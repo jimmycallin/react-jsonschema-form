@@ -61,7 +61,7 @@
     "eslint-plugin-react": "^7.4.0",
     "jest": "24.9.0",
     "less": "^3.10.3",
-    "less-loader": "^5.0.0",
+    "less-loader": "^7.3.0",
     "lodash": "^4.17.15",
     "react": "^16.8.6",
     "react-dom": "^16.8.6",

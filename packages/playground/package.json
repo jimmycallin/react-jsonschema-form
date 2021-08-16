@@ -52,7 +52,7 @@
     "json-schema-merge-allof": "^0.6.0",
     "jss": "^10.0.3",
     "less": "^3.11.3",
-    "less-loader": "^5.0.0",
+    "less-loader": "^7.3.0",
     "lodash": "^4.17.21",
     "prop-types": "^15.7.2",
     "react-app-polyfill": "^1.0.4",
