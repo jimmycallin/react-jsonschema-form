@@ -28,7 +28,7 @@ import {
 import validator from '@rjsf/validator-ajv8';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { get, has, isEmpty, omit, pick } from 'lodash';
+import { get, has, pick } from 'lodash';
 import type { MockInstance } from 'vitest';
 
 import type { LayoutGridFieldProps } from '../src/components/fields/LayoutGridField';
@@ -781,7 +781,7 @@ function getExpectedPropsForField(
     return schema1;
   }, props.schema);
   // Null out nested properties that can show up when additionalProperties is specified
-  if (!isEmpty(schema?.properties)) {
+  if (schema?.properties && Object.keys(schema.properties).length > 0) {
     schema.properties = {};
   }
   // Get the readonly options from the schema, if any
@@ -925,11 +925,13 @@ describe('LayoutGridField', () => {
       expect(findChildrenAndProps(TEST_LAYOUT_GRID_CHILDREN, GridType.COLUMN, registry)).toEqual(expectedResult);
     });
     test('returns the children array and expected looked up className values in grid props for the condition', () => {
+      const { children: conditionChildren, ...conditionWithoutChildren } =
+        TEST_LAYOUT_GRID_CHILDREN[GridType.CONDITION];
       const classNames: string[] = TEST_LAYOUT_GRID_CHILDREN[GridType.CONDITION].className.split(' ');
       const className: string = classNames.map((ele: string) => LOOKUP_MAP[ele]).join(' ');
       const expectedResult = {
         children: TEST_LAYOUT_GRID_CHILDREN[GridType.CONDITION].children,
-        gridProps: { ...omit(TEST_LAYOUT_GRID_CHILDREN[GridType.CONDITION], ['children']), className },
+        gridProps: { ...conditionWithoutChildren, className },
       };
       expect(findChildrenAndProps(TEST_LAYOUT_GRID_CHILDREN, GridType.CONDITION, registry)).toEqual(expectedResult);
     });

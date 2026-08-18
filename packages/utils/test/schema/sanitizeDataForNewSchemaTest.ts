@@ -1,4 +1,3 @@
-import cloneDeep from 'lodash/cloneDeep';
 import set from 'lodash/set';
 
 import type { SchemaUtilsType, RJSFSchema } from '../../src';
@@ -25,7 +24,7 @@ export default function sanitizeDataForNewSchemaTest(testValidator: TestValidato
     });
     it('returns input formData when the new schema matches the data for the new schema rather than the old', () => {
       const newSchema = schemaUtils.retrieveSchema(SECOND_ONE_OF, oneOfSchema);
-      const oldSchema = cloneDeep(schemaUtils.retrieveSchema(FIRST_ONE_OF, oneOfSchema));
+      const oldSchema = structuredClone(schemaUtils.retrieveSchema(FIRST_ONE_OF, oneOfSchema));
       // Change the type of name to trigger a fall-thru
       set(oldSchema, ['properties', 'name', 'type'], 'boolean');
       // By changing the type, the name will be marked as undefined

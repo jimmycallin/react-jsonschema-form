@@ -1,5 +1,4 @@
 import deepFreeze from 'deep-freeze-es6';
-import reduce from 'lodash/reduce';
 
 import type { EnumOptionsType, ErrorSchema, RJSFSchema, RJSFValidationError } from '../../src';
 import { ANY_OF_KEY, DEFAULT_ID_PREFIX, DEFAULT_ID_SEPARATOR, ErrorSchemaBuilder, ID_KEY, ONE_OF_KEY } from '../../src';
@@ -374,9 +373,8 @@ export const TEST_FORM_DATA = {
   },
 };
 
-export const TEST_ERROR_SCHEMA: ErrorSchema = reduce(
-  ERROR_MAPPER,
-  (builder: ErrorSchemaBuilder, value, key) => {
+export const TEST_ERROR_SCHEMA: ErrorSchema = Object.entries(ERROR_MAPPER).reduce(
+  (builder: ErrorSchemaBuilder, [key, value]) => {
     if (value) {
       return builder.addErrors(value, key === '' ? undefined : key);
     }
@@ -385,18 +383,16 @@ export const TEST_ERROR_SCHEMA: ErrorSchema = reduce(
   new ErrorSchemaBuilder(),
 ).ErrorSchema;
 
-export const TEST_ERROR_LIST: RJSFValidationError[] = reduce(
-  ERROR_MAPPER,
-  (list: RJSFValidationError[], value, key) => {
+export const TEST_ERROR_LIST: RJSFValidationError[] = Object.entries(ERROR_MAPPER).reduce<RJSFValidationError[]>(
+  (list, [key, value]) => {
     list.push({ property: `.${key}`, message: value, stack: `.${key} ${value}` });
     return list;
   },
   [],
 );
 
-export const TEST_ERROR_LIST_OUTPUT: RJSFValidationError[] = reduce(
-  ERROR_MAPPER,
-  (list: RJSFValidationError[], value, key) => {
+export const TEST_ERROR_LIST_OUTPUT: RJSFValidationError[] = Object.entries(ERROR_MAPPER).reduce<RJSFValidationError[]>(
+  (list, [key, value]) => {
     if (value) {
       list.push({ property: `.${key}`, message: value, stack: `.${key} ${value}` });
     }

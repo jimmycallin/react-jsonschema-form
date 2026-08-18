@@ -26,9 +26,9 @@ import {
 } from '@rjsf/utils';
 import get from 'lodash/get';
 import has from 'lodash/has';
-import isEmpty from 'lodash/isEmpty';
-import noop from 'lodash/noop';
 import set from 'lodash/set';
+
+const noop = () => {};
 
 /** Gets the selected option from the list of `options`, using the `selectorField` to search inside each `option` for
  * the `properties[selectorField].default(or const)` that matches the given `value`.
@@ -193,7 +193,7 @@ export default function LayoutMultiSchemaField<
       id={id}
       schema={schema}
       label={(title || schema.title) ?? ''}
-      disabled={disabled || (Array.isArray(enumOptions) && isEmpty(enumOptions))}
+      disabled={disabled || (Array.isArray(enumOptions) && enumOptions.length === 0)}
       uiSchema={uiSchema}
       required={required}
       readonly={!!readonly}
@@ -210,7 +210,7 @@ export default function LayoutMultiSchemaField<
         name={name}
         schema={schema}
         label={(title || schema.title) ?? ''}
-        disabled={disabled || (Array.isArray(enumOptions) && isEmpty(enumOptions))}
+        disabled={disabled || (Array.isArray(enumOptions) && enumOptions.length === 0)}
         uiSchema={uiSchema}
         autofocus={autofocus}
         readonly={readonly}

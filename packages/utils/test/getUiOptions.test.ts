@@ -1,8 +1,9 @@
-import noop from 'lodash/noop';
 import type { MockInstance } from 'vitest';
 
 import type { GlobalUISchemaOptions, UIOptionsType, UiSchema } from '../src';
 import { getUiOptions } from '../src';
+
+const noop = () => {};
 
 const uiSchema: UiSchema = {
   widgetText: {

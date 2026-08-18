@@ -1,8 +1,6 @@
 import UriResolver from 'fast-uri';
 import jsonpointer from 'jsonpointer';
 import get from 'lodash/get';
-import isEmpty from 'lodash/isEmpty';
-import isObject from 'lodash/isObject';
 
 import {
   ALL_OF_KEY,
@@ -12,6 +10,7 @@ import {
   REF_KEY,
   SCHEMA_KEY,
 } from './constants';
+import isObject from './isObject';
 import type { GenericObjectType, RJSFSchema, StrictRJSFSchema } from './types';
 
 /** Looks for the `$id` pointed by `ref` in the schema definitions embedded in
@@ -123,7 +122,7 @@ export function findSchemaDefinitionRecursive<S extends StrictRJSFSchema = RJSFS
     current = findEmbeddedSchemaRecursive<S>(rootSchema, refId.replace(/\/$/, ''));
     if (current !== undefined) {
       currentBaseURI = current[ID_KEY];
-      if (!isEmpty(refAnchor)) {
+      if (refAnchor.length > 0) {
         current = jsonpointer.get(current, decodeURIComponent(refAnchor.join('#')));
       }
     }

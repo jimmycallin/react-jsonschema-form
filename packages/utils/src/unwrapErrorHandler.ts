@@ -1,6 +1,5 @@
-import isPlainObject from 'lodash/isPlainObject';
-
-import type { ErrorSchema, FormValidation, GenericObjectType } from './types';
+import isObject from './isObject';
+import type { ErrorSchema, FormValidation } from './types';
 
 /** Unwraps the `errorHandler` structure into the associated `ErrorSchema`, stripping the `addError()` functions from it
  *
@@ -12,13 +11,13 @@ export default function unwrapErrorHandler<T = any>(errorHandler: FormValidation
     if (key === 'addError') {
       return acc;
     }
-    const childSchema = (errorHandler as GenericObjectType)[key];
-    if (isPlainObject(childSchema)) {
-      return {
-        ...acc,
-        [key]: unwrapErrorHandler(childSchema),
-      };
+    // `key` came from `errorHandler`, so it indexes it; `Object.keys()` just cannot say so in the type system
+    const childHandler = errorHandler[key as keyof FormValidation<T>];
+    if (isObject(childHandler)) {
+      // `FormValidation<T>[K]` will not reduce while `T` is an unresolved type parameter, so the recursive arm of the
+      // union it yields has to be named here. `isObject()` has already ruled out the `__errors` array arm.
+      return { ...acc, [key]: unwrapErrorHandler(childHandler as FormValidation<T[keyof T]>) };
     }
-    return { ...acc, [key]: childSchema };
+    return { ...acc, [key]: childHandler };
   }, {});
 }

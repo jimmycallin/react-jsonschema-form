@@ -25,11 +25,11 @@ import {
   ONE_OF_KEY,
   PROPERTIES_KEY,
   REF_KEY,
+  isObject,
   TranslatableString,
 } from '@rjsf/utils';
 import get from 'lodash/get';
 import has from 'lodash/has';
-import isObject from 'lodash/isObject';
 import set from 'lodash/set';
 import { Markdown } from 'markdown-to-jsx/react';
 

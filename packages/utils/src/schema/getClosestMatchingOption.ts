@@ -1,12 +1,11 @@
 import get from 'lodash/get';
 import has from 'lodash/has';
-import isObject from 'lodash/isObject';
-import times from 'lodash/times';
 
 import { ONE_OF_KEY, REF_KEY, JUNK_OPTION_ID, ANY_OF_KEY } from '../constants';
 import getDiscriminatorFieldFromSchema from '../getDiscriminatorFieldFromSchema';
 import getOptionMatchingSimpleDiscriminator from '../getOptionMatchingSimpleDiscriminator';
 import guessType from '../guessType';
+import isObject from '../isObject';
 import type {
   Experimental_CustomMergeAllOf,
   FormContextType,
@@ -103,7 +102,7 @@ export function calculateIndexScore<T = any, S extends StrictRJSFSchema = RJSFSc
         }
         if (value.type === 'object') {
           // If the structure is matching then give it a little boost in score
-          const structureBoost = isObject(formValue) ? 1 : 0;
+          const structureBoost = typeof formValue === 'object' && formValue !== null ? 1 : 0;
           return (
             score +
             structureBoost +
@@ -195,7 +194,7 @@ export default function getClosestMatchingOption<
   }
   if (!allValidIndexes.length) {
     // No indexes were valid, so we'll score all the options, add all the indexes
-    times(resolvedOptions.length, (i) => allValidIndexes.push(i));
+    resolvedOptions.forEach((_, i) => allValidIndexes.push(i));
   }
   interface BestType {
     bestIndex: number;

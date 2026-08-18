@@ -52,8 +52,6 @@ import {
   ONE_OF_KEY,
 } from '@rjsf/utils';
 import _get from 'lodash/get';
-import _isEmpty from 'lodash/isEmpty';
-import _pick from 'lodash/pick';
 import _set from 'lodash/set';
 import _toPath from 'lodash/toPath';
 import _unset from 'lodash/unset';
@@ -348,8 +346,16 @@ function toIChangeEvent<T = any, S extends StrictRJSFSchema = RJSFSchema, F exte
   state: FormState<T, S, F>,
   status?: IChangeEvent['status'],
 ): IChangeEvent<T, S, F> {
+  const { schema, uiSchema, fieldPathId, schemaUtils, formData, edit, errors, errorSchema } = state;
   return {
-    ..._pick(state, ['schema', 'uiSchema', 'fieldPathId', 'schemaUtils', 'formData', 'edit', 'errors', 'errorSchema']),
+    schema,
+    uiSchema,
+    fieldPathId,
+    schemaUtils,
+    formData,
+    edit,
+    errors,
+    errorSchema,
     ...(status !== undefined && { status }),
   };
 }
@@ -1042,7 +1048,7 @@ export default class Form<
       // @ts-expect-error TS2590, because getting from the error schema is confusing TS
       const oldValidationError = !isRootPath ? _get(schemaValidationErrorSchema, path) : schemaValidationErrorSchema;
       // If there is an old validation error for this path, assume we are updating it directly
-      if (!_isEmpty(oldValidationError)) {
+      if (oldValidationError && Object.keys(oldValidationError).length > 0) {
         // Apply the user-supplied newErrorSchema onto a clone of the AJV-only base, so that
         // mergeErrors below sees the user's error at this path without mutating shared state.
         if (!isRootPath) {

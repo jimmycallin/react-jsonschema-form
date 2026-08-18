@@ -1,5 +1,4 @@
 import get from 'lodash/get';
-import noop from 'lodash/noop';
 import type { MockInstance } from 'vitest';
 
 import type { RJSFSchema } from '../../src';
@@ -35,6 +34,8 @@ import {
   SUPER_SCHEMA,
 } from '../testUtils/testData';
 import type { TestValidatorType } from './types';
+
+const noop = () => {};
 
 export default function retrieveSchemaTest(testValidator: TestValidatorType) {
   describe('retrieveSchema()', () => {

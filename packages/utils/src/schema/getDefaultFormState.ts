@@ -1,6 +1,5 @@
 import type { JSONSchema7Object } from 'json-schema';
 import get from 'lodash/get';
-import isEmpty from 'lodash/isEmpty';
 
 import {
   ALL_OF_KEY,
@@ -85,6 +84,20 @@ export function getInnerSchemaForArrayItem<S extends StrictRJSFSchema = RJSFSche
   return {} as S;
 }
 
+/** Determines whether a computed default carries any content, i.e. it is a string or array with elements, or an object
+ * with own keys. Anything else - including a number or boolean - counts as empty, which is what decides whether a
+ * nullable schema's default collapses to `null`.
+ *
+ * @param value - The computed default to inspect
+ * @returns - True if the value carries content, otherwise false
+ */
+function hasContent(value: unknown): boolean {
+  if (typeof value === 'string' || Array.isArray(value)) {
+    return value.length > 0;
+  }
+  return typeof value === 'object' && value !== null && Object.keys(value).length > 0;
+}
+
 /** Checks if the given `schema` contains the `null` type along with another type AND if the `default` contained within
  * the schema is `null` AND the `computedDefault` is empty. If all of those conditions are true, then the `schema`'s
  * default should be `null` rather than `computedDefault`.
@@ -99,7 +112,7 @@ export function computeDefaultBasedOnSchemaTypeAndDefaults<T = any, S extends St
 ) {
   const { default: schemaDefault, type } = schema;
   const shouldReturnNullAsDefault =
-    Array.isArray(type) && type.includes('null') && isEmpty(computedDefault) && schemaDefault === null;
+    Array.isArray(type) && type.includes('null') && !hasContent(computedDefault) && schemaDefault === null;
   return shouldReturnNullAsDefault ? (null as T) : computedDefault;
 }
 
@@ -144,7 +157,11 @@ function maybeAddDefaultToObject<T = any>(
   } else if (includeUndefinedValues === 'excludeObjectChildren') {
     // Fix for Issue #4709: When in 'excludeObjectChildren' mode, don't set primitive fields to empty objects
     // Only add the computed default if it's not an empty object placeholder for a primitive field
-    if ((isNullType && computedDefault !== undefined) || !isObject(computedDefault) || !isEmpty(computedDefault)) {
+    if (
+      (isNullType && computedDefault !== undefined) ||
+      !isObject(computedDefault) ||
+      Object.keys(computedDefault).length > 0
+    ) {
       acc[key] = computedDefault;
     }
     // If computedDefault is an empty object {}, don't add it - let the field stay undefined
@@ -156,14 +173,14 @@ function maybeAddDefaultToObject<T = any>(
     if (isObject(computedDefault)) {
       // If emptyObjectFields 'skipEmptyDefaults' store computedDefault if it's a non-empty object(e.g. not {})
       if (emptyObjectFields === 'skipEmptyDefaults') {
-        if (!isEmpty(computedDefault)) {
+        if (Object.keys(computedDefault).length > 0) {
           acc[key] = computedDefault;
         }
       } // Else store computedDefault if it's a non-empty object(e.g. not {}) and satisfies certain conditions
       // Condition 1: If computedDefault is not empty or if the key is a required field
       // Condition 2: If the parent object is required or emptyObjectFields is not 'populateRequiredDefaults'
       else if (
-        (!isEmpty(computedDefault) || requiredFields.includes(key)) &&
+        (Object.keys(computedDefault).length > 0 || requiredFields.includes(key)) &&
         (isSelfOrParentRequired || emptyObjectFields !== 'populateRequiredDefaults')
       ) {
         acc[key] = computedDefault;
@@ -293,7 +310,8 @@ export function computeDefaults<T = any, S extends StrictRJSFSchema = RJSFSchema
     // Then set the defaults from the current schema for the referenced schema.
     // Only do this if rawFormData has no meaningful data - we don't want to override user's existing values.
     // Check for undefined OR empty object - rawFormData may be coerced to {} when not an object.
-    const hasNoExistingData = rawFormData === undefined || (isObject(rawFormData) && isEmpty(rawFormData));
+    const hasNoExistingData =
+      rawFormData === undefined || (isObject(rawFormData) && Object.keys(rawFormData).length === 0);
     if (schemaToCompute && !defaults && hasNoExistingData) {
       defaults = schema.default as T | undefined;
     }

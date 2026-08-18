@@ -1,14 +1,12 @@
 import get from 'lodash/get';
-import reduce from 'lodash/reduce';
 
 import type { FormValidation } from '../src';
 import { createErrorHandler, unwrapErrorHandler, ERRORS_KEY } from '../src';
 import { TEST_FORM_DATA, ERROR_MAPPER, TEST_ERROR_SCHEMA } from './testUtils/testData';
 
 const EMPTY_WRAPPER = createErrorHandler(null);
-const POPULATED_WRAPPER: FormValidation = reduce(
-  ERROR_MAPPER,
-  (validation: FormValidation, value, key) => {
+const POPULATED_WRAPPER: FormValidation = Object.entries(ERROR_MAPPER).reduce(
+  (validation: FormValidation, [key, value]) => {
     const propValidation: FormValidation | undefined = key ? get(validation, key) : validation;
     propValidation?.addError(value);
     return validation;

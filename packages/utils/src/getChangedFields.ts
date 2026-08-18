@@ -1,8 +1,14 @@
-import difference from 'lodash/difference';
-import get from 'lodash/get';
-import isPlainObject from 'lodash/isPlainObject';
-
 import deepEquals from './deepEquals';
+
+/** Determines whether a `value` can be compared field by field, i.e. it is a non-null object that is not an array.
+ * Narrowing to an indexable type is what lets the comparison below read `value[key]` without an assertion.
+ *
+ * @param value - The value to check
+ * @returns - True if the value can be compared field by field
+ */
+function isComparableObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
 
 /**
  * Compares two objects and returns the names of the fields that have changed.
@@ -21,21 +27,23 @@ import deepEquals from './deepEquals';
  * console.log(changedFields); // Output: ['age']
  */
 export default function getChangedFields(a: unknown, b: unknown): string[] {
-  const aIsPlainObject = isPlainObject(a);
-  const bIsPlainObject = isPlainObject(b);
-  // If strictly equal or neither of them is a plainObject returns an empty array
-  if (a === b || (!aIsPlainObject && !bIsPlainObject)) {
+  const aIsComparable = isComparableObject(a);
+  const bIsComparable = isComparableObject(b);
+  if (a === b) {
     return [];
   }
-  if (aIsPlainObject && !bIsPlainObject) {
-    return Object.keys(a as object);
+  if (aIsComparable && bIsComparable) {
+    const aKeys = Object.keys(a);
+    const unequalFields = aKeys.filter((key) => !deepEquals(a[key], b[key]));
+    const diffFields = Object.keys(b).filter((key) => !aKeys.includes(key));
+    return [...unequalFields, ...diffFields];
   }
-  if (!aIsPlainObject && bIsPlainObject) {
-    return Object.keys(b as object);
+  // Only one of them can be compared field by field, so every one of its fields counts as changed
+  if (aIsComparable) {
+    return Object.keys(a);
   }
-  const unequalFields = Object.entries(a as object)
-    .filter(([key, value]) => !deepEquals(value, get(b, key)))
-    .map(([key]) => key);
-  const diffFields = difference(Object.keys(b as object), Object.keys(a as object));
-  return [...unequalFields, ...diffFields];
+  if (bIsComparable) {
+    return Object.keys(b);
+  }
+  return [];
 }

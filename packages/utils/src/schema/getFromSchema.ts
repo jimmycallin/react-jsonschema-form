@@ -1,6 +1,5 @@
 import get from 'lodash/get';
 import has from 'lodash/has';
-import isEmpty from 'lodash/isEmpty';
 
 import { REF_KEY } from '../constants';
 import type {
@@ -34,7 +33,7 @@ function getFromSchemaInternal<T = any, S extends StrictRJSFSchema = RJSFSchema,
   if (has(schema, REF_KEY)) {
     fieldSchema = retrieveSchema<T, S, F>(validator, schema, rootSchema, undefined, experimental_customMergeAllOf);
   }
-  if (isEmpty(path)) {
+  if (path.length === 0) {
     return fieldSchema;
   }
   const pathList = Array.isArray(path) ? [...path] : path.split('.');

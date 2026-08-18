@@ -21,10 +21,14 @@ should change the heading of the (upcoming) version to include a major version b
 ## @rjsf/core
 
 - Fixed `TimeWidget` to respect schema `multipleOf` time precision, preserving second-precision values while keeping minute-precision native inputs synchronized with their displayed value ([#5174](https://github.com/rjsf-team/react-jsonschema-form/pull/5174))
+- Replaced lodash's `isEmpty`, `isObject`, `isPlainObject`, `each`, `flatten`, `includes`, `intersection`, `last`, `noop`, `pick` and `uniqueId` with native equivalents, shrinking the gzipped ESM bundle from 75,038 to 70,278 bytes. In `FixedArray`, the tuple `items` check relied on lodash's `isObject()` returning `true` for arrays, so it now uses `Array.isArray()` to say so explicitly
+- Fixed `ui:layoutGrid` throwing a `TypeError` when a `className` was supplied as a non-string, and falling back to an empty field name when `name` was supplied as a non-string; the grid config was previously read as `any`, so neither was checked
 
 ## @rjsf/utils
 
 - Fixed an issue in `sortedJSONStringify` with regards to handling arrays containing `null` and `undefined` values.
+- Fixed `getChangedFields()` reporting a spurious change for a field whose name contains a `.`, which lodash's `get()` read as a nested path rather than a literal key
+- Replaced lodash's `isEmpty`, `isObject`, `isPlainObject`, `difference`, `get`, `times` and `uniqueId` with native equivalents, shrinking the gzipped ESM bundle from 39,299 to 36,234 bytes. The schema, `uiSchema` and error/form-data traversals now use the existing `isObject()` helper, except `getChangedFields()`, which needs an indexable narrowing and so carries a local one
 
 ## @rjsf/validator-ata
 

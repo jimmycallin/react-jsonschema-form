@@ -1,7 +1,6 @@
-import isPlainObject from 'lodash/isPlainObject';
-
 import { ERRORS_KEY } from './constants';
-import type { ErrorSchema, GenericObjectType, RJSFValidationError } from './types';
+import isObject from './isObject';
+import type { ErrorSchema, RJSFValidationError } from './types';
 
 /** Converts an `errorSchema` into a list of `RJSFValidationErrors`
  *
@@ -30,11 +29,10 @@ export default function toErrorList<T = any>(
     );
   }
   return Object.keys(errorSchema).reduce((currentList, key) => {
-    if (key !== ERRORS_KEY) {
-      const childSchema = (errorSchema as GenericObjectType)[key];
-      if (isPlainObject(childSchema)) {
-        return currentList.concat(toErrorList(childSchema, [...fieldPath, key]));
-      }
+    // `key` came from `errorSchema`, so it indexes it; `Object.keys()` just cannot say so in the type system
+    const childSchema = errorSchema[key as keyof ErrorSchema<T>];
+    if (key !== ERRORS_KEY && isObject(childSchema)) {
+      return currentList.concat(toErrorList(childSchema, [...fieldPath, key]));
     }
     return currentList;
   }, errorList);

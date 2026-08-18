@@ -1,5 +1,4 @@
 import get from 'lodash/get';
-import isEmpty from 'lodash/isEmpty';
 import pick from 'lodash/pick';
 
 import { NAME_KEY, RJSF_ADDITIONAL_PROPERTIES_FLAG } from '../constants';
@@ -49,8 +48,13 @@ export function getUsedFormData<T = any>(formData: T | undefined, fields: string
  */
 // oxlint-disable-next-line typescript/no-deprecated
 export function getFieldNames<T = any>(pathSchema: PathSchema<T>, formData?: T): string[][] {
-  const formValueHasData = (value: T, isLeaf: boolean) =>
-    typeof value !== 'object' || isEmpty(value) || (isLeaf && !isEmpty(value));
+  const formValueHasData = (value: T, isLeaf: boolean) => {
+    if (typeof value !== 'object' || value === null) {
+      return true;
+    }
+    const isEmptyValue = Array.isArray(value) ? value.length === 0 : Object.keys(value).length === 0;
+    return isEmptyValue || isLeaf;
+  };
   const getAllPaths = (_obj: GenericObjectType, acc: string[][] = [], paths: string[][] = [[]]) => {
     const objKeys = Object.keys(_obj);
     objKeys.forEach((key: string) => {
@@ -426,16 +430,17 @@ export default function omitExtraData<
    * `handleConditions`, `handleDependencies`). Returns `undefined` when `source` is undefined or
    * `schemaDef` is `false`; returns `source` unchanged when `schemaDef` is `true` or empty.
    *
-   * @param schemaDef - The schema (or boolean shorthand) to filter `source` against
+   * @param schemaDef - The schema (or boolean shorthand) to filter `source` against. Nullish is accepted because
+   *      untyped callers reach the public entry point with it, and is treated as a pass-through
    * @param source - The raw form data value to filter
    * @param [target] - An optional accumulator carrying results from prior oneOf/anyOf processing
    * @returns - The filtered value, or `undefined` when the schema rejects the value
    */
-  function omit(schemaDef: S | boolean, source: unknown, target?: unknown): unknown {
+  function omit(schemaDef: S | boolean | null | undefined, source: unknown, target?: unknown): unknown {
     if (source === undefined || schemaDef === false) {
       return undefined;
     }
-    if (schemaDef === true || isEmpty(schemaDef as object)) {
+    if (schemaDef === true || !schemaDef || Object.keys(schemaDef).length === 0) {
       return source;
     }
 

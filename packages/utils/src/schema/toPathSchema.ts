@@ -1,6 +1,5 @@
 // oxlint-disable typescript/no-deprecated
 import get from 'lodash/get';
-import isObject from 'lodash/isObject';
 import set from 'lodash/set';
 
 import {
@@ -18,6 +17,7 @@ import {
 } from '../constants';
 import deepEquals from '../deepEquals';
 import getDiscriminatorFieldFromSchema from '../getDiscriminatorFieldFromSchema';
+import isObject from '../isObject';
 import type {
   Experimental_CustomMergeAllOf,
   FormContextType,
