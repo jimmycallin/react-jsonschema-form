@@ -1,5 +1,4 @@
 // oxlint-disable typescript/no-deprecated
-import isObject from 'lodash/isObject';
 
 import {
   ADDITIONAL_PROPERTIES_KEY,
@@ -16,6 +15,7 @@ import {
 } from '../constants';
 import deepEquals from '../deepEquals';
 import getDiscriminatorFieldFromSchema from '../getDiscriminatorFieldFromSchema';
+import isObject from '../isObject';
 import { getByPath, setByPath } from '../pathUtils';
 import type {
   Experimental_CustomMergeAllOf,

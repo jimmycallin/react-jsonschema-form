@@ -1,9 +1,9 @@
-import get from 'lodash/get';
-import noop from 'lodash/noop';
 import type { MockInstance } from 'vitest';
 
 import type { RJSFSchema, UiSchema } from '../src';
-import { CONST_KEY, optionsList, PROPERTIES_KEY } from '../src';
+import { CONST_KEY, getByPath, optionsList, PROPERTIES_KEY } from '../src';
+
+const noop = () => {};
 
 describe('optionsList()', () => {
   let consoleWarnSpy: MockInstance;
@@ -220,7 +220,7 @@ describe('optionsList()', () => {
         anyOfSchema.anyOf!.map((schema, index) => ({
           schema,
           label: anyOfUiSchema.anyOf[index]['ui:title'],
-          value: get(schema, CONST_KEY),
+          value: getByPath(schema, CONST_KEY),
         })),
       );
     });
@@ -321,8 +321,8 @@ describe('optionsList()', () => {
       expect(optionsList(anyOfSchema)).toEqual(
         anyOfSchema.anyOf!.map((schema) => ({
           schema,
-          label: get(schema, ['title']),
-          value: get(schema, [PROPERTIES_KEY, 'animal', CONST_KEY]),
+          label: getByPath(schema, ['title']),
+          value: getByPath(schema, [PROPERTIES_KEY, 'animal', CONST_KEY]),
         })),
       );
     });
@@ -358,8 +358,8 @@ describe('optionsList()', () => {
       expect(optionsList(anyOfSchema)).toEqual(
         anyOfSchema.anyOf!.map((schema) => ({
           schema,
-          label: get(schema, [PROPERTIES_KEY, 'animal', 'title']),
-          value: get(schema, [PROPERTIES_KEY, 'animal', CONST_KEY]),
+          label: getByPath(schema, [PROPERTIES_KEY, 'animal', 'title']),
+          value: getByPath(schema, [PROPERTIES_KEY, 'animal', CONST_KEY]),
         })),
       );
     });
@@ -393,8 +393,8 @@ describe('optionsList()', () => {
       expect(optionsList(anyOfSchema, {})).toEqual(
         anyOfSchema.anyOf!.map((schema) => ({
           schema,
-          label: get(schema, [PROPERTIES_KEY, 'animal', CONST_KEY]),
-          value: get(schema, [PROPERTIES_KEY, 'animal', CONST_KEY]),
+          label: getByPath(schema, [PROPERTIES_KEY, 'animal', CONST_KEY]),
+          value: getByPath(schema, [PROPERTIES_KEY, 'animal', CONST_KEY]),
         })),
       );
     });
@@ -424,12 +424,14 @@ describe('optionsList()', () => {
           },
         ],
       };
-      const anyOfUiSchema = { 'ui:options': { optionsSchemaSelector: 'animal' } };
+      const anyOfUiSchema = {
+        'ui:options': { optionsSchemaSelector: 'animal' },
+      };
       expect(optionsList(anyOfSchema, anyOfUiSchema)).toEqual(
         anyOfSchema.anyOf!.map((schema) => ({
           schema,
-          label: get(schema, [PROPERTIES_KEY, 'animal', 'title']),
-          value: get(schema, [PROPERTIES_KEY, 'animal', CONST_KEY]),
+          label: getByPath(schema, [PROPERTIES_KEY, 'animal', 'title']),
+          value: getByPath(schema, [PROPERTIES_KEY, 'animal', CONST_KEY]),
         })),
       );
     });
@@ -460,7 +462,7 @@ describe('optionsList()', () => {
         anyOfSchema.anyOf!.map((schema, index) => ({
           schema,
           label: anyOfUiSchema.anyOf[index]['ui:title'],
-          value: get(schema, [PROPERTIES_KEY, 'animal', CONST_KEY]),
+          value: getByPath(schema, [PROPERTIES_KEY, 'animal', CONST_KEY]),
         })),
       );
     });
@@ -528,7 +530,7 @@ describe('optionsList()', () => {
         oneOfSchema.oneOf!.map((schema, index) => ({
           schema,
           label: oneOfUiSchema.oneOf[index]['ui:title'],
-          value: get(schema, CONST_KEY),
+          value: getByPath(schema, CONST_KEY),
         })),
       );
     });
@@ -582,8 +584,8 @@ describe('optionsList()', () => {
       expect(optionsList(oneOfSchema)).toEqual(
         oneOfSchema.oneOf!.map((schema) => ({
           schema,
-          label: get(schema, ['title']),
-          value: get(schema, [PROPERTIES_KEY, 'animal', CONST_KEY]),
+          label: getByPath(schema, ['title']),
+          value: getByPath(schema, [PROPERTIES_KEY, 'animal', CONST_KEY]),
         })),
       );
     });
@@ -619,8 +621,8 @@ describe('optionsList()', () => {
       expect(optionsList(oneOfSchema)).toEqual(
         oneOfSchema.oneOf!.map((schema) => ({
           schema,
-          label: get(schema, [PROPERTIES_KEY, 'animal', 'title']),
-          value: get(schema, [PROPERTIES_KEY, 'animal', CONST_KEY]),
+          label: getByPath(schema, [PROPERTIES_KEY, 'animal', 'title']),
+          value: getByPath(schema, [PROPERTIES_KEY, 'animal', CONST_KEY]),
         })),
       );
     });
@@ -654,8 +656,8 @@ describe('optionsList()', () => {
       expect(optionsList(oneOfSchema, {})).toEqual(
         oneOfSchema.oneOf!.map((schema) => ({
           schema,
-          label: get(schema, [PROPERTIES_KEY, 'animal', CONST_KEY]),
-          value: get(schema, [PROPERTIES_KEY, 'animal', CONST_KEY]),
+          label: getByPath(schema, [PROPERTIES_KEY, 'animal', CONST_KEY]),
+          value: getByPath(schema, [PROPERTIES_KEY, 'animal', CONST_KEY]),
         })),
       );
     });
@@ -685,12 +687,14 @@ describe('optionsList()', () => {
           },
         ],
       };
-      const oneOfUiSchema = { 'ui:options': { optionsSchemaSelector: 'animal' } };
+      const oneOfUiSchema = {
+        'ui:options': { optionsSchemaSelector: 'animal' },
+      };
       expect(optionsList(oneOfSchema, oneOfUiSchema)).toEqual(
         oneOfSchema.oneOf!.map((schema) => ({
           schema,
-          label: get(schema, [PROPERTIES_KEY, 'animal', 'title']),
-          value: get(schema, [PROPERTIES_KEY, 'animal', CONST_KEY]),
+          label: getByPath(schema, [PROPERTIES_KEY, 'animal', 'title']),
+          value: getByPath(schema, [PROPERTIES_KEY, 'animal', CONST_KEY]),
         })),
       );
     });
@@ -721,7 +725,7 @@ describe('optionsList()', () => {
         oneOfSchema.oneOf!.map((schema, index) => ({
           schema,
           label: oneOfUiSchema.oneOf[index]['ui:title'],
-          value: get(schema, [PROPERTIES_KEY, 'animal', CONST_KEY]),
+          value: getByPath(schema, [PROPERTIES_KEY, 'animal', CONST_KEY]),
         })),
       );
     });

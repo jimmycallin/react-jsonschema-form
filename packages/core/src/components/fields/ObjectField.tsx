@@ -28,9 +28,9 @@ import {
   ONE_OF_KEY,
   PROPERTIES_KEY,
   REF_KEY,
+  isObject,
   TranslatableString,
 } from '@rjsf/utils';
-import isObject from 'lodash/isObject';
 import { Markdown } from 'markdown-to-jsx/react';
 
 import { ADDITIONAL_PROPERTY_KEY_REMOVE } from '../constants';

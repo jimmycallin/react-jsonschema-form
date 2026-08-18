@@ -1,5 +1,4 @@
-import isPlainObject from 'lodash/isPlainObject';
-
+import isPlainObject from './isPlainObject';
 import type { ErrorSchema, FormValidation, GenericObjectType } from './types';
 
 /** Unwraps the `errorHandler` structure into the associated `ErrorSchema`, stripping the `addError()` functions from it
@@ -16,7 +15,7 @@ export default function unwrapErrorHandler<T = any>(errorHandler: FormValidation
     if (isPlainObject(childSchema)) {
       return {
         ...acc,
-        [key]: unwrapErrorHandler(childSchema),
+        [key]: unwrapErrorHandler(childSchema as FormValidation<T>),
       };
     }
     return { ...acc, [key]: childSchema };

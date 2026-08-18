@@ -1,11 +1,12 @@
 // oxlint-disable typescript/no-deprecated
-import noop from 'lodash/noop';
 import type { MockInstance } from 'vitest';
 
 import type { RJSFSchema } from '../../src';
 import { toPathSchema, createSchemaUtils } from '../../src';
 import { RECURSIVE_REF, RECURSIVE_REF_ALLOF } from '../testUtils/testData';
 import type { TestValidatorType } from './types';
+
+const noop = () => {};
 
 export default function toPathSchemaTest(testValidator: TestValidatorType) {
   describe('toPathSchema()', () => {

@@ -1,9 +1,10 @@
 import type { RJSFSchema } from '@rjsf/utils';
 import { writeFileSync } from 'fs';
-import noop from 'lodash/noop';
 import type { MockInstance } from 'vitest';
 
 import compileSchemaValidators, { compileSchemaValidatorsCode } from '../src/compileSchemaValidators';
+
+const noop = () => {};
 
 vi.mock('fs', () => {
   const writeFileSync = vi.fn();

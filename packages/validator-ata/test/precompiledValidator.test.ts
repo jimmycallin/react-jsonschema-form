@@ -1,12 +1,13 @@
 import type { ErrorSchema, FormValidation, RJSFSchema, RJSFValidationError, UiSchema } from '@rjsf/utils';
 import { ErrorSchemaBuilder, hashForSchema, JUNK_OPTION_ID, retrieveSchema, RJSF_REF_KEY } from '@rjsf/utils';
-import noop from 'lodash/noop';
 import type { Mock } from 'vitest';
 
 import type { Localizer, ValidatorFunctions } from '../src';
 import { compileSchemaValidatorsCode } from '../src/compileSchemaValidators';
 import ATAPrecompiledValidator from '../src/precompiledValidator';
 import superSchemaObj from './harness/superSchema.json';
+
+const noop = () => {};
 
 const rootSchema = superSchemaObj as unknown as RJSFSchema;
 

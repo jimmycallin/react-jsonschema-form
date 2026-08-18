@@ -21,22 +21,30 @@ should change the heading of the (upcoming) version to include a major version b
 ## @rjsf/utils
 
 - Added new path utilities `getByPath`, `setByPath`, `hasByPath`, `unsetByPath` and `toPath`, and switched all path-based `lodash` usage (`get`, `set`, `setWith`, `has`, `unset`, `toPath`, `pick`) over to them. Unlike their lodash counterparts, these treat a bare string as a single literal key, lodash-style dotted path strings are parsed explicitly via `toPath()`, and `getByPath()`/`hasByPath()` resolve **own** properties only (inherited members and prototype internals such as `__proto__` never resolve)
+- Replaced the remaining non-path `lodash` usage (`isEmpty`, `isNil`, `isObject`, `isPlainObject`, `keys`, `difference`, `omit`, `pickBy`, `times`, `transform`, `uniq`, `uniqueId`, and friends) with native equivalents, and dropped the `lodash`/`lodash-es` dependencies entirely
 
 ## @rjsf/core
 
 - Replaced all path-based `lodash` usage (`get`, `set`, `unset`, `toPath`, `pick`) with the new `@rjsf/utils` path utilities
+- Replaced the remaining non-path `lodash` usage (`isEmpty`, `isObject`, `each`, `flatten`, `includes`, `intersection`, `last`, `noop`, `omit`, `uniqueId`, and friends) with native equivalents, and dropped the `lodash`/`lodash-es` dependencies entirely
 
 ## @rjsf/validator-ajv8
 
 - Replaced all `lodash/get` usage with the new `@rjsf/utils` path utilities
+- Replaced `lodash/isObject` with `isObject` from `@rjsf/utils` and dropped the `lodash`/`lodash-es` dependencies entirely
 
 ## @rjsf/validator-ata
 
 - Replaced all `lodash/get` usage with the new `@rjsf/utils` path utilities
+- Replaced `lodash/isObject` with `isObject` from `@rjsf/utils` and dropped the `lodash`/`lodash-es` dependencies entirely
 
 ## @rjsf/validator-cfworker
 
 - Replaced all `lodash/get` usage with the new `@rjsf/utils` path utilities and dropped the `lodash`/`lodash-es` dependencies entirely
+
+## Dev / docs / playground
+
+- Removed the last `lodash` usage from the playground and the test suites, so no package declares `lodash`/`lodash-es` as a direct dependency any more (both remain in the lockfile as transitive dependencies of third-party tooling). The `lodashReplacer` `tsc-alias` machinery that rewrote `lodash` imports to `lodash-es` for the ESM builds has been deleted along with it
 
 # 6.8.1
 

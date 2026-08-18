@@ -31,9 +31,6 @@ importers:
       '@types/estree':
         specifier: ^1.0.9
         version: 1.0.9
-      '@types/lodash':
-        specifier: ^4.17.24
-        version: 4.17.24
       '@types/node':
         specifier: ^24.13.2
         version: 24.13.2
@@ -216,12 +213,6 @@ importers:
 
   packages/core:
     dependencies:
-      lodash:
-        specifier: ^4.18.1
-        version: 4.18.1
-      lodash-es:
-        specifier: ^4.18.1
-        version: 4.18.1
       markdown-to-jsx:
         specifier: ^9.8.2
         version: 9.8.2(react@18.3.1)
@@ -558,9 +549,6 @@ importers:
       jss:
         specifier: ^10.10.0
         version: 10.10.0
-      lodash:
-        specifier: ^4.18.1
-        version: 4.18.1
       lucide-react:
         specifier: ^1.16.0
         version: 1.17.0(react@18.3.1)
@@ -849,12 +837,6 @@ importers:
       jsonpointer:
         specifier: ^5.0.1
         version: 5.0.1
-      lodash:
-        specifier: ^4.18.1
-        version: 4.18.1
-      lodash-es:
-        specifier: ^4.18.1
-        version: 4.18.1
       react:
         specifier: '>=18'
         version: 18.3.1
@@ -880,12 +862,6 @@ importers:
       ajv-formats:
         specifier: ^2.1.1
         version: 2.1.1(ajv@8.20.0)
-      lodash:
-        specifier: ^4.18.1
-        version: 4.18.1
-      lodash-es:
-        specifier: ^4.18.1
-        version: 4.18.1
     devDependencies:
       '@rjsf/utils':
         specifier: workspace:^
@@ -902,12 +878,6 @@ importers:
       ata-validator:
         specifier: ^1.6.1
         version: 1.6.1(yaml@2.9.0)
-      lodash:
-        specifier: ^4.18.1
-        version: 4.18.1
-      lodash-es:
-        specifier: ^4.18.1
-        version: 4.18.1
     devDependencies:
       '@rjsf/utils':
         specifier: workspace:^
@@ -5484,9 +5454,6 @@ packages:
 
   '@types/json-schema@7.0.15':
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
-
-  '@types/lodash@4.17.24':
-    resolution: {integrity: sha512-gIW7lQLZbue7lRSWEFql49QJJWThrTFFeIMJdp3eH4tKoxm1OvEPg02rm4wCCSHS0cL3/Fizimb35b7k8atwsQ==}
 
   '@types/mdast@4.0.4':
     resolution: {integrity: sha512-kGaNbPh1k7AFzgpud/gMdvIm5xuECykRR+JnWKQno9TAXVa6WIVCGTPvYGekIDL4uwCZQSYbUxNBSb1aUo79oA==}
@@ -17422,8 +17389,6 @@ snapshots:
       '@types/istanbul-lib-report': 3.0.3
 
   '@types/json-schema@7.0.15': {}
-
-  '@types/lodash@4.17.24': {}
 
   '@types/mdast@4.0.4':
     dependencies:

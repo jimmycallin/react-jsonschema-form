@@ -1,8 +1,5 @@
-import cloneDeep from 'lodash/cloneDeep';
-import set from 'lodash/set';
-
 import type { SchemaUtilsType, RJSFSchema } from '../../src';
-import { createSchemaUtils, sanitizeDataForNewSchema } from '../../src';
+import { createSchemaUtils, sanitizeDataForNewSchema, setByPath } from '../../src';
 import { FIRST_ONE_OF, oneOfData, oneOfSchema, SECOND_ONE_OF } from '../testUtils/testData';
 import type { TestValidatorType } from './types';
 
@@ -20,8 +17,14 @@ export default function sanitizeDataForNewSchemaTest(testValidator: TestValidato
       expect(sanitizeDataForNewSchema(testValidator, oneOfSchema, newSchema, undefined, oneOfData)).toEqual(oneOfData);
     });
     it('handles boolean property schemas without crashing', () => {
-      const oldSchema: RJSFSchema = { type: 'object', properties: { foo: true } };
-      const newSchema: RJSFSchema = { type: 'object', properties: { foo: false } };
+      const oldSchema: RJSFSchema = {
+        type: 'object',
+        properties: { foo: true },
+      };
+      const newSchema: RJSFSchema = {
+        type: 'object',
+        properties: { foo: false },
+      };
       expect(sanitizeDataForNewSchema(testValidator, oneOfSchema, newSchema, oldSchema, { foo: 'x' })).toEqual({
         foo: 'x',
       });
@@ -32,9 +35,9 @@ export default function sanitizeDataForNewSchemaTest(testValidator: TestValidato
     });
     it('returns input formData when the new schema matches the data for the new schema rather than the old', () => {
       const newSchema = schemaUtils.retrieveSchema(SECOND_ONE_OF, oneOfSchema);
-      const oldSchema = cloneDeep(schemaUtils.retrieveSchema(FIRST_ONE_OF, oneOfSchema));
+      const oldSchema = structuredClone(schemaUtils.retrieveSchema(FIRST_ONE_OF, oneOfSchema));
       // Change the type of name to trigger a fall-thru
-      set(oldSchema, ['properties', 'name', 'type'], 'boolean');
+      setByPath(oldSchema, ['properties', 'name', 'type'], 'boolean');
       // By changing the type, the name will be marked as undefined
       const expected = { ...oneOfData, name: undefined };
       expect(schemaUtils.sanitizeDataForNewSchema(newSchema, oldSchema, oneOfData)).toEqual(expected);
@@ -285,7 +288,11 @@ export default function sanitizeDataForNewSchemaTest(testValidator: TestValidato
           },
         },
       };
-      expect(schemaUtils.sanitizeDataForNewSchema(newSchema, oldSchema, { enumField: 'oldData' })).toEqual({
+      expect(
+        schemaUtils.sanitizeDataForNewSchema(newSchema, oldSchema, {
+          enumField: 'oldData',
+        }),
+      ).toEqual({
         enumField: 'newData',
       });
     });
@@ -308,7 +315,11 @@ export default function sanitizeDataForNewSchemaTest(testValidator: TestValidato
           },
         },
       };
-      expect(schemaUtils.sanitizeDataForNewSchema(newSchema, oldSchema, { enumField: 'keptData' })).toEqual({
+      expect(
+        schemaUtils.sanitizeDataForNewSchema(newSchema, oldSchema, {
+          enumField: 'keptData',
+        }),
+      ).toEqual({
         enumField: 'keptData',
       });
     });
@@ -332,7 +343,11 @@ export default function sanitizeDataForNewSchemaTest(testValidator: TestValidato
           },
         },
       };
-      expect(schemaUtils.sanitizeDataForNewSchema(newSchema, oldSchema, { enumField: 'oldData' })).toEqual({
+      expect(
+        schemaUtils.sanitizeDataForNewSchema(newSchema, oldSchema, {
+          enumField: 'oldData',
+        }),
+      ).toEqual({
         enumField: 'defaultData',
       });
     });
@@ -355,7 +370,11 @@ export default function sanitizeDataForNewSchemaTest(testValidator: TestValidato
           },
         },
       };
-      expect(schemaUtils.sanitizeDataForNewSchema(newSchema, oldSchema, { enumField: 'oldData' })).toEqual({
+      expect(
+        schemaUtils.sanitizeDataForNewSchema(newSchema, oldSchema, {
+          enumField: 'oldData',
+        }),
+      ).toEqual({
         enumField: undefined,
       });
     });
@@ -379,7 +398,11 @@ export default function sanitizeDataForNewSchemaTest(testValidator: TestValidato
           },
         },
       };
-      expect(schemaUtils.sanitizeDataForNewSchema(newSchema, oldSchema, { enumField: 'oldData' })).toEqual({
+      expect(
+        schemaUtils.sanitizeDataForNewSchema(newSchema, oldSchema, {
+          enumField: 'oldData',
+        }),
+      ).toEqual({
         enumField: 'otherData',
       });
     });
@@ -402,7 +425,11 @@ export default function sanitizeDataForNewSchemaTest(testValidator: TestValidato
           },
         },
       };
-      expect(schemaUtils.sanitizeDataForNewSchema(newSchema, oldSchema, { enumField: 'oldData' })).toEqual({
+      expect(
+        schemaUtils.sanitizeDataForNewSchema(newSchema, oldSchema, {
+          enumField: 'oldData',
+        }),
+      ).toEqual({
         enumField: 'newData',
       });
     });
@@ -425,7 +452,11 @@ export default function sanitizeDataForNewSchemaTest(testValidator: TestValidato
           },
         },
       };
-      expect(schemaUtils.sanitizeDataForNewSchema(newSchema, oldSchema, { enumField: 'oldData' })).toEqual({
+      expect(
+        schemaUtils.sanitizeDataForNewSchema(newSchema, oldSchema, {
+          enumField: 'oldData',
+        }),
+      ).toEqual({
         enumField: 'oldData',
       });
     });

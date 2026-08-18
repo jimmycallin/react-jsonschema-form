@@ -20,6 +20,7 @@ import {
   getUiOptions,
   hashObject,
   ID_KEY,
+  isObject,
   lookupFromFormContext,
   ONE_OF_KEY,
   PROPERTIES_KEY,
@@ -30,14 +31,6 @@ import {
   ITEMS_KEY,
   useDeepCompareMemo,
 } from '@rjsf/utils';
-import each from 'lodash/each';
-import flatten from 'lodash/flatten';
-import includes from 'lodash/includes';
-import intersection from 'lodash/intersection';
-import isEmpty from 'lodash/isEmpty';
-import isObject from 'lodash/isObject';
-import isPlainObject from 'lodash/isPlainObject';
-import last from 'lodash/last';
 
 /** The enumeration of the three different Layout GridTemplate type values
  */
@@ -165,10 +158,10 @@ export function computeFieldUiSchema<T = any, S extends StrictRJSFSchema = RJSFS
   const localUiSchema = getByPath<UiSchema<T, S, F> | undefined>(uiSchema, toPath(field));
   const localUiOptions = { ...(localUiSchema?.[UI_OPTIONS_KEY] ?? {}), ...uiProps, ...globalUiOptions };
   const fieldUiSchema = { ...localUiSchema };
-  if (!isEmpty(localUiOptions)) {
+  if (Object.keys(localUiOptions).length > 0) {
     fieldUiSchema[UI_OPTIONS_KEY] = localUiOptions;
   }
-  if (!isEmpty(globalUiOptions)) {
+  if (Object.keys(globalUiOptions).length > 0) {
     // pass the global uiOptions down to the field uiSchema so that they can be applied to all nested fields
     fieldUiSchema[UI_GLOBAL_OPTIONS_KEY] = globalUiOptions;
   }
@@ -208,15 +201,15 @@ export function conditionMatches(
   datum?: unknown,
   value: unknown = '$0m3tH1nG Un3xP3cT3d',
 ): boolean {
-  const data = flatten([datum]).sort();
-  const values = flatten([value]).sort();
+  const data = [datum].flat().sort();
+  const values = [value].flat().sort();
   switch (operator) {
     case Operators.ALL:
       return deepEquals(data, values);
     case Operators.SOME:
-      return intersection(data, values).length > 0;
+      return data.some((entry) => values.includes(entry));
     case Operators.NONE:
-      return intersection(data, values).length === 0;
+      return !data.some((entry) => values.includes(entry));
     default:
       return false;
   }
@@ -241,7 +234,7 @@ export function findChildrenAndProps<T = any, S extends StrictRJSFSchema = RJSFS
 ) {
   let gridProps: GridProps = {};
   let children = layoutGridSchema[schemaKey];
-  if (isPlainObject(children)) {
+  if (isObject(children)) {
     const { children: elements, className: toMapClassNames, ...otherProps } = children as ConfigObject;
     children = elements;
     if (toMapClassNames) {
@@ -286,7 +279,7 @@ export function computeArraySchemasIfPresent<S extends StrictRJSFSchema = RJSFSc
     const items = schema[ITEMS_KEY];
     if (Array.isArray(items)) {
       if (index > items.length) {
-        rawSchema = last(items) as S;
+        rawSchema = items.at(-1) as S;
       } else {
         rawSchema = items[index] as S;
       }
@@ -367,7 +360,7 @@ export function getSchemaDetailsForField<
   let optionsInfo: OneOfOptionsInfoType<S> | undefined;
   let isRequired = false;
   // retrieveSchema will return an empty schema in the worst case scenario, convert it to undefined
-  if (isEmpty(schema)) {
+  if (!schema || Object.keys(schema).length === 0) {
     schema = undefined;
   }
   if (schema && leafPath) {
@@ -378,7 +371,7 @@ export function getSchemaDetailsForField<
       schema = schemaUtils.findSelectedOptionInXxxOf(schema, leafPath, xxx, innerData);
     }
     fieldPathId = toFieldPathId(leafPath, globalFormOptions, fieldPathId);
-    isRequired = schema !== undefined && Array.isArray(schema.required) && includes(schema.required, leafPath);
+    isRequired = schema !== undefined && Array.isArray(schema.required) && schema.required.includes(leafPath);
     const result = computeArraySchemasIfPresent<S>(schema, fieldPathId, leafPath);
     if (result.rawSchema) {
       schema = result.rawSchema;
@@ -447,9 +440,9 @@ export function computeUIComponentPropsFromGridSchema<
     const { name: innerName = '', render, ...innerProps } = gridSchema;
     name = innerName;
     uiProps = innerProps;
-    if (!isEmpty(uiProps)) {
+    if (Object.keys(uiProps).length > 0) {
       // Transform any `$lookup=` in the uiProps props with the appropriate value
-      each(uiProps, (prop: ConfigObject, key: string) => {
+      Object.entries(uiProps).forEach(([key, prop]) => {
         if (typeof prop === 'string') {
           const match: string[] | null = LOOKUP_REGEX.exec(prop);
           if (Array.isArray(match) && match.length > 1) {
