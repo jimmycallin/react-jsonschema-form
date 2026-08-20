@@ -16,6 +16,17 @@ should change the heading of the (upcoming) version to include a major version b
 
 -->
 
+# 6.9.0
+
+## @rjsf/core
+
+- Lazily load `markdown-to-jsx` via a new `LazyMarkdown` component so that forms which never render markdown no longer download it (~70KB minified less in the eager consumer bundle). While the renderer loads — or in environments where it cannot be loaded at all, such as script-tag UMD usage or CJS test runners without dynamic import support — content is rendered with a simple built-in fallback supporting the `**bold**`, `__bold__`, `_italics_` and `` `code` `` used by the built-in translatable strings. Awaiting the new `preloadMarkdown()` export makes all markdown render synchronously, which avoids the fallback entirely; call it up front in SSR contexts and in tests that assert on markdown output
+- `LazyMarkdown` disables raw HTML parsing in markdown by default everywhere (previously the `FileWidget` file info parsed raw HTML, including user-provided file names); pass `options={{ disableParsingRawHTML: false }}` to a custom usage to re-enable it
+
+## @rjsf/snapshot-tests
+
+- Updated the markdown-rendering form tests to wait for the lazily loaded markdown renderer so snapshots keep capturing the final rendered output
+
 # 6.8.0
 
 ## @rjsf/core

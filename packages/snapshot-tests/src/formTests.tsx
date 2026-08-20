@@ -1,5 +1,6 @@
 import type { ComponentType } from 'react';
 import type { FormProps } from '@rjsf/core';
+import { preloadMarkdown } from '@rjsf/core';
 import type { RJSFSchema, ErrorSchema, UiSchema, Experimental_DefaultFormStateBehavior } from '@rjsf/utils';
 import { bracketNameGenerator, dotNotationNameGenerator } from '@rjsf/utils';
 import validator from '@rjsf/validator-ajv8';
@@ -12,6 +13,11 @@ vi.mock('@rjsf/utils', async (importOriginal) => ({
 }));
 
 export function formTests(Form: ComponentType<FormProps>) {
+  // Preload the lazy markdown renderer so snapshots capture the final markdown output
+  beforeAll(async () => {
+    await preloadMarkdown();
+  });
+
   describe('single fields', () => {
     describe('string field', () => {
       test('regular', async () => {
@@ -45,7 +51,7 @@ export function formTests(Form: ComponentType<FormProps>) {
         const { asFragment } = render(<Form schema={schema} validator={validator} />);
         expect(asFragment()).toMatchSnapshot();
       });
-      test('field with markdown help text', () => {
+      test('field with markdown help text', async () => {
         const schema: RJSFSchema = {
           type: 'string',
           title: 'Markdown Help Test',
@@ -73,7 +79,7 @@ export function formTests(Form: ComponentType<FormProps>) {
         expect(asFragment()).toMatchSnapshot();
       });
 
-      test('field with markdown help and description', () => {
+      test('field with markdown help and description', async () => {
         const schema: RJSFSchema = {
           type: 'string',
           title: 'Markdown Help and Description',
@@ -88,7 +94,7 @@ export function formTests(Form: ComponentType<FormProps>) {
         expect(asFragment()).toMatchSnapshot();
       });
 
-      test('required field with markdown help', () => {
+      test('required field with markdown help', async () => {
         const schema: RJSFSchema = {
           type: 'string',
           title: 'Required Field with Markdown Help',

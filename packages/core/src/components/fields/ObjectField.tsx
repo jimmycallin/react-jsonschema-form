@@ -31,9 +31,9 @@ import get from 'lodash/get';
 import has from 'lodash/has';
 import isObject from 'lodash/isObject';
 import set from 'lodash/set';
-import { Markdown } from 'markdown-to-jsx/react';
 
 import { ADDITIONAL_PROPERTY_KEY_REMOVE } from '../constants';
+import Markdown from '../LazyMarkdown';
 
 /** Returns a flag indicating whether the `name` field is required in the object schema
  *
@@ -398,7 +398,7 @@ export default function ObjectField<T = any, S extends StrictRJSFSchema = RJSFSc
       return (
         <div>
           <p className='rjsf-config-error' style={{ color: 'red' }}>
-            <Markdown options={{ disableParsingRawHTML: true }}>
+            <Markdown>
               {translateString(TranslatableString.InvalidObjectField, [name || 'root', (err as Error).message])}
             </Markdown>
           </p>

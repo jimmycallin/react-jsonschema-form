@@ -1,7 +1,8 @@
 import type { ReactElement } from 'react';
 import type { FormContextType, Registry, RJSFSchema, StrictRJSFSchema, UiSchema } from '@rjsf/utils';
 import { getTestIds, getUiOptions } from '@rjsf/utils';
-import { Markdown } from 'markdown-to-jsx/react';
+
+import Markdown from './LazyMarkdown';
 
 const TEST_IDS = getTestIds();
 
@@ -27,11 +28,7 @@ export default function RichHelp<T = any, S extends StrictRJSFSchema = RJSFSchem
   const uiOptions = getUiOptions<T, S, F>(uiSchema, globalUiOptions);
 
   if (uiOptions.enableMarkdownInHelp && typeof help === 'string') {
-    return (
-      <Markdown options={{ disableParsingRawHTML: true }} data-testid={TEST_IDS.markdown}>
-        {help}
-      </Markdown>
-    );
+    return <Markdown data-testid={TEST_IDS.markdown}>{help}</Markdown>;
   }
   return help;
 }

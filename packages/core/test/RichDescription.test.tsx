@@ -47,14 +47,14 @@ describe('RichDescription', () => {
     const markdown = within(container).queryByTestId(RichDescription.TEST_IDS.markdown);
     expect(markdown).not.toBeInTheDocument();
   });
-  test('react rich text description, enabled enableMarkdownInDescription', () => {
+  test('react rich text description, enabled enableMarkdownInDescription', async () => {
     const expectedBold = 'Rich';
     const text = `**${expectedBold}** Text`;
     const expected = `${expectedBold} Text`;
     const props = getProps({ description: text, uiSchema: { 'ui:enableMarkdownInDescription': true } });
     const { container } = render(<RichDescription {...props} />);
     expect(container).toHaveTextContent(expected);
-    const markdown = within(container).getByTestId(RichDescription.TEST_IDS.markdown);
+    const markdown = await within(container).findByTestId(RichDescription.TEST_IDS.markdown);
     expect(markdown).toBeInTheDocument();
     const bold = markdown.querySelector('strong');
     expect(bold).toHaveTextContent(expectedBold);
