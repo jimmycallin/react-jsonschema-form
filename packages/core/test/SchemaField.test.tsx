@@ -19,6 +19,18 @@ import { createFormComponent, submitForm } from './testUtils';
 const user = userEvent.setup();
 
 describe('SchemaField', () => {
+  it('renders when ui:options is explicitly undefined', () => {
+    const schema: RJSFSchema = {
+      type: 'object',
+      properties: { foo: { type: 'string' } },
+    };
+    const { node } = createFormComponent({
+      schema,
+      uiSchema: { foo: { 'ui:options': undefined } },
+    });
+    expect(node.querySelector('input[id=root_foo]')).not.toBeNull();
+  });
+
   describe('registry', () => {
     it('should provide expected registry as prop', () => {
       let receivedProps: FieldProps;

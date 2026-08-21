@@ -413,12 +413,13 @@ export function resolveAllReferences<S extends StrictRJSFSchema = RJSFSchema>(
         resolveAnyOfOrOneOfRefs,
         !resolveAnyOfOrOneOfRefs,
       );
-      childrenLists.push(childList);
+      // Only the refs each child appended matter; the shared prefix is already in recurseList
+      childrenLists.push(childList.slice(recurseList.length));
     }
+    // Children never re-append refs already in recurseList (cycles are detected before pushing),
+    // so only duplicates across children need deduping
     for (const ref of new Set(childrenLists.flat())) {
-      if (!recurseList.includes(ref)) {
-        recurseList.push(ref);
-      }
+      recurseList.push(ref);
     }
     resolvedSchema = { ...resolvedSchema, [PROPERTIES_KEY]: updatedProps };
   }

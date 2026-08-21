@@ -45,10 +45,10 @@ export default function RangeWidget<T = any, S extends StrictRJSFSchema = RJSFSc
   const handleChange = (newValue: number[]) => onChange(newValue[0]);
 
   const sliderProps = { value, label, id, ...rangeSpec<S>(schema) };
-  const optionProps = new Map(Object.entries(options.props ?? {}));
+  const optionProps = (options.props ?? {}) as Record<string, unknown>;
   const uiProps = {
     id,
-    ...Object.fromEntries(allowedProps.filter((key) => optionProps.has(key)).map((key) => [key, optionProps.get(key)])),
+    ...Object.fromEntries(allowedProps.filter((key) => key in optionProps).map((key) => [key, optionProps[key]])),
   };
   return (
     <>

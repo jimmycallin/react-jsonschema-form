@@ -22,6 +22,7 @@ import {
   isCustomWidget,
   isFixedItems,
   isFormDataAvailable,
+  deepClone,
   optionsList,
   shouldRenderOptionalField,
   toFieldPathId,
@@ -951,7 +952,7 @@ export default function ArrayField<T = any, S extends StrictRJSFSchema = RJSFSch
 
       const newKeyedFormDataRow: KeyedFormDataType<T> = {
         key: generateRowId(),
-        item: structuredClone(keyedFormDataRef.current[index].item),
+        item: deepClone(keyedFormDataRef.current[index].item),
       };
       const newKeyedFormData = [...keyedFormDataRef.current];
       if (index !== undefined) {

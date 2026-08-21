@@ -8,7 +8,7 @@ import type {
   ValidationData,
   ValidatorType,
 } from '@rjsf/utils';
-import { deepEquals, hashForSchema, ID_KEY, ROOT_SCHEMA_PREFIX, withIdRefPrefix } from '@rjsf/utils';
+import { deepClone, deepEquals, hashForSchema, ID_KEY, ROOT_SCHEMA_PREFIX, withIdRefPrefix } from '@rjsf/utils';
 import type { ValidationError, Validator } from 'ata-validator';
 
 import createAtaInstance from './createAtaInstance';
@@ -96,7 +96,7 @@ export default class ATAValidator<
     if (data === null || typeof data !== 'object') {
       return data;
     }
-    return structuredClone(data);
+    return deepClone(data);
   }
 
   /** Returns the cached ata `Validator` for the given id, or builds and

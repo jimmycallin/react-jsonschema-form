@@ -207,12 +207,12 @@ function SchemaFieldRender<T = any, S extends StrictRJSFSchema = RJSFSchema, F e
     'ui:style': consumedUiStyle,
     ...fieldUiSchema
   } = uiSchema;
-  if (UI_OPTIONS_KEY in fieldUiSchema) {
+  if (isObject(fieldUiSchema[UI_OPTIONS_KEY])) {
     const {
       classNames: consumedOptionClassNames,
       style: consumedOptionStyle,
       ...fieldUiOptions
-    } = fieldUiSchema[UI_OPTIONS_KEY]!;
+    } = fieldUiSchema[UI_OPTIONS_KEY];
     fieldUiSchema[UI_OPTIONS_KEY] = fieldUiOptions;
   }
 

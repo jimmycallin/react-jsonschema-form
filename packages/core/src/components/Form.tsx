@@ -26,6 +26,7 @@ import type {
 } from '@rjsf/utils';
 import {
   createSchemaUtils,
+  deepClone,
   deepEquals,
   ErrorSchemaBuilder,
   getChangedFields,
@@ -950,7 +951,7 @@ export default class Form<
     const rootPathId = fieldPathId.path[0] || '';
 
     const isRootPath = !path || path.length === 0 || (path.length === 1 && path[0] === rootPathId);
-    let formData = isRootPath ? newValue : structuredClone(oldFormData);
+    let formData = isRootPath ? newValue : deepClone(oldFormData);
 
     // When switching from null to an object option in oneOf, MultiSchemaField sends
     // an object with property names but undefined values (e.g., {types: undefined, content: undefined}).

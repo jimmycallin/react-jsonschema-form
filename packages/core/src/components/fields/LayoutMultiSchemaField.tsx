@@ -150,9 +150,7 @@ export default function LayoutMultiSchemaField<
   // Set hideError to the value provided in the uiSchema, otherwise stick with the prop to propagate to children
   const hideFieldError = uiSchemaHideError === undefined ? hideError : Boolean(uiSchemaHideError);
 
-  const rawErrors = get(errorSchema, [ERRORS_KEY], []) as string[];
-  const fieldErrorSchema = { ...errorSchema } as ErrorSchema<T>;
-  delete fieldErrorSchema[ERRORS_KEY];
+  const { [ERRORS_KEY]: rawErrors = [], ...fieldErrorSchema } = (errorSchema ?? {}) as ErrorSchema<T>;
   const displayLabel = schemaUtils.getDisplayLabel(schema, uiSchema, globalUiOptions);
 
   /** Callback function that updates the selected option and adjusts the form data based on the structure of the new

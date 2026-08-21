@@ -16,6 +16,22 @@ should change the heading of the (upcoming) version to include a major version b
 
 -->
 
+# 6.8.1
+
+## @rjsf/utils
+
+- Added a new `deepClone()` utility that deep-clones plain objects and arrays while copying functions, class instances and other exotic values by reference, never throwing on them
+- Improved the performance of reference resolution in `retrieveSchema` for schemas with many `$ref`s by avoiding repeated re-scans of already-collected references
+
+## @rjsf/core
+
+- Fixed a regression from the `lodash/cloneDeep` removal where editing any field crashed with `DataCloneError` when the form data contained a function, class instance or React element (e.g. values stored by custom widgets); the array item copy button had the same problem. Such values are now copied by reference via the new `deepClone()`
+- Fixed a regression from the `lodash/omit` removal where a `uiSchema` containing an explicitly undefined `ui:options` (e.g. `'ui:options': cond ? {...} : undefined`) crashed with a `TypeError`
+
+## @rjsf/validator-ata
+
+- Fixed validation crashing with `DataCloneError` when validating form data containing functions or class instances, and restored support for environments without `structuredClone`, by cloning via the new `deepClone()`
+
 # 6.8.0
 
 ## @rjsf/core

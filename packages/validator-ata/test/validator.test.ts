@@ -358,32 +358,11 @@ describe('createAtaInstance defaults', () => {
 });
 
 describe('cloneForValidation', () => {
-  it('uses globalThis.structuredClone when available', () => {
-    // jsdom strips structuredClone, so we provide it for this test to cover
-    // the modern-runtime branch alongside the JSON-roundtrip fallback.
-    const original = globalThis.structuredClone;
-    const spy = vi.fn((v: unknown) => JSON.parse(JSON.stringify(v)));
-    Object.defineProperty(globalThis, 'structuredClone', {
-      value: spy,
-      configurable: true,
-      writable: true,
-    });
-    try {
-      const v = customizeValidator();
-      const schema: RJSFSchema = { type: 'object', properties: { x: { type: 'string' } } };
-      v.isValid(schema, { x: 'a' }, schema);
-      expect(spy).toHaveBeenCalled();
-    } finally {
-      if (original === undefined) {
-        delete (globalThis as { structuredClone?: unknown }).structuredClone;
-      } else {
-        Object.defineProperty(globalThis, 'structuredClone', {
-          value: original,
-          configurable: true,
-          writable: true,
-        });
-      }
-    }
+  it('does not throw when form data contains values structuredClone rejects', () => {
+    const v = customizeValidator();
+    const schema: RJSFSchema = { type: 'object', properties: { x: { type: 'string' } } };
+    const data = { x: 'a', extra: () => 'fn' };
+    expect(() => v.isValid(schema, data, schema)).not.toThrow();
   });
 
   it('returns primitives untouched', () => {
