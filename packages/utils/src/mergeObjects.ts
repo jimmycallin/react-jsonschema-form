@@ -17,8 +17,8 @@ export default function mergeObjects(
 ) {
   return Object.keys(obj2).reduce(
     (acc, key) => {
-      const left = obj1[key],
-        right = obj2[key];
+      const left: unknown = obj1[key],
+        right: unknown = obj2[key];
       if (key in obj1 && isObject(right)) {
         // Deep merging a primitive with an object is not meaningful, so the primitive side is treated as empty.
         // Recursing with a primitive here used to throw, because the `key in obj1` below is invalid on a primitive.
