@@ -28,8 +28,16 @@ export default function getDateElementProps(
   const { day, month, year, hour, minute, second } = date;
 
   const dayObj: DateElementProp = { type: 'day', range: [1, 31], value: day };
-  const monthObj: DateElementProp = { type: 'month', range: [1, 12], value: month };
-  const yearObj: DateElementProp = { type: 'year', range: yearRange, value: year };
+  const monthObj: DateElementProp = {
+    type: 'month',
+    range: [1, 12],
+    value: month,
+  };
+  const yearObj: DateElementProp = {
+    type: 'year',
+    range: yearRange,
+    value: year,
+  };
 
   const dateElementProp: DateElementProp[] = [];
   switch (format) {

@@ -24,7 +24,6 @@ import type {
   GenericObjectType,
   PathSchema,
   RJSFSchema,
-  StrictRJSFSchema,
   ValidatorType,
 } from '../types';
 import getClosestMatchingOption from './getClosestMatchingOption';
@@ -42,7 +41,11 @@ import retrieveSchema from './retrieveSchema';
  * @param [experimental_customMergeAllOf] - Optional function that allows for custom merging of `allOf` schemas
  * @returns - The `PathSchema` object for the `schema`
  */
-function toPathSchemaInternal<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
+function toPathSchemaInternal<
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>(
   validator: ValidatorType<T, S, F>,
   schema: S,
   name: string,
@@ -194,7 +197,11 @@ function toPathSchemaInternal<T = any, S extends StrictRJSFSchema = RJSFSchema, 
  * @returns - The `PathSchema` object for the `schema`
  * @deprecated - To be removed as an exported `@rjsf/utils` function in a future release
  */
-export default function toPathSchema<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
+export default function toPathSchema<
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>(
   validator: ValidatorType<T, S, F>,
   schema: S,
   name = '',

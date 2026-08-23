@@ -14,7 +14,7 @@ describe('removeOptionalEmptyObjects()', () => {
 
     it('should return non-object formData as-is', () => {
       const schema: RJSFSchema = { type: 'string' };
-      expect(removeOptionalEmptyObjects(testValidator, schema, schema, 'hello' as any)).toEqual('hello');
+      expect(removeOptionalEmptyObjects(testValidator, schema, schema, 'hello')).toEqual('hello');
     });
 
     it('should return formData as-is when schema is null or undefined (not an object)', () => {

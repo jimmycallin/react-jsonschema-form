@@ -8,7 +8,6 @@ import type {
   FormContextType,
   RJSFSchema,
   SchemaFieldPath,
-  StrictRJSFSchema,
   ValidatorType,
 } from '../types';
 import retrieveSchema from './retrieveSchema';
@@ -23,7 +22,11 @@ import retrieveSchema from './retrieveSchema';
  * @param [experimental_customMergeAllOf] - Optional function that allows for custom merging of `allOf` schemas
  * @returns - The internal schema from the `schema` for the given `path` or undefined if not found
  */
-function getFromSchemaInternal<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
+function getFromSchemaInternal<
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>(
   validator: ValidatorType<T, S, F>,
   rootSchema: S,
   schema: S,
@@ -64,9 +67,9 @@ function getFromSchemaInternal<T = any, S extends StrictRJSFSchema = RJSFSchema,
  * @returns - The inner schema from the `schema` for the given `path` or the `defaultValue` if not found
  */
 export default function getFromSchema<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(
   validator: ValidatorType<T, S, F>,
   rootSchema: S,
@@ -76,9 +79,9 @@ export default function getFromSchema<
   experimental_customMergeAllOf?: Experimental_CustomMergeAllOf<S>,
 ): T;
 export default function getFromSchema<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(
   validator: ValidatorType<T, S, F>,
   rootSchema: S,
@@ -88,9 +91,9 @@ export default function getFromSchema<
   experimental_customMergeAllOf?: Experimental_CustomMergeAllOf<S>,
 ): S;
 export default function getFromSchema<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(
   validator: ValidatorType<T, S, F>,
   rootSchema: S,

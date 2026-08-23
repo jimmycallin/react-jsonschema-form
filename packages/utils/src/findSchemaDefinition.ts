@@ -12,7 +12,7 @@ import {
   REF_KEY,
   SCHEMA_KEY,
 } from './constants';
-import type { GenericObjectType, RJSFSchema, StrictRJSFSchema } from './types';
+import type { GenericObjectType, RJSFSchema } from './types';
 
 /** Looks for the `$id` pointed by `ref` in the schema definitions embedded in
  * a JSON Schema bundle
@@ -21,7 +21,7 @@ import type { GenericObjectType, RJSFSchema, StrictRJSFSchema } from './types';
  * @param ref - The `$id` of the reference to search for
  * @returns - The schema matching the reference, or `undefined` if no match is found
  */
-function findEmbeddedSchemaRecursive<S extends StrictRJSFSchema = RJSFSchema>(schema: S, ref: string): S | undefined {
+function findEmbeddedSchemaRecursive<S extends RJSFSchema = RJSFSchema>(schema: S, ref: string): S | undefined {
   if (ID_KEY in schema && UriResolver.equal(schema[ID_KEY] as string, ref)) {
     return schema;
   }
@@ -50,12 +50,15 @@ function findEmbeddedSchemaRecursive<S extends StrictRJSFSchema = RJSFSchema>(sc
  * @param schema - The schema to be processed
  * @param baseURI - The base URI to be used for resolving relative references
  */
-export function makeAllReferencesAbsolute<S extends StrictRJSFSchema = RJSFSchema>(schema: S, baseURI: string): S {
+export function makeAllReferencesAbsolute<S extends RJSFSchema = RJSFSchema>(schema: S, baseURI: string): S {
   const currentURI = get(schema, ID_KEY, baseURI);
   let result = schema;
   // Make all other references absolute
   if (REF_KEY in result) {
-    result = { ...result, [REF_KEY]: UriResolver.resolve(currentURI, result[REF_KEY]!) };
+    result = {
+      ...result,
+      [REF_KEY]: UriResolver.resolve(currentURI, result[REF_KEY]!),
+    };
   }
   // Look for references in nested subschemas
   for (const [key, subSchema] of Object.entries(result)) {
@@ -65,7 +68,10 @@ export function makeAllReferencesAbsolute<S extends StrictRJSFSchema = RJSFSchem
         [key]: subSchema.map((item) => (isObject(item) ? makeAllReferencesAbsolute(item as S, currentURI) : item)),
       };
     } else if (isObject(subSchema)) {
-      result = { ...result, [key]: makeAllReferencesAbsolute(subSchema as S, currentURI) };
+      result = {
+        ...result,
+        [key]: makeAllReferencesAbsolute(subSchema as S, currentURI),
+      };
     }
   }
   return result;
@@ -79,10 +85,11 @@ export function makeAllReferencesAbsolute<S extends StrictRJSFSchema = RJSFSchem
  * @returns - An array with the first value being the object minus the `key` element and the second element being the
  *      value from `object[key]`
  */
-export function splitKeyElementFromObject(key: string, object: GenericObjectType) {
+export function splitKeyElementFromObject<TObj extends GenericObjectType>(key: string, object: TObj): [TObj, unknown] {
   const value = object[key];
   const { [key]: removed, ...remaining } = object;
-  return [remaining, value];
+  // The rest element of a computed-key destructure widens to Omit<TObj, string>; it is still the same object shape.
+  return [remaining as TObj, value];
 }
 
 /** Given the name of a `$ref` from within a schema, using the `rootSchema`, recursively look up and return the
@@ -97,7 +104,7 @@ export function splitKeyElementFromObject(key: string, object: GenericObjectType
  * @returns - The sub-schema within the `rootSchema` which matches the `$ref` if it exists
  * @throws - Error indicating that no schema for that reference could be resolved
  */
-export function findSchemaDefinitionRecursive<S extends StrictRJSFSchema = RJSFSchema>(
+export function findSchemaDefinitionRecursive<S extends RJSFSchema = RJSFSchema>(
   $ref?: string,
   rootSchema: S = {} as S,
   recurseList: string[] = [],
@@ -132,7 +139,7 @@ export function findSchemaDefinitionRecursive<S extends StrictRJSFSchema = RJSFS
     throw new Error(`Could not find a definition for ${$ref}.`);
   }
   const nextRef = current[REF_KEY];
-  if (nextRef) {
+  if (typeof nextRef === 'string' && nextRef) {
     // Check for circular references.
     if (recurseList.includes(nextRef)) {
       if (recurseList.length === 1) {
@@ -142,14 +149,15 @@ export function findSchemaDefinitionRecursive<S extends StrictRJSFSchema = RJSFS
       const circularPath = [...restRefs, ref, firstRef].join(' -> ');
       throw new Error(`Definition for ${firstRef} contains a circular reference through ${circularPath}`);
     }
-    const [remaining, theRef] = splitKeyElementFromObject(REF_KEY, current);
-    const subSchema = findSchemaDefinitionRecursive<S>(theRef, rootSchema, [...recurseList, ref], currentBaseURI);
+    const [remaining] = splitKeyElementFromObject(REF_KEY, current);
+    const subSchema = findSchemaDefinitionRecursive<S>(nextRef, rootSchema, [...recurseList, ref], currentBaseURI);
     if (Object.keys(remaining).length > 0) {
       if (
         rootSchema[SCHEMA_KEY] === JSON_SCHEMA_DRAFT_2019_09 ||
         rootSchema[SCHEMA_KEY] === JSON_SCHEMA_DRAFT_2020_12
       ) {
-        return { [ALL_OF_KEY]: [remaining, subSchema] } as S;
+        const combined: RJSFSchema = { [ALL_OF_KEY]: [remaining, subSchema] };
+        return combined as S;
       }
       return { ...remaining, ...subSchema };
     }
@@ -169,7 +177,7 @@ export function findSchemaDefinitionRecursive<S extends StrictRJSFSchema = RJSFS
  * @returns - The sub-schema within the `rootSchema` which matches the `$ref` if it exists
  * @throws - Error indicating that no schema for that reference could be resolved
  */
-export default function findSchemaDefinition<S extends StrictRJSFSchema = RJSFSchema>(
+export default function findSchemaDefinition<S extends RJSFSchema = RJSFSchema>(
   $ref?: string,
   rootSchema: S = {} as S,
   baseURI: string | undefined = get(rootSchema, [ID_KEY]),

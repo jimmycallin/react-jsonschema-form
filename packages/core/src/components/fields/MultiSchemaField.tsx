@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { ErrorSchema, FieldProps, FormContextType, RJSFSchema, StrictRJSFSchema, UiSchema } from '@rjsf/utils';
+import type { ErrorSchema, FieldProps, FormContextType, RJSFSchema, UiSchema } from '@rjsf/utils';
 import {
   ANY_OF_KEY,
   deepEquals,
@@ -23,7 +23,7 @@ import isEmpty from 'lodash/isEmpty';
  *
  * @param props - The `FieldProps` for this template
  */
-function AnyOfField<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
+function AnyOfField<T = unknown, S extends RJSFSchema = RJSFSchema, F extends FormContextType = FormContextType>(
   props: FieldProps<T, S, F>,
 ) {
   const {
@@ -35,7 +35,7 @@ function AnyOfField<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends 
     onBlur,
     onChange,
     onFocus,
-    options,
+    options = [],
     readonly,
     registry,
     required = false,

@@ -3,13 +3,7 @@ import get from 'lodash/get';
 import { CONST_KEY, DEFAULT_KEY, PROPERTIES_KEY } from '../constants';
 import deepEquals from '../deepEquals';
 import getDiscriminatorFieldFromSchema from '../getDiscriminatorFieldFromSchema';
-import type {
-  Experimental_CustomMergeAllOf,
-  FormContextType,
-  RJSFSchema,
-  StrictRJSFSchema,
-  ValidatorType,
-} from '../types';
+import type { Experimental_CustomMergeAllOf, FormContextType, RJSFSchema, ValidatorType } from '../types';
 import retrieveSchema from './retrieveSchema';
 
 /** Finds the option inside the `schema['any/oneOf']` list which has the `properties[selectorField].default` or
@@ -27,9 +21,9 @@ import retrieveSchema from './retrieveSchema';
  * @returns - The anyOf/oneOf option that matches the selector field in the schema or undefined if nothing is selected
  */
 export default function findSelectedOptionInXxxOf<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(
   validator: ValidatorType<T, S, F>,
   rootSchema: S,

@@ -1,15 +1,15 @@
 import type { ChangeEvent, FocusEvent } from 'react';
 import { Textarea } from '@chakra-ui/react';
-import type { FormContextType, RJSFSchema, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
+import type { FormContextType, RJSFSchema, WidgetProps } from '@rjsf/utils';
 import { ariaDescribedByIds, labelValue } from '@rjsf/utils';
 
 import { Field } from '../components/ui/field';
 import { getChakra } from '../utils';
 
 export default function TextareaWidget<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >({
   id,
   htmlName,

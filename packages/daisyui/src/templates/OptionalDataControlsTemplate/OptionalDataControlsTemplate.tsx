@@ -1,5 +1,5 @@
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
-import type { FormContextType, OptionalDataControlsTemplateProps, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
+import type { FormContextType, OptionalDataControlsTemplateProps, RJSFSchema } from '@rjsf/utils';
 
 import { RemoveButton } from '../ButtonTemplates';
 import DaisyUIButton from '../ButtonTemplates/DaisyUIButton';
@@ -13,9 +13,9 @@ import DaisyUIButton from '../ButtonTemplates/DaisyUIButton';
  * @param props - The `OptionalDataControlsTemplateProps` for the template
  */
 export default function OptionalDataControlsTemplate<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(props: OptionalDataControlsTemplateProps<T, S, F>) {
   const { id, registry, label, onAddClick, onRemoveClick } = props;
   if (onAddClick) {

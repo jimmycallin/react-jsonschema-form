@@ -4,7 +4,7 @@ import type { TestValidatorType } from '../../../utils/test/schema';
 import type { CustomValidatorOptionsType } from '../../src';
 import { customizeValidator } from '../../src';
 
-export default function getTestValidator<T = any>(options: CustomValidatorOptionsType): TestValidatorType<T> {
+export default function getTestValidator<T = unknown>(options: CustomValidatorOptionsType): TestValidatorType<T> {
   const validator = customizeValidator<T>(options);
   return {
     validateFormData(
@@ -18,7 +18,7 @@ export default function getTestValidator<T = any>(options: CustomValidatorOption
     isValid(schema: RJSFSchema, formData: T | undefined, rootSchema: RJSFSchema): boolean {
       return validator.isValid(schema, formData, rootSchema);
     },
-    rawValidation<Result = any>(schema: RJSFSchema, formData?: T): { errors?: Result[]; validationError?: Error } {
+    rawValidation<Result = unknown>(schema: RJSFSchema, formData?: T): { errors?: Result[]; validationError?: Error } {
       return validator.rawValidation(schema, formData);
     },
     setReturnValues() {

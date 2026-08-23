@@ -13,7 +13,6 @@ import type {
   GenericObjectType,
   PathSchema,
   RJSFSchema,
-  StrictRJSFSchema,
   ValidatorType,
 } from '../types';
 import getClosestMatchingOption from './getClosestMatchingOption';
@@ -27,7 +26,7 @@ import shallowAllOfMerge from './shallowAllOfMerge';
  * @param fields - The fields to keep while filtering
  * @deprecated - To be removed as an exported `@rjsf/utils` function in a future release
  */
-export function getUsedFormData<T = any>(formData: T | undefined, fields: string[]): T | undefined {
+export function getUsedFormData<T = unknown>(formData: T | undefined, fields: string[]): T | undefined {
   // For the case of a single input form
   if (fields.length === 0 && typeof formData !== 'object') {
     return formData;
@@ -48,18 +47,19 @@ export function getUsedFormData<T = any>(formData: T | undefined, fields: string
  * @deprecated - To be removed as an exported `@rjsf/utils` function in a future release
  */
 // oxlint-disable-next-line typescript/no-deprecated
-export function getFieldNames<T = any>(pathSchema: PathSchema<T>, formData?: T): string[][] {
-  const formValueHasData = (value: T, isLeaf: boolean) =>
+export function getFieldNames<T = unknown>(pathSchema: PathSchema<T>, formData?: T): (string | string[])[] {
+  const formValueHasData = (value: unknown, isLeaf: boolean) =>
     typeof value !== 'object' || isEmpty(value) || (isLeaf && !isEmpty(value));
-  const getAllPaths = (_obj: GenericObjectType, acc: string[][] = [], paths: string[][] = [[]]) => {
+  const getAllPaths = (_obj: GenericObjectType, acc: (string | string[])[] = [], paths: string[][] = [[]]) => {
     const objKeys = Object.keys(_obj);
     objKeys.forEach((key: string) => {
       const data = _obj[key];
-      if (typeof data === 'object') {
+      if (isObject(data)) {
         const newPaths = paths.map((path) => [...path, key]);
         // If an object is marked with additionalProperties, all its keys are valid
-        if (data[RJSF_ADDITIONAL_PROPERTIES_FLAG] && data[NAME_KEY] !== '') {
-          acc.push(data[NAME_KEY]);
+        const dataName = data[RJSF_ADDITIONAL_PROPERTIES_FLAG] ? data[NAME_KEY] : undefined;
+        if (typeof dataName === 'string' && dataName !== '') {
+          acc.push(dataName);
         } else {
           getAllPaths(data, acc, newPaths);
         }
@@ -80,7 +80,9 @@ export function getFieldNames<T = any>(pathSchema: PathSchema<T>, formData?: T):
     return acc;
   };
 
-  return getAllPaths(pathSchema);
+  // A `PathSchema` is always an object (it is `FieldPath` plus its recursive children), it just lacks the string index
+  // signature that `getAllPaths()` needs to walk it
+  return getAllPaths(pathSchema as GenericObjectType);
 }
 
 /** Returns true when a form value is considered empty: null/undefined/'', an empty array, or a plain
@@ -97,7 +99,7 @@ export function isValueEmpty(value: unknown): boolean {
     return value.length === 0;
   }
   if (isObject(value)) {
-    return Object.values(value as GenericObjectType).every(isValueEmpty);
+    return Object.values(value).every(isValueEmpty);
   }
   return false;
 }
@@ -109,7 +111,7 @@ export function isValueEmpty(value: unknown): boolean {
  * @param [experimental_customMergeAllOf] - Optional custom merge function; see `Form` documentation
  * @returns - The merged schema with `allOf` resolved into a single schema object
  */
-function doMergeAllOf<S extends StrictRJSFSchema = RJSFSchema>(
+function doMergeAllOf<S extends RJSFSchema = RJSFSchema>(
   schema: S,
   experimental_customMergeAllOf?: Experimental_CustomMergeAllOf<S>,
 ): S {
@@ -130,9 +132,9 @@ function doMergeAllOf<S extends StrictRJSFSchema = RJSFSchema>(
  * @returns - The `formData` after omitting extra data, or `undefined` when `formData` is undefined
  */
 export default function omitExtraData<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(
   validator: ValidatorType<T, S, F>,
   schema: S,
@@ -140,16 +142,6 @@ export default function omitExtraData<
   formData?: T,
   experimental_customMergeAllOf?: Experimental_CustomMergeAllOf<S>,
 ): T | undefined {
-  /** Type predicate that narrows `value` to `GenericObjectType` — true when `value` is a plain,
-   * non-array object (i.e. a JSON object). Used to distinguish JSON objects from arrays and primitives.
-   *
-   * @param value - The value to check
-   * @returns - True if `value` is a plain non-array object
-   */
-  function isObjectValue(value: unknown): value is GenericObjectType {
-    return isObject(value);
-  }
-
   /** Type predicate that narrows a `S | boolean` schema definition to `S` — true when `schemaDef` is
    * a schema object rather than a JSON Schema boolean shorthand (`true` meaning allow-all, `false`
    * meaning deny-all).
@@ -203,9 +195,7 @@ export default function omitExtraData<
         const innerRequired = new Set(sd.required ?? []);
         // Drop this optional object when every key in v is both optional in the inner schema
         // and has an empty value. Vacuously true for {} so empty objects are always dropped.
-        const shouldDrop = Object.entries(v as GenericObjectType).every(
-          ([k, val]) => !innerRequired.has(k) && isValueEmpty(val),
-        );
+        const shouldDrop = Object.entries(v).every(([k, val]) => !innerRequired.has(k) && isValueEmpty(val));
         if (shouldDrop) {
           return;
         }
@@ -408,7 +398,7 @@ export default function omitExtraData<
    */
   function handleDependencies(childSchema: S, source: unknown, target: unknown): unknown {
     const { dependencies } = childSchema;
-    if (dependencies === undefined || !isObjectValue(source)) {
+    if (dependencies === undefined || !isObject(source)) {
       return target;
     }
     let result = target;
@@ -464,10 +454,10 @@ export default function omitExtraData<
 
     const type = getSchemaType<S>(localSchema);
     if (type === 'object') {
-      if (!isObjectValue(source)) {
+      if (!isObject(source)) {
         return undefined;
       }
-      filtered = handleObject(localSchema, source, isObjectValue(filtered) ? filtered : {});
+      filtered = handleObject(localSchema, source, isObject(filtered) ? filtered : {});
     } else if (type === 'array') {
       if (!Array.isArray(source)) {
         return undefined;

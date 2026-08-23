@@ -1,7 +1,14 @@
 import noop from 'lodash/noop';
 
 import type { Registry, RJSFSchema, TemplatesType, UiSchema, UiSchemaDefinitions } from '../src';
-import { resolveUiSchema, RJSF_REF_KEY } from '../src';
+import { isUiSchema, resolveUiSchema, RJSF_REF_KEY } from '../src';
+
+/** Reads the `oneOf` branch uiSchemas that `resolveUiSchema` populates; `oneOf` is not a well-known `UiSchema` key, so
+ * it reads back as `unknown` and has to be narrowed
+ */
+function oneOfBranches({ oneOf }: UiSchema): (UiSchema | undefined)[] {
+  return Array.isArray(oneOf) ? oneOf.map((entry: unknown) => (isUiSchema(entry) ? entry : undefined)) : [];
+}
 
 beforeEach(() => {
   vi.spyOn(console, 'warn').mockImplementation(noop);
@@ -79,8 +86,8 @@ describe('resolveUiSchema() - oneOf/anyOf branch walking', () => {
 
     const result = resolveUiSchema(schema, undefined, reg);
     expect(result.oneOf).toHaveLength(2);
-    expect(result.oneOf[0]).toEqual({ 'ui:title': 'Option A' });
-    expect(result.oneOf[1]).toEqual({ 'ui:title': 'Option B' });
+    expect(oneOfBranches(result)[0]).toEqual({ 'ui:title': 'Option A' });
+    expect(oneOfBranches(result)[1]).toEqual({ 'ui:title': 'Option B' });
   });
 
   it('merges local uiSchema.oneOf overrides on top of definitions', () => {
@@ -90,7 +97,7 @@ describe('resolveUiSchema() - oneOf/anyOf branch walking', () => {
     const reg = { ...baseRegistry, uiSchemaDefinitions: definitions };
 
     const result = resolveUiSchema(schema, local, reg);
-    expect(result.oneOf[0]).toEqual({ 'ui:title': 'Custom', name: { 'ui:placeholder': 'Name' } });
+    expect(oneOfBranches(result)[0]).toEqual({ 'ui:title': 'Custom', name: { 'ui:placeholder': 'Name' } });
   });
 
   it('walks oneOf on a resolved schema (via RJSF_REF_KEY from #4967)', () => {
@@ -109,8 +116,8 @@ describe('resolveUiSchema() - oneOf/anyOf branch walking', () => {
     const result = resolveUiSchema(resolvedSchema, undefined, reg);
     expect(result['ui:title']).toBe('Parent');
     expect(result.oneOf).toHaveLength(2);
-    expect(result.oneOf[0]).toEqual({ 'ui:title': 'A' });
-    expect(result.oneOf[1]).toEqual({ 'ui:title': 'B' });
+    expect(oneOfBranches(result)[0]).toEqual({ 'ui:title': 'A' });
+    expect(oneOfBranches(result)[1]).toEqual({ 'ui:title': 'B' });
   });
 
   it('does not populate uiSchema.oneOf when no options have matching definitions', () => {
@@ -132,8 +139,8 @@ describe('resolveUiSchema() - oneOf/anyOf branch walking', () => {
     const reg = { ...baseRegistry, uiSchemaDefinitions: definitions };
 
     const result = resolveUiSchema(schema, undefined, reg);
-    expect(result.oneOf[0]).toEqual({ 'ui:title': 'Known' });
-    expect(result.oneOf[1]).toBeUndefined();
+    expect(oneOfBranches(result)[0]).toEqual({ 'ui:title': 'Known' });
+    expect(oneOfBranches(result)[1]).toBeUndefined();
   });
 
   it('resolves an unresolved $ref to walk its oneOf branches', () => {
@@ -149,7 +156,7 @@ describe('resolveUiSchema() - oneOf/anyOf branch walking', () => {
 
     const result = resolveUiSchema(schema, undefined, reg);
     expect(result['ui:title']).toBe('W');
-    expect(result.oneOf?.[0]).toEqual({ 'ui:title': 'A' });
+    expect(oneOfBranches(result)[0]).toEqual({ 'ui:title': 'A' });
   });
 });
 

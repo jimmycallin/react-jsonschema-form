@@ -1,5 +1,5 @@
 import type { FocusEvent } from 'react';
-import type { FormContextType, RJSFSchema, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
+import type { FormContextType, RJSFSchema, WidgetProps } from '@rjsf/utils';
 import {
   ariaDescribedByIds,
   enumOptionValueDecoder,
@@ -20,9 +20,9 @@ import { cn } from '../lib/utils';
  * @param props - The `WidgetProps` for this component
  */
 export default function CheckboxesWidget<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >({
   id,
   htmlName,
@@ -42,9 +42,9 @@ export default function CheckboxesWidget<
   const checkboxesValues = Array.isArray(value) ? value : [value];
 
   const handleBlur = ({ target }: FocusEvent<HTMLButtonElement>) =>
-    onBlur(id, enumOptionValueDecoder<S>((target as any)?.value, enumOptions, optionValueFormat, emptyValue));
+    onBlur(id, enumOptionValueDecoder<S>(target?.value, enumOptions, optionValueFormat, emptyValue));
   const handleFocus = ({ target }: FocusEvent<HTMLButtonElement>) =>
-    onFocus(id, enumOptionValueDecoder<S>((target as any)?.value, enumOptions, optionValueFormat, emptyValue));
+    onFocus(id, enumOptionValueDecoder<S>(target?.value, enumOptions, optionValueFormat, emptyValue));
 
   return (
     <div className={cn({ 'flex flex-col gap-2': !inline, 'flex flex-row gap-4 flex-wrap': inline })}>

@@ -1,4 +1,4 @@
-import type { RJSFSchema, StrictRJSFSchema } from './types';
+import type { RJSFSchema } from './types';
 
 /** Check to see if a `schema` specifies that a value must be true. This happens when:
  * - `schema.const` is truthy
@@ -9,7 +9,7 @@ import type { RJSFSchema, StrictRJSFSchema } from './types';
  * @param schema - The schema to check
  * @returns - True if the schema specifies a value that must be true, false otherwise
  */
-export default function schemaRequiresTrueValue<S extends StrictRJSFSchema = RJSFSchema>(schema: S): boolean {
+export default function schemaRequiresTrueValue<S extends RJSFSchema = RJSFSchema>(schema: S): boolean {
   // Check if const is a truthy value
   if (schema.const) {
     return true;

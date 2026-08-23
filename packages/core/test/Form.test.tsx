@@ -5,6 +5,7 @@ import type {
   FieldProps,
   FieldTemplateProps,
   FormValidation,
+  GenericObjectType,
   RJSFSchema,
   UiSchema,
   ValidatorType,
@@ -16,6 +17,7 @@ import {
   dotNotationNameGenerator,
   getTemplate,
   getUiOptions,
+  isObject,
   optionalControlsId,
 } from '@rjsf/utils';
 import validator, { customizeValidator } from '@rjsf/validator-ajv8';
@@ -1255,7 +1257,7 @@ describeRepeated('Form common', (createFormComponent) => {
       const ids: (string | undefined)[] = [];
       const onChange: FormProps['onChange'] = (data, id) => {
         const { formData: fd } = data;
-        formData = { ...formData, ...fd };
+        formData = { ...formData, ...(isObject(fd) ? fd : {}) };
         ids.push(id);
       };
       createFormComponent({
@@ -1489,7 +1491,8 @@ describeRepeated('Form common', (createFormComponent) => {
       expect(contentInput!.value).toEqual('placeholder');
 
       // Also verify the final formData has correct values
-      const lastFormData = onChangeCalls[onChangeCalls.length - 1].event.formData;
+      const lastEventFormData = onChangeCalls[onChangeCalls.length - 1].event.formData;
+      const lastFormData: GenericObjectType = isObject(lastEventFormData) ? lastEventFormData : {};
       expect(lastFormData.types).toEqual('advanced');
       expect(lastFormData.content).toEqual('placeholder');
     });
@@ -2073,8 +2076,8 @@ describeRepeated('Form common', (createFormComponent) => {
     });
 
     describe('when the onChange prop sets formData to a falsey value', () => {
-      function TestForm(props: { falseyValue: any }) {
-        const [formData, setFormData] = useState<any>({});
+      function TestForm(props: { falseyValue: unknown }) {
+        const [formData, setFormData] = useState<unknown>({});
 
         const onChange = useCallback(() => {
           setFormData(props.falseyValue);
@@ -4732,7 +4735,8 @@ describe('Calling onChange right after updating a Form with props formData', () 
         return;
       }
       changed = true;
-      latestProps.current.onChange('test', [latestProps.current.formData.length]);
+      const currentFormData = latestProps.current.formData;
+      latestProps.current.onChange('test', [Array.isArray(currentFormData) ? currentFormData.length : 0]);
     });
     return <ArrayField {...fieldProps} />;
   };

@@ -1,11 +1,15 @@
 import type { ReactElement } from 'react';
-import type { FormContextType, Registry, RJSFSchema, StrictRJSFSchema, UiSchema } from '@rjsf/utils';
+import type { FormContextType, Registry, RJSFSchema, UiSchema } from '@rjsf/utils';
 import { getTestIds, getUiOptions } from '@rjsf/utils';
 import { Markdown } from 'markdown-to-jsx/react';
 
 const TEST_IDS = getTestIds();
 
-export interface RichHelpProps<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any> {
+export interface RichHelpProps<
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+> {
   /** The description text for a field, potentially containing markdown */
   help: string | ReactElement;
   /** The uiSchema object for this base component */
@@ -18,11 +22,11 @@ export interface RichHelpProps<T = any, S extends StrictRJSFSchema = RJSFSchema,
  *
  * @param props - The `RichHelpProps` for this component
  */
-export default function RichHelp<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>({
-  help,
-  registry,
-  uiSchema = {},
-}: RichHelpProps<T, S, F>) {
+export default function RichHelp<
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>({ help, registry, uiSchema = {} }: RichHelpProps<T, S, F>) {
   const { globalUiOptions } = registry;
   const uiOptions = getUiOptions<T, S, F>(uiSchema, globalUiOptions);
 

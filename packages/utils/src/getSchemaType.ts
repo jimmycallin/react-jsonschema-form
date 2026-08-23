@@ -1,5 +1,5 @@
 import guessType from './guessType';
-import type { RJSFSchema, StrictRJSFSchema } from './types';
+import type { RJSFSchema } from './types';
 
 /** Gets the type of a given `schema`. If the type is not explicitly defined, then an attempt is made to infer it from
  * other elements of the schema as follows:
@@ -13,9 +13,7 @@ import type { RJSFSchema, StrictRJSFSchema } from './types';
  * @param schema - The schema for which to get the type
  * @returns - The type of the schema
  */
-export default function getSchemaType<S extends StrictRJSFSchema = RJSFSchema>(
-  schema: S,
-): string | string[] | undefined {
+export default function getSchemaType<S extends RJSFSchema = RJSFSchema>(schema: S): string | string[] | undefined {
   let { type } = schema;
 
   if (!type && schema.const) {

@@ -1,12 +1,5 @@
 import { UI_WIDGET_KEY } from '../constants';
-import type {
-  Experimental_CustomMergeAllOf,
-  FormContextType,
-  RJSFSchema,
-  StrictRJSFSchema,
-  UiSchema,
-  ValidatorType,
-} from '../types';
+import type { Experimental_CustomMergeAllOf, FormContextType, RJSFSchema, UiSchema, ValidatorType } from '../types';
 import retrieveSchema from './retrieveSchema';
 
 /** Checks to see if the `schema` and `uiSchema` combination represents an array of files
@@ -18,7 +11,11 @@ import retrieveSchema from './retrieveSchema';
  * @param [experimental_customMergeAllOf] - Optional function that allows for custom merging of `allOf` schemas
  * @returns - True if schema/uiSchema contains an array of files, otherwise false
  */
-export default function isFilesArray<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
+export default function isFilesArray<
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>(
   validator: ValidatorType<T, S, F>,
   schema: S,
   uiSchema: UiSchema<T, S, F> = {},

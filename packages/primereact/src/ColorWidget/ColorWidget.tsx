@@ -1,15 +1,20 @@
-import type { ChangeEvent } from 'react';
-import type { FormContextType, RJSFSchema, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
+import type { FormContextType, RJSFSchema } from '@rjsf/utils';
 import { ariaDescribedByIds, getInputProps } from '@rjsf/utils';
+import type { ColorPickerChangeEvent } from 'primereact/colorpicker';
 import { ColorPicker } from 'primereact/colorpicker';
+
+import type { PrimeWidgetProps } from '../util';
+import { getPrimeOptions } from '../util';
 
 /** The `ColorWidget` component renders a color picker.
  *
  * @param props - The `WidgetProps` for this component
  */
-export default function ColorWidget<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
-  props: WidgetProps<T, S, F>,
-) {
+export default function ColorWidget<
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>(props: PrimeWidgetProps<ColorPickerChangeEvent, T, S, F>) {
   const {
     id,
     placeholder,
@@ -27,10 +32,11 @@ export default function ColorWidget<T = any, S extends StrictRJSFSchema = RJSFSc
     type,
   } = props;
   const inputProps = getInputProps<T, S, F>(schema, type, options);
-  const { inline } = options;
-  const primeProps = (options.prime || {}) as object;
+  const primeOptions = getPrimeOptions<T, S, F>(options);
+  const { inline } = primeOptions;
+  const primeProps = primeOptions.prime || {};
 
-  const handleChange = ({ target: { value: newValue } }: ChangeEvent<HTMLInputElement>) =>
+  const handleChange = ({ target: { value: newValue } }: ColorPickerChangeEvent) =>
     onChange(newValue === '' ? options.emptyValue : newValue);
   const handleBlur = () => onBlur?.(id, value);
   const handleFocus = () => onFocus?.(id, value);

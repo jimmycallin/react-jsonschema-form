@@ -1,6 +1,7 @@
+import type { RJSFSchema } from '../src';
 import { getSchemaType } from '../src';
 
-const cases: { schema: object; expected: string | undefined }[] = [
+const cases: { schema: RJSFSchema; expected: string | undefined }[] = [
   {
     schema: { type: 'string' },
     expected: 'string',

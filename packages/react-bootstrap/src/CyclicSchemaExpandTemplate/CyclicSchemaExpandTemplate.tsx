@@ -1,4 +1,4 @@
-import type { CyclicSchemaExpandProps, FormContextType, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
+import type { CyclicSchemaExpandProps, FormContextType, RJSFSchema } from '@rjsf/utils';
 import { ID_KEY, TranslatableString } from '@rjsf/utils';
 import Alert from 'react-bootstrap/Alert';
 import Button from 'react-bootstrap/Button';
@@ -8,9 +8,9 @@ import Button from 'react-bootstrap/Button';
  * @param props - The `CyclicSchemaExpandProps` for this component
  */
 export default function CyclicSchemaExpandTemplate<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(props: CyclicSchemaExpandProps<T, S, F>) {
   const { name, fieldPathId, registry, onExpand } = props;
   const { translateString } = registry;

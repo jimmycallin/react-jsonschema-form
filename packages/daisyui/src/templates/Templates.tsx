@@ -1,4 +1,4 @@
-import type { FormContextType, RJSFSchema, StrictRJSFSchema, TemplatesType } from '@rjsf/utils';
+import type { FormContextType, RJSFSchema, TemplatesType } from '@rjsf/utils';
 
 import ArrayFieldItemButtonsTemplate from './ArrayFieldItemButtonsTemplate';
 import ArrayFieldItemTemplate from './ArrayFieldItemTemplate';
@@ -41,9 +41,9 @@ import WrapIfAdditionalTemplate from './WrapIfAdditionalTemplate';
  * @returns A partial `TemplatesType` object with all required template components
  */
 export function generateTemplates<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(): Partial<TemplatesType<T, S, F>> {
   return {
     ArrayFieldItemTemplate,

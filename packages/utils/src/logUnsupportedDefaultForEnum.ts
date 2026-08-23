@@ -1,5 +1,5 @@
 import enumOptionsIndexForValue from './enumOptionsIndexForValue';
-import type { EnumOptionsType, RJSFSchema, StrictRJSFSchema } from './types';
+import type { EnumOptionsType, RJSFSchema } from './types';
 
 /** Logs a warning when a single-select enum widget has a schema default that is not one of its enum options.
  *
@@ -8,7 +8,7 @@ import type { EnumOptionsType, RJSFSchema, StrictRJSFSchema } from './types';
  * @param enumOptions - The enum options available to the widget
  * @param multiple - Whether the widget allows multiple selections
  */
-export default function logUnsupportedDefaultForEnum<S extends StrictRJSFSchema = RJSFSchema>(
+export default function logUnsupportedDefaultForEnum<S extends RJSFSchema = RJSFSchema>(
   id: string,
   schema: S,
   enumOptions?: EnumOptionsType<S>[],

@@ -1,7 +1,7 @@
-import type { FocusEvent } from 'react';
+import type { FocusEvent, FormEvent } from 'react';
 import type { RadioGroupOnChangeData } from '@fluentui/react-components';
 import { Label, Radio, RadioGroup } from '@fluentui/react-components';
-import type { FormContextType, RJSFSchema, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
+import type { FormContextType, RJSFSchema, WidgetProps } from '@rjsf/utils';
 import {
   ariaDescribedByIds,
   enumOptionValueDecoder,
@@ -17,7 +17,11 @@ import {
  *
  * @param props - The `WidgetProps` for this component
  */
-export default function RadioWidget<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>({
+export default function RadioWidget<
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>({
   id,
   htmlName,
   options,
@@ -34,7 +38,7 @@ export default function RadioWidget<T = any, S extends StrictRJSFSchema = RJSFSc
   const { enumOptions, enumDisabled, emptyValue, inline } = options;
   const optionValueFormat = getOptionValueFormat(options);
 
-  const handleChange = (_: any, data: RadioGroupOnChangeData) =>
+  const handleChange = (_: FormEvent<HTMLDivElement>, data: RadioGroupOnChangeData) =>
     onChange(enumOptionValueDecoder<S>(data.value, enumOptions, optionValueFormat, emptyValue));
   const handleBlur = ({ target }: FocusEvent<HTMLInputElement>) =>
     onBlur(id, enumOptionValueDecoder<S>(target?.value, enumOptions, optionValueFormat, emptyValue));

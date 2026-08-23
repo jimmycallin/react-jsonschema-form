@@ -1,5 +1,5 @@
 import getUiOptions from './getUiOptions';
-import type { FormContextType, RJSFSchema, StrictRJSFSchema, UiSchema } from './types';
+import type { FormContextType, RJSFSchema, UiSchema } from './types';
 
 /** Checks whether the field described by `schema`, having the `uiSchema` and `formData` supports expanding. The UI for
  * the field can expand if it has additional properties, is not forced as non-expandable by the `uiSchema` and the
@@ -10,11 +10,11 @@ import type { FormContextType, RJSFSchema, StrictRJSFSchema, UiSchema } from './
  * @param [formData] - The formData for the field
  * @returns - True if the schema element has additionalProperties, is expandable, and not at the maxProperties limit
  */
-export default function canExpand<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
-  schema: RJSFSchema,
-  uiSchema: UiSchema<T, S, F> = {},
-  formData?: T,
-) {
+export default function canExpand<
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>(schema: RJSFSchema, uiSchema: UiSchema<T, S, F> = {}, formData?: T) {
   if (!(schema.additionalProperties || schema.patternProperties)) {
     return false;
   }

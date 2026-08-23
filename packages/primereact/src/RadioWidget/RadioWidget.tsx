@@ -1,4 +1,4 @@
-import type { FormContextType, RJSFSchema, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
+import type { FormContextType, RJSFSchema, WidgetProps } from '@rjsf/utils';
 import {
   ariaDescribedByIds,
   enumOptionValueDecoder,
@@ -10,16 +10,20 @@ import {
 import type { RadioButtonChangeEvent } from 'primereact/radiobutton';
 import { RadioButton } from 'primereact/radiobutton';
 
+import { getPrimeProps } from '../util';
+
 /** The `RadioWidget` is a widget for rendering a radio group.
  *  It is typically used with a string property constrained with enum options.
  *
  * @param props - The `WidgetProps` for this component
  */
-export default function RadioWidget<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
-  props: WidgetProps<T, S, F>,
-) {
+export default function RadioWidget<
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>(props: WidgetProps<T, S, F>) {
   const { id, htmlName, value, disabled, readonly, onChange, onBlur, onFocus, options } = props;
-  const primeProps = (options.prime || {}) as object;
+  const primeProps = getPrimeProps<T, S, F>(options);
   const { enumOptions, enumDisabled, emptyValue } = options;
   const optionValueFormat = getOptionValueFormat(options);
 

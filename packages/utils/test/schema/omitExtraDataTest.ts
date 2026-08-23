@@ -525,7 +525,7 @@ export default function omitExtraDataTest(testValidator: TestValidatorType) {
       it('should return non-object formData as-is', () => {
         const schema: RJSFSchema = { type: 'string' };
         // String type falls through without object/array branching, source is returned.
-        expect(omitExtraData(testValidator, schema, schema, 'hello' as any)).toEqual('hello');
+        expect(omitExtraData(testValidator, schema, schema, 'hello')).toEqual('hello');
       });
 
       it('should return formData as-is when schema is null or undefined', () => {
@@ -955,12 +955,12 @@ export default function omitExtraDataTest(testValidator: TestValidatorType) {
 
       it('returns undefined when schema type is object but source is a non-object scalar', () => {
         const schema: RJSFSchema = { type: 'object', properties: { foo: { type: 'string' } } };
-        expect(omitExtraData(testValidator, schema, schema, 'not-an-object' as any)).toBeUndefined();
+        expect(omitExtraData(testValidator, schema, schema, 'not-an-object')).toBeUndefined();
       });
 
       it('returns undefined when schema type is array but source is a non-array value', () => {
         const schema: RJSFSchema = { type: 'array', items: { type: 'string' } };
-        expect(omitExtraData(testValidator, schema, schema, 'not-an-array' as any)).toBeUndefined();
+        expect(omitExtraData(testValidator, schema, schema, 'not-an-array')).toBeUndefined();
       });
     });
 
@@ -1232,7 +1232,7 @@ export default function omitExtraDataTest(testValidator: TestValidatorType) {
           anyOf: [{ items: { type: 'string' } }],
           items: { type: 'string' },
         };
-        expect(omitExtraData(testValidator, schema, schema, [] as any)).toEqual([]);
+        expect(omitExtraData(testValidator, schema, schema, [])).toEqual([]);
       });
 
       it('reuses an array target already built by anyOf when outer schema is also type:array', () => {
@@ -1244,7 +1244,7 @@ export default function omitExtraDataTest(testValidator: TestValidatorType) {
           anyOf: [{ items: { type: 'string' } }, { items: { type: 'number' } }],
           items: { type: 'string' },
         };
-        expect(omitExtraData(testValidator, schema, schema, [] as any)).toEqual([]);
+        expect(omitExtraData(testValidator, schema, schema, [])).toEqual([]);
       });
     });
 

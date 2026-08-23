@@ -1,4 +1,4 @@
-import type { FormContextType, RJSFSchema, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
+import type { FormContextType, RJSFSchema, WidgetProps } from '@rjsf/utils';
 import { DateElement, TranslatableString, useAltDateWidgetProps } from '@rjsf/utils';
 
 /** The `AltDateWidget` component provides an alternative date/time input
@@ -15,9 +15,9 @@ import { DateElement, TranslatableString, useAltDateWidgetProps } from '@rjsf/ut
  * @param props - The `WidgetProps` for this component
  */
 export default function AltDateWidget<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(props: WidgetProps<T, S, F>) {
   const { disabled = false, readonly = false, autofocus = false, options, id, name, registry, onBlur, onFocus } = props;
   const { translateString } = registry;

@@ -1,12 +1,16 @@
 import { withTheme } from '@rjsf/core';
-import type { RJSFSchema, StrictRJSFSchema, FormContextType } from '@rjsf/utils';
+import type { RJSFSchema, FormContextType } from '@rjsf/utils';
 
 import { generateTheme } from '../theme/Theme';
 
 /**
  * Generate a form with the DaisyUI theme
  */
-export function generateForm<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>() {
+export function generateForm<
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>() {
   return withTheme(generateTheme<T, S, F>());
 }
 

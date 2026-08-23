@@ -1,15 +1,15 @@
 import type { ComponentType } from 'react';
 import type { FormProps, ThemeProps } from '@rjsf/core';
 import { withTheme } from '@rjsf/core';
-import type { FormContextType, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
+import type { FormContextType, RJSFSchema } from '@rjsf/utils';
 
 import Templates, { generateTemplates } from './templates';
 import Widgets, { generateWidgets } from './widgets';
 
 export function generateTheme<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(): ThemeProps<T, S, F> {
   return {
     templates: generateTemplates<T, S, F>(),
@@ -20,9 +20,9 @@ export function generateTheme<
 const Theme = generateTheme();
 
 export function generateForm<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(): ComponentType<FormProps<T, S, F>> {
   return withTheme<T, S, F>(generateTheme<T, S, F>());
 }

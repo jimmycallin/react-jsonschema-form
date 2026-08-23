@@ -1,12 +1,12 @@
 import { useCallback } from 'react';
-import type { FieldProps, FormContextType, RJSFSchema, StrictRJSFSchema, ErrorSchema } from '@rjsf/utils';
+import type { FieldProps, FormContextType, RJSFSchema, ErrorSchema } from '@rjsf/utils';
 import { getWidget, getUiOptions, optionsList, hasWidget } from '@rjsf/utils';
 
 /** The `StringField` component is used to render a schema field that represents a string type
  *
  * @param props - The `FieldProps` for this template
  */
-function StringField<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
+function StringField<T = unknown, S extends RJSFSchema = RJSFSchema, F extends FormContextType = FormContextType>(
   props: FieldProps<T, S, F>,
 ) {
   const {

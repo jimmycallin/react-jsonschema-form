@@ -1,6 +1,6 @@
 import { REF_KEY } from './constants';
 import deepEquals from './deepEquals';
-import type { FormContextType, Registry, RJSFSchema, StrictRJSFSchema } from './types';
+import type { FormContextType, Registry, RJSFSchema } from './types';
 
 /** Helper to check whether a JSON schema object is the root schema. The schema is a root schema with root `properties`
  * key or a root `$ref` key. If the `schemaToCompare` has a root `oneOf` property, the function will
@@ -13,10 +13,11 @@ import type { FormContextType, Registry, RJSFSchema, StrictRJSFSchema } from './
  *        function will return true.
  * @returns - Flag indicating whether the `schemaToCompare` is the root schema
  */
-export default function isRootSchema<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
-  registry: Registry<T, S, F>,
-  schemaToCompare: S,
-): boolean {
+export default function isRootSchema<
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>(registry: Registry<T, S, F>, schemaToCompare: S): boolean {
   const { rootSchema, schemaUtils } = registry;
   if (deepEquals(schemaToCompare, rootSchema)) {
     return true;

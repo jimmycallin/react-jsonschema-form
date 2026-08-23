@@ -1,4 +1,4 @@
-import type { FieldTemplateProps, FormContextType, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
+import type { FieldTemplateProps, FormContextType, RJSFSchema } from '@rjsf/utils';
 import { getTemplate, getUiOptions } from '@rjsf/utils';
 
 import Label from './Label';
@@ -9,9 +9,9 @@ import Label from './Label';
  * @param props - The `FieldTemplateProps` for this component
  */
 export default function FieldTemplate<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(props: FieldTemplateProps<T, S, F>) {
   const { id, label, children, errors, help, description, hidden, required, displayLabel, registry, uiSchema } = props;
   const uiOptions = getUiOptions(uiSchema);

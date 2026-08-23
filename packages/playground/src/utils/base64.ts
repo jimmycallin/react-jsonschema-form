@@ -9,7 +9,7 @@ const base64 = (function base64() {
   // Otherwise, it is assumed that we are in node.js, and we can use the util module's TextEncoder and TextDecoder
   return {
     encode(text: string): string {
-      let encoder: any;
+      let encoder: TextEncoder;
       if (typeof TextEncoder !== 'undefined') {
         encoder = new TextEncoder();
       } else {
@@ -20,7 +20,7 @@ const base64 = (function base64() {
       return btoa(safeFromCharCode(encoder, text));
     },
     decode(text: string): string {
-      let decoder: any;
+      let decoder: TextDecoder;
       if (typeof TextDecoder !== 'undefined') {
         decoder = new TextDecoder();
       } else {
@@ -37,7 +37,7 @@ const base64 = (function base64() {
  * This function is a workaround for the fact that the String.fromCharCode method can throw a "Maximum call stack size exceeded" error if you try to pass too many arguments to it at once.
  * This is because String.fromCharCode expects individual character codes as arguments and javascript has a limit on the number of arguments that can be passed to a function.
  */
-function safeFromCharCode(encoder: any, text: string): string {
+function safeFromCharCode(encoder: TextEncoder, text: string): string {
   const codes = encoder.encode(text);
   const CHUNK_SIZE = 0x9000; // 36864
   let result = '';

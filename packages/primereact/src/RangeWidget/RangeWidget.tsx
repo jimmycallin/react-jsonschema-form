@@ -1,19 +1,23 @@
 import type { FocusEvent } from 'react';
-import type { FormContextType, RJSFSchema, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
+import type { FormContextType, RJSFSchema, WidgetProps } from '@rjsf/utils';
 import { ariaDescribedByIds, rangeSpec } from '@rjsf/utils';
 import type { SliderChangeEvent } from 'primereact/slider';
 import { Slider } from 'primereact/slider';
+
+import { getPrimeProps } from '../util';
 
 /** The `RangeWidget` component uses the `Slider` from PrimeReact, wrapping the result
  * in a div, with the value alongside it.
  *
  * @param props - The `WidgetProps` for this component
  */
-export default function RangeWidget<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
-  props: WidgetProps<T, S, F>,
-) {
+export default function RangeWidget<
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>(props: WidgetProps<T, S, F>) {
   const { value, readonly, disabled, onBlur, onFocus, options, schema, onChange, id } = props;
-  const primeProps = (options.prime || {}) as object;
+  const primeProps = getPrimeProps<T, S, F>(options);
   const sliderProps = { value, id, ...rangeSpec<S>(schema) };
 
   const handleChange = (e: SliderChangeEvent) => {

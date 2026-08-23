@@ -1,15 +1,20 @@
-import type { FormContextType, RJSFSchema, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
+import type { FormContextType, RJSFSchema } from '@rjsf/utils';
 import { ariaDescribedByIds, getInputProps } from '@rjsf/utils';
 import type { InputNumberChangeEvent } from 'primereact/inputnumber';
 import { InputNumber } from 'primereact/inputnumber';
+
+import type { PrimeWidgetProps } from '../util';
+import { getPrimeOptions } from '../util';
 
 /** The `UpDownWidget` renders an input component for a number.
  *
  * @param props - The `WidgetProps` for this component
  */
-export default function UpDownWidget<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
-  props: WidgetProps<T, S, F>,
-) {
+export default function UpDownWidget<
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>(props: PrimeWidgetProps<InputNumberChangeEvent, T, S, F>) {
   const {
     id,
     placeholder,
@@ -28,8 +33,10 @@ export default function UpDownWidget<T = any, S extends StrictRJSFSchema = RJSFS
     rawErrors = [],
   } = props;
   const inputProps = getInputProps<T, S, F>(schema, type, options);
-  const { showButtons, buttonLayout, useGrouping, minFractionDigits, maxFractionDigits, locale, currency } = options;
-  const primeProps = (options.prime || {}) as object;
+  const primeOptions = getPrimeOptions<T, S, F>(options);
+  const { showButtons, buttonLayout, useGrouping, minFractionDigits, maxFractionDigits, locale, currency } =
+    primeOptions;
+  const primeProps = primeOptions.prime || {};
 
   const handleChange = (event: InputNumberChangeEvent) => onChange(event.value === null ? options.emptyValue : value);
   const handleBlur = () => onBlur?.(id, value);
@@ -49,11 +56,11 @@ export default function UpDownWidget<T = any, S extends StrictRJSFSchema = RJSFS
       showButtons={typeof showButtons === 'undefined' ? true : !!showButtons}
       buttonLayout={buttonLayout ?? 'stacked'}
       useGrouping={!!useGrouping}
-      minFractionDigits={minFractionDigits as number}
-      maxFractionDigits={maxFractionDigits as number}
-      locale={locale as string}
+      minFractionDigits={minFractionDigits}
+      maxFractionDigits={maxFractionDigits}
+      locale={locale}
       mode={currency ? 'currency' : 'decimal'}
-      currency={currency as string}
+      currency={currency}
       value={Number.isNaN(Number(value)) ? null : Number(value)}
       invalid={rawErrors.length > 0}
       onChange={onChangeOverride || handleChange}

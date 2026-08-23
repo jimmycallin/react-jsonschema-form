@@ -1,21 +1,21 @@
 import { useContext } from 'react';
-import type { FormContextType, TitleFieldProps, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
+import type { FormContextType, TitleFieldProps, RJSFSchema } from '@rjsf/utils';
 import { Col, Divider, Row, ConfigProvider } from 'antd';
 import classNames from 'classnames';
+
+import { getAntdFormContext } from '../../utils';
 
 /** The `TitleField` is the template to use to render the title of a field
  *
  * @param props - The `TitleFieldProps` for this component
  */
-export default function TitleField<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>({
-  id,
-  required,
-  registry,
-  title,
-  optionalDataControl,
-}: TitleFieldProps<T, S, F>) {
+export default function TitleField<
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>({ id, required, registry, title, optionalDataControl }: TitleFieldProps<T, S, F>) {
   const { formContext } = registry;
-  const { colon = true } = formContext;
+  const { colon = true } = getAntdFormContext(formContext);
 
   let labelChildren = title;
   if (colon && typeof title === 'string' && title.trim() !== '') {
@@ -65,7 +65,12 @@ export default function TitleField<T = any, S extends StrictRJSFSchema = RJSFSch
   return (
     <>
       {heading}
-      <Divider size='small' style={{ marginBlock: '1px' /* pull the margin right up against the label */ }} />
+      <Divider
+        size='small'
+        style={{
+          marginBlock: '1px' /* pull the margin right up against the label */,
+        }}
+      />
     </>
   );
 }

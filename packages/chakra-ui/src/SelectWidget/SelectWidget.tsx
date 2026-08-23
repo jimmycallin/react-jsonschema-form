@@ -2,7 +2,7 @@ import type { FocusEvent } from 'react';
 import { useMemo, useRef } from 'react';
 import type { SelectValueChangeDetails } from '@chakra-ui/react';
 import { createListCollection, Select as ChakraSelect } from '@chakra-ui/react';
-import type { EnumOptionsType, FormContextType, RJSFSchema, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
+import type { EnumOptionsType, FormContextType, RJSFSchema, WidgetProps } from '@rjsf/utils';
 import {
   ariaDescribedByIds,
   enumOptionSelectedValue,
@@ -13,15 +13,26 @@ import {
   logUnsupportedDefaultForEnum,
   SelectedOptionDescription,
 } from '@rjsf/utils';
-import type { OptionsOrGroups } from 'chakra-react-select';
 
 import { Field } from '../components/ui/field';
 import { SelectRoot, SelectTrigger, SelectValueText } from '../components/ui/select';
 import { getChakra } from '../utils';
 
-export default function SelectWidget<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
-  props: WidgetProps<T, S, F>,
-) {
+/** A single option rendered by the select: the encoded DOM value plus its label */
+interface SelectOption {
+  /** The label shown for the option */
+  label: string;
+  /** The encoded value used in the DOM */
+  value: string;
+  /** Whether the option is selectable */
+  disabled?: boolean;
+}
+
+export default function SelectWidget<
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>(props: WidgetProps<T, S, F>) {
   const {
     id,
     htmlName,
@@ -61,8 +72,8 @@ export default function SelectWidget<T = any, S extends StrictRJSFSchema = RJSFS
 
   const showPlaceholderOption = !multiple && schema.default === undefined;
   logUnsupportedDefaultForEnum<S>(id, schema, enumOptions, multiple);
-  const displayEnumOptions = useMemo((): OptionsOrGroups<any, any> => {
-    let computedOptions: OptionsOrGroups<any, any> = [];
+  const displayEnumOptions = useMemo((): SelectOption[] => {
+    let computedOptions: SelectOption[] = [];
     if (Array.isArray(enumOptions)) {
       computedOptions = enumOptions.map((option: EnumOptionsType<S>, index: number) => {
         const { value: enumValue, label: enumLabel } = option;
@@ -73,7 +84,7 @@ export default function SelectWidget<T = any, S extends StrictRJSFSchema = RJSFS
         };
       });
       if (showPlaceholderOption) {
-        (computedOptions as any[]).unshift({ value: '', label: placeholder || '' });
+        computedOptions.unshift({ value: '', label: placeholder || '' });
       }
     }
     return computedOptions;

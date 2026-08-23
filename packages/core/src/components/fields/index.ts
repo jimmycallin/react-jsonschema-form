@@ -1,4 +1,4 @@
-import type { Field, FormContextType, RegistryFieldsType, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
+import type { Field, FormContextType, RegistryFieldsType, RJSFSchema } from '@rjsf/utils';
 
 import ArrayField from './ArrayField';
 import BooleanField from './BooleanField';
@@ -16,9 +16,9 @@ import SchemaField from './SchemaField';
 import StringField from './StringField';
 
 function fields<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(): RegistryFieldsType<T, S, F> {
   return {
     AnyOfField: MultiSchemaField,

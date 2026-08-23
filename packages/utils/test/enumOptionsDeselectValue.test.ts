@@ -5,7 +5,7 @@ import { ALL_OPTIONS } from './testUtils/testData';
 const ALL_VALUES = ALL_OPTIONS.map((opt) => opt.value);
 
 describe('enumOptionsDeselectValue()', () => {
-  let selected: EnumOptionsType['value'][];
+  let selected: EnumOptionsType['value'] | EnumOptionsType['value'][] | undefined;
   it('returns same selection when no options', () => {
     selected = enumOptionsDeselectValue('0', ALL_VALUES);
     expect(selected).toEqual(ALL_VALUES);

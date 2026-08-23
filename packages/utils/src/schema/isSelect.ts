@@ -1,11 +1,5 @@
 import isConstant from '../isConstant';
-import type {
-  FormContextType,
-  RJSFSchema,
-  StrictRJSFSchema,
-  ValidatorType,
-  Experimental_CustomMergeAllOf,
-} from '../types';
+import type { FormContextType, RJSFSchema, ValidatorType, Experimental_CustomMergeAllOf } from '../types';
 import retrieveSchema from './retrieveSchema';
 
 /** Checks to see if the `schema` combination represents a select
@@ -16,7 +10,11 @@ import retrieveSchema from './retrieveSchema';
  * @param [experimental_customMergeAllOf] - Optional function that allows for custom merging of `allOf` schemas
  * @returns - True if schema contains a select, otherwise false
  */
-export default function isSelect<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
+export default function isSelect<
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>(
   validator: ValidatorType<T, S, F>,
   theSchema: S,
   rootSchema: S = {} as S,

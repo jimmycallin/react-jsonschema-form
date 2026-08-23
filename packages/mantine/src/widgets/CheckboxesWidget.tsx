@@ -1,7 +1,7 @@
 import type { FocusEvent } from 'react';
 import { useCallback } from 'react';
 import { Checkbox, Flex, Input } from '@mantine/core';
-import type { FormContextType, WidgetProps, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
+import type { FormContextType, WidgetProps, RJSFSchema } from '@rjsf/utils';
 import {
   ariaDescribedByIds,
   enumOptionValueDecoder,
@@ -20,9 +20,9 @@ import { cleanupOptions } from '../utils';
  * @param props - The `WidgetProps` for this component
  */
 export default function CheckboxesWidget<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(props: WidgetProps<T, S, F>) {
   const {
     id,
@@ -46,7 +46,7 @@ export default function CheckboxesWidget<
   const themeProps = cleanupOptions(options);
 
   const handleChange = useCallback(
-    (nextValue: any) => {
+    (nextValue: string[]) => {
       if (!disabled && !readonly && onChange) {
         onChange(enumOptionValueDecoder<S>(nextValue, enumOptions, optionValueFormat, emptyValue));
       }

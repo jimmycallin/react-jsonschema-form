@@ -1,7 +1,7 @@
 import type { FocusEvent } from 'react';
 import type { CheckboxCheckedChangeDetails } from '@chakra-ui/react';
 import { Text } from '@chakra-ui/react';
-import type { WidgetProps, StrictRJSFSchema, RJSFSchema, FormContextType } from '@rjsf/utils';
+import type { WidgetProps, RJSFSchema, FormContextType } from '@rjsf/utils';
 import {
   ariaDescribedByIds,
   descriptionId,
@@ -16,9 +16,9 @@ import { Field } from '../components/ui/field';
 import { getChakra } from '../utils';
 
 export default function CheckboxWidget<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(props: WidgetProps<T, S, F>) {
   const {
     id,

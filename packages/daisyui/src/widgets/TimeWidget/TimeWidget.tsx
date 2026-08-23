@@ -1,6 +1,6 @@
 import type { FocusEvent } from 'react';
 import { useCallback } from 'react';
-import type { WidgetProps, StrictRJSFSchema, RJSFSchema, FormContextType } from '@rjsf/utils';
+import type { WidgetProps, RJSFSchema, FormContextType } from '@rjsf/utils';
 
 /** The `TimeWidget` component renders a time input with DaisyUI styling
  *
@@ -12,9 +12,11 @@ import type { WidgetProps, StrictRJSFSchema, RJSFSchema, FormContextType } from 
  *
  * @param props - The `WidgetProps` for this component
  */
-export default function TimeWidget<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
-  props: WidgetProps<T, S, F>,
-) {
+export default function TimeWidget<
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>(props: WidgetProps<T, S, F>) {
   const { id, value, onChange, onFocus, onBlur, required, disabled, readonly } = props;
 
   /** Handle focus events

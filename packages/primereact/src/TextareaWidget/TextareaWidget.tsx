@@ -1,18 +1,20 @@
 import type { ChangeEvent } from 'react';
-import type { FormContextType, RJSFSchema, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
+import type { FormContextType, RJSFSchema, WidgetProps } from '@rjsf/utils';
 import { InputTextarea } from 'primereact/inputtextarea';
+
+import { getPrimeProps } from '../util';
 
 /** The `TextareaWidget` is a widget for rendering input fields as textarea using PrimeReact.
  *
  * @param props - The `WidgetProps` for this component
  */
 export default function TextareaWidget<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(props: WidgetProps<T, S, F>) {
   const { id, htmlName, value, required, disabled, readonly, autofocus, onChange, onBlur, onFocus, options } = props;
-  const primeProps = (options.prime || {}) as object;
+  const primeProps = getPrimeProps<T, S, F>(options);
 
   let rows = 5;
   // noinspection SuspiciousTypeOfGuard

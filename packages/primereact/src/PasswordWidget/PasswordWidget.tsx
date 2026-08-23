@@ -1,17 +1,19 @@
 import type { ChangeEvent } from 'react';
-import type { FormContextType, RJSFSchema, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
+import type { BaseInputTemplateProps, FormContextType, RJSFSchema } from '@rjsf/utils';
 import { ariaDescribedByIds, getInputProps } from '@rjsf/utils';
 import { Password } from 'primereact/password';
+
+import { getPrimeProps } from '../util';
 
 /** The `PasswordWidget` renders a `Password` component
  *
  * @param props - The `WidgetProps` for this component
  */
 export default function PasswordWidget<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
->(props: WidgetProps<T, S, F>) {
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>(props: BaseInputTemplateProps<T, S, F>) {
   const {
     id,
     placeholder,
@@ -30,7 +32,7 @@ export default function PasswordWidget<
     rawErrors = [],
   } = props;
   const inputProps = getInputProps<T, S, F>(schema, type, options);
-  const primeProps = (options.prime || {}) as object;
+  const primeProps = getPrimeProps<T, S, F>(options);
 
   const handleChange = ({ target: { value: newValue } }: ChangeEvent<HTMLInputElement>) =>
     onChange(newValue === '' ? options.emptyValue : newValue);

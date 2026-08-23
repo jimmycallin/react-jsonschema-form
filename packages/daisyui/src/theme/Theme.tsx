@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { createContext, useCallback, useContext, useMemo, useState } from 'react';
 import type { ThemeProps } from '@rjsf/core';
 import { getDefaultRegistry } from '@rjsf/core';
-import type { FormContextType, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
+import type { FormContextType, RJSFSchema } from '@rjsf/utils';
 
 import { generateTemplates } from '../templates/Templates';
 import { generateWidgets } from '../widgets/Widgets';
@@ -15,9 +15,9 @@ import { generateWidgets } from '../widgets/Widgets';
  * @returns A ThemeProps object containing all necessary components for the theme
  */
 export function generateTheme<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(): ThemeProps<T, S, F> {
   const { fields } = getDefaultRegistry<T, S, F>();
   const generatedWidgets = generateWidgets<T, S, F>();

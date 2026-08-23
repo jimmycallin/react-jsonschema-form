@@ -1,4 +1,4 @@
-import type { FieldErrorProps, FormContextType, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
+import type { FieldErrorProps, FormContextType, RJSFSchema } from '@rjsf/utils';
 import { errorId } from '@rjsf/utils';
 import { Message } from 'primereact/message';
 
@@ -7,9 +7,9 @@ import { Message } from 'primereact/message';
  * @param props - The `FieldErrorProps` for the errors being rendered
  */
 export default function FieldErrorTemplate<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >({ errors, fieldPathId }: FieldErrorProps<T, S, F>) {
   if (errors && errors.length > 0) {
     const id = errorId(fieldPathId);

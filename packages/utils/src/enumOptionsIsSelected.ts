@@ -1,5 +1,5 @@
 import deepEquals from './deepEquals';
-import type { EnumOptionsType, RJSFSchema, StrictRJSFSchema } from './types';
+import type { EnumOptionsType, RJSFSchema } from './types';
 
 /** Determines whether the given `value` is (one of) the `selected` value(s).
  *
@@ -7,7 +7,7 @@ import type { EnumOptionsType, RJSFSchema, StrictRJSFSchema } from './types';
  * @param selected - The current selected value or list of values
  * @returns - true if the `value` is one of the `selected` ones, false otherwise
  */
-export default function enumOptionsIsSelected<S extends StrictRJSFSchema = RJSFSchema>(
+export default function enumOptionsIsSelected<S extends RJSFSchema = RJSFSchema>(
   value: EnumOptionsType<S>['value'],
   selected: EnumOptionsType<S>['value'] | EnumOptionsType<S>['value'][],
 ) {

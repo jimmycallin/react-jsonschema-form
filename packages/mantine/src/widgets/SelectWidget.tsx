@@ -1,7 +1,7 @@
 import type { FocusEvent } from 'react';
 import { useCallback, useMemo } from 'react';
 import { Select, MultiSelect } from '@mantine/core';
-import type { FormContextType, RJSFSchema, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
+import type { FormContextType, RJSFSchema, WidgetProps } from '@rjsf/utils';
 import {
   ariaDescribedByIds,
   enumOptionSelectedValue,
@@ -20,9 +20,11 @@ import { cleanupOptions } from '../utils';
  *
  * @param props - The `WidgetProps` for this component
  */
-export default function SelectWidget<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
-  props: WidgetProps<T, S, F>,
-) {
+export default function SelectWidget<
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>(props: WidgetProps<T, S, F>) {
   const {
     id,
     htmlName,
@@ -49,9 +51,10 @@ export default function SelectWidget<T = any, S extends StrictRJSFSchema = RJSFS
   logUnsupportedDefaultForEnum<S>(id, schema, enumOptions, multiple);
 
   const handleChange = useCallback(
-    (nextValue: any) => {
+    (nextValue: string | string[] | null) => {
       if (!disabled && !readonly && onChange) {
-        onChange(enumOptionValueDecoder<S>(nextValue, enumOptions, optionValueFormat, emptyValue));
+        // A cleared single select hands back `null`, which the decoder treats the same as the empty string
+        onChange(enumOptionValueDecoder<S>(nextValue ?? '', enumOptions, optionValueFormat, emptyValue));
       }
     },
     [onChange, disabled, readonly, enumOptions, emptyValue, optionValueFormat],
@@ -106,19 +109,24 @@ export default function SelectWidget<T = any, S extends StrictRJSFSchema = RJSFS
     ...themeProps,
   };
 
+  // Mantine's `MultiSelect` needs a string list and its `Select` needs a string or `null` when nothing is selected
+  const selected = enumOptionSelectedValue<S>(
+    value,
+    enumOptions,
+    Boolean(multiple),
+    optionValueFormat,
+    multiple ? [] : '',
+  );
+  const multiSelected = Array.isArray(selected) ? selected : [];
+  const singleSelected = typeof selected === 'string' && selected !== '' ? selected : null;
+
   return (
     <>
       <SelectedOptionDescription {...props} />
       {multiple ? (
-        <MultiSelect
-          {...sharedProps}
-          value={enumOptionSelectedValue<S>(value, enumOptions, true, optionValueFormat, []) as string[]}
-        />
+        <MultiSelect {...sharedProps} value={multiSelected} />
       ) : (
-        <Select
-          {...sharedProps}
-          value={enumOptionSelectedValue<S>(value, enumOptions, false, optionValueFormat, null) as string | null}
-        />
+        <Select {...sharedProps} value={singleSelected} />
       )}
     </>
   );

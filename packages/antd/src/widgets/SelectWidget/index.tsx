@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import type { FormContextType, GenericObjectType, RJSFSchema, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
+import type { FormContextType, RJSFSchema, WidgetProps } from '@rjsf/utils';
 import {
   ariaDescribedByIds,
   enumOptionSelectedValue,
@@ -13,6 +13,8 @@ import type { SelectProps } from 'antd';
 import { Select } from 'antd';
 import type { DefaultOptionType } from 'antd/es/select';
 
+import { getAntdFormContext, selectEmptyValue } from '../../utils';
+
 const SELECT_STYLE = {
   width: '100%',
 };
@@ -23,9 +25,9 @@ const SELECT_STYLE = {
  * @param props - The `WidgetProps` for this component
  */
 export default function SelectWidget<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >({
   autofocus,
   disabled,
@@ -45,12 +47,12 @@ export default function SelectWidget<
 }: WidgetProps<T, S, F>) {
   const [open, setOpen] = useState(false);
   const { formContext } = registry;
-  const { readonlyAsDisabled = true } = formContext as GenericObjectType;
+  const { readonlyAsDisabled = true } = getAntdFormContext(formContext);
 
   const { enumOptions, enumDisabled, emptyValue } = options;
   const optionValueFormat = getOptionValueFormat(options);
 
-  const handleChange = (nextValue: any) =>
+  const handleChange = (nextValue: string | string[]) =>
     onChange(enumOptionValueDecoder<S>(nextValue, enumOptions, optionValueFormat, emptyValue));
 
   const handleBlur = () => onBlur(id, enumOptionValueDecoder<S>(value, enumOptions, optionValueFormat, emptyValue));
@@ -67,7 +69,13 @@ export default function SelectWidget<
 
   const getPopupContainer = SelectWidget.getPopupContainerCallback();
 
-  const selectValue = enumOptionSelectedValue<S>(value, enumOptions, !!multiple, optionValueFormat, emptyValue);
+  const selectValue = enumOptionSelectedValue<S>(
+    value,
+    enumOptions,
+    !!multiple,
+    optionValueFormat,
+    selectEmptyValue(emptyValue),
+  );
 
   // Antd's typescript definitions do not contain the following props that are actually necessary and, if provided,
   // they are used, so hacking them in via by spreading `extraProps` on the component to avoid typescript errors
@@ -135,4 +143,5 @@ export default function SelectWidget<
  * disabled while in the playground. Since the callback is a simple function, it can be returned by this static
  * "generator" function.
  */
-SelectWidget.getPopupContainerCallback = () => (node: any) => node.parentElement;
+// `parentElement` is nullable, but antd only calls this for a mounted trigger, which always has a parent
+SelectWidget.getPopupContainerCallback = () => (node: HTMLElement) => node.parentElement as HTMLElement;

@@ -1,4 +1,4 @@
-import type { FormContextType, Registry, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
+import type { FormContextType, Registry, RJSFSchema } from '@rjsf/utils';
 import { DEFAULT_ID_PREFIX, DEFAULT_ID_SEPARATOR, englishStringTranslator } from '@rjsf/utils';
 
 import fields from './components/fields';
@@ -10,9 +10,9 @@ import widgets from './components/widgets';
  * rootSchema and validator. It will be added into the computed registry later in the Form.
  */
 export default function getDefaultRegistry<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(): Omit<Registry<T, S, F>, 'schemaUtils'> {
   return {
     fields: fields<T, S, F>(),

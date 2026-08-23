@@ -15,7 +15,7 @@ export type PathType = string | FieldPathList;
  * schema by using either dotted path or an array of path names. Once you are done building the `ErrorSchema`, you can
  * get the result and/or reset all the errors back to an initial set and start again.
  */
-export default class ErrorSchemaBuilder<T = any> {
+export default class ErrorSchemaBuilder<T = unknown> {
   /** The error schema being built
    *
    * @private
@@ -44,7 +44,6 @@ export default class ErrorSchemaBuilder<T = any> {
    */
   private getOrCreateErrorBlock(pathOfError?: PathType) {
     const hasPath = (Array.isArray(pathOfError) && pathOfError.length > 0) || typeof pathOfError === 'string';
-    // @ts-expect-error TS2590 to avoid "Expression produces a union type that is too complex to represent" error
     let errorBlock: ErrorSchema = hasPath ? get(this.errorSchema, pathOfError) : this.errorSchema;
     if (!errorBlock && pathOfError) {
       errorBlock = {};

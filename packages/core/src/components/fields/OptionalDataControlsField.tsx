@@ -1,10 +1,4 @@
-import type {
-  FieldProps,
-  FormContextType,
-  OptionalDataControlsTemplateProps,
-  RJSFSchema,
-  StrictRJSFSchema,
-} from '@rjsf/utils';
+import type { FieldProps, FormContextType, OptionalDataControlsTemplateProps, RJSFSchema } from '@rjsf/utils';
 import {
   getSchemaType,
   getTemplate,
@@ -20,9 +14,9 @@ import {
  * @param props - The `FieldProps` for this template
  */
 export default function OptionalDataControlsField<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(props: FieldProps<T, S, F>) {
   const {
     schema,

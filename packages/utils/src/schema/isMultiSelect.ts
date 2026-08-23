@@ -1,10 +1,4 @@
-import type {
-  FormContextType,
-  RJSFSchema,
-  StrictRJSFSchema,
-  ValidatorType,
-  Experimental_CustomMergeAllOf,
-} from '../types';
+import type { FormContextType, RJSFSchema, ValidatorType, Experimental_CustomMergeAllOf } from '../types';
 import isSelect from './isSelect';
 
 /** Checks to see if the `schema` combination represents a multi-select
@@ -16,9 +10,9 @@ import isSelect from './isSelect';
  * @returns - True if schema contains a multi-select, otherwise false
  */
 export default function isMultiSelect<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(
   validator: ValidatorType<T, S, F>,
   schema: S,

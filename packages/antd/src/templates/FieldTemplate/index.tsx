@@ -1,6 +1,8 @@
-import type { FieldTemplateProps, FormContextType, RJSFSchema, StrictRJSFSchema, GenericObjectType } from '@rjsf/utils';
+import type { FieldTemplateProps, FormContextType, RJSFSchema, GenericObjectType } from '@rjsf/utils';
 import { getTemplate, getUiOptions } from '@rjsf/utils';
 import { Form } from 'antd';
+
+import { getAntdFormContext } from '../../utils';
 
 const VERTICAL_LABEL_COL = { span: 24 };
 const VERTICAL_WRAPPER_COL = { span: 24 };
@@ -11,9 +13,9 @@ const VERTICAL_WRAPPER_COL = { span: 24 };
  * @param props - The `FieldTemplateProps` for this component
  */
 export default function FieldTemplate<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(props: FieldTemplateProps<T, S, F>) {
   const {
     children,
@@ -39,7 +41,7 @@ export default function FieldTemplate<
     wrapperCol = VERTICAL_WRAPPER_COL,
     wrapperStyle,
     descriptionLocation = 'below',
-  } = formContext as GenericObjectType;
+  } = getAntdFormContext(formContext);
 
   const uiOptions = getUiOptions<T, S, F>(uiSchema);
 

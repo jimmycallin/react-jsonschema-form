@@ -1,7 +1,7 @@
 import type { FocusEvent } from 'react';
 import { useCallback } from 'react';
 import { ColorInput } from '@mantine/core';
-import type { FormContextType, RJSFSchema, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
+import type { FormContextType, RJSFSchema, WidgetProps } from '@rjsf/utils';
 import { labelValue, ariaDescribedByIds } from '@rjsf/utils';
 
 import { cleanupOptions } from '../utils';
@@ -10,9 +10,11 @@ import { cleanupOptions } from '../utils';
  *
  * @param props - The `WidgetProps` for this component
  */
-export default function ColorWidget<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
-  props: WidgetProps<T, S, F>,
-) {
+export default function ColorWidget<
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>(props: WidgetProps<T, S, F>) {
   const {
     id,
     name,

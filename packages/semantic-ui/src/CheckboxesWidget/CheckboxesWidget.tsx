@@ -1,5 +1,5 @@
-import type { ChangeEvent } from 'react';
-import type { FormContextType, RJSFSchema, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
+import type { FormEvent } from 'react';
+import type { FormContextType, RJSFSchema, WidgetProps } from '@rjsf/utils';
 import {
   ariaDescribedByIds,
   enumOptionsDeselectValue,
@@ -9,6 +9,7 @@ import {
   optionId,
   titleId,
 } from '@rjsf/utils';
+import type { CheckboxProps } from 'semantic-ui-react';
 import { Form } from 'semantic-ui-react';
 
 import { getSemanticProps } from '../util';
@@ -19,9 +20,9 @@ import { getSemanticProps } from '../util';
  * @param props - The `WidgetProps` for this component
  */
 export default function CheckboxesWidget<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(props: WidgetProps<T, S, F>) {
   const {
     id,
@@ -54,7 +55,7 @@ export default function CheckboxesWidget<
   });
   const handleChange =
     (index: number) =>
-    ({ target: { checked } }: ChangeEvent<HTMLInputElement>) => {
+    (_event: FormEvent<HTMLInputElement>, { checked }: CheckboxProps) => {
       // oxlint-disable-next-line no-shadow
       if (checked) {
         onChange(enumOptionsSelectValue<S>(index, checkboxesValues, enumOptions));

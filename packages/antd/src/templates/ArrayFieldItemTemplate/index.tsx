@@ -1,6 +1,8 @@
-import type { ArrayFieldItemTemplateProps, FormContextType, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
+import type { ArrayFieldItemTemplateProps, FormContextType, RJSFSchema } from '@rjsf/utils';
 import { getUiOptions, getTemplate } from '@rjsf/utils';
 import { Col, Row, Space } from 'antd';
+
+import { getAntdFormContext } from '../../utils';
 
 const BTN_GRP_STYLE = {
   width: '100%',
@@ -16,9 +18,9 @@ const BTN_STYLE = {
  * @param props - The `ArrayFieldItemTemplateProps` props for the component
  */
 export default function ArrayFieldItemTemplate<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(props: ArrayFieldItemTemplateProps<T, S, F>) {
   const { children, buttonsProps, displayLabel, hasDescription, hasToolbar, index, registry, uiSchema } = props;
   const uiOptions = getUiOptions<T, S, F>(uiSchema);
@@ -27,7 +29,7 @@ export default function ArrayFieldItemTemplate<
     registry,
     uiOptions,
   );
-  const { rowGutter = 24, toolbarAlign = displayLabel ? 'middle' : 'top' } = registry.formContext;
+  const { rowGutter = 24, toolbarAlign = displayLabel ? 'middle' : 'top' } = getAntdFormContext(registry.formContext);
   const margin = hasDescription ? -8 : 16;
 
   return (

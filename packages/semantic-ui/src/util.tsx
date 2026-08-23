@@ -1,15 +1,31 @@
-import type { ElementType } from 'react';
-import type {
-  UiSchema,
-  GenericObjectType,
-  FormContextType,
-  RJSFSchema,
-  StrictRJSFSchema,
-  UIOptionsType,
-} from '@rjsf/utils';
-import { getUiOptions } from '@rjsf/utils';
+import type { ElementType, ReactNode } from 'react';
+import type { UiSchema, GenericObjectType, FormContextType, RJSFSchema, UIOptionsType } from '@rjsf/utils';
+import { getUiOptions, isObject } from '@rjsf/utils';
 
-export interface SemanticPropsTypes<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any> {
+/** The props the semantic-ui theme forwards to its Semantic UI components. These arrive from the `formContext`, the
+ * `uiSchema` or the `ui:options`, all of which are arbitrarily-keyed, so they are read through `asSemanticOptions()`.
+ */
+export interface SemanticOptions extends GenericObjectType {
+  /** The props to forward to the component that renders a field's errors */
+  errorOptions?: GenericObjectType;
+}
+
+/** Narrows a `semantic` entry read out of a `formContext`, `uiSchema` or `ui:options` to the theme's options shape.
+ * Those containers are arbitrarily keyed so the lookup yields `unknown`; anything that is not an object cannot be a
+ * set of component props, so it is treated as absent. This is the theme's single narrowing point for those reads.
+ *
+ * @param value - The `semantic` value read out of one of those containers
+ * @returns - The value as `SemanticOptions`, or undefined when it is not an object
+ */
+export function asSemanticOptions(value: unknown): SemanticOptions | undefined {
+  return isObject(value) ? (value as SemanticOptions) : undefined;
+}
+
+export interface SemanticPropsTypes<
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+> {
   formContext?: F;
   uiSchema?: UiSchema<T, S, F>;
   options?: UIOptionsType<T, S, F>;
@@ -18,9 +34,9 @@ export interface SemanticPropsTypes<T = any, S extends StrictRJSFSchema = RJSFSc
 }
 
 export interface SemanticErrorPropsType<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 > {
   formContext?: F;
   uiSchema?: UiSchema<T, S, F>;
@@ -31,6 +47,7 @@ export interface SemanticErrorPropsType<
 export type WrapProps = GenericObjectType & {
   wrap: boolean;
   component?: ElementType;
+  children?: ReactNode;
 };
 
 /**
@@ -44,16 +61,20 @@ export type WrapProps = GenericObjectType & {
  * @param {Object?} params.defaultContextProps
  * @returns {any}
  */
-export function getSemanticProps<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>({
+export function getSemanticProps<
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>({
   formContext = {} as F,
   uiSchema = {},
   options = {},
   defaultSchemaProps = { fluid: true, inverted: false },
   defaultContextProps = {},
 }: SemanticPropsTypes<T, S, F>) {
-  const formContextProps = formContext.semantic;
-  const schemaProps = getUiOptions<T, S, F>(uiSchema).semantic;
-  const optionProps = options.semantic;
+  const formContextProps = asSemanticOptions(formContext.semantic);
+  const schemaProps = asSemanticOptions(getUiOptions<T, S, F>(uiSchema).semantic);
+  const optionProps = asSemanticOptions(options.semantic);
   // formContext props should overide other props
   return {
     ...defaultSchemaProps,
@@ -74,19 +95,18 @@ export function getSemanticProps<T = any, S extends StrictRJSFSchema = RJSFSchem
  * @returns {any}
  */
 export function getSemanticErrorProps<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >({
   formContext = {} as F,
   uiSchema = {},
   options = {},
   defaultProps = { size: 'small', pointing: 'above' },
 }: SemanticErrorPropsType<T, S, F>) {
-  const formContextProps = formContext.semantic?.errorOptions;
-  const semanticOptions: GenericObjectType = getUiOptions<T, S, F>(uiSchema).semantic as GenericObjectType;
-  const schemaProps = semanticOptions?.errorOptions;
-  const optionProps = (options.semantic as GenericObjectType)?.errorOptions;
+  const formContextProps = asSemanticOptions(formContext.semantic)?.errorOptions;
+  const schemaProps = asSemanticOptions(getUiOptions<T, S, F>(uiSchema).semantic)?.errorOptions;
+  const optionProps = asSemanticOptions(options.semantic)?.errorOptions;
 
   return { ...defaultProps, ...schemaProps, ...optionProps, ...formContextProps };
 }

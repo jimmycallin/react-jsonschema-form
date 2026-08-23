@@ -1,14 +1,14 @@
 import { Flex, Box, Group, Button, Select, Input } from '@mantine/core';
-import type { DateObject, FormContextType, RJSFSchema, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
+import type { DateObject, FormContextType, RJSFSchema, WidgetProps } from '@rjsf/utils';
 import { ariaDescribedByIds, dateRangeOptions, titleId, TranslatableString, useAltDateWidgetProps } from '@rjsf/utils';
 
 /** The `AltDateWidget` is an alternative widget for rendering date properties.
  * @param props - The `WidgetProps` for this component
  */
 export default function AltDateWidget<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(props: WidgetProps<T, S, F>) {
   const { id, required, disabled, readonly, label, hideLabel, rawErrors, options, registry } = props;
   const { translateString } = registry;
@@ -31,7 +31,7 @@ export default function AltDateWidget<
                 name={elemId}
                 placeholder={elemProps.type}
                 disabled={disabled || readonly}
-                data={dateRangeOptions<S>(elemProps.range[0], elemProps.range[1]).map((item) => item.value.toString())}
+                data={dateRangeOptions<S>(elemProps.range[0], elemProps.range[1]).map((item) => String(item.value))}
                 value={!elemProps.value || elemProps.value < 0 ? null : elemProps.value.toString()}
                 onChange={(v) => handleChange(elemProps.type as keyof DateObject, v || undefined)}
                 searchable={false}

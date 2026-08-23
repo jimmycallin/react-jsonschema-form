@@ -2,7 +2,7 @@ import type { FocusEvent } from 'react';
 import FormLabel from '@mui/material/FormLabel';
 import type { SliderProps } from '@mui/material/Slider';
 import Slider from '@mui/material/Slider';
-import type { FormContextType, GenericObjectType, RJSFSchema, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
+import type { FormContextType, GenericObjectType, RJSFSchema, WidgetProps } from '@rjsf/utils';
 import { ariaDescribedByIds, labelValue, rangeSpec } from '@rjsf/utils';
 
 import { getMuiProps } from '../util';
@@ -21,14 +21,16 @@ export interface RangeWidgetMuiProps extends GenericObjectType {
  *
  * @param props - The `WidgetProps` for this component
  */
-export default function RangeWidget<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
-  props: WidgetProps<T, S, F>,
-) {
+export default function RangeWidget<
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>(props: WidgetProps<T, S, F>) {
   const { value, readonly, disabled, onBlur, onFocus, options, schema, onChange, required, label, hideLabel, id } =
     props;
   const sliderProps = { value, label, id, name: id, ...rangeSpec<S>(schema) };
 
-  const handleChange = (_: any, newValue?: number | number[]) => {
+  const handleChange = (_: Event, newValue?: number | number[]) => {
     onChange(newValue ?? options.emptyValue);
   };
   const handleBlur = ({ target }: FocusEvent<HTMLInputElement>) => onBlur(id, target?.value);

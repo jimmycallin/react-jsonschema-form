@@ -1,5 +1,5 @@
 import rangeSpec from './rangeSpec';
-import type { FormContextType, InputPropsType, RJSFSchema, StrictRJSFSchema, UIOptionsType } from './types';
+import type { FormContextType, InputPropsType, RJSFSchema, UIOptionsType } from './types';
 
 /** Using the `schema`, `defaultType` and `options`, extract out the props for the <input> element that make sense.
  *
@@ -10,9 +10,9 @@ import type { FormContextType, InputPropsType, RJSFSchema, StrictRJSFSchema, UIO
  * @returns - The extracted `InputPropsType` object
  */
 export default function getInputProps<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(
   schema: RJSFSchema,
   defaultType?: string,

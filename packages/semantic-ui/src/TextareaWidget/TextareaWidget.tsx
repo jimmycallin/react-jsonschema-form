@@ -1,5 +1,5 @@
 import type { ChangeEvent } from 'react';
-import type { FormContextType, RJSFSchema, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
+import type { FormContextType, RJSFSchema, WidgetProps } from '@rjsf/utils';
 import { ariaDescribedByIds, labelValue } from '@rjsf/utils';
 import { Form } from 'semantic-ui-react';
 
@@ -10,9 +10,9 @@ import { getSemanticProps } from '../util';
  * @param props - The `WidgetProps` for this component
  */
 export default function TextareaWidget<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(props: WidgetProps<T, S, F>) {
   const {
     id,

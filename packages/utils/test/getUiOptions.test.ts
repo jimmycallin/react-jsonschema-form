@@ -2,7 +2,14 @@ import noop from 'lodash/noop';
 import type { MockInstance } from 'vitest';
 
 import type { GlobalUISchemaOptions, UIOptionsType, UiSchema } from '../src';
-import { getUiOptions } from '../src';
+import { getUiOptions, isUiSchema } from '../src';
+
+/** Reads a nested uiSchema out of the fixture below; nested values on a `UiSchema` are `unknown`, and some of the
+ * fixtures below are deliberately malformed, so the guard is how they get narrowed for the call
+ */
+function nested(value: unknown): UiSchema {
+  return isUiSchema(value) ? value : {};
+}
 
 const uiSchema: UiSchema = {
   widgetText: {
@@ -65,28 +72,28 @@ describe('getUiOptions()', () => {
     expect(getUiOptions(undefined, globalOptions)).toEqual(globalOptions);
   });
   it('returns globalOptions when uiSchema is null', () => {
-    expect(getUiOptions(null as any, globalOptions)).toEqual(globalOptions);
+    expect(getUiOptions(null as unknown as UiSchema, globalOptions)).toEqual(globalOptions);
   });
   it('returns array object as options', () => {
-    expect(getUiOptions(uiSchema.arrayObject, globalOptions)).toEqual(results.arrayObject);
+    expect(getUiOptions(nested(uiSchema.arrayObject), globalOptions)).toEqual(results.arrayObject);
     expect(consoleErrorSpy).not.toHaveBeenCalled();
   });
   it('returns widget text as options', () => {
-    expect(getUiOptions(uiSchema.widgetText)).toEqual(results.widgetText);
+    expect(getUiOptions(nested(uiSchema.widgetText))).toEqual(results.widgetText);
     expect(consoleErrorSpy).not.toHaveBeenCalled();
   });
   it('returns widget object as empty, with error', () => {
-    expect(getUiOptions(uiSchema.widgetObject)).toEqual(results.widgetObject);
+    expect(getUiOptions(nested(uiSchema.widgetObject))).toEqual(results.widgetObject);
     expect(consoleErrorSpy).toHaveBeenCalledWith(
       'Setting options via ui:widget object is no longer supported, use ui:options instead',
     );
   });
   it('returns options object as options', () => {
-    expect(getUiOptions(uiSchema.optionsObject)).toEqual(results.optionsObject);
+    expect(getUiOptions(nested(uiSchema.optionsObject))).toEqual(results.optionsObject);
     expect(consoleErrorSpy).toHaveBeenCalledTimes(1);
   });
   it('returns multiple options as options', () => {
-    expect(getUiOptions(uiSchema.multiOptions)).toEqual(results.multiOptions);
+    expect(getUiOptions(nested(uiSchema.multiOptions))).toEqual(results.multiOptions);
     expect(consoleErrorSpy).toHaveBeenCalledTimes(1);
   });
 });

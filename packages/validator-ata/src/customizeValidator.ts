@@ -1,4 +1,4 @@
-import type { FormContextType, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
+import type { FormContextType, RJSFSchema } from '@rjsf/utils';
 
 import type { CustomValidatorOptionsType, Localizer } from './types';
 import ATAValidator from './validator';
@@ -8,9 +8,9 @@ import ATAValidator from './validator';
  * `@rjsf/validator-ajv8`'s `customizeValidator`.
  */
 export default function customizeValidator<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(options: CustomValidatorOptionsType = {}, localizer?: Localizer) {
   return new ATAValidator<T, S, F>(options, localizer);
 }

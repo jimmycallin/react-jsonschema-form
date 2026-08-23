@@ -2,7 +2,7 @@ import type { BoxProps } from '@mui/material/Box';
 import Box from '@mui/material/Box';
 import type { ButtonProps } from '@mui/material/Button';
 import Button from '@mui/material/Button';
-import type { GenericObjectType, FormContextType, RJSFSchema, StrictRJSFSchema, SubmitButtonProps } from '@rjsf/utils';
+import type { GenericObjectType, FormContextType, RJSFSchema, SubmitButtonProps } from '@rjsf/utils';
 import { getSubmitButtonOptions, getUiOptions } from '@rjsf/utils';
 
 import { computeSxProps, getMuiProps } from '../util';
@@ -21,9 +21,9 @@ export interface SubmitButtonMuiProps extends GenericObjectType {
 /** The `SubmitButton` renders a button that represent the `Submit` action on a form
  */
 export default function SubmitButton<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >({ uiSchema }: SubmitButtonProps<T, S, F>) {
   const { submitText, norender, props: submitButtonProps = {} } = getSubmitButtonOptions<T, S, F>(uiSchema);
   if (norender) {

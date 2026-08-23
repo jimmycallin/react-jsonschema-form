@@ -1,4 +1,4 @@
-import type { FormContextType, ObjectFieldTemplateProps, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
+import type { FormContextType, ObjectFieldTemplateProps, RJSFSchema } from '@rjsf/utils';
 import { buttonId, canExpand, descriptionId, getTemplate, getUiOptions, titleId } from '@rjsf/utils';
 
 /** The `ObjectFieldTemplate` is the template to use to render all the inner properties of an object along with the
@@ -8,9 +8,9 @@ import { buttonId, canExpand, descriptionId, getTemplate, getUiOptions, titleId 
  * @param props - The `ObjectFieldTemplateProps` for this component
  */
 export default function ObjectFieldTemplate<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >({
   description,
   title,
@@ -62,7 +62,7 @@ export default function ObjectFieldTemplate<
       )}
       <div className='flex flex-col gap-2'>
         {!showOptionalDataControlInTitle ? optionalDataControl : undefined}
-        {properties.map((element: any) => (
+        {properties.map((element) => (
           <div key={element.name} className={`${element.hidden ? 'hidden' : ''} flex`}>
             <div className='w-full'>{element.content}</div>
           </div>

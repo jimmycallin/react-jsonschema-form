@@ -1,5 +1,5 @@
 import type { BoxProps, FormHelperTextProps, GridProps, PaperProps, SxProps, TypographyProps } from '@mui/material';
-import type { FormContextType, RJSFSchema, StrictRJSFSchema, UIOptionsType, GenericObjectType } from '@rjsf/utils';
+import type { FormContextType, RJSFSchema, UIOptionsType, GenericObjectType } from '@rjsf/utils';
 
 /**
  * Extract props meant for MUI components from the `options` field of the `uiSchema`.
@@ -9,14 +9,14 @@ import type { FormContextType, RJSFSchema, StrictRJSFSchema, UIOptionsType, Gene
  * @returns {P}
  */
 export function getMuiProps<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
-  P extends GenericObjectType = GenericObjectType,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+  P extends object = GenericObjectType,
 >(options: UIOptionsType<T, S, F>, propsToFilter?: string[], rjsfSlotPropsOnly?: boolean): P {
   const muiProps = (options?.mui as P) || ({} as P);
   if (rjsfSlotPropsOnly) {
-    const { rjsfSlotProps } = muiProps as any;
+    const { rjsfSlotProps } = muiProps as { rjsfSlotProps?: unknown };
     return { rjsfSlotProps } as unknown as P;
   }
   if (propsToFilter) {
@@ -46,7 +46,7 @@ export function getMuiProps<
  */
 export function computeSxProps<MuiProps extends GridProps>(
   sxProps: SxProps,
-  muiProps: MuiProps & { sx: any[] },
+  muiProps: MuiProps & { sx: SxProps[] },
 ): MuiProps['sx'] | MuiProps['sx'][];
 export function computeSxProps<MuiProps extends BoxProps | FormHelperTextProps | PaperProps | TypographyProps>(
   sxProps: SxProps,

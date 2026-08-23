@@ -1,4 +1,4 @@
-import type { TitleFieldProps, StrictRJSFSchema, RJSFSchema, FormContextType } from '@rjsf/utils';
+import type { TitleFieldProps, RJSFSchema, FormContextType } from '@rjsf/utils';
 import { getUiOptions } from '@rjsf/utils';
 
 /** The `TitleField` component renders the title for a form section or field
@@ -12,9 +12,11 @@ import { getUiOptions } from '@rjsf/utils';
  *
  * @param props - The `TitleFieldProps` for the component
  */
-export default function TitleField<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
-  props: TitleFieldProps<T, S, F>,
-) {
+export default function TitleField<
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>(props: TitleFieldProps<T, S, F>) {
   const { id, title, uiSchema, optionalDataControl } = props;
   const uiOptions = getUiOptions<T, S, F>(uiSchema);
 

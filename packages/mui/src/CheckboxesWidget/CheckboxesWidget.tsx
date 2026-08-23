@@ -6,7 +6,7 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import type { FormGroupProps } from '@mui/material/FormGroup';
 import FormGroup from '@mui/material/FormGroup';
 import FormLabel from '@mui/material/FormLabel';
-import type { FormContextType, GenericObjectType, WidgetProps, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
+import type { FormContextType, GenericObjectType, WidgetProps, RJSFSchema } from '@rjsf/utils';
 import {
   ariaDescribedByIds,
   enumOptionValueDecoder,
@@ -39,9 +39,9 @@ export interface CheckboxesWidgetMuiProps extends GenericObjectType {
  * @param props - The `WidgetProps` for this component
  */
 export default function CheckboxesWidget<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(props: WidgetProps<T, S, F>) {
   const {
     label,

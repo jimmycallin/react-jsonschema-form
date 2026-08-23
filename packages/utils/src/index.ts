@@ -51,6 +51,7 @@ import isFixedItems from './isFixedItems';
 import isFormDataAvailable from './isFormDataAvailable';
 import isObject from './isObject';
 import isRootSchema from './isRootSchema';
+import isUiSchema from './isUiSchema';
 import labelValue from './labelValue';
 import localToUTC from './localToUTC';
 import logUnsupportedDefaultForEnum from './logUnsupportedDefaultForEnum';
@@ -158,6 +159,7 @@ export {
   isFormDataAvailable,
   isObject,
   isRootSchema,
+  isUiSchema,
   labelValue,
   localToUTC,
   logUnsupportedDefaultForEnum,

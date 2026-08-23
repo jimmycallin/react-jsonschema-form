@@ -1,13 +1,17 @@
 import type { FocusEvent } from 'react';
 import type { SliderValueChangeDetails } from '@chakra-ui/react';
-import type { FormContextType, RJSFSchema, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
+import type { FormContextType, RJSFSchema, WidgetProps } from '@rjsf/utils';
 import { ariaDescribedByIds, labelValue, rangeSpec } from '@rjsf/utils';
 
 import { Field } from '../components/ui/field';
 import { Slider } from '../components/ui/slider';
 import { getChakra } from '../utils';
 
-export default function RangeWidget<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>({
+export default function RangeWidget<
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>({
   value,
   readonly,
   disabled,

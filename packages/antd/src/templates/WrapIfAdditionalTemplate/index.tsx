@@ -1,6 +1,8 @@
-import type { FormContextType, RJSFSchema, StrictRJSFSchema, WrapIfAdditionalTemplateProps } from '@rjsf/utils';
+import type { FormContextType, RJSFSchema, WrapIfAdditionalTemplateProps } from '@rjsf/utils';
 import { ADDITIONAL_PROPERTY_FLAG, UI_OPTIONS_KEY, TranslatableString, buttonId } from '@rjsf/utils';
 import { Col, Row, Form, Input } from 'antd';
+
+import { getAntdFormContext } from '../../utils';
 
 const VERTICAL_LABEL_COL = { span: 24 };
 const VERTICAL_WRAPPER_COL = { span: 24 };
@@ -15,9 +17,9 @@ const INPUT_STYLE = {
  * @param props - The `WrapIfAdditionalProps` for this component
  */
 export default function WrapIfAdditionalTemplate<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(props: WrapIfAdditionalTemplateProps<T, S, F>) {
   const {
     children,
@@ -43,7 +45,7 @@ export default function WrapIfAdditionalTemplate<
     toolbarAlign = 'top',
     wrapperCol = VERTICAL_WRAPPER_COL,
     wrapperStyle,
-  } = registry.formContext;
+  } = getAntdFormContext(registry.formContext);
   const { templates, translateString } = registry;
   // Button templates are not overridden in the uiSchema
   const { RemoveButton } = templates.ButtonTemplates;

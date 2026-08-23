@@ -1,4 +1,4 @@
-import type { FormContextType, RegistryWidgetsType, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
+import type { FormContextType, RegistryWidgetsType, RJSFSchema } from '@rjsf/utils';
 
 import AltDateTimeWidget from './AltDateTimeWidget';
 import AltDateWidget from './AltDateWidget';
@@ -13,9 +13,9 @@ import SelectWidget from './SelectWidget';
 import TextareaWidget from './TextareaWidget';
 
 export function generateWidgets<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(): RegistryWidgetsType<T, S, F> {
   return {
     AltDateTimeWidget,

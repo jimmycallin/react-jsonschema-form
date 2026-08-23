@@ -1,13 +1,16 @@
-import type { ErrorTransformer } from '@rjsf/utils';
+import type { CustomValidator, ErrorTransformer, FieldValidation } from '@rjsf/utils';
+import { isObject } from '@rjsf/utils';
 
 import type { Sample } from './Sample';
 
-function customValidate({ pass1, pass2 }: { pass1: string; pass2: string }, errors: any) {
-  if (pass1 !== pass2) {
-    errors.pass2.addError("Passwords don't match.");
+const customValidate: CustomValidator = (formData, errors) => {
+  if (isObject(formData) && formData.pass1 !== formData.pass2) {
+    // `errors` is keyed by the form's properties; this sample's schema has a `pass2` field
+    const pass2Errors = errors.pass2 as FieldValidation | undefined;
+    pass2Errors?.addError("Passwords don't match.");
   }
   return errors;
-}
+};
 
 const transformErrors: ErrorTransformer = (errors) =>
   errors.map((error) => {

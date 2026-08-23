@@ -8,7 +8,6 @@ import type {
   FieldPathList,
   FormContextType,
   PathSchema,
-  StrictRJSFSchema,
   Registry,
   RegistryFieldsType,
   RegistryWidgetsType,
@@ -67,7 +66,11 @@ import { ADDITIONAL_PROPERTY_KEY_REMOVE, IS_RESET } from './constants';
 type DeprecatedBooleanOption = boolean;
 
 /** The properties that are passed to the `Form` */
-export interface FormProps<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any> {
+export interface FormProps<
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+> {
   /** The JSON schema object for the form */
   schema: S;
   /** An implementation of the `ValidatorType` interface that is needed for form validation to work */
@@ -132,15 +135,15 @@ export interface FormProps<T = any, S extends StrictRJSFSchema = RJSFSchema, F e
    * and its data are valid. It will be passed a result object having a `formData` attribute, which is the valid form
    * data you're usually after. The original event will also be passed as a second parameter
    */
-  onSubmit?: (data: IChangeEvent<T, S, F>, event: FormEvent<any>) => void;
+  onSubmit?: (data: IChangeEvent<T, S, F>, event: FormEvent<HTMLFormElement>) => void;
   /** Sometimes you may want to trigger events or modify external state when a field has been touched, so you can pass
    * an `onBlur` handler, which will receive the id of the input that was blurred and the field value
    */
-  onBlur?: (id: string, data: any) => void;
+  onBlur?: (id: string, data: unknown) => void;
   /** Sometimes you may want to trigger events or modify external state when a field has been focused, so you can pass
    * an `onFocus` handler, which will receive the id of the input that is focused and the field value
    */
-  onFocus?: (id: string, data: any) => void;
+  onFocus?: (id: string, data: unknown) => void;
   /** The value of this prop will be passed to the `accept-charset` HTML attribute on the form */
   acceptCharset?: string;
   /** The value of this prop will be passed to the `action` HTML attribute on the form
@@ -285,7 +288,11 @@ export interface FormProps<T = any, S extends StrictRJSFSchema = RJSFSchema, F e
 }
 
 /** The data that is contained within the state for the `Form` */
-export interface FormState<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any> {
+export interface FormState<
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+> {
   /** The JSON schema object for the form */
   schema: S;
   /** The uiSchema for the form */
@@ -327,9 +334,9 @@ export interface FormState<T = any, S extends StrictRJSFSchema = RJSFSchema, F e
  * the schema validation errors. An additional `status` is added when returned from `onSubmit`
  */
 export interface IChangeEvent<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 > extends Pick<
   FormState<T, S, F>,
   'schema' | 'uiSchema' | 'fieldPathId' | 'schemaUtils' | 'formData' | 'edit' | 'errors' | 'errorSchema'
@@ -344,7 +351,7 @@ export interface IChangeEvent<
  * @param status - The status provided by the onSubmit
  * @returns - The `IChangeEvent` for the state
  */
-function toIChangeEvent<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
+function toIChangeEvent<T = unknown, S extends RJSFSchema = RJSFSchema, F extends FormContextType = FormContextType>(
   state: FormState<T, S, F>,
   status?: IChangeEvent['status'],
 ): IChangeEvent<T, S, F> {
@@ -369,14 +376,14 @@ interface PendingChange<T> {
 
 /** The `Form` component renders the outer form and all the fields defined in the `schema` */
 export default class Form<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 > extends Component<FormProps<T, S, F>, FormState<T, S, F>> {
-  /** The ref used to hold the `form` element, this needs to be `any` because `tagName` or `_internalFormWrapper` can
-   * provide any possible type here
+  /** The ref used to hold the `form` element. `tagName` and `_internalFormWrapper` can render something other than a
+   * `<form>`, so consumers should not assume more than the `HTMLFormElement` API this uses.
    */
-  formElement: RefObject<any>;
+  formElement: RefObject<HTMLFormElement | null>;
 
   /** The list of pending changes
    */
@@ -394,10 +401,11 @@ export default class Form<
    * @param state - The current state
    * @returns Partial state with re-merged errors if `extraErrors` changed, or `null` if no update is needed
    */
-  static getDerivedStateFromProps<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
-    props: FormProps<T, S, F>,
-    state: FormState<T, S, F>,
-  ): Partial<FormState<T, S, F>> | null {
+  static getDerivedStateFromProps<
+    T = unknown,
+    S extends RJSFSchema = RJSFSchema,
+    F extends FormContextType = FormContextType,
+  >(props: FormProps<T, S, F>, state: FormState<T, S, F>): Partial<FormState<T, S, F>> | null {
     if (props.extraErrors !== state.prevExtraErrors) {
       const baseErrors: ValidationData<T> = {
         errors: state.schemaValidationErrors || [],
@@ -802,7 +810,7 @@ export default class Form<
    * @return - The `extraErrors` and `customErrors` merged into the `schemaValidation`
    * @private
    */
-  private static mergeErrors<T = any>(
+  private static mergeErrors<T = unknown>(
     schemaValidation: ValidationData<T>,
     extraErrors?: FormProps['extraErrors'],
     customErrors?: ErrorSchemaBuilder,
@@ -859,7 +867,11 @@ export default class Form<
     const schemaValidationErrors = errors;
     const schemaValidationErrorSchema = errorSchema;
     const mergedErrors = Form.mergeErrors<T>({ errorSchema, errors }, extraErrors, customErrors);
-    return { ...mergedErrors, schemaValidationErrors, schemaValidationErrorSchema };
+    return {
+      ...mergedErrors,
+      schemaValidationErrors,
+      schemaValidationErrorSchema,
+    };
   }
 
   /** Returns the `formData` with only the elements specified in the `fields` list
@@ -878,7 +890,9 @@ export default class Form<
    * @deprecated - To be removed as an exported `Form` function in a future release; there isn't a planned replacement
    */
   // oxlint-disable-next-line class-methods-use-this, typescript/no-deprecated
-  getFieldNames = (pathSchema: PathSchema<T>, formData?: T): string[][] => getFieldNames(pathSchema, formData);
+  getFieldNames = (pathSchema: PathSchema<T>, formData?: T): (string | string[])[] =>
+    // oxlint-disable-next-line typescript/no-deprecated
+    getFieldNames(pathSchema, formData);
 
   /** Returns the `formData` after filtering to remove any extra data not in a form field
    *
@@ -1039,7 +1053,6 @@ export default class Form<
 
     if (newErrorSchema) {
       // First check to see if there is an existing validation error on this path...
-      // @ts-expect-error TS2590, because getting from the error schema is confusing TS
       const oldValidationError = !isRootPath ? _get(schemaValidationErrorSchema, path) : schemaValidationErrorSchema;
       // If there is an old validation error for this path, assume we are updating it directly
       if (!_isEmpty(oldValidationError)) {
@@ -1080,7 +1093,12 @@ export default class Form<
         customErrors,
         retrievedSchema,
       );
-      state = { ...state, formData: newFormData, ...liveValidation, customErrors };
+      state = {
+        ...state,
+        formData: newFormData,
+        ...liveValidation,
+        customErrors,
+      };
     } else if (!noValidate && newErrorSchema) {
       // Merging 'newErrorSchema' into 'errorSchema' to display the custom raised errors.
       const mergedErrors = Form.mergeErrors<T>(
@@ -1088,7 +1106,12 @@ export default class Form<
         extraErrors,
         customErrors,
       );
-      state = { ...state, formData: newFormData, ...mergedErrors, customErrors };
+      state = {
+        ...state,
+        formData: newFormData,
+        ...mergedErrors,
+        customErrors,
+      };
     }
 
     this.setState(state as FormState<T, S, F>, () => {
@@ -1153,7 +1176,7 @@ export default class Form<
    * @param id - The unique `id` of the field that was blurred
    * @param data - The data associated with the field that was blurred
    */
-  onBlur = (id: string, data: any) => {
+  onBlur = (id: string, data: unknown) => {
     const { onBlur, omitExtraData, liveOmit, liveValidate } = this.props;
     if (onBlur) {
       onBlur(id, data);
@@ -1203,7 +1226,7 @@ export default class Form<
    * @param id - The unique `id` of the field that was focused
    * @param data - The data associated with the field that was focused
    */
-  onFocus = (id: string, data: any) => {
+  onFocus = (id: string, data: unknown) => {
     const { onFocus } = this.props;
     if (onFocus) {
       onFocus(id, data);
@@ -1218,7 +1241,7 @@ export default class Form<
    *
    * @param event - The submit HTML form event
    */
-  onSubmit = (event: FormEvent<any>) => {
+  onSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (event.target !== event.currentTarget) {
       return;
@@ -1263,9 +1286,9 @@ export default class Form<
    * @private
    */
   private static getGlobalFormOptions<
-    T = any,
-    S extends StrictRJSFSchema = RJSFSchema,
-    F extends FormContextType = any,
+    T = unknown,
+    S extends RJSFSchema = RJSFSchema,
+    F extends FormContextType = FormContextType,
   >(props: FormProps<T, S, F>): GlobalFormOptions {
     const {
       uiSchema = {},
@@ -1282,13 +1305,15 @@ export default class Form<
       idPrefix: rootFieldId || idPrefix,
       idSeparator,
       useFallbackUiForUnsupportedType,
-      ...(experimental_componentUpdateStrategy !== undefined && { experimental_componentUpdateStrategy }),
+      ...(experimental_componentUpdateStrategy !== undefined && {
+        experimental_componentUpdateStrategy,
+      }),
       ...(nameGenerator !== undefined && { nameGenerator }),
     };
   }
 
   /** Computed the registry for the form using the given `props`, `schema` and `schemaUtils` */
-  static getRegistry<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
+  static getRegistry<T = unknown, S extends RJSFSchema = RJSFSchema, F extends FormContextType = FormContextType>(
     props: FormProps<T, S, F>,
     schema: S,
     schemaUtils: SchemaUtilsType<T, S, F>,
@@ -1347,19 +1372,21 @@ export default class Form<
     }
 
     const elementId = path.join(idSeparator);
-    let field = this.formElement.current.elements[elementId];
+    const form = this.formElement.current;
+    if (!form) {
+      return;
+    }
+    // `namedItem` returns the single matching control, or a `RadioNodeList` when several controls share the id
+    let field: Element | RadioNodeList | null = form.elements.namedItem(elementId);
     if (!field) {
       // if not an exact match, try finding a focusable element starting with the element id (like radio buttons or checkboxes)
       // some themes (e.g. shadcn) use button elements instead of native inputs for radio groups
-      field = this.formElement.current.querySelector(`input[id^="${elementId}"], button[id^="${elementId}"]`);
+      field = form.querySelector(`input[id^="${elementId}"], button[id^="${elementId}"]`);
     }
-    if (field?.length) {
-      // If we got a list with length > 0
-      // oxlint-disable-next-line prefer-destructuring
-      field = field[0];
-    }
-    if (field) {
-      field.focus();
+    // If we got a list, take its first entry
+    const target = field instanceof Element ? field : field?.item(0);
+    if (target instanceof HTMLElement) {
+      target.focus();
     }
   }
 
@@ -1471,9 +1498,14 @@ export default class Form<
 
     let { [SUBMIT_BTN_OPTIONS_KEY]: submitOptions = {} } = getUiOptions<T, S, F>(uiSchema);
     if (disabled) {
-      submitOptions = { ...submitOptions, props: { ...submitOptions.props, disabled: true } };
+      submitOptions = {
+        ...submitOptions,
+        props: { ...submitOptions.props, disabled: true },
+      };
     }
-    const submitUiSchema = { [UI_OPTIONS_KEY]: { [SUBMIT_BTN_OPTIONS_KEY]: submitOptions } };
+    const submitUiSchema = {
+      [UI_OPTIONS_KEY]: { [SUBMIT_BTN_OPTIONS_KEY]: submitOptions },
+    };
 
     return (
       <FormTag

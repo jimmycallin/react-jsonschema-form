@@ -1,5 +1,5 @@
 import enumOptionsIsSelected from './enumOptionsIsSelected';
-import type { EnumOptionsType, RJSFSchema, StrictRJSFSchema } from './types';
+import type { EnumOptionsType, RJSFSchema } from './types';
 
 /** Returns the index(es) of the options in `allEnumOptions` whose value(s) match the ones in `value`. All the
  * `enumOptions` are filtered based on whether they are a "selected" `value` and the index of each selected one is then
@@ -12,7 +12,7 @@ import type { EnumOptionsType, RJSFSchema, StrictRJSFSchema } from './types';
  * @returns - A single string index for the first `value` in `allEnumOptions`, if not `multiple`. Otherwise, the list
  *        of indexes for (each of) the value(s) in `value`.
  */
-export default function enumOptionsIndexForValue<S extends StrictRJSFSchema = RJSFSchema>(
+export default function enumOptionsIndexForValue<S extends RJSFSchema = RJSFSchema>(
   value: EnumOptionsType<S>['value'] | EnumOptionsType<S>['value'][],
   allEnumOptions: EnumOptionsType<S>[] = [],
   multiple = false,

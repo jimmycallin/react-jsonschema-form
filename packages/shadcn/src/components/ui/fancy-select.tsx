@@ -12,7 +12,7 @@ import { Command, CommandGroup, CommandItem, CommandList } from './command';
  */
 export interface FancySelectItem {
   /** The value of the item */
-  value: any;
+  value: unknown;
   /** The display label for the item */
   label: string;
   /** The index position of the item */
@@ -30,7 +30,7 @@ interface FancySelectInterface {
   /** Currently selected item value */
   selected: string;
   /** Callback function when value changes */
-  onValueChange?: (value: any) => void;
+  onValueChange?: (value: string) => void;
   /** Whether the component should autofocus */
   autoFocus?: boolean;
   /** ID of the element that describes this select */
@@ -137,7 +137,7 @@ export function FancySelect({
                 {items.map((item) => (
                   <CommandItem
                     ref={item.value === selected ? selectedRef : undefined}
-                    key={item.value}
+                    key={String(item.value)}
                     value={String(item.value)}
                     onMouseDown={(e) => {
                       e.preventDefault();
@@ -145,7 +145,7 @@ export function FancySelect({
                     }}
                     onSelect={() => {
                       if (!item.disabled) {
-                        onValueChange?.(item.value);
+                        onValueChange?.(String(item.value));
                         setOpen(false);
                       }
                     }}

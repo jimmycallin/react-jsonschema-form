@@ -1,12 +1,5 @@
 import { useCallback } from 'react';
-import type {
-  FieldProps,
-  FormContextType,
-  EnumOptionsType,
-  ErrorSchema,
-  RJSFSchema,
-  StrictRJSFSchema,
-} from '@rjsf/utils';
+import type { FieldProps, FormContextType, EnumOptionsType, ErrorSchema, RJSFSchema } from '@rjsf/utils';
 import { getWidget, getUiOptions, optionsList, TranslatableString } from '@rjsf/utils';
 import isObject from 'lodash/isObject';
 
@@ -15,7 +8,7 @@ import isObject from 'lodash/isObject';
  *
  * @param props - The `FieldProps` for this template
  */
-function BooleanField<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
+function BooleanField<T = unknown, S extends RJSFSchema = RJSFSchema, F extends FormContextType = FormContextType>(
   props: FieldProps<T, S, F>,
 ) {
   const {
@@ -64,13 +57,13 @@ function BooleanField<T = any, S extends StrictRJSFSchema = RJSFSchema, F extend
             }
             return undefined;
           })
-          .filter((o: any) => o) as S[], // cast away the error that typescript can't grok is fixed
+          .filter((o) => o !== undefined),
       } as unknown as S,
       uiSchema,
     );
   } else {
     const enums = schema.enum ?? [true, false];
-    if (!enumNames && enums.length === 2 && enums.every((v: any) => typeof v === 'boolean')) {
+    if (!enumNames && enums.length === 2 && enums.every((v) => typeof v === 'boolean')) {
       enumOptions = [
         {
           value: enums[0],

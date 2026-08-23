@@ -7,6 +7,6 @@ import isObject from 'lodash/isObject';
  * @param formData - The data to check
  * @returns - True if `formData` is not undefined, null, a primitive type or an array or an empty object
  */
-export default function isFormDataAvailable<T = any>(formData?: T): boolean {
+export default function isFormDataAvailable<T = unknown>(formData?: T): boolean {
   return formData != null && (!isObject(formData) || Array.isArray(formData) || !isEmpty(formData));
 }

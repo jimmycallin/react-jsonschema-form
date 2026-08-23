@@ -13,16 +13,16 @@ import type { TestValidatorParams, TestValidatorType } from '../schema/types';
  * All tests that use the `TestValidator` are contained within the `@rjsf/utils/test/schema` directory and are run via
  * the `schema.test.ts` file.
  */
-export default function getTestValidator<T = any>({
+export default function getTestValidator<T = unknown>({
   data = [],
   isValid = [],
   errorList = [],
-}: TestValidatorParams): TestValidatorType {
+}: TestValidatorParams<T>): TestValidatorType<T> {
   const testValidator: {
     validatorData: ValidationData<T>[];
     isValidResult: boolean[];
     errorList: RJSFValidationError[][];
-    validator: TestValidatorType;
+    validator: TestValidatorType<T>;
   } = {
     validatorData: data,
     isValidResult: isValid,
@@ -42,7 +42,7 @@ export default function getTestValidator<T = any>({
         return true;
       }),
       rawValidation: vi.fn().mockImplementation(noop),
-      setReturnValues({ isValid, data, errorList }: TestValidatorParams) {
+      setReturnValues({ isValid, data, errorList }: TestValidatorParams<T>) {
         if (isValid !== undefined) {
           testValidator.isValidResult = isValid;
         }

@@ -1,7 +1,7 @@
 import type { JSONSchema7Type } from 'json-schema';
 
 import { CONST_KEY, getSchemaType, isObject } from './';
-import type { RJSFSchema, StrictRJSFSchema } from './types';
+import type { RJSFSchema } from './types';
 
 /**
  * Checks if the schema const property value is an AJV $data reference
@@ -10,7 +10,7 @@ import type { RJSFSchema, StrictRJSFSchema } from './types';
  * @param schema - The schema to check if the const is an AJV $data reference
  * @returns - true if the schema const property value is an AJV $data reference otherwise false.
  */
-export default function constIsAjvDataReference<S extends StrictRJSFSchema = RJSFSchema>(schema: S): boolean {
+export default function constIsAjvDataReference<S extends RJSFSchema = RJSFSchema>(schema: S): boolean {
   const schemaConst = schema[CONST_KEY] as JSONSchema7Type & { $data: string };
   const schemaType = getSchemaType<S>(schema);
   return (

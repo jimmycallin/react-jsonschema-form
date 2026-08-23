@@ -1,3 +1,4 @@
+import { isUiSchema } from '@rjsf/utils';
 import type { RJSFSchema, WidgetProps } from '@rjsf/utils';
 import userEvent from '@testing-library/user-event';
 
@@ -178,9 +179,11 @@ describe('BooleanField', () => {
   });
 
   it('should pass uiSchema to custom widget', () => {
-    const CustomCheckboxWidget = ({ uiSchema }: WidgetProps) => (
-      <div id='custom-ui-option-value'>{uiSchema?.custom_field_key['ui:options'].test}</div>
-    );
+    const CustomCheckboxWidget = ({ uiSchema }: WidgetProps) => {
+      const customFieldUiSchema = uiSchema?.custom_field_key;
+      const test = isUiSchema(customFieldUiSchema) ? customFieldUiSchema['ui:options']?.test : undefined;
+      return <div id='custom-ui-option-value'>{typeof test === 'string' ? test : undefined}</div>;
+    };
 
     const { node } = createFormComponent({
       schema: {

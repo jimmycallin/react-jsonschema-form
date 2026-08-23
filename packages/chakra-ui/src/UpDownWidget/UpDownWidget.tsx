@@ -1,15 +1,17 @@
 import type { FocusEvent } from 'react';
 import type { NumberInputValueChangeDetails } from '@chakra-ui/react';
-import type { FormContextType, RJSFSchema, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
+import type { FormContextType, RJSFSchema, WidgetProps } from '@rjsf/utils';
 import { ariaDescribedByIds, labelValue } from '@rjsf/utils';
 
 import { Field } from '../components/ui/field';
 import { NumberInputRoot } from '../components/ui/number-input';
 import { getChakra } from '../utils';
 
-export default function UpDownWidget<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
-  props: WidgetProps<T, S, F>,
-) {
+export default function UpDownWidget<
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>(props: WidgetProps<T, S, F>) {
   const { id, readonly, disabled, label, hideLabel, value, onChange, onBlur, onFocus, rawErrors, required } = props;
 
   const handleChange = ({ value: newValue }: NumberInputValueChangeDetails) => onChange(newValue);
