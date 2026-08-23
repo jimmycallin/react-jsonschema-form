@@ -17,10 +17,12 @@ export default function mergeObjects(
 ) {
   return Object.keys(obj2).reduce(
     (acc, key) => {
-      const left = obj1 ? obj1[key] : {},
+      const left = obj1[key],
         right = obj2[key];
-      if (obj1 && key in obj1 && isObject(right)) {
-        acc[key] = mergeObjects(left, right, concatArrays);
+      if (key in obj1 && isObject(right)) {
+        // Deep merging a primitive with an object is not meaningful, so the primitive side is treated as empty.
+        // Recursing with a primitive here used to throw, because the `key in obj1` below is invalid on a primitive.
+        acc[key] = mergeObjects(isObject(left) ? left : {}, right, concatArrays);
       } else if (concatArrays && Array.isArray(left) && Array.isArray(right)) {
         let toMerge = right;
         if (concatArrays === 'preventDuplicates') {

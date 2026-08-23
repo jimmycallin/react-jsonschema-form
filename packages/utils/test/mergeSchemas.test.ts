@@ -19,6 +19,11 @@ describe('mergeSchemas()', () => {
     expect(mergeSchemas({ a: { b: undefined } }, { a: { b: { c: 1 } } })).toEqual({ a: { b: { c: 1 } } });
   });
 
+  it('should take the second object when the first holds a primitive under the same key', () => {
+    // Recursing into a primitive used to throw a TypeError; the primitive side is treated as empty instead
+    expect(mergeSchemas({ a: 5 }, { a: { b: 1 } })).toEqual({ a: { b: 1 } });
+  });
+
   it('should recursively merge deeply nested objects', () => {
     const obj1 = {
       a: 1,
