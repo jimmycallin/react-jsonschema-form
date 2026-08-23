@@ -1,7 +1,7 @@
 import type { FocusEvent } from 'react';
 import { useCallback } from 'react';
-import type { WidgetProps, StrictRJSFSchema, FormContextType, RJSFSchema } from '@rjsf/utils';
-import { enumOptionValueDecoder, enumOptionValueEncoder, getOptionValueFormat } from '@rjsf/utils';
+import type { EnumOptionsType, WidgetProps, FormContextType, RJSFSchema } from '@rjsf/utils';
+import { enumOptionValueDecoder, enumOptionValueEncoder, getOptionValueFormat, isObject } from '@rjsf/utils';
 
 /** The `RadioWidget` component renders a group of radio buttons with DaisyUI styling
  *
@@ -15,18 +15,11 @@ import { enumOptionValueDecoder, enumOptionValueEncoder, getOptionValueFormat } 
  *
  * @param props - The `WidgetProps` for this component
  */
-export default function RadioWidget<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>({
-  id,
-  htmlName,
-  options,
-  value,
-  required,
-  disabled,
-  readonly,
-  onChange,
-  onFocus,
-  onBlur,
-}: WidgetProps<T, S, F>) {
+export default function RadioWidget<
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>({ id, htmlName, options, value, required, disabled, readonly, onChange, onFocus, onBlur }: WidgetProps<T, S, F>) {
   const { enumOptions, emptyValue } = options;
   const optionValueFormat = getOptionValueFormat(options);
   const isEnumeratedObject = enumOptions && enumOptions[0]?.value && typeof enumOptions[0].value === 'object';
@@ -36,9 +29,10 @@ export default function RadioWidget<T = any, S extends StrictRJSFSchema = RJSFSc
    * @param option - The option to check
    * @returns Whether the option should be checked
    */
-  const isChecked = (option: any) => {
+  const isChecked = (option: EnumOptionsType<S>) => {
     if (isEnumeratedObject) {
-      return value && value.name === option.value.name;
+      // An "enumerated object" option is matched on its `name`
+      return isObject(value) && isObject(option.value) && value.name === option.value.name;
     }
     return value === option.value;
   };
@@ -80,7 +74,7 @@ export default function RadioWidget<T = any, S extends StrictRJSFSchema = RJSFSc
       {/* Display the options in a vertical flex layout for better spacing */}
       <div className='flex flex-col gap-2 mt-1'>
         {enumOptions?.map((option, index) => (
-          <label key={option.value} className='flex items-center cursor-pointer gap-2'>
+          <label key={String(option.value)} className='flex items-center cursor-pointer gap-2'>
             <input
               type='radio'
               id={`${id}-${option.value}`}

@@ -3,14 +3,14 @@ import getSchemaType from './getSchemaType.ts';
 import getUiOptions from './getUiOptions.ts';
 import isObject from './isObject.ts';
 import isRootSchema from './isRootSchema.ts';
-import type { FormContextType, Registry, RJSFSchema, StrictRJSFSchema, UiSchema } from './types.ts';
+import type { FormContextType, Registry, RJSFSchema, UiSchema } from './types.ts';
 
 /** Returns the unique list of schema types for all of the options in a anyOf/oneOf
  *
  * @param schemas - The list of schemas representing the XxxOf options
  * @returns - All of the unique types contained within the oneOf list
  */
-export function getSchemaTypesForXxxOf<S extends StrictRJSFSchema = RJSFSchema>(schemas: S[]): string | string[] {
+export function getSchemaTypesForXxxOf<S extends RJSFSchema = RJSFSchema>(schemas: S[]): string | string[] {
   const allTypes: string[] = [
     ...new Set(
       schemas
@@ -33,9 +33,9 @@ export function getSchemaTypesForXxxOf<S extends StrictRJSFSchema = RJSFSchema>(
  * @return - True if the field should be rendered with the optional field UI, otherwise false
  */
 export default function shouldRenderOptionalField<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(registry: Registry<T, S, F>, schema: S, required: boolean, uiSchema?: UiSchema<T, S, F>): boolean {
   const { enableOptionalDataFieldForType = [] } = getUiOptions<T, S, F>(uiSchema, registry.globalUiOptions);
   let schemaType: ReturnType<typeof getSchemaType<S>>;

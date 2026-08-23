@@ -116,7 +116,7 @@ export function objectTests(Form: ComponentType<FormProps>) {
       const schema: RJSFSchema = {
         additionalProperties: true,
       };
-      const formData: any = {
+      const formData = {
         additionalProperty: 'should appear',
       };
       const { asFragment } = render(<Form schema={schema} validator={validator} formData={formData} />);
@@ -149,7 +149,7 @@ export function objectTests(Form: ComponentType<FormProps>) {
           ...titleAndDesc,
           additionalProperties: true,
         };
-        const formData: any = {
+        const formData = {
           additionalProperty: 'should appear',
         };
         const { asFragment } = render(<Form schema={schema} validator={validator} formData={formData} />);
@@ -182,7 +182,7 @@ export function objectTests(Form: ComponentType<FormProps>) {
         const schema: RJSFSchema = {
           additionalProperties: true,
         };
-        const formData: any = {
+        const formData = {
           additionalProperty: 'should appear',
         };
         const { asFragment } = render(
@@ -245,7 +245,7 @@ export function objectTests(Form: ComponentType<FormProps>) {
           ...titleAndDesc,
           additionalProperties: true,
         };
-        const formData: any = {
+        const formData = {
           additionalProperty: 'should appear',
         };
         const { asFragment } = render(

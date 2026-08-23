@@ -5,7 +5,7 @@ import { useCallback } from 'react';
 import localTimeToOffsetTime from './localTimeToOffsetTime.ts';
 import offsetTimeToLocalTime from './offsetTimeToLocalTime.ts';
 import padTimeSeconds from './padTimeSeconds.ts';
-import type { FormContextType, RJSFSchema, StrictRJSFSchema, WidgetProps } from './types.ts';
+import type { FormContextType, RJSFSchema, WidgetProps } from './types.ts';
 
 export interface UseTimeWidgetPropsResult {
   /** True when `schema.format` is `iso-time`, meaning a timezone offset is optional rather than required */
@@ -27,9 +27,9 @@ export interface UseTimeWidgetPropsResult {
  * @returns - The `UseTimeWidgetPropsResult` to be used within a `TimeWidget` implementation
  */
 export default function useTimeWidgetProps<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(props: WidgetProps<T, S, F>): UseTimeWidgetPropsResult {
   const { schema, value } = props;
   const isIsoTime = schema.format === 'iso-time';

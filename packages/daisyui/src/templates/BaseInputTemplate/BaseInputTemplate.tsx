@@ -1,7 +1,7 @@
 import type { ChangeEvent, FocusEvent, MouseEvent } from 'react';
 import { useCallback } from 'react';
 import { SchemaExamples } from '@rjsf/core';
-import type { WidgetProps, StrictRJSFSchema, RJSFSchema, FormContextType } from '@rjsf/utils';
+import type { BaseInputTemplateProps, RJSFSchema, FormContextType } from '@rjsf/utils';
 import { getInputProps, ariaDescribedByIds, examplesId } from '@rjsf/utils';
 
 /** The `BaseInputTemplate` component is a template for rendering basic input elements
@@ -19,10 +19,10 @@ import { getInputProps, ariaDescribedByIds, examplesId } from '@rjsf/utils';
  * @param props - The `WidgetProps` for the component
  */
 export default function BaseInputTemplate<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
->(props: WidgetProps<T, S, F>) {
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>(props: BaseInputTemplateProps<T, S, F>) {
   const {
     id,
     htmlName,

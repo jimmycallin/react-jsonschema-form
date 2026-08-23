@@ -4,7 +4,6 @@ import type {
   FormContextType,
   Registry,
   RJSFSchema,
-  StrictRJSFSchema,
   UIOptionsType,
   UiSchema,
   WidgetProps,
@@ -13,7 +12,7 @@ import { getTemplate, TranslatableString, useFileWidgetProps } from '@rjsf/utils
 
 import RichDescription from '../RichDescription.tsx';
 
-function FileInfoPreview<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>({
+function FileInfoPreview<T = unknown, S extends RJSFSchema = RJSFSchema, F extends FormContextType = FormContextType>({
   fileInfo,
   registry,
 }: {
@@ -46,7 +45,7 @@ function FileInfoPreview<T = any, S extends StrictRJSFSchema = RJSFSchema, F ext
   );
 }
 
-function FilesInfo<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>({
+function FilesInfo<T = unknown, S extends RJSFSchema = RJSFSchema, F extends FormContextType = FormContextType>({
   filesInfo,
   registry,
   preview,
@@ -94,7 +93,7 @@ function FilesInfo<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends F
  *  The `FileWidget` is a widget for rendering file upload fields.
  *  It is typically used with a string property with data-url format.
  */
-function FileWidget<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
+function FileWidget<T = unknown, S extends RJSFSchema = RJSFSchema, F extends FormContextType = FormContextType>(
   props: WidgetProps<T, S, F>,
 ) {
   const { disabled, readonly, required, multiple, onChange, value, options, registry, uiSchema } = props;

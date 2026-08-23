@@ -1,4 +1,4 @@
-import type { Field, FormContextType, RegistryFieldsType, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
+import type { Field, FormContextType, RegistryFieldsType, RJSFSchema } from '@rjsf/utils';
 
 import ArrayField from './ArrayField.tsx';
 import BooleanField from './BooleanField.tsx';
@@ -34,9 +34,9 @@ export {
 
 /** The core fields, keyed by the names the `SchemaField` looks them up by */
 export function generateFields<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(): RegistryFieldsType<T, S, F> {
   return {
     AnyOfField: MultiSchemaField,

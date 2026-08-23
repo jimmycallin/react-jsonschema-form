@@ -1,5 +1,5 @@
 import isObject from './isObject.ts';
-import type { RJSFSchema, StrictRJSFSchema } from './types.ts';
+import type { RJSFSchema } from './types.ts';
 
 /** Detects whether the given `schema` contains fixed items. This is the case when `schema.items` is an array that only
  * contains objects.
@@ -7,6 +7,6 @@ import type { RJSFSchema, StrictRJSFSchema } from './types.ts';
  * @param schema - The schema in which to check for fixed items
  * @returns - True if there are fixed items in the schema, false otherwise
  */
-export default function isFixedItems<S extends StrictRJSFSchema = RJSFSchema>(schema: S) {
+export default function isFixedItems<S extends RJSFSchema = RJSFSchema>(schema: S) {
   return Array.isArray(schema.items) && schema.items.every((item) => isObject(item));
 }

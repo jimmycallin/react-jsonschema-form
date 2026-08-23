@@ -1,7 +1,7 @@
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
-import type { CyclicSchemaExpandProps, FormContextType, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
+import type { CyclicSchemaExpandProps, FormContextType, RJSFSchema } from '@rjsf/utils';
 import { ID_KEY, TranslatableString } from '@rjsf/utils';
 
 /** The `CyclicSchemaExpandTemplate` is the template to use to render the cyclic schema expand message and controls
@@ -9,9 +9,9 @@ import { ID_KEY, TranslatableString } from '@rjsf/utils';
  * @param props - The `CyclicSchemaExpandProps` for this component
  */
 export default function CyclicSchemaExpandTemplate<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(props: CyclicSchemaExpandProps<T, S, F>) {
   const { name, fieldPathId, registry, onExpand } = props;
   const { translateString } = registry;

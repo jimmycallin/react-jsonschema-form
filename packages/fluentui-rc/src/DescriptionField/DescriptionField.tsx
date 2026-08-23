@@ -1,6 +1,6 @@
 import { Text, makeStyles, tokens } from '@fluentui/react-components';
 import { RichDescription } from '@rjsf/core';
-import type { DescriptionFieldProps, FormContextType, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
+import type { DescriptionFieldProps, FormContextType, RJSFSchema } from '@rjsf/utils';
 
 const useStyles = makeStyles({
   label: {
@@ -14,9 +14,9 @@ const useStyles = makeStyles({
  * @param props - The `DescriptionFieldProps` for this component
  */
 export default function DescriptionField<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(props: DescriptionFieldProps<T, S, F>) {
   const { id, description, registry, uiSchema } = props;
   const classes = useStyles();

@@ -42,25 +42,31 @@ export const JUNK_OPTION: StrictRJSFSchema = {
  * @param [customMergeAllOf] - Optional function that allows for custom merging of `allOf` schemas
  * @returns - The score a schema against the formData
  */
-export function calculateIndexScore<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
+export function calculateIndexScore<
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>(
   validator: ValidatorType<T, S, F>,
   rootSchema: S,
   schema?: S,
-  formData?: any,
+  formData?: unknown,
   customMergeAllOf?: CustomMergeAllOf<S>,
 ): number {
   let totalScore = 0;
   if (schema) {
     if (isObject(schema.properties)) {
       totalScore += Object.entries(schema.properties).reduce((score, [key, value]) => {
-        const formValue = formData?.[key];
+        // `formData` is only known to be an object here, so the child value is asserted to the field type `T`
+        const formValue = (isObject(formData) ? formData[key] : undefined) as T | undefined;
         if (typeof value === 'boolean') {
           return score;
         }
         if (hasByPath(value, REF_KEY)) {
           const newSchema = retrieveSchema<T, S, F>(validator, value as S, rootSchema, formValue, customMergeAllOf);
           return (
-            score + calculateIndexScore<T, S, F>(validator, rootSchema, newSchema, formValue || {}, customMergeAllOf)
+            score +
+            calculateIndexScore<T, S, F>(validator, rootSchema, newSchema, (formValue || {}) as T, customMergeAllOf)
           );
         }
         if ((hasByPath(value, ONE_OF_KEY) || hasByPath(value, ANY_OF_KEY)) && formValue) {
@@ -136,9 +142,9 @@ export function calculateIndexScore<T = any, S extends StrictRJSFSchema = RJSFSc
  * @returns - The index of the option that is the closest match to the `formData` or the `selectedOption` if no match
  */
 export default function getClosestMatchingOption<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(
   validator: ValidatorType<T, S, F>,
   rootSchema: S,

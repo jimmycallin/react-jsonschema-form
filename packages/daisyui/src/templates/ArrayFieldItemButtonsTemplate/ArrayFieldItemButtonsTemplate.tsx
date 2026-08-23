@@ -1,13 +1,13 @@
-import type { FormContextType, RJSFSchema, StrictRJSFSchema, ArrayFieldItemButtonsTemplateProps } from '@rjsf/utils';
+import type { FormContextType, RJSFSchema, ArrayFieldItemButtonsTemplateProps } from '@rjsf/utils';
 import { buttonId } from '@rjsf/utils';
 
 /** The `ArrayFieldItemButtonsTemplate` component renders the action buttons for an array field item
  * using DaisyUI's join component when multiple buttons are present.
  */
 export default function ArrayFieldItemButtonsTemplate<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(props: ArrayFieldItemButtonsTemplateProps<T, S, F>) {
   const {
     disabled,

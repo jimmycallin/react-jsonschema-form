@@ -289,7 +289,7 @@ describe('ArrayFieldTemplate', () => {
     });
 
     it('should pass formData so it is in sync with items', async () => {
-      const ArrayFieldTemplate = ({ formData, items, onAddClick }: ArrayFieldTemplateProps) => {
+      const ArrayFieldTemplate = ({ formData = [], items, onAddClick }: ArrayFieldTemplateProps<string[]>) => {
         if (formData.length !== items.length) {
           throw new Error('Error');
         }

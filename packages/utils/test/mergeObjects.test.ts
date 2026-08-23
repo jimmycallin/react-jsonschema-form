@@ -15,6 +15,11 @@ describe('mergeObjects()', () => {
     expect(mergeObjects({ a: 1 }, { a: 2 })).toEqual({ a: 2 });
   });
 
+  it('should take the second object when the first holds a primitive under the same key', () => {
+    // Deep merging a primitive with an object is not meaningful, so the primitive side is treated as an empty object
+    expect(mergeObjects({ a: 5 }, { a: { b: 1 } })).toEqual({ a: { b: 1 } });
+  });
+
   it('should override non-existing values of the first object with the values from the second', () => {
     expect(mergeObjects({ a: { b: undefined } }, { a: { b: { c: 1 } } })).toEqual({ a: { b: { c: 1 } } });
   });

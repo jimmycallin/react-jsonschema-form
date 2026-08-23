@@ -1,4 +1,4 @@
-import type { FormContextType, RJSFSchema, StrictRJSFSchema, UnsupportedFieldProps } from '@rjsf/utils';
+import type { FormContextType, RJSFSchema, UnsupportedFieldProps } from '@rjsf/utils';
 import { TranslatableString } from '@rjsf/utils';
 
 import RichDescription from '../RichDescription.tsx';
@@ -8,7 +8,7 @@ import RichDescription from '../RichDescription.tsx';
  *
  * @param props - The `FieldProps` for this template
  */
-function UnsupportedField<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
+function UnsupportedField<T = unknown, S extends RJSFSchema = RJSFSchema, F extends FormContextType = FormContextType>(
   props: UnsupportedFieldProps<T, S, F>,
 ) {
   const { schema, uiSchema, fieldPathId, reason, registry } = props;

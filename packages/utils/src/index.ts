@@ -55,6 +55,7 @@ import isFormDataAvailable from './isFormDataAvailable.ts';
 import isObject from './isObject.ts';
 import isPlainObject from './isPlainObject.ts';
 import isRootSchema from './isRootSchema.ts';
+import isUiSchema from './isUiSchema.ts';
 import labelValue from './labelValue.ts';
 import localTimeToOffsetTime from './localTimeToOffsetTime.ts';
 import localToUTC from './localToUTC.ts';
@@ -177,6 +178,7 @@ export {
   isObject,
   isPlainObject,
   isRootSchema,
+  isUiSchema,
   labelValue,
   localTimeToOffsetTime,
   localToUTC,

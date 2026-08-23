@@ -20,8 +20,8 @@ export type ComponentUpdateStrategy = 'customDeep' | 'shallow' | 'always';
  */
 export default function shouldRender(
   component: React.Component,
-  nextProps: any,
-  nextState: any,
+  nextProps: unknown,
+  nextState: unknown,
   updateStrategy: ComponentUpdateStrategy = 'customDeep',
 ) {
   if (updateStrategy === 'always') {

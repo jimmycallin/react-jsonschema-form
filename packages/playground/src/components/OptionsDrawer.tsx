@@ -312,7 +312,9 @@ export default function OptionsDrawer({
 
   const handleSetLiveSettings = useCallback(
     ({ formData: settingsData }: IChangeEvent) => {
-      setLiveSettings((previousLiveSettings) => ({ ...previousLiveSettings, ...settingsData }));
+      // This form's schema is built from `LiveSettings`, so its data is a partial of it
+      const settings = settingsData as Partial<LiveSettings> | undefined;
+      setLiveSettings((previousLiveSettings) => ({ ...previousLiveSettings, ...settings }));
     },
     [setLiveSettings],
   );

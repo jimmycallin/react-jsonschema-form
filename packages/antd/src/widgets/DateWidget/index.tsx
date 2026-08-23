@@ -1,13 +1,16 @@
-import type { FormContextType, RJSFSchema, StrictRJSFSchema, WidgetProps, GenericObjectType } from '@rjsf/utils';
+import type { FormContextType, RJSFSchema, WidgetProps } from '@rjsf/utils';
 import { ariaDescribedByIds, getDateTimeLocalValue } from '@rjsf/utils';
 import { DatePicker } from 'antd';
+import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
+
+import { getAntdFormContext } from '../../utils.ts';
 
 const DATE_PICKER_STYLE = {
   width: '100%',
 };
 
-type DateWidgetProps<T, S extends StrictRJSFSchema, F extends FormContextType> = WidgetProps<T, S, F> & {
+type DateWidgetProps<T, S extends RJSFSchema, F extends FormContextType> = WidgetProps<T, S, F> & {
   showTime?: boolean;
 };
 
@@ -20,7 +23,11 @@ type DateWidgetProps<T, S extends StrictRJSFSchema, F extends FormContextType> =
  *
  * @param props - The `WidgetProps` for this component
  */
-export default function DateWidget<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>({
+export default function DateWidget<
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>({
   disabled,
   registry,
   id,
@@ -34,10 +41,10 @@ export default function DateWidget<T = any, S extends StrictRJSFSchema = RJSFSch
   schema,
 }: DateWidgetProps<T, S, F>) {
   const { formContext } = registry;
-  const { readonlyAsDisabled = true } = formContext as GenericObjectType;
+  const { readonlyAsDisabled = true } = getAntdFormContext(formContext);
   const { isIsoDateTime, localValue } = getDateTimeLocalValue(schema, value);
 
-  const handleChange = (nextValue: any) => {
+  const handleChange = (nextValue: Dayjs | null) => {
     if (!nextValue) {
       onChange(nextValue);
     } else if (isIsoDateTime) {
@@ -77,4 +84,5 @@ export default function DateWidget<T = any, S extends StrictRJSFSchema = RJSFSch
  * disabled while in the playground. Since the callback is a simple function, it can be returned by this static
  * "generator" function.
  */
-DateWidget.getPopupContainerCallback = () => (node: any) => node.parentNode;
+// `parentNode` is typed as the more general `ParentNode`, but antd renders the popup into an element
+DateWidget.getPopupContainerCallback = () => (node: HTMLElement) => node.parentNode as HTMLElement;

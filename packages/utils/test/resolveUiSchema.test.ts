@@ -1,5 +1,12 @@
 import type { Registry, RJSFSchema, TemplatesType, UiSchema, UiSchemaDefinitions } from '../src/index.ts';
-import { RJSF_REF_KEY, noop, resolveUiSchema } from '../src/index.ts';
+import { RJSF_REF_KEY, isUiSchema, noop, resolveUiSchema } from '../src/index.ts';
+
+/** Reads the `oneOf` branch uiSchemas that `resolveUiSchema` populates; `oneOf` is not a well-known `UiSchema` key, so
+ * it reads back as `unknown` and has to be narrowed
+ */
+function oneOfBranches({ oneOf }: UiSchema): (UiSchema | undefined)[] {
+  return Array.isArray(oneOf) ? oneOf.map((entry: unknown) => (isUiSchema(entry) ? entry : undefined)) : [];
+}
 
 beforeEach(() => {
   vi.spyOn(console, 'warn').mockImplementation(noop);
@@ -172,7 +179,7 @@ describe('resolveUiSchema() - oneOf/anyOf branch walking', () => {
 
     const result = resolveUiSchema(schema, undefined, reg);
     expect(result['ui:title']).toBe('W');
-    expect(result.oneOf?.[0]).toEqual({ 'ui:title': 'A' });
+    expect(oneOfBranches(result)[0]).toEqual({ 'ui:title': 'A' });
   });
 });
 

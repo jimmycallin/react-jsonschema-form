@@ -1,13 +1,6 @@
 import { UI_OPTIONS_KEY, UI_WIDGET_KEY } from './constants.ts';
 import isObject from './isObject.ts';
-import type {
-  FormContextType,
-  GlobalUISchemaOptions,
-  RJSFSchema,
-  StrictRJSFSchema,
-  UIOptionsType,
-  UiSchema,
-} from './types.ts';
+import type { FormContextType, GlobalUISchemaOptions, RJSFSchema, UIOptionsType, UiSchema } from './types.ts';
 
 /** Narrows a uiSchema key to the `ui:` namespace, so indexing resolves against that index signature */
 function isUiKey(key: string): key is `ui:${string}` {
@@ -21,10 +14,11 @@ function isUiKey(key: string): key is `ui:${string}` {
  * @param [globalOptions={}] - The optional Global UI Schema from which to get any fallback `xxx` options
  * @returns - An object containing all the `ui:xxx` options with the `ui:` stripped off along with all `globalOptions`
  */
-export default function getUiOptions<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
-  uiSchema: UiSchema<T, S, F> = {},
-  globalOptions: GlobalUISchemaOptions = {},
-): UIOptionsType<T, S, F> {
+export default function getUiOptions<
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>(uiSchema: UiSchema<T, S, F> = {}, globalOptions: GlobalUISchemaOptions = {}): UIOptionsType<T, S, F> {
   // Handle null or undefined uiSchema
   if (!uiSchema) {
     return { ...globalOptions };

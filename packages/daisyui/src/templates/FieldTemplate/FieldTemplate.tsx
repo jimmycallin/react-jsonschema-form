@@ -1,4 +1,4 @@
-import type { FieldTemplateProps, StrictRJSFSchema, RJSFSchema, FormContextType } from '@rjsf/utils';
+import type { FieldTemplateProps, RJSFSchema, FormContextType } from '@rjsf/utils';
 import { getTemplate, getUiOptions } from '@rjsf/utils';
 
 import { getDaisy } from '../../utils.ts';
@@ -18,9 +18,9 @@ import { getDaisy } from '../../utils.ts';
  * @param props - The `FieldTemplateProps` for the component
  */
 export default function FieldTemplate<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(props: FieldTemplateProps<T, S, F>) {
   const {
     id,

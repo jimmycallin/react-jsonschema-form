@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import type { FallbackFieldProps, FieldPathId, FormContextType, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
+import type { FallbackFieldProps, FieldPathId, FormContextType, RJSFSchema } from '@rjsf/utils';
 import {
   getTemplate,
   getUiOptions,
@@ -27,7 +27,7 @@ function getFallbackTypeSelectionSchema(title: string): RJSFSchema {
  * Determines the JSON Schema type of the given formData.
  * @param formData - The form data whose type is to be determined.
  */
-function getTypeOfFormData(formData: any): JSONSchema7TypeName {
+function getTypeOfFormData(formData: unknown): JSONSchema7TypeName {
   const dataType = typeof formData;
   if (dataType === 'string' || dataType === 'number' || dataType === 'boolean') {
     return dataType;
@@ -44,7 +44,7 @@ function getTypeOfFormData(formData: any): JSONSchema7TypeName {
  * @param formData - The form data to be casted.
  * @param newType - The target type to which the form data should be casted.
  */
-function castToNewType<T = any>(formData: T, newType: JSONSchema7TypeName): T {
+function castToNewType<T = unknown>(formData: T, newType: JSONSchema7TypeName): T {
   switch (newType) {
     case 'string':
       return String(formData) as T;
@@ -64,9 +64,9 @@ function castToNewType<T = any>(formData: T, newType: JSONSchema7TypeName): T {
  * `useFallbackUiForUnsupportedType` is enabled in the `globalUiOptions`, it provides a type selector
  */
 export default function FallbackField<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(props: FallbackFieldProps<T, S, F>) {
   const {
     id,

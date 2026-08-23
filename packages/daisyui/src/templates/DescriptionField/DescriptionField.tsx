@@ -1,5 +1,5 @@
 import { RichDescription } from '@rjsf/core';
-import type { DescriptionFieldProps, StrictRJSFSchema, RJSFSchema, FormContextType } from '@rjsf/utils';
+import type { DescriptionFieldProps, RJSFSchema, FormContextType } from '@rjsf/utils';
 
 /** The `DescriptionField` component renders descriptive text for a form field
  * with DaisyUI styling. It displays the description in a subtle text color
@@ -8,9 +8,9 @@ import type { DescriptionFieldProps, StrictRJSFSchema, RJSFSchema, FormContextTy
  * @param props - The `DescriptionFieldProps` for the component
  */
 export default function DescriptionField<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(props: DescriptionFieldProps<T, S, F>) {
   const { id, description, registry, uiSchema } = props;
   if (!description) {

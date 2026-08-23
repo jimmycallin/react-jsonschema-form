@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react';
-import type { ArrayFieldItemTemplateProps, FormContextType, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
+import type { ArrayFieldItemTemplateProps, FormContextType, RJSFSchema } from '@rjsf/utils';
 import { getTemplate, getUiOptions } from '@rjsf/utils';
 
 /** The `ArrayFieldItemTemplate` component is the template used to render an items of an array.
@@ -7,9 +7,9 @@ import { getTemplate, getUiOptions } from '@rjsf/utils';
  * @param props - The `ArrayFieldItemTemplateProps` props for the component
  */
 export default function ArrayFieldItemTemplate<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(props: ArrayFieldItemTemplateProps<T, S, F>) {
   const { children, className, buttonsProps, displayLabel, hasDescription, hasToolbar, registry, uiSchema } = props;
   const uiOptions = getUiOptions<T, S, F>(uiSchema);
@@ -25,8 +25,15 @@ export default function ArrayFieldItemTemplate<
     fontWeight: 'bold',
   };
   const margin = hasDescription ? 31 : 9;
-  const containerStyle = { display: 'flex', alignItems: displayLabel ? 'center' : 'baseline' };
-  const toolbarStyle = { display: 'flex', justifyContent: 'flex-end', marginTop: displayLabel ? `${margin}px` : 0 };
+  const containerStyle = {
+    display: 'flex',
+    alignItems: displayLabel ? 'center' : 'baseline',
+  };
+  const toolbarStyle = {
+    display: 'flex',
+    justifyContent: 'flex-end',
+    marginTop: displayLabel ? `${margin}px` : 0,
+  };
   return (
     <div className={className} style={containerStyle}>
       <div className={hasToolbar ? 'col-xs-9 col-md-10 col-xl-11' : 'col-xs-12'}>{children}</div>

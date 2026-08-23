@@ -1,4 +1,4 @@
-import type { FormContextType, MarkdownTemplateProps, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
+import type { FormContextType, MarkdownTemplateProps, RJSFSchema } from '@rjsf/utils';
 import { getTestIds } from '@rjsf/utils';
 import { Markdown } from 'markdown-to-jsx/react';
 
@@ -8,9 +8,9 @@ const TEST_IDS = getTestIds();
  * `markdown-to-jsx`, which is what lets it be an optional peer dependency.
  */
 export default function MarkdownTemplate<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >({ children }: MarkdownTemplateProps<T, S, F>) {
   return (
     <Markdown options={{ disableParsingRawHTML: true }} data-testid={TEST_IDS.markdown}>

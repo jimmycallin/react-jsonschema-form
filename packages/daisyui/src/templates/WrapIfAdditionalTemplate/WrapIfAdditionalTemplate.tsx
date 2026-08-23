@@ -1,4 +1,4 @@
-import type { WrapIfAdditionalTemplateProps, StrictRJSFSchema, RJSFSchema, FormContextType } from '@rjsf/utils';
+import type { WrapIfAdditionalTemplateProps, RJSFSchema, FormContextType } from '@rjsf/utils';
 import { buttonId, ADDITIONAL_PROPERTY_FLAG, TranslatableString } from '@rjsf/utils';
 
 /** The `WrapIfAdditional` component is used by the `FieldTemplate` to rename, or remove properties that are
@@ -7,9 +7,9 @@ import { buttonId, ADDITIONAL_PROPERTY_FLAG, TranslatableString } from '@rjsf/ut
  * @param props - The `WrapIfAdditionalProps` for this component
  */
 export default function WrapIfAdditionalTemplate<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(props: WrapIfAdditionalTemplateProps<T, S, F>) {
   const {
     children,

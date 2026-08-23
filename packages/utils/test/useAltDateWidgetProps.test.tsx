@@ -73,13 +73,14 @@ const MOCKED_DATE = new Date(DATE_TIME_STR);
 const REGISTRY = {
   widgets: { SelectWidget },
 } as unknown as Registry;
+const YEARS_RANGE: [number, number] = [2000, 2030];
 const PROPS: WidgetProps = {
   id: 'root',
   name: 'root',
   label: '',
   schema: { type: 'string', format: 'date-time' },
   registry: REGISTRY,
-  options: { yearsRange: [2000, 2030] },
+  options: { yearsRange: YEARS_RANGE },
   onChange: vi.fn(),
   onBlur: vi.fn(),
   onFocus: vi.fn(),
@@ -103,7 +104,7 @@ describe('useAltDateWidgetProps()', () => {
     const { result } = renderHook(() => useAltDateWidgetProps(PROPS));
     const { elements, handleChange, handleClear, handleSetNow } = result.current;
     const dateObj = parseDateString();
-    const expectedElements = getDateElementProps(dateObj, false, PROPS.options.yearsRange);
+    const expectedElements = getDateElementProps(dateObj, false, YEARS_RANGE);
     expect(elements).toEqual(expectedElements);
     expect(handleChange).toBeInstanceOf(Function);
     expect(handleClear).toBeInstanceOf(Function);
@@ -122,7 +123,7 @@ describe('useAltDateWidgetProps()', () => {
     const { result } = renderHook(() => useAltDateWidgetProps(props));
     const { elements, handleChange, handleClear, handleSetNow } = result.current;
     const dateObj = parseDateString(DATE_STR);
-    const expectedElements = getDateElementProps(dateObj, false, PROPS.options.yearsRange);
+    const expectedElements = getDateElementProps(dateObj, false, YEARS_RANGE);
     expect(elements).toEqual(expectedElements);
     expect(handleChange).toBeInstanceOf(Function);
     expect(handleClear).toBeInstanceOf(Function);
@@ -140,7 +141,7 @@ describe('useAltDateWidgetProps()', () => {
     const { result, rerender: rerenderHook } = renderHook(() => useAltDateWidgetProps(PROPS));
     const { elements, handleChange, handleClear, handleSetNow } = result.current;
     const dateObj = parseDateString();
-    let expectedElements = getDateElementProps(dateObj, false, PROPS.options.yearsRange);
+    let expectedElements = getDateElementProps(dateObj, false, YEARS_RANGE);
     expect(elements).toEqual(expectedElements);
     expect(handleChange).toBeInstanceOf(Function);
     expect(handleClear).toBeInstanceOf(Function);
@@ -155,7 +156,7 @@ describe('useAltDateWidgetProps()', () => {
     expect(PROPS.onChange).not.toHaveBeenCalled();
     rerenderHook(() => useAltDateWidgetProps(PROPS));
     dateObj.year = 2023;
-    expectedElements = getDateElementProps(dateObj, false, PROPS.options.yearsRange);
+    expectedElements = getDateElementProps(dateObj, false, YEARS_RANGE);
     expect(result.current.elements).toEqual(expectedElements);
     rerender(
       <DateElementsTester elements={result.current.elements} handleChange={result.current.handleChange} {...PROPS} />,
@@ -166,7 +167,7 @@ describe('useAltDateWidgetProps()', () => {
     expect(PROPS.onChange).not.toHaveBeenCalled();
     rerenderHook(() => useAltDateWidgetProps(PROPS));
     dateObj.month = 10;
-    expectedElements = getDateElementProps(dateObj, false, PROPS.options.yearsRange);
+    expectedElements = getDateElementProps(dateObj, false, YEARS_RANGE);
     expect(result.current.elements).toEqual(expectedElements);
     rerender(
       <DateElementsTester elements={result.current.elements} handleChange={result.current.handleChange} {...PROPS} />,
@@ -180,7 +181,7 @@ describe('useAltDateWidgetProps()', () => {
     const { result } = renderHook(() => useAltDateWidgetProps(TIME_PROPS));
     const { elements, handleChange, handleClear, handleSetNow } = result.current;
     const dateObj = parseDateString();
-    const expectedElements = getDateElementProps(dateObj, true, TIME_PROPS.options.yearsRange);
+    const expectedElements = getDateElementProps(dateObj, true, YEARS_RANGE);
     expect(elements).toEqual(expectedElements);
     expect(handleChange).toBeInstanceOf(Function);
     expect(handleClear).toBeInstanceOf(Function);
@@ -199,7 +200,7 @@ describe('useAltDateWidgetProps()', () => {
     const { result } = renderHook(() => useAltDateWidgetProps(props));
     const { elements, handleChange, handleClear, handleSetNow } = result.current;
     const dateObj = parseDateString(DATE_TIME_STR);
-    const expectedElements = getDateElementProps(dateObj, true, TIME_PROPS.options.yearsRange);
+    const expectedElements = getDateElementProps(dateObj, true, YEARS_RANGE);
     expect(elements).toEqual(expectedElements);
     expect(handleChange).toBeInstanceOf(Function);
     expect(handleClear).toBeInstanceOf(Function);
@@ -217,7 +218,7 @@ describe('useAltDateWidgetProps()', () => {
     const { result, rerender: rerenderHook } = renderHook(() => useAltDateWidgetProps(TIME_PROPS));
     const { elements, handleChange, handleClear, handleSetNow } = result.current;
     const dateObj = parseDateString();
-    let expectedElements = getDateElementProps(dateObj, true, TIME_PROPS.options.yearsRange);
+    let expectedElements = getDateElementProps(dateObj, true, YEARS_RANGE);
     expect(elements).toEqual(expectedElements);
     expect(handleChange).toBeInstanceOf(Function);
     expect(handleClear).toBeInstanceOf(Function);
@@ -232,7 +233,7 @@ describe('useAltDateWidgetProps()', () => {
     expect(TIME_PROPS.onChange).not.toHaveBeenCalled();
     rerenderHook(() => useAltDateWidgetProps(TIME_PROPS));
     dateObj.year = 2023;
-    expectedElements = getDateElementProps(dateObj, true, TIME_PROPS.options.yearsRange);
+    expectedElements = getDateElementProps(dateObj, true, YEARS_RANGE);
     expect(result.current.elements).toEqual(expectedElements);
     rerender(
       <DateElementsTester
@@ -247,7 +248,7 @@ describe('useAltDateWidgetProps()', () => {
     expect(TIME_PROPS.onChange).not.toHaveBeenCalled();
     rerenderHook(() => useAltDateWidgetProps(TIME_PROPS));
     dateObj.month = 10;
-    expectedElements = getDateElementProps(dateObj, true, TIME_PROPS.options.yearsRange);
+    expectedElements = getDateElementProps(dateObj, true, YEARS_RANGE);
     expect(result.current.elements).toEqual(expectedElements);
     rerender(
       <DateElementsTester
@@ -262,7 +263,7 @@ describe('useAltDateWidgetProps()', () => {
     expect(TIME_PROPS.onChange).not.toHaveBeenCalled();
     rerenderHook(() => useAltDateWidgetProps(TIME_PROPS));
     dateObj.day = 2;
-    expectedElements = getDateElementProps(dateObj, true, TIME_PROPS.options.yearsRange);
+    expectedElements = getDateElementProps(dateObj, true, YEARS_RANGE);
     expect(result.current.elements).toEqual(expectedElements);
     rerender(
       <DateElementsTester
@@ -277,7 +278,7 @@ describe('useAltDateWidgetProps()', () => {
     expect(TIME_PROPS.onChange).not.toHaveBeenCalled();
     rerenderHook(() => useAltDateWidgetProps(TIME_PROPS));
     dateObj.hour = 1;
-    expectedElements = getDateElementProps(dateObj, true, TIME_PROPS.options.yearsRange);
+    expectedElements = getDateElementProps(dateObj, true, YEARS_RANGE);
     expect(result.current.elements).toEqual(expectedElements);
     rerender(
       <DateElementsTester
@@ -291,7 +292,7 @@ describe('useAltDateWidgetProps()', () => {
     });
     rerenderHook(() => useAltDateWidgetProps(TIME_PROPS));
     dateObj.minute = 2;
-    expectedElements = getDateElementProps(dateObj, true, TIME_PROPS.options.yearsRange);
+    expectedElements = getDateElementProps(dateObj, true, YEARS_RANGE);
     expect(result.current.elements).toEqual(expectedElements);
     rerender(
       <DateElementsTester
@@ -310,7 +311,7 @@ describe('useAltDateWidgetProps()', () => {
     const { result } = renderHook(() => useAltDateWidgetProps(props));
     const { elements, handleChange, handleClear, handleSetNow } = result.current;
     const dateObj = parseDateString(DATE_STR);
-    const expectedElements = getDateElementProps(dateObj, false, PROPS.options.yearsRange);
+    const expectedElements = getDateElementProps(dateObj, false, YEARS_RANGE);
     expect(elements).toEqual(expectedElements);
     expect(handleChange).toBeInstanceOf(Function);
     expect(handleClear).toBeInstanceOf(Function);
@@ -331,7 +332,7 @@ describe('useAltDateWidgetProps()', () => {
     const { result } = renderHook(() => useAltDateWidgetProps(props));
     const { elements, handleChange, handleClear, handleSetNow } = result.current;
     const dateObj = parseDateString();
-    const expectedElements = getDateElementProps(dateObj, false, PROPS.options.yearsRange);
+    const expectedElements = getDateElementProps(dateObj, false, YEARS_RANGE);
     expect(elements).toEqual(expectedElements);
     expect(handleChange).toBeInstanceOf(Function);
     expect(handleClear).toBeInstanceOf(Function);
