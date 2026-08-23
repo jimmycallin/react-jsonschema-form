@@ -23,7 +23,7 @@ import isObject from './isObject.ts';
  *       that does not exist in defaults.
  * @returns - The resulting merged form data with defaults
  */
-export default function mergeDefaultsWithFormData<T = any>(
+export default function mergeDefaultsWithFormData<T = unknown>(
   defaults?: T,
   formData?: T,
   mergeExtraArrayDefaults = false,
@@ -59,8 +59,8 @@ export default function mergeDefaultsWithFormData<T = any>(
     return mapped as unknown as T;
   }
   if (isObject(formData)) {
-    // oxlint-disable-next-line prefer-object-spread -- spread loses T type, Object.assign preserves it
-    const acc: { [key in keyof T]: any } = Object.assign({}, defaults); // Prevent mutation of source object.
+    // The result is assembled one key at a time, so it is only a `T` once every key of the `formData` has been merged
+    const acc: GenericObjectType = { ...defaults }; // Prevent mutation of source object.
     const formDataObj: GenericObjectType = formData;
     const defaultsObj: GenericObjectType | undefined = isObject(defaults) ? defaults : undefined;
     return Object.keys(formDataObj).reduce((accumulator, key) => {
@@ -76,18 +76,19 @@ export default function mergeDefaultsWithFormData<T = any>(
         isObject(keyDefault) &&
         Object.values(keyDefault).some((v) => isObject(v) || Array.isArray(v));
 
-      const keyDefaultIsObject = keyExistsInDefaults && isObject(defaultsObj?.[key]);
+      const keyDefaultValue = defaultsObj?.[key];
+      const keyDefaultIsObject = keyExistsInDefaults && isObject(keyDefaultValue);
       const keyHasFormDataObject = keyExistsInFormData && isObject(keyValue);
 
       if (keyDefaultIsObject && keyHasFormDataObject && !defaultValueNeedsDeepMerge) {
-        accumulator[key as keyof T] = {
-          ...defaultsObj?.[key],
+        accumulator[key] = {
+          ...keyDefaultValue,
           ...keyValue,
         };
         return accumulator;
       }
 
-      accumulator[key as keyof T] = mergeDefaultsWithFormData<T>(
+      accumulator[key] = mergeDefaultsWithFormData(
         defaultsObj?.[key],
         keyValue,
         mergeExtraArrayDefaults,
@@ -97,7 +98,7 @@ export default function mergeDefaultsWithFormData<T = any>(
         overrideFormDataWithDefaults && (keyExistsInDefaults || !keyExistsInFormData),
       );
       return acc;
-    }, acc);
+    }, acc) as T;
   }
 
   /**

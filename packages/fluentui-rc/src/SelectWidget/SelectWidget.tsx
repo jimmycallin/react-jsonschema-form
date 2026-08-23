@@ -1,6 +1,6 @@
-import type { OptionOnSelectData } from '@fluentui/react-combobox';
+import type { OptionOnSelectData, SelectionEvents } from '@fluentui/react-combobox';
 import { Dropdown, Field, Option } from '@fluentui/react-components';
-import type { FormContextType, RJSFSchema, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
+import type { FormContextType, RJSFSchema, WidgetProps } from '@rjsf/utils';
 import {
   ariaDescribedByIds,
   enumOptionValueDecoder,
@@ -24,7 +24,7 @@ function getValue(data: OptionOnSelectData, multiple: boolean) {
  *
  * @param props - The `WidgetProps` for this component
  */
-function SelectWidget<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>({
+function SelectWidget<T = unknown, S extends RJSFSchema = RJSFSchema, F extends FormContextType = FormContextType>({
   id,
   htmlName,
   options,
@@ -63,7 +63,7 @@ function SelectWidget<T = any, S extends StrictRJSFSchema = RJSFSchema, F extend
 
   const handleBlur = () => onBlur(id, selectedIndexes);
   const handleFocus = () => onFocus(id, selectedIndexes);
-  const handleChange = (_: any, data: OptionOnSelectData) => {
+  const handleChange = (_: SelectionEvents, data: OptionOnSelectData) => {
     const newValue = getValue(data, multiple);
     return onChange(enumOptionValueDecoder<S>(newValue, enumOptions, optionValueFormat, optEmptyVal));
   };

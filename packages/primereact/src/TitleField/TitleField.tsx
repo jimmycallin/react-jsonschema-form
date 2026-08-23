@@ -1,4 +1,4 @@
-import type { FormContextType, RJSFSchema, StrictRJSFSchema, TitleFieldProps } from '@rjsf/utils';
+import type { FormContextType, RJSFSchema, TitleFieldProps } from '@rjsf/utils';
 import { getUiOptions, titleId } from '@rjsf/utils';
 import { Divider } from 'primereact/divider';
 
@@ -6,13 +6,11 @@ import { Divider } from 'primereact/divider';
  *
  * @param props - The `TitleFieldProps` for this component
  */
-export default function TitleField<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>({
-  id,
-  title,
-  uiSchema,
-  required,
-  optionalDataControl,
-}: TitleFieldProps<T, S, F>) {
+export default function TitleField<
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>({ id, title, uiSchema, required, optionalDataControl }: TitleFieldProps<T, S, F>) {
   const uiOptions = getUiOptions<T, S, F>(uiSchema);
   let heading = (
     <h5 style={{ margin: 0, fontSize: id === titleId('root') ? '1.5rem' : '1.2rem' }}>

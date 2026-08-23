@@ -1,5 +1,5 @@
 import { Fieldset } from '@chakra-ui/react';
-import type { FieldErrorProps, FormContextType, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
+import type { FieldErrorProps, FormContextType, RJSFSchema } from '@rjsf/utils';
 import { errorId } from '@rjsf/utils';
 
 /** The `FieldErrorTemplate` component renders the errors local to the particular field
@@ -7,9 +7,9 @@ import { errorId } from '@rjsf/utils';
  * @param props - The `FieldErrorProps` for the errors being rendered
  */
 export default function FieldErrorTemplate<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(props: FieldErrorProps<T, S, F>) {
   const { errors = [], fieldPathId } = props;
   if (errors.length === 0) {

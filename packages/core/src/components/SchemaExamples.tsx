@@ -1,7 +1,7 @@
-import type { RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
+import type { RJSFSchema } from '@rjsf/utils';
 import { examplesId } from '@rjsf/utils';
 
-export interface SchemaExamplesProps<S extends StrictRJSFSchema = RJSFSchema> {
+export interface SchemaExamplesProps<S extends RJSFSchema = RJSFSchema> {
   /** The id of the input element this datalist is for */
   id: string;
   /** The JSON schema object containing examples and default value */
@@ -15,7 +15,7 @@ export interface SchemaExamplesProps<S extends StrictRJSFSchema = RJSFSchema> {
  *
  * @param props - The `SchemaExamplesProps` for this component
  */
-export default function SchemaExamples<S extends StrictRJSFSchema = RJSFSchema>(props: SchemaExamplesProps<S>) {
+export default function SchemaExamples<S extends RJSFSchema = RJSFSchema>(props: SchemaExamplesProps<S>) {
   const { id, schema } = props;
   const { examples, default: schemaDefault } = schema;
   if (!Array.isArray(examples)) {
@@ -29,7 +29,7 @@ export default function SchemaExamples<S extends StrictRJSFSchema = RJSFSchema>(
             ? ([schemaDefault] as string[])
             : [],
         )
-        .map((example: any) => (
+        .map((example: string) => (
           // oxlint-disable-next-line jsx-a11y/control-has-associated-label
           <option key={String(example)} value={example} />
         ))}

@@ -17,6 +17,7 @@ import {
   ErrorSchemaBuilder,
   getUiOptions,
   ID_KEY,
+  isUiSchema,
   LOOKUP_MAP_NAME,
   ONE_OF_KEY,
   PROPERTIES_KEY,
@@ -679,7 +680,12 @@ function FakeSchemaField({ 'data-testid': testId, ...props }: Readonly<FieldProp
   return (
     <div data-testid={testId}>
       <span id={id}>{stringifyProps(props)}</span>
-      <input value={formData} onChange={onTextChange} onBlur={onTextBlur} onFocus={onTextFocus} />
+      <input
+        value={typeof formData === 'string' ? formData : undefined}
+        onChange={onTextChange}
+        onBlur={onTextBlur}
+        onFocus={onTextFocus}
+      />
     </div>
   );
 }
@@ -793,16 +799,17 @@ function getExpectedPropsForField(
   // Get the readonly options from the schema, if any
   const readonly = getByPath<boolean>(schema, 'readOnly');
   // Get the options from the schema's oneOf, if any
-  const options = getByPath<RJSFSchema[]>(schema, ONE_OF_KEY);
+  // Boolean sub-schemas cannot be field options, so they are filtered out
+  const options = schema?.[ONE_OF_KEY]?.filter((option): option is RJSFSchema => typeof option !== 'boolean');
   // Drill down in the uiSchema, errorSchema, fieldPathId and formData to the field
-  const uiSchema = getByPath<UiSchema>(props.uiSchema, toPath(field));
+  const fieldUISchema = getByPath(props.uiSchema, toPath(field));
+  const uiSchema = isUiSchema(fieldUISchema) ? fieldUISchema : undefined;
   const errorSchema = getByPath<ErrorSchema>(props.errorSchema, toPath(field));
   const fieldPathId = fieldPathIdFromPaths(paths, globalFormOptions, props.fieldPathId!);
   const formData = getByPath<GenericObjectType>(props.formData, toPath(field));
   // Also extract any global props
   const global = getByPath<GenericObjectType>(props.uiSchema, [UI_GLOBAL_OPTIONS_KEY]);
-  const fieldUISchema = getByPath<UiSchema>(props.uiSchema, toPath(field));
-  const { readonly: uiReadonly } = getUiOptions(fieldUISchema);
+  const { readonly: uiReadonly } = getUiOptions(uiSchema);
   // The expected props are the FORWARDED_PROPS, the field name, sub-schema, sub-uiSchema and sub-fieldPathId
   return {
     ...Object.fromEntries(
@@ -1105,7 +1112,7 @@ describe('LayoutGridField', () => {
       const path = 'employment.location.state';
       const paths = path.split('.');
       const formData = { employment: { job_type: 'company' } };
-      const schema: RJSFSchema = gridFormSchemaRegistry.schemaUtils.getFromSchema(
+      const schema = gridFormSchemaRegistry.schemaUtils.getFromSchema(
         GRID_FORM_SCHEMA,
         [DEFINITIONS_KEY, 'Location', PROPERTIES_KEY, 'state'],
         {},
@@ -1670,21 +1677,13 @@ describe('LayoutGridField', () => {
   });
   test('renderCondition, condition passes, field and empty value, NONE operator, has formData', async () => {
     const fieldName = 'simpleString';
-    const gridProps = {
-      operator: Operators.NONE,
-      field: fieldName,
-      value: null,
-    };
+    const gridProps = { operator: Operators.NONE, field: fieldName, value: null };
+    const formData = { [fieldName]: 'foo' };
     const props = getProps({
       schema: SAMPLE_SCHEMA,
-      uiSchema: {
-        ...sampleUISchema,
-        [UI_GLOBAL_OPTIONS_KEY]: { always: 'there' },
-      },
-      formData: { [fieldName]: 'foo' },
-      layoutGridSchema: {
-        [GridType.CONDITION]: { ...gridProps, children: GRID_CHILDREN },
-      },
+      uiSchema: { ...sampleUISchema, [UI_GLOBAL_OPTIONS_KEY]: { always: 'there' } },
+      formData,
+      layoutGridSchema: { [GridType.CONDITION]: { ...gridProps, children: GRID_CHILDREN } },
       registry: sampleSchemaRegistry,
     });
     const fieldPathId = toFieldPathId(fieldName, props.registry.globalFormOptions, props.fieldPathId);
@@ -1699,7 +1698,7 @@ describe('LayoutGridField', () => {
     expect(fields[1]).toHaveTextContent(stringifyProps(getExpectedPropsForField(props, GRID_CHILDREN[1])));
     // Test onChange and value in the input
     const input = within(fields[0]).getByRole('textbox');
-    expect(input).toHaveValue(props.formData[fieldName]);
+    expect(input).toHaveValue(formData[fieldName]);
     await userEvent.type(input, '!');
     expect(props.onChange).toHaveBeenCalledWith('foo!', fieldPathId.path, EXTRA_ERROR, fieldId);
   });

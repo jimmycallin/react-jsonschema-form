@@ -53,6 +53,7 @@ import isFormDataAvailable from './isFormDataAvailable.ts';
 import isObject from './isObject.ts';
 import isPlainObject from './isPlainObject.ts';
 import isRootSchema from './isRootSchema.ts';
+import isUiSchema from './isUiSchema.ts';
 import labelValue from './labelValue.ts';
 import localToUTC from './localToUTC.ts';
 import logUnsupportedDefaultForEnum from './logUnsupportedDefaultForEnum.ts';
@@ -168,6 +169,7 @@ export {
   isObject,
   isPlainObject,
   isRootSchema,
+  isUiSchema,
   labelValue,
   localToUTC,
   logUnsupportedDefaultForEnum,

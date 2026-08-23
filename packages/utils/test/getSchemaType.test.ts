@@ -1,6 +1,7 @@
+import type { RJSFSchema } from '../src/index.ts';
 import { getSchemaType } from '../src/index.ts';
 
-const cases: { schema: object; expected: string | undefined }[] = [
+const cases: { schema: RJSFSchema; expected: string | undefined }[] = [
   {
     schema: { type: 'string' },
     expected: 'string',

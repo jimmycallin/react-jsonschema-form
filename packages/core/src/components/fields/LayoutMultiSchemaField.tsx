@@ -6,7 +6,6 @@ import type {
   FormContextType,
   RJSFSchema,
   SchemaUtilsType,
-  StrictRJSFSchema,
   UiSchema,
 } from '@rjsf/utils';
 import {
@@ -36,7 +35,7 @@ import {
  * @param selectorField - The name of the field that is common in all of the schemas that represents the selector field
  * @param value - The current value of the selector field from the data
  */
-export function getSelectedOption<S extends StrictRJSFSchema = RJSFSchema>(
+export function getSelectedOption<S extends RJSFSchema = RJSFSchema>(
   options: EnumOptionsType<S>[],
   selectorField: string,
   value: unknown,
@@ -60,7 +59,11 @@ export function getSelectedOption<S extends StrictRJSFSchema = RJSFSchema>(
  * @returns - The list of enumOptions for the `schema` and `options`
  * @throws - Error when no enum options were computed
  */
-export function computeEnumOptions<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
+export function computeEnumOptions<
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>(
   schema: S,
   options: S[],
   schemaUtils: SchemaUtilsType<T, S, F>,
@@ -88,9 +91,9 @@ export function computeEnumOptions<T = any, S extends StrictRJSFSchema = RJSFSch
  * is active. If no `selectorField` is specified, then an error is thrown.
  */
 export default function LayoutMultiSchemaField<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(props: FieldProps<T, S, F>) {
   const {
     name,
@@ -100,7 +103,7 @@ export default function LayoutMultiSchemaField<
     fieldPathId,
     onBlur,
     onChange,
-    options,
+    options = [],
     onFocus,
     registry,
     uiSchema,
@@ -115,8 +118,6 @@ export default function LayoutMultiSchemaField<
   const [enumOptions, setEnumOptions] = useState(computeEnumOptions(schema, options, schemaUtils, uiSchema, formData));
   const id = fieldPathId[ID_KEY];
   const discriminator = getDiscriminatorFieldFromSchema(schema);
-  const FieldErrorTemplate = getTemplate<'FieldErrorTemplate', T, S, F>('FieldErrorTemplate', registry, options);
-  const FieldTemplate = getTemplate<'FieldTemplate', T, S, F>('FieldTemplate', registry, options);
   const schemaHash = hashObject(schema);
   const optionsHash = hashObject(options);
   const uiSchemaHash = uiSchema ? hashObject(uiSchema) : '';
@@ -135,6 +136,8 @@ export default function LayoutMultiSchemaField<
     hideError: uiSchemaHideError,
     ...uiOptions
   } = getUiOptions<T, S, F>(uiSchema);
+  const FieldErrorTemplate = getTemplate<'FieldErrorTemplate', T, S, F>('FieldErrorTemplate', registry, uiOptions);
+  const FieldTemplate = getTemplate<'FieldTemplate', T, S, F>('FieldTemplate', registry, uiOptions);
   if (!selectorField) {
     throw new Error('No selector field provided for the LayoutMultiSchemaField');
   }

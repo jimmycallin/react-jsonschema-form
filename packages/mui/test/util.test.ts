@@ -1,3 +1,5 @@
+import type { FormContextType, RJSFSchema } from '@rjsf/utils';
+
 import { getMuiProps } from '../src/util.ts';
 
 describe('getMuiProps', () => {
@@ -8,7 +10,7 @@ describe('getMuiProps', () => {
         variant: 'filled',
       },
     };
-    const result = getMuiProps(options);
+    const result = getMuiProps<unknown, RJSFSchema, FormContextType, typeof options.mui>(options);
     expect(result.rjsfSlotProps.fieldErrorList.dense).toBe(true);
     expect(result.variant).toBe('filled');
   });

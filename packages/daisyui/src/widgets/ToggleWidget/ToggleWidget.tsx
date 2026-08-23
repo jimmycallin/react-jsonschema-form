@@ -1,6 +1,6 @@
 import type { ChangeEvent } from 'react';
 import { useCallback } from 'react';
-import type { FormContextType, RJSFSchema, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
+import type { FormContextType, RJSFSchema, WidgetProps } from '@rjsf/utils';
 
 /** The `ToggleWidget` component renders a toggle switch input with DaisyUI styling
  *
@@ -14,9 +14,9 @@ import type { FormContextType, RJSFSchema, StrictRJSFSchema, WidgetProps } from 
  * @param props - The `WidgetProps` for this component
  */
 export default function ToggleWidget<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >({ id, value, required, disabled, readonly, autofocus, onChange, onFocus, onBlur, options }: WidgetProps<T, S, F>) {
   /** Handle change events from the toggle input
    *

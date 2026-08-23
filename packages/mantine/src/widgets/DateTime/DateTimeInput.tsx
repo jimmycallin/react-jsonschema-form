@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { DateInput } from '@mantine/dates';
-import type { FormContextType, RJSFSchema, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
+import type { FormContextType, RJSFSchema, WidgetProps } from '@rjsf/utils';
 import { ariaDescribedByIds, labelValue } from '@rjsf/utils';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat.js';
@@ -8,7 +8,7 @@ import customParseFormat from 'dayjs/plugin/customParseFormat.js';
 // This plugin is needed to support the parsing of date and time values in the `DateWidget` and `DateTimeWidget`
 dayjs.extend(customParseFormat);
 
-const dateParser = (input: string, format: string) => {
+const dateParser = (input: string, format?: string) => {
   if (!input) {
     return null;
   }
@@ -16,21 +16,27 @@ const dateParser = (input: string, format: string) => {
   return d.isValid() ? d.toDate() : null;
 };
 
-const dateFormat = (date?: Date, format?: string) => {
+const dateFormat = (date?: Date | string, format?: string) => {
   if (!date) {
     return '';
   }
   return dayjs(date).format(format || 'YYYY-MM-DD');
 };
 
+/** The extra prop the Date-Time widgets pass down to `DateTimeInput`, which is not part of `WidgetProps` */
+interface DateTimeInputFormats {
+  /** The dayjs format to use when the `ui:options` do not carry a `valueFormat` */
+  defaultValueFormat: string;
+}
+
 /** The `DateTimeInput` is a base component that used by other Date-Time widget components.
  * @param props - The `WidgetProps` for this component
  */
 export default function DateTimeInput<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
->(props: WidgetProps<T, S, F>) {
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>(props: WidgetProps<T, S, F> & DateTimeInputFormats) {
   const {
     id,
     name,
@@ -43,17 +49,19 @@ export default function DateTimeInput<
     label,
     hideLabel,
     rawErrors,
-    options,
     onChange,
     onBlur,
     onFocus,
-    valueFormat,
-    displayFormat,
+    defaultValueFormat,
   } = props;
+  // The formats come out of the arbitrarily-keyed `ui:options`, so they arrive as `unknown`
+  const { valueFormat: rawValueFormat, displayFormat: rawDisplayFormat, ...options } = props.options;
+  const valueFormat = typeof rawValueFormat === 'string' ? rawValueFormat : defaultValueFormat;
+  const displayFormat = typeof rawDisplayFormat === 'string' ? rawDisplayFormat : valueFormat;
 
   const handleChange = useCallback(
-    (nextValue: any) => {
-      onChange(dateFormat(nextValue, valueFormat as string));
+    (nextValue: string | null) => {
+      onChange(dateFormat(nextValue ?? undefined, valueFormat));
     },
     [onChange, valueFormat],
   );
@@ -74,8 +82,8 @@ export default function DateTimeInput<
     <DateInput
       id={id}
       name={name}
-      value={dateParser(value, valueFormat as string)}
-      dateParser={(v) => dateParser(v, displayFormat as string)}
+      value={dateParser(value, valueFormat)}
+      dateParser={(v) => dateParser(v, displayFormat)}
       placeholder={placeholder || undefined}
       required={required}
       disabled={disabled || readonly}

@@ -1,3 +1,13 @@
+/** Determines whether `value` is a non-null object whose keys can be enumerated and indexed. Unlike `isObject()` this
+ * accepts arrays, since a shallow comparison of two arrays compares their index keys.
+ *
+ * @param value - The value to check
+ * @returns - True if `value` can be indexed by string keys
+ */
+function isIndexable(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
 /** Implements a shallow equals comparison that uses Object.is() for comparing values.
  * This function compares objects by checking if all keys and their values are equal using Object.is().
  *
@@ -5,19 +15,14 @@
  * @param b - The second element to compare
  * @returns - True if the `a` and `b` are shallow equal, false otherwise
  */
-export default function shallowEquals(a: any, b: any): boolean {
+export default function shallowEquals(a: unknown, b: unknown): boolean {
   // If they're the same reference, they're equal
   if (Object.is(a, b)) {
     return true;
   }
 
-  // If either is null or undefined, they're not equal (since we know they're not the same reference)
-  if (a == null || b == null) {
-    return false;
-  }
-
-  // If they're not objects, they're not equal (since Object.is already checked)
-  if (typeof a !== 'object' || typeof b !== 'object') {
+  // If either is nullish or not an object, they're not equal (since Object.is already checked)
+  if (!isIndexable(a) || !isIndexable(b)) {
     return false;
   }
 

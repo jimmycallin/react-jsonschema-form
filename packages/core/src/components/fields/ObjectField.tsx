@@ -23,13 +23,13 @@ import {
   getPropertySchema,
   getUiOptions,
   isFormDataAvailable,
+  isUiSchema,
   orderProperties,
   shouldRenderOptionalField,
   toFieldPathId,
   useDeepCompareMemo,
   ONE_OF_KEY,
   REF_KEY,
-  isObject,
   TranslatableString,
 } from '@rjsf/utils';
 import { Markdown } from 'markdown-to-jsx/react';
@@ -42,7 +42,7 @@ import { ADDITIONAL_PROPERTY_KEY_REMOVE } from '../constants.ts';
  * @param name - The name of the field to check for required-ness
  * @returns - True if the field `name` is required, false otherwise
  */
-function isRequired<S extends StrictRJSFSchema = RJSFSchema>(schema: S, name: string) {
+function isRequired<S extends RJSFSchema = RJSFSchema>(schema: S, name: string) {
   return Array.isArray(schema.required) && schema.required.includes(name);
 }
 
@@ -51,7 +51,7 @@ function isRequired<S extends StrictRJSFSchema = RJSFSchema>(schema: S, name: st
  * @param translateString - The string translation function from the registry
  * @param type - The type of the new additional schema property
  */
-function getDefaultValue<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
+function getDefaultValue<T = unknown, S extends RJSFSchema = RJSFSchema, F extends FormContextType = FormContextType>(
   translateString: Registry<T, S, F>['translateString'],
   type?: RJSFSchema['type'],
 ) {
@@ -77,18 +77,16 @@ function isAdditionalPropertySchema(schema: unknown) {
   return Boolean((schema as RJSFMarkedSchema)?.[ADDITIONAL_PROPERTY_FLAG]);
 }
 
-function getAdditionalPropertyOrder<S extends StrictRJSFSchema = RJSFSchema>(
-  schemaProperties: NonNullable<S['properties']>,
-) {
+function getAdditionalPropertyOrder<S extends RJSFSchema = RJSFSchema>(schemaProperties: NonNullable<S['properties']>) {
   return Object.keys(schemaProperties).filter((property) => isAdditionalPropertySchema(schemaProperties[property]));
 }
 
 /** Props for the `ObjectFieldProperty` component */
 interface ObjectFieldPropertyProps<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
-> extends Omit<FieldProps<T, S, F>, 'name'> {
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+> extends FieldProps<T, S, F> {
   /** The name of the property within the parent object */
   propertyName: string;
   /** Flag indicating whether this property was added by the additionalProperties UI */
@@ -101,9 +99,11 @@ interface ObjectFieldPropertyProps<
 
 /** The `ObjectFieldProperty` component is used to render the `SchemaField` for a child property of an object
  */
-function ObjectFieldPropertyFn<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
-  props: ObjectFieldPropertyProps<T, S, F>,
-) {
+function ObjectFieldPropertyFn<
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>(props: ObjectFieldPropertyProps<T, S, F>) {
   const {
     fieldPathId,
     schema,
@@ -216,9 +216,11 @@ const ObjectFieldProperty = memo(ObjectFieldPropertyFn) as typeof ObjectFieldPro
  *
  * @param props - The `FieldProps` for this template
  */
-export default function ObjectField<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
-  props: FieldProps<T, S, F>,
-) {
+export default function ObjectField<
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>(props: FieldProps<T, S, F>) {
   const {
     schema: rawSchema,
     uiSchema = {},
@@ -248,7 +250,10 @@ export default function ObjectField<T = any, S extends StrictRJSFSchema = RJSFSc
   const schemaProperties = useMemo(() => schema.properties ?? {}, [schema.properties]);
   // All the children will use childFieldPathId if present in the props, falling back to the fieldPathId
   const childFieldPathId = props.childFieldPathId ?? fieldPathId;
-  const lastRenamedProperty = useRef({ previousKey: '', currentKey: undefined as string | undefined });
+  const lastRenamedProperty = useRef({
+    previousKey: '',
+    currentKey: undefined as string | undefined,
+  });
   const [additionalPropertyOrder, setAdditionalPropertyOrder] = useState(() =>
     getAdditionalPropertyOrder<S>(schemaProperties),
   );
@@ -300,11 +305,13 @@ export default function ObjectField<T = any, S extends StrictRJSFSchema = RJSFSc
       let type: RJSFSchema['type'] = undefined;
       let constValue: RJSFSchema['const'] = undefined;
       let defaultValue: RJSFSchema['default'] = undefined;
-      if (isObject(schema.additionalProperties)) {
-        type = schema.additionalProperties.type;
-        constValue = schema.additionalProperties.const;
-        defaultValue = schema.additionalProperties.default;
-        let apSchema = schema.additionalProperties;
+      // Widen from the deferred `S['additionalProperties']` so `typeof` narrows to the concrete schema type
+      const additionalPropertiesSchema: StrictRJSFSchema | boolean | undefined = schema.additionalProperties;
+      if (typeof additionalPropertiesSchema === 'object') {
+        type = additionalPropertiesSchema.type;
+        constValue = additionalPropertiesSchema.const;
+        defaultValue = additionalPropertiesSchema.default;
+        let apSchema = additionalPropertiesSchema;
         if (REF_KEY in apSchema) {
           apSchema = schemaUtils.retrieveSchema({ [REF_KEY]: apSchema[REF_KEY] } as S, formData);
           type = apSchema.type;
@@ -343,7 +350,7 @@ export default function ObjectField<T = any, S extends StrictRJSFSchema = RJSFSc
         const newFormData: GenericObjectType = {
           ...(currentFormData as GenericObjectType),
         };
-        const newKeys: GenericObjectType = { [oldKey]: actualNewKey };
+        const newKeys: Record<string, string> = { [oldKey]: actualNewKey };
         const keyValues = Object.keys(newFormData).map((key) => {
           // `Object.hasOwn` so a falsy rename target (e.g. `""`) isn't dropped.
           const mappedKey = Object.hasOwn(newKeys, key) ? newKeys[key] : key;
@@ -418,12 +425,14 @@ export default function ObjectField<T = any, S extends StrictRJSFSchema = RJSFSc
     description: uiOptions.label === false ? undefined : description,
     properties: orderedProperties.map((propertyName) => {
       const addedByAdditionalProperties = isAdditionalPropertySchema(schema.properties?.[propertyName]);
-      const fieldUiSchema = addedByAdditionalProperties ? uiSchema.additionalProperties : uiSchema[propertyName];
+      const rawFieldUiSchema = addedByAdditionalProperties ? uiSchema.additionalProperties : uiSchema[propertyName];
+      const fieldUiSchema = isUiSchema<T, S, F>(rawFieldUiSchema) ? rawFieldUiSchema : undefined;
       const hidden = getUiOptions<T, S, F>(fieldUiSchema).widget === 'hidden';
       const content = (
         <ObjectFieldProperty<T, S, F>
           key={getStableKey(propertyName)}
           propertyName={propertyName}
+          name={propertyName}
           required={isRequired<S>(schema, propertyName)}
           schema={getPropertySchema<S>(schema, propertyName)}
           uiSchema={fieldUiSchema}

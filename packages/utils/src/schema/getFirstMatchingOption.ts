@@ -1,7 +1,7 @@
 import { PROPERTIES_KEY } from '../constants.ts';
 import getOptionMatchingSimpleDiscriminator from '../getOptionMatchingSimpleDiscriminator.ts';
 import { getByPath } from '../pathUtils.ts';
-import type { FormContextType, RJSFSchema, StrictRJSFSchema, ValidatorType } from '../types.ts';
+import type { FormContextType, RJSFSchema, ValidatorType } from '../types.ts';
 
 /** Given the `formData` and list of `options`, attempts to find the index of the first option that matches the data.
  * Always returns the first option if there is nothing that matches.
@@ -15,9 +15,9 @@ import type { FormContextType, RJSFSchema, StrictRJSFSchema, ValidatorType } fro
  * @returns - The index of the first matched option or 0 if none is available
  */
 export default function getFirstMatchingOption<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(
   validator: ValidatorType<T, S, F>,
   formData: T | undefined,

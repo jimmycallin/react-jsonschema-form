@@ -1,4 +1,4 @@
-import type { FormContextType, StrictRJSFSchema, RJSFSchema, ArrayFieldDescriptionProps } from '@rjsf/utils';
+import type { FormContextType, RJSFSchema, ArrayFieldDescriptionProps } from '@rjsf/utils';
 import { descriptionId, getUiOptions } from '@rjsf/utils';
 
 /** The `ArrayFieldDescriptionTemplate` component renders the description for an array field
@@ -8,9 +8,9 @@ import { descriptionId, getUiOptions } from '@rjsf/utils';
  * @param props - The `ArrayFieldDescriptionProps` for the component
  */
 export default function ArrayFieldDescriptionTemplate<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(props: ArrayFieldDescriptionProps<T, S, F>) {
   const { fieldPathId, description, uiSchema, registry } = props;
   const options = getUiOptions<T, S, F>(uiSchema, registry.globalUiOptions);

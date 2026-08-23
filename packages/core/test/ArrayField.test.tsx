@@ -2,9 +2,9 @@ import type {
   ArrayFieldTemplateProps,
   ArrayFieldItemButtonsTemplateProps,
   ArrayFieldItemTemplateProps,
+  CustomValidator,
   DescriptionFieldProps,
-  ErrorSchema,
-  FieldPathList,
+  Field,
   FieldProps,
   GenericObjectType,
   RJSFSchema,
@@ -13,7 +13,7 @@ import type {
   WidgetProps,
   FormValidation,
 } from '@rjsf/utils';
-import { noop } from '@rjsf/utils';
+import { ErrorSchemaBuilder, getUiOptions, isObject, isUiSchema, noop } from '@rjsf/utils';
 import userEvent from '@testing-library/user-event';
 
 import ArrayField from '../src/components/fields/ArrayField.tsx';
@@ -165,18 +165,20 @@ const ArrayFieldTestItemTemplate = (props: ArrayFieldItemTemplateProps) => {
   );
 };
 
-const ArrayFieldTest = (props: FieldProps<any[]>) => {
-  const onChangeTest = (newFormData: any, path: FieldPathList, errorSchema?: ErrorSchema<any[]>, id?: string) => {
+// `ArrayField` takes `FieldProps<T[]>`, which the `Field` type (built on `FieldProps<T>`) cannot express, so this is
+// widened the same way `src/components/fields/index.ts` widens the real `ArrayField`
+const ArrayFieldTest = ((props: FieldProps<unknown[]>) => {
+  const onChangeTest: FieldProps<unknown[]>['onChange'] = (newFormData, path, errorSchema, id) => {
+    // ArrayField forwards its children's onChange, so the changed value here is really an array item, not the array
+    const changedValue: unknown = newFormData;
     let newErrorSchema = errorSchema;
-    if (newFormData !== 'Appie') {
-      newErrorSchema = {
-        __errors: ['Value must be "Appie"'],
-      } as ErrorSchema<any[]>;
+    if (changedValue !== 'Appie') {
+      newErrorSchema = new ErrorSchemaBuilder<unknown[]>().addErrors(['Value must be "Appie"']).ErrorSchema;
     }
     props.onChange(newFormData, path, newErrorSchema, id);
   };
   return <ArrayField {...props} onChange={onChangeTest} />;
-};
+}) as unknown as Field;
 
 const mockFileReader = {
   // oxlint-disable-next-line no-unused-vars
@@ -2131,9 +2133,11 @@ describe('ArrayField', () => {
     });
 
     it('should pass uiSchema to custom widget', () => {
-      const CustomWidget = ({ uiSchema }: WidgetProps) => (
-        <div id='custom-ui-option-value'>{uiSchema?.custom_field_key['ui:options'].test}</div>
-      );
+      const CustomWidget = ({ uiSchema }: WidgetProps) => {
+        const customFieldUiSchema = uiSchema?.custom_field_key;
+        const { test } = getUiOptions(isUiSchema(customFieldUiSchema) ? customFieldUiSchema : undefined);
+        return <div id='custom-ui-option-value'>{typeof test === 'string' ? test : undefined}</div>;
+      };
 
       const { node } = createFormComponent({
         schema: {
@@ -2708,11 +2712,16 @@ describe('ArrayField', () => {
         },
       },
     };
-    function customValidate(_: any | undefined, errors: FormValidation) {
+    interface ComplexFormData {
+      foo: { bar: string }[];
+    }
+    // The validator is written against the known shape of `complexSchema` so the nested error tree stays typed; the
+    // `as` widens it for `createFormComponent()`, whose props describe an untyped (`unknown`) formData
+    const customValidate = ((_: ComplexFormData | undefined, errors: FormValidation<ComplexFormData>) => {
       errors.foo?.[0]?.bar?.addError('test');
       errors.foo?.[1]?.bar?.addError('test');
       return errors;
-    }
+    }) as unknown as CustomValidator;
 
     it('should render nested error decorated input widgets with the expected ids', async () => {
       const { node } = createFormComponent({
@@ -2772,9 +2781,10 @@ describe('ArrayField', () => {
           registry: { formContext },
           fieldPathId,
         } = props;
+        const codeId = formContext[fieldPathId.$id];
         return (
           <>
-            <code id={formContext[fieldPathId.$id]}>Ha</code>
+            <code id={typeof codeId === 'string' ? codeId : undefined}>Ha</code>
             <SchemaField {...props} />
           </>
         );
@@ -2802,9 +2812,10 @@ describe('ArrayField', () => {
           registry: { formContext },
           fieldPathId,
         } = props;
+        const codeId = formContext[fieldPathId.$id];
         return (
           <>
-            <code id={formContext[fieldPathId.$id]}>Ha</code>
+            <code id={typeof codeId === 'string' ? codeId : undefined}>Ha</code>
             <SchemaField {...props} />
           </>
         );
@@ -3371,7 +3382,7 @@ describe('ArrayField', () => {
 
       const uiSchema: UiSchema = {
         items: (itemData) => {
-          if (itemData.priority === 'high') {
+          if (isObject(itemData) && itemData.priority === 'high') {
             return {
               name: {
                 'ui:widget': 'textarea',

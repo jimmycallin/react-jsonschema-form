@@ -1,6 +1,6 @@
 import deepEquals from './deepEquals.ts';
 import enumOptionsValueForIndex from './enumOptionsValueForIndex.ts';
-import type { EnumOptionsType, RJSFSchema, StrictRJSFSchema } from './types.ts';
+import type { EnumOptionsType, RJSFSchema } from './types.ts';
 
 /** Removes the enum option value at the `valueIndex` from the currently `selected` (list of) value(s). If `selected` is
  * a list, then that list is updated to remove the enum option value with the `valueIndex` in `allEnumOptions`. If it is
@@ -14,7 +14,7 @@ import type { EnumOptionsType, RJSFSchema, StrictRJSFSchema } from './types.ts';
  *        unless `selected` is a single value. In that case, if the `valueIndex` value matches `selected`, returns
  *        undefined, otherwise `selected`.
  */
-export default function enumOptionsDeselectValue<S extends StrictRJSFSchema = RJSFSchema>(
+export default function enumOptionsDeselectValue<S extends RJSFSchema = RJSFSchema>(
   valueIndex: string | number,
   selected?: EnumOptionsType<S>['value'] | EnumOptionsType<S>['value'][],
   allEnumOptions: EnumOptionsType<S>[] = [],

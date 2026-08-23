@@ -1,13 +1,13 @@
 import { memo } from 'react';
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import type { FormContextType, IconButtonProps, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
+import type { FormContextType, IconButtonProps, RJSFSchema } from '@rjsf/utils';
 
 /** Interface for props specific to DaisyUIButton, extending IconButtonProps but with stricter icon typing */
 interface DaisyUIButtonProps<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 > extends Omit<IconButtonProps<T, S, F>, 'icon'> {
   /** The FontAwesome icon to display in the button */
   icon: IconDefinition;
@@ -18,7 +18,7 @@ interface DaisyUIButtonProps<
  *
  * @param props - The component props
  */
-function DaisyUIButton<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
+function DaisyUIButton<T = unknown, S extends RJSFSchema = RJSFSchema, F extends FormContextType = FormContextType>(
   props: DaisyUIButtonProps<T, S, F>,
 ) {
   const { icon, iconType, uiSchema, registry, className, ...otherProps } = props;

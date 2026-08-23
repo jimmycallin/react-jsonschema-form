@@ -1,4 +1,4 @@
-import type { FormContextType, RJSFSchema, StrictRJSFSchema, WrapIfAdditionalTemplateProps } from '@rjsf/utils';
+import type { FormContextType, RJSFSchema, WrapIfAdditionalTemplateProps } from '@rjsf/utils';
 import { ADDITIONAL_PROPERTY_FLAG, buttonId, TranslatableString } from '@rjsf/utils';
 import { Form, Grid } from 'semantic-ui-react';
 
@@ -8,9 +8,9 @@ import { Form, Grid } from 'semantic-ui-react';
  * @param props - The `WrapIfAdditionalProps` for this component
  */
 export default function WrapIfAdditionalTemplate<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(props: WrapIfAdditionalTemplateProps<T, S, F>) {
   const {
     children,
@@ -61,7 +61,7 @@ export default function WrapIfAdditionalTemplate<
                 label={displayLabel ? keyLabel : undefined}
                 required={required}
                 defaultValue={label}
-                disabled={disabled || (readonlyAsDisabled && readonly)}
+                disabled={disabled || (Boolean(readonlyAsDisabled) && readonly)}
                 id={id}
                 name={id}
                 onBlur={!readonly ? onKeyRenameBlur : undefined}

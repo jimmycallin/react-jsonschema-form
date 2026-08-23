@@ -1,6 +1,6 @@
 import { createRef, useEffect } from 'react';
-import type { RJSFSchema, UiSchema, WidgetProps } from '@rjsf/utils';
-import { getTemplate, getUiOptions } from '@rjsf/utils';
+import type { GenericObjectType, RJSFSchema, UiSchema, WidgetProps } from '@rjsf/utils';
+import { getTemplate, getUiOptions, isObject } from '@rjsf/utils';
 import { waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
@@ -160,7 +160,7 @@ describeRepeated('Form common: event handlers', (createFormComponent) => {
       const ids: (string | undefined)[] = [];
       const onChange: FormProps['onChange'] = (data, id) => {
         const { formData: fd } = data;
-        formData = { ...formData, ...fd };
+        formData = { ...formData, ...(isObject(fd) ? fd : {}) };
         ids.push(id);
       };
       createFormComponent({
@@ -394,7 +394,8 @@ describeRepeated('Form common: event handlers', (createFormComponent) => {
       expect(contentInput!.value).toEqual('placeholder');
 
       // Also verify the final formData has correct values
-      const lastFormData = onChangeCalls[onChangeCalls.length - 1].event.formData;
+      const lastEventFormData = onChangeCalls[onChangeCalls.length - 1].event.formData;
+      const lastFormData: GenericObjectType = isObject(lastEventFormData) ? lastEventFormData : {};
       expect(lastFormData.types).toEqual('advanced');
       expect(lastFormData.content).toEqual('placeholder');
     });

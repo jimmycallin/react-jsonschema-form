@@ -10,7 +10,6 @@ import type {
   GenericObjectType,
   PathSchema,
   RJSFSchema,
-  StrictRJSFSchema,
   ValidatorType,
 } from '../types.ts';
 import getClosestMatchingOption from './getClosestMatchingOption.ts';
@@ -24,7 +23,7 @@ import shallowAllOfMerge from './shallowAllOfMerge.ts';
  * @param fields - The fields to keep while filtering
  * @deprecated - To be removed as an exported `@rjsf/utils` function in a future release
  */
-export function getUsedFormData<T = any>(formData: T | undefined, fields: string[]): T | undefined {
+export function getUsedFormData<T = unknown>(formData: T | undefined, fields: string[]): T | undefined {
   // For the case of a single input form
   if (fields.length === 0 && typeof formData !== 'object') {
     return formData;
@@ -53,7 +52,7 @@ export function getUsedFormData<T = any>(formData: T | undefined, fields: string
  * @deprecated - To be removed as an exported `@rjsf/utils` function in a future release
  */
 // oxlint-disable-next-line typescript/no-deprecated
-export function getFieldNames<T = any>(pathSchema: PathSchema<T>, formData?: T): string[][] {
+export function getFieldNames<T = unknown>(pathSchema: PathSchema<T>, formData?: T): (string | string[])[] {
   const formValueHasData = (value: unknown, isLeaf: boolean) => {
     if (typeof value !== 'object' || value === null) {
       return true;
@@ -61,15 +60,16 @@ export function getFieldNames<T = any>(pathSchema: PathSchema<T>, formData?: T):
     const isEmptyValue = Array.isArray(value) ? value.length === 0 : Object.keys(value).length === 0;
     return isEmptyValue || isLeaf;
   };
-  const getAllPaths = (_obj: GenericObjectType, acc: string[][] = [], paths: string[][] = [[]]) => {
+  const getAllPaths = (_obj: GenericObjectType, acc: (string | string[])[] = [], paths: string[][] = [[]]) => {
     const objKeys = Object.keys(_obj);
     objKeys.forEach((key: string) => {
       const data = _obj[key];
-      if (typeof data === 'object') {
+      if (isObject(data)) {
         const newPaths = paths.map((path) => [...path, key]);
         // If an object is marked with additionalProperties, all its keys are valid
-        if (data[RJSF_ADDITIONAL_PROPERTIES_FLAG] && data[NAME_KEY] !== '') {
-          acc.push(data[NAME_KEY]);
+        const dataName = data[RJSF_ADDITIONAL_PROPERTIES_FLAG] ? data[NAME_KEY] : undefined;
+        if (typeof dataName === 'string' && dataName !== '') {
+          acc.push(dataName);
         } else {
           getAllPaths(data, acc, newPaths);
         }
@@ -90,7 +90,9 @@ export function getFieldNames<T = any>(pathSchema: PathSchema<T>, formData?: T):
     return acc;
   };
 
-  return getAllPaths(pathSchema);
+  // A `PathSchema` is always an object (it is `FieldPath` plus its recursive children), it just lacks the string index
+  // signature that `getAllPaths()` needs to walk it
+  return getAllPaths(pathSchema as GenericObjectType);
 }
 
 /** Returns true when a form value is considered empty: null/undefined/'', an empty array, or a plain
@@ -119,7 +121,7 @@ export function isValueEmpty(value: unknown): boolean {
  * @param [experimental_customMergeAllOf] - Optional custom merge function; see `Form` documentation
  * @returns - The merged schema with `allOf` resolved into a single schema object
  */
-function doMergeAllOf<S extends StrictRJSFSchema = RJSFSchema>(
+function doMergeAllOf<S extends RJSFSchema = RJSFSchema>(
   schema: S,
   experimental_customMergeAllOf?: Experimental_CustomMergeAllOf<S>,
 ): S {
@@ -140,9 +142,9 @@ function doMergeAllOf<S extends StrictRJSFSchema = RJSFSchema>(
  * @returns - The `formData` after omitting extra data, or `undefined` when `formData` is undefined
  */
 export default function omitExtraData<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(
   validator: ValidatorType<T, S, F>,
   schema: S,
@@ -150,16 +152,6 @@ export default function omitExtraData<
   formData?: T,
   experimental_customMergeAllOf?: Experimental_CustomMergeAllOf<S>,
 ): T | undefined {
-  /** Type predicate that narrows `value` to `GenericObjectType` — true when `value` is a plain,
-   * non-array object (i.e. a JSON object). Used to distinguish JSON objects from arrays and primitives.
-   *
-   * @param value - The value to check
-   * @returns - True if `value` is a plain non-array object
-   */
-  function isObjectValue(value: unknown): value is GenericObjectType {
-    return isObject(value);
-  }
-
   /** Type predicate that narrows a `S | boolean` schema definition to `S` — true when `schemaDef` is
    * a schema object rather than a JSON Schema boolean shorthand (`true` meaning allow-all, `false`
    * meaning deny-all).
@@ -421,7 +413,7 @@ export default function omitExtraData<
    */
   function handleDependencies(childSchema: S, source: unknown, target: unknown): unknown {
     const { dependencies } = childSchema;
-    if (dependencies === undefined || !isObjectValue(source)) {
+    if (dependencies === undefined || !isObject(source)) {
       return target;
     }
     let result = target;
@@ -481,10 +473,10 @@ export default function omitExtraData<
 
     const type = getSchemaType<S>(localSchema);
     if (type === 'object') {
-      if (!isObjectValue(source)) {
+      if (!isObject(source)) {
         return undefined;
       }
-      filtered = handleObject(localSchema, source, isObjectValue(filtered) ? filtered : {});
+      filtered = handleObject(localSchema, source, isObject(filtered) ? filtered : {});
     } else if (type === 'array') {
       if (!Array.isArray(source)) {
         return undefined;
@@ -499,7 +491,7 @@ export default function omitExtraData<
     // pruned. Keys added only by winning conditional branches are still removed here so the result
     // honours additionalProperties:false.
     const afterConditions = handleConditions(localSchema, source, filtered);
-    if (localSchema.additionalProperties === false && isObjectValue(afterConditions)) {
+    if (localSchema.additionalProperties === false && isObject(afterConditions)) {
       const knownKeys = new Set(Object.keys(localSchema.properties ?? {}));
       const patterns = localSchema.patternProperties
         ? Object.keys(localSchema.patternProperties).map((p) => new RegExp(p))

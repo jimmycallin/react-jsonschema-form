@@ -1028,7 +1028,8 @@ describe('Calling onChange right after updating a Form with props formData', () 
         return;
       }
       changed = true;
-      latestProps.current.onChange('test', [latestProps.current.formData.length]);
+      const currentFormData = latestProps.current.formData;
+      latestProps.current.onChange('test', [Array.isArray(currentFormData) ? currentFormData.length : 0]);
     });
     return <ArrayField {...fieldProps} />;
   };

@@ -1,13 +1,15 @@
 import { Grid, Title } from '@mantine/core';
-import type { FormContextType, TitleFieldProps, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
+import type { FormContextType, TitleFieldProps, RJSFSchema } from '@rjsf/utils';
 
 /** The `TitleField` is the template to use to render the title of a field
  *
  * @param props - The `TitleFieldProps` for this component
  */
-export default function TitleField<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
-  props: TitleFieldProps<T, S, F>,
-) {
+export default function TitleField<
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>(props: TitleFieldProps<T, S, F>) {
   const { id, title, optionalDataControl } = props;
   let heading = title ? (
     <Title id={id} order={3} fw='normal'>

@@ -1,20 +1,20 @@
 import { CONST_KEY, DEFAULT_KEY, PROPERTIES_KEY, REF_KEY } from '../constants.ts';
 import deepEquals from '../deepEquals.ts';
 import getPropertySchema from '../getPropertySchema.ts';
+import isObject from '../isObject.ts';
 import { getByPath, hasByPath } from '../pathUtils.ts';
 import type {
   Experimental_CustomMergeAllOf,
   FormContextType,
   GenericObjectType,
   RJSFSchema,
-  StrictRJSFSchema,
   ValidatorType,
 } from '../types.ts';
 import retrieveSchema from './retrieveSchema.ts';
 
 const NO_VALUE = Symbol('no Value');
 
-function enumValuesForSchema<S extends StrictRJSFSchema = RJSFSchema>(schema: S): any[] | undefined {
+function enumValuesForSchema<S extends RJSFSchema = RJSFSchema>(schema: S): unknown[] | undefined {
   if (Array.isArray(schema.enum)) {
     return schema.enum;
   }
@@ -36,7 +36,7 @@ function enumValuesForSchema<S extends StrictRJSFSchema = RJSFSchema>(schema: S)
   return values.length > 0 ? values : undefined;
 }
 
-function replacementForInvalidEnumValue<S extends StrictRJSFSchema = RJSFSchema>(schema: S, formValue: any) {
+function replacementForInvalidEnumValue<S extends RJSFSchema = RJSFSchema>(schema: S, formValue: unknown) {
   const enumValues = enumValuesForSchema(schema);
   if (!enumValues || enumValues.some((value) => deepEquals(value, formValue))) {
     return NO_VALUE;
@@ -99,15 +99,15 @@ function replacementForInvalidEnumValue<S extends StrictRJSFSchema = RJSFSchema>
  *      to `undefined`. Will return `undefined` if the new schema is not an object containing properties.
  */
 export default function sanitizeDataForNewSchema<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(
   validator: ValidatorType<T, S, F>,
   rootSchema: S,
   newSchema?: S,
   oldSchema?: S,
-  data: any = {},
+  data: unknown = {},
   experimental_customMergeAllOf?: Experimental_CustomMergeAllOf<S>,
 ): T {
   // By default, we will clear the form data
@@ -129,7 +129,8 @@ export default function sanitizeDataForNewSchema<
     // Create a place to store nested data that will be a side-effect of the filter
     const nestedData: GenericObjectType = {};
     keys.forEach((key) => {
-      const formValue = data?.[key];
+      // `data` is only known to be an object here, so the child value is asserted to the field type `T`
+      const formValue = (isObject(data) ? data[key] : undefined) as T | undefined;
       const isNewProperty = !hasByPath(oldSchema, [PROPERTIES_KEY, key]);
       let oldKeyedSchema = getPropertySchema<S>(oldSchema, key);
       let newKeyedSchema = getPropertySchema<S>(newSchema, key);
@@ -210,7 +211,7 @@ export default function sanitizeDataForNewSchema<
     });
 
     newFormData = {
-      ...(typeof data === 'string' || Array.isArray(data) ? undefined : data),
+      ...(isObject(data) ? data : undefined),
       ...removeOldSchemaData,
       ...nestedData,
     };
@@ -269,7 +270,7 @@ export default function sanitizeDataForNewSchema<
           // Filter out items that are no longer valid in the new items schema (e.g., enum values that changed)
           const newItemEnumValues = enumValuesForSchema(newSchemaItems as S);
           const filteredData = newItemEnumValues
-            ? data.filter((item: any) => newItemEnumValues.some((v: any) => deepEquals(v, item)))
+            ? data.filter((item: unknown) => newItemEnumValues.some((v) => deepEquals(v, item)))
             : data;
           newFormData = maxItems > 0 && filteredData.length > maxItems ? filteredData.slice(0, maxItems) : filteredData;
         }
