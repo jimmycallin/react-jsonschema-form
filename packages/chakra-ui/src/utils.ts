@@ -5,9 +5,15 @@ import type { UiSchema } from '@rjsf/utils';
 
 const { isValidProperty } = defaultSystem;
 
-export interface ChakraUiSchema extends Omit<UiSchema, 'ui:options'> {
+/** A `UiSchema` whose `ui:options` are known to carry the theme's `chakra` prop bag.
+ *
+ * NOTE: this intersects rather than using `Omit<UiSchema, 'ui:options'>`. `UiSchema` has a string index signature, so
+ * `keyof UiSchema` includes `string` and `Omit` erases every named member, leaving only the index signature — which
+ * silently typed the whole uiSchema as `any`.
+ */
+export type ChakraUiSchema = UiSchema & {
   'ui:options'?: ChakraUiOptions;
-}
+};
 
 type ChakraUiOptions = UiSchema['ui:options'] & { chakra?: ChakraField.RootProps };
 

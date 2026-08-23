@@ -14,8 +14,8 @@ import type { GenericObjectType, GenericSymbolObjectType } from './types';
 export default function mergeSchemas(obj1: GenericObjectType, obj2: GenericObjectType) {
   const acc = { ...obj1 }; // Prevent mutation of source object.
   const result = Object.keys(obj2).reduce((accumulator, key) => {
-    const left = obj1[key],
-      right = obj2[key];
+    const left: unknown = obj1[key],
+      right: unknown = obj2[key];
     if (key in obj1 && isObject(right)) {
       // Deep merging a primitive with an object is not meaningful, so the primitive side is treated as empty.
       // Recursing with a primitive here used to throw, because the `key in obj1` below is invalid on a primitive.
