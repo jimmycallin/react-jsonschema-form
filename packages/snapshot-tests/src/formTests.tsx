@@ -1,6 +1,12 @@
 import type { ComponentType } from 'react';
 import type { FormProps } from '@rjsf/core';
-import type { RJSFSchema, ErrorSchema, UiSchema, Experimental_DefaultFormStateBehavior } from '@rjsf/utils';
+import type {
+  RJSFSchema,
+  ErrorSchema,
+  GenericObjectType,
+  UiSchema,
+  Experimental_DefaultFormStateBehavior,
+} from '@rjsf/utils';
 import { bracketNameGenerator, dotNotationNameGenerator } from '@rjsf/utils';
 import validator from '@rjsf/validator-ajv8';
 import { render } from '@testing-library/react';
@@ -725,7 +731,7 @@ export function formTests(Form: ComponentType<FormProps>) {
       let schema: RJSFSchema;
       let uiSchema: UiSchema;
       let experimental_defaultFormStateBehavior: Experimental_DefaultFormStateBehavior;
-      let formData: any;
+      let formData: GenericObjectType;
       beforeAll(() => {
         schema = {
           title: 'test',

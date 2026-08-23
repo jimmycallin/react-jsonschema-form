@@ -4,13 +4,7 @@ import type { GridProps } from '@mui/material/Grid';
 import Grid from '@mui/material/Grid';
 import type { PaperProps } from '@mui/material/Paper';
 import Paper from '@mui/material/Paper';
-import type {
-  ArrayFieldTemplateProps,
-  FormContextType,
-  RJSFSchema,
-  StrictRJSFSchema,
-  GenericObjectType,
-} from '@rjsf/utils';
+import type { ArrayFieldTemplateProps, FormContextType, RJSFSchema, GenericObjectType } from '@rjsf/utils';
 import { getTemplate, getUiOptions, buttonId } from '@rjsf/utils';
 
 import { computeSxProps, getMuiProps } from '../util';
@@ -37,9 +31,9 @@ export interface ArrayFieldTemplateMuiProps extends GenericObjectType {
  * @param props - The `ArrayFieldTemplateProps` props for the component
  */
 export default function ArrayFieldTemplate<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(props: ArrayFieldTemplateProps<T, S, F>) {
   const {
     canAdd,

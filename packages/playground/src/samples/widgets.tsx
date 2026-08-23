@@ -1,3 +1,5 @@
+import type { WidgetProps } from '@rjsf/utils';
+
 import type { Sample } from './Sample';
 
 const widgets: Sample = {
@@ -233,11 +235,7 @@ const widgets: Sample = {
         value,
         onChange,
         options,
-      }: {
-        value: any;
-        onChange: (value: any) => void;
-        options: { backgroundColor: string };
-      }) => {
+      }: Pick<WidgetProps, 'value' | 'onChange'> & { options: { backgroundColor: string } }) => {
         const { backgroundColor } = options;
         return (
           <input
@@ -257,10 +255,8 @@ const widgets: Sample = {
         value,
         onChange,
         options,
-      }: {
-        value: any;
-        onChange: (value: any) => void;
-        options: { enumOptions: { label: string; value: any }[]; backgroundColor: string };
+      }: Pick<WidgetProps, 'value' | 'onChange'> & {
+        options: { enumOptions: { label: string; value: string }[]; backgroundColor: string };
       }) => {
         const { enumOptions, backgroundColor } = options;
         return (

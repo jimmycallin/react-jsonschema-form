@@ -1,4 +1,4 @@
-import type { FieldTemplateProps, FormContextType, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
+import type { FieldTemplateProps, FormContextType, RJSFSchema } from '@rjsf/utils';
 import { getTemplate, getUiOptions } from '@rjsf/utils';
 import { Form } from 'semantic-ui-react';
 
@@ -10,9 +10,9 @@ import { getSemanticProps, MaybeWrap } from '../util';
  * @param props - The `FieldTemplateProps` for this component
  */
 export default function FieldTemplate<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(props: FieldTemplateProps<T, S, F>) {
   const {
     id,
@@ -63,10 +63,10 @@ export default function FieldTemplate<
       {...otherProps}
     >
       <Form.Group key={id} widths='equal' grouped>
-        <MaybeWrap wrap={wrapContent} className='sui-field-content'>
+        <MaybeWrap wrap={Boolean(wrapContent)} className='sui-field-content'>
           {children}
           {displayLabel && rawDescription && !isCheckbox && (
-            <MaybeWrap wrap={wrapLabel} className='sui-field-label'>
+            <MaybeWrap wrap={Boolean(wrapLabel)} className='sui-field-label'>
               {description}
             </MaybeWrap>
           )}

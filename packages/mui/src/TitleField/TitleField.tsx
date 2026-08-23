@@ -6,7 +6,7 @@ import type { GridProps } from '@mui/material/Grid';
 import Grid from '@mui/material/Grid';
 import type { TypographyProps } from '@mui/material/Typography';
 import Typography from '@mui/material/Typography';
-import type { FormContextType, GenericObjectType, TitleFieldProps, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
+import type { FormContextType, GenericObjectType, TitleFieldProps, RJSFSchema } from '@rjsf/utils';
 import { getUiOptions } from '@rjsf/utils';
 
 import { computeSxProps, getMuiProps } from '../util';
@@ -34,9 +34,11 @@ export interface TitleFieldMuiProps extends GenericObjectType {
  *
  * @param props - The `TitleFieldProps` for this component
  */
-export default function TitleField<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
-  props: TitleFieldProps<T, S, F>,
-) {
+export default function TitleField<
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>(props: TitleFieldProps<T, S, F>) {
   const { id, title, optionalDataControl, uiSchema } = props;
 
   const uiOptions = getUiOptions<T, S, F>(uiSchema);

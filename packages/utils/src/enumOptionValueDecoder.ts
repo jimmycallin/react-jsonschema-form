@@ -1,5 +1,5 @@
 import enumOptionsValueForIndex from './enumOptionsValueForIndex';
-import type { EnumOptionsType, OptionValueFormat, StrictRJSFSchema, RJSFSchema } from './types';
+import type { EnumOptionsType, OptionValueFormat, RJSFSchema } from './types';
 
 /** Resolves a single DOM value string back to its typed enum value in `'realValue'` mode.
  *
@@ -13,10 +13,10 @@ import type { EnumOptionsType, OptionValueFormat, StrictRJSFSchema, RJSFSchema }
  * @param emptyValue - The value to return when the input is empty, options are missing, or no match is found
  * @returns The original typed enum value, or `emptyValue`
  */
-function decodeSingle<S extends StrictRJSFSchema = RJSFSchema>(
+function decodeSingle<S extends RJSFSchema = RJSFSchema>(
   value: string,
   enumOptions: EnumOptionsType<S>[] | undefined,
-  emptyValue?: unknown,
+  emptyValue?: EnumOptionsType<S>['value'],
 ): unknown {
   if (value === '' || !Array.isArray(enumOptions)) {
     return emptyValue;
@@ -48,11 +48,11 @@ function decodeSingle<S extends StrictRJSFSchema = RJSFSchema>(
  * @param emptyValue - The value to return for empty/missing selections
  * @returns The original typed enum value(s)
  */
-export default function enumOptionValueDecoder<S extends StrictRJSFSchema = RJSFSchema>(
+export default function enumOptionValueDecoder<S extends RJSFSchema = RJSFSchema>(
   value: string | string[],
   enumOptions: EnumOptionsType<S>[] | undefined,
   format: OptionValueFormat = 'indexed',
-  emptyValue?: unknown,
+  emptyValue?: EnumOptionsType<S>['value'],
 ): unknown {
   if (format !== 'realValue') {
     return enumOptionsValueForIndex<S>(value, enumOptions, emptyValue);

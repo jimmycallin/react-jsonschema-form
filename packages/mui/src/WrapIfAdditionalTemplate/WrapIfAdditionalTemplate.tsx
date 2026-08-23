@@ -2,13 +2,7 @@ import type { CSSProperties } from 'react';
 import type { GridProps } from '@mui/material/Grid';
 import Grid from '@mui/material/Grid';
 import TextField from '@mui/material/TextField';
-import type {
-  GenericObjectType,
-  FormContextType,
-  RJSFSchema,
-  StrictRJSFSchema,
-  WrapIfAdditionalTemplateProps,
-} from '@rjsf/utils';
+import type { GenericObjectType, FormContextType, RJSFSchema, WrapIfAdditionalTemplateProps } from '@rjsf/utils';
 import { ADDITIONAL_PROPERTY_FLAG, buttonId, TranslatableString, getUiOptions } from '@rjsf/utils';
 
 import { computeSxProps, getMuiProps } from '../util';
@@ -33,9 +27,9 @@ export interface WrapIfAdditionalTemplateMuiProps extends GenericObjectType {
  * @param props - The `WrapIfAdditionalProps` for this component
  */
 export default function WrapIfAdditionalTemplate<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(props: WrapIfAdditionalTemplateProps<T, S, F>) {
   const {
     children,

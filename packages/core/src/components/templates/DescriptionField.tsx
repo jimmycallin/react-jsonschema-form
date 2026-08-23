@@ -1,4 +1,4 @@
-import type { DescriptionFieldProps, FormContextType, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
+import type { DescriptionFieldProps, FormContextType, RJSFSchema } from '@rjsf/utils';
 
 import RichDescription from '../RichDescription';
 
@@ -7,9 +7,9 @@ import RichDescription from '../RichDescription';
  * @param props - The `DescriptionFieldProps` for this component
  */
 export default function DescriptionField<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(props: DescriptionFieldProps<T, S, F>) {
   const { id, description, registry, uiSchema } = props;
   if (!description) {

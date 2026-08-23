@@ -1,7 +1,7 @@
 import get from 'lodash/get';
 
 import { PROPERTIES_KEY } from './constants';
-import type { RJSFSchema, StrictRJSFSchema } from './types';
+import type { RJSFSchema } from './types';
 
 /** Compares the value of `discriminatorField` within `formData` against the value of `discriminatorField` within schema for each `option`.
  * Returns index of first `option` whose discriminator matches formData. Returns `undefined` if there is no match.
@@ -13,7 +13,7 @@ import type { RJSFSchema, StrictRJSFSchema } from './types';
  *          determine which option is selected
  * @returns - The index of the matched option or undefined if there is no match
  */
-export default function getOptionMatchingSimpleDiscriminator<T = any, S extends StrictRJSFSchema = RJSFSchema>(
+export default function getOptionMatchingSimpleDiscriminator<T = unknown, S extends RJSFSchema = RJSFSchema>(
   formData: T | undefined,
   options: S[],
   discriminatorField?: string,

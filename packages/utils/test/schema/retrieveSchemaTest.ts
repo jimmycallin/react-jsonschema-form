@@ -50,7 +50,8 @@ export default function retrieveSchemaTest(testValidator: TestValidatorType) {
       testValidator.reset?.();
     });
     it('returns empty object when schema is not an object', () => {
-      expect(retrieveSchema(testValidator, [] as RJSFSchema)).toEqual({});
+      // An array is deliberately not a valid schema, so it has to be forced through `unknown`
+      expect(retrieveSchema(testValidator, [] as unknown as RJSFSchema)).toEqual({});
     });
     it('tolerates a schema with an explicitly undefined `properties`', () => {
       const schema = { type: 'object', properties: undefined } as RJSFSchema;
@@ -459,7 +460,7 @@ export default function retrieveSchemaTest(testValidator: TestValidatorType) {
       });
     });
     it('should `resolve` a bundled draft 2020-12 JSON Schema', () => {
-      const definitions: RJSFSchema = {
+      const definitions: Record<string, RJSFSchema> = {
         'https://jsonschema.dev/schemas/mixins/integer': {
           $schema: 'https://json-schema.org/draft/2020-12/schema',
           $id: 'https://jsonschema.dev/schemas/mixins/integer',

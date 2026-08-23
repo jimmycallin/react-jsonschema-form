@@ -1,5 +1,5 @@
 import { CONST_KEY } from './constants';
-import type { RJSFSchema, StrictRJSFSchema } from './types';
+import type { StrictRJSFSchema } from './types';
 
 /** This function checks if the given `schema` matches a single constant value. This happens when either the schema has
  * an `enum` array with a single value or there is a `const` defined.
@@ -7,6 +7,6 @@ import type { RJSFSchema, StrictRJSFSchema } from './types';
  * @param schema - The schema for a field
  * @returns - True if the `schema` has a single constant value, false otherwise
  */
-export default function isConstant<S extends StrictRJSFSchema = RJSFSchema>(schema: S) {
+export default function isConstant(schema: StrictRJSFSchema) {
   return (Array.isArray(schema.enum) && schema.enum.length === 1) || CONST_KEY in schema;
 }

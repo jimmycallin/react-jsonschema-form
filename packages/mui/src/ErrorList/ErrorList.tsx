@@ -13,7 +13,7 @@ import type { PaperProps } from '@mui/material/Paper';
 import Paper from '@mui/material/Paper';
 import type { TypographyProps } from '@mui/material/Typography';
 import Typography from '@mui/material/Typography';
-import type { ErrorListProps, FormContextType, GenericObjectType, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
+import type { ErrorListProps, FormContextType, GenericObjectType, RJSFSchema } from '@rjsf/utils';
 import { TranslatableString, getUiOptions } from '@rjsf/utils';
 
 import { computeSxProps, getMuiProps } from '../util';
@@ -43,11 +43,11 @@ export interface ErrorListMuiProps extends GenericObjectType {
  *
  * @param props - The `ErrorListProps` for this component
  */
-export default function ErrorList<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>({
-  errors,
-  registry,
-  uiSchema,
-}: ErrorListProps<T, S, F>) {
+export default function ErrorList<
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>({ errors, registry, uiSchema }: ErrorListProps<T, S, F>) {
   const { translateString } = registry;
 
   const uiOptions = getUiOptions<T, S, F>(uiSchema);

@@ -5,13 +5,7 @@ import type { GridProps } from '@mui/material/Grid';
 import Grid from '@mui/material/Grid';
 import type { PaperProps } from '@mui/material/Paper';
 import Paper from '@mui/material/Paper';
-import type {
-  ArrayFieldItemTemplateProps,
-  FormContextType,
-  RJSFSchema,
-  StrictRJSFSchema,
-  GenericObjectType,
-} from '@rjsf/utils';
+import type { ArrayFieldItemTemplateProps, FormContextType, RJSFSchema, GenericObjectType } from '@rjsf/utils';
 import { getUiOptions, getTemplate } from '@rjsf/utils';
 
 import { computeSxProps, getMuiProps } from '../util';
@@ -40,9 +34,9 @@ export interface ArrayFieldItemTemplateMuiProps extends GenericObjectType {
  * @param props - The `ArrayFieldItemTemplateProps` props for the component
  */
 export default function ArrayFieldItemTemplate<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(props: ArrayFieldItemTemplateProps<T, S, F>) {
   const { children, buttonsProps, hasDescription, hasToolbar, uiSchema, registry } = props;
   const uiOptions = getUiOptions<T, S, F>(uiSchema);

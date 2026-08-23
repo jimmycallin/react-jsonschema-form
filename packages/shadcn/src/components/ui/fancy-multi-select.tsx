@@ -15,7 +15,7 @@ import { Command, CommandGroup, CommandItem, CommandList } from './command';
  */
 export interface FancySelectItem {
   /** The value of the item */
-  value: any;
+  value: unknown;
   /** The display label for the item */
   label: string;
   /** The index position of the item */
@@ -155,7 +155,7 @@ export function FancyMultiSelect({
       >
         <div className='flex gap-1 flex-wrap'>
           {selectedItems.map((item) => (
-            <Badge key={item.value} variant='secondary'>
+            <Badge key={String(item.value)} variant='secondary'>
               {item.label}
               <button
                 type='button'

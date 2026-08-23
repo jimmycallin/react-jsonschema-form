@@ -14,7 +14,7 @@ import type { ErrorSchema, ValidationData } from './types';
  * @param [preventDuplicates=false] - Optional flag, if true, will call `mergeObjects()` with `preventDuplicates`
  * @returns - The `validationData` with the additional errors from `additionalErrorSchema` merged into it, if provided.
  */
-export default function validationDataMerge<T = any>(
+export default function validationDataMerge<T = unknown>(
   validationData: ValidationData<T>,
   additionalErrorSchema?: ErrorSchema<T>,
   preventDuplicates = false,

@@ -51,11 +51,15 @@ export const JUNK_OPTION: StrictRJSFSchema = {
  * @param [experimental_customMergeAllOf] - Optional function that allows for custom merging of `allOf` schemas
  * @returns - The score a schema against the formData
  */
-export function calculateIndexScore<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
+export function calculateIndexScore<
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>(
   validator: ValidatorType<T, S, F>,
   rootSchema: S,
   schema?: S,
-  formData?: any,
+  formData?: unknown,
   experimental_customMergeAllOf?: Experimental_CustomMergeAllOf<S>,
 ): number {
   let totalScore = 0;
@@ -158,9 +162,9 @@ export function calculateIndexScore<T = any, S extends StrictRJSFSchema = RJSFSc
  * @returns - The index of the option that is the closest match to the `formData` or the `selectedOption` if no match
  */
 export default function getClosestMatchingOption<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(
   validator: ValidatorType<T, S, F>,
   rootSchema: S,

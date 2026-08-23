@@ -2,7 +2,7 @@ import type { CheckboxProps } from '@mui/material/Checkbox';
 import Checkbox from '@mui/material/Checkbox';
 import type { FormControlLabelProps } from '@mui/material/FormControlLabel';
 import FormControlLabel from '@mui/material/FormControlLabel';
-import type { FormContextType, GenericObjectType, RJSFSchema, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
+import type { FormContextType, GenericObjectType, RJSFSchema, WidgetProps } from '@rjsf/utils';
 import { ariaDescribedByIds, descriptionId, getTemplate, labelValue, schemaRequiresTrueValue } from '@rjsf/utils';
 
 import { getMuiProps } from '../util';
@@ -24,9 +24,9 @@ export interface CheckboxWidgetMuiProps extends GenericObjectType {
  * @param props - The `WidgetProps` for this component
  */
 export default function CheckboxWidget<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(props: WidgetProps<T, S, F>) {
   const {
     schema,
@@ -55,7 +55,7 @@ export default function CheckboxWidget<
   // "const" or "enum" keywords
   const required = schemaRequiresTrueValue<S>(schema);
 
-  const handleChange = (_: any, checked: boolean) => onChange(checked);
+  const handleChange = (_: React.ChangeEvent<HTMLInputElement>, checked: boolean) => onChange(checked);
   const handleBlur: React.FocusEventHandler<HTMLButtonElement> = () => onBlur(id, value);
   const handleFocus: React.FocusEventHandler<HTMLButtonElement> = () => onFocus(id, value);
   const description = options.description ?? schema.description;

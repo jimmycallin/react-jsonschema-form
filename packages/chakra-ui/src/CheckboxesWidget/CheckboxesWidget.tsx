@@ -1,6 +1,7 @@
 import type { FocusEvent } from 'react';
+import type { FieldsetRootProps } from '@chakra-ui/react';
 import { CheckboxGroup, FieldsetRoot, Stack, Text, FieldsetLegend } from '@chakra-ui/react';
-import type { FormContextType, RJSFSchema, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
+import type { FormContextType, RJSFSchema, WidgetProps } from '@rjsf/utils';
 import {
   ariaDescribedByIds,
   enumOptionSelectedValue,
@@ -15,9 +16,9 @@ import { Checkbox } from '../components/ui/checkbox';
 import { getChakra } from '../utils';
 
 export default function CheckboxesWidget<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(props: WidgetProps<T, S, F>) {
   const {
     id,
@@ -48,12 +49,13 @@ export default function CheckboxesWidget<
 
   const chakraProps = getChakra({ uiSchema });
 
+  // `getChakra` returns Field.RootProps; the styling props it carries are shared with the Fieldset root
   return (
     <FieldsetRoot
       mb={1}
       disabled={disabled || readonly}
       invalid={rawErrors && rawErrors.length > 0}
-      {...(chakraProps as any)}
+      {...(chakraProps as FieldsetRootProps)}
     >
       {!hideLabel && label && <FieldsetLegend>{labelValue(label)}</FieldsetLegend>}
       <CheckboxGroup

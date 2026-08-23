@@ -1,15 +1,11 @@
 import type { ChangeEvent, FocusEvent, MouseEvent } from 'react';
 import { useCallback } from 'react';
 import { SchemaExamples } from '@rjsf/core';
-import type {
-  BaseInputTemplateProps,
-  FormContextType,
-  GenericObjectType,
-  RJSFSchema,
-  StrictRJSFSchema,
-} from '@rjsf/utils';
+import type { BaseInputTemplateProps, FormContextType, RJSFSchema } from '@rjsf/utils';
 import { ariaDescribedByIds, examplesId, getInputProps } from '@rjsf/utils';
 import { Input, InputNumber } from 'antd';
+
+import { getAntdFormContext } from '../../utils';
 
 const INPUT_STYLE = {
   width: '100%',
@@ -22,9 +18,9 @@ const INPUT_STYLE = {
  * @param props - The `WidgetProps` for this template
  */
 export default function BaseInputTemplate<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(props: BaseInputTemplateProps<T, S, F>) {
   const {
     disabled,
@@ -47,7 +43,7 @@ export default function BaseInputTemplate<
   // InputNumber doesn't use a native <input type="number"> directly - it wraps it and controls the stepping behavior
   // through its own props. The step prop in Ant Design expects a number, not the string "any"
   const inputProps = getInputProps<T, S, F>(schema, type, options, false);
-  const { readonlyAsDisabled = true } = formContext as GenericObjectType;
+  const { readonlyAsDisabled = true } = getAntdFormContext(formContext);
   const { ClearButton } = registry.templates.ButtonTemplates;
 
   const handleNumberChange = (nextValue: number | null) => onChange(nextValue);

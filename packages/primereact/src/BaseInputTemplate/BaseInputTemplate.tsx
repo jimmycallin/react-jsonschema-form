@@ -1,15 +1,17 @@
 import type { ChangeEvent, MouseEvent } from 'react';
 import { useCallback } from 'react';
-import type { BaseInputTemplateProps, FormContextType, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
+import type { BaseInputTemplateProps, FormContextType, RJSFSchema } from '@rjsf/utils';
 import { ariaDescribedByIds, examplesId, getInputProps } from '@rjsf/utils';
 import { InputText } from 'primereact/inputtext';
+
+import { getPrimeProps } from '../util';
 
 /** The `BaseInputTemplate` is the template the fallback if no widget is specified.
  */
 export default function BaseInputTemplate<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(props: BaseInputTemplateProps<T, S, F>) {
   const {
     id,
@@ -35,7 +37,7 @@ export default function BaseInputTemplate<
   const { AutoCompleteWidget } = registry.widgets;
 
   const inputProps = getInputProps<T, S, F>(schema, type, options);
-  const primeProps = (options.prime || {}) as object;
+  const primeProps = getPrimeProps<T, S, F>(options);
   const handleChange = ({ target: { value: newValue } }: ChangeEvent<HTMLInputElement>) =>
     onChange(newValue === '' ? options.emptyValue : newValue);
   const handleBlur = () => onBlur?.(id, value);

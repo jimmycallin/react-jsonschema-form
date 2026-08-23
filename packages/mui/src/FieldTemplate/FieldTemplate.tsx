@@ -2,13 +2,17 @@ import type { FormControlProps } from '@mui/material/FormControl';
 import FormControl from '@mui/material/FormControl';
 import type { TypographyProps } from '@mui/material/Typography';
 import Typography from '@mui/material/Typography';
-import type { FieldTemplateProps, FormContextType, GenericObjectType, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
+import type { FieldTemplateProps, FormContextType, GenericObjectType, RJSFSchema } from '@rjsf/utils';
 import { getTemplate, getUiOptions } from '@rjsf/utils';
 
 import { getMuiProps } from '../util';
 
 /** Properties available for the `rjsfSlotProps` target of the FieldTemplate. */
 export interface FieldTemplateMuiProps extends GenericObjectType {
+  /** Styles applied to the MUI `FormControl` wrapping the field. */
+  sx?: FormControlProps['sx'];
+  /** Class name applied to the MUI `FormControl` wrapping the field. */
+  className?: string;
   /** RJSF-specific slot props for targeting child elements of the FieldTemplate. */
   rjsfSlotProps?: {
     /** Props applied to the MUI `FormControl` wrapping the field. */
@@ -24,9 +28,9 @@ export interface FieldTemplateMuiProps extends GenericObjectType {
  * @param props - The `FieldTemplateProps` for this component
  */
 export default function FieldTemplate<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(props: FieldTemplateProps<T, S, F>) {
   const {
     id,

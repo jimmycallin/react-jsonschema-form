@@ -1,4 +1,4 @@
-import type { RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
+import type { RJSFSchema } from '@rjsf/utils';
 import { schemaParser } from '@rjsf/utils';
 import { Validator } from 'ata-validator';
 
@@ -15,7 +15,7 @@ import type { CustomValidatorOptionsType } from './types';
  * @param schema - The schema to compile
  * @param [options={}] - The `CustomValidatorOptionsType` used to build the validator
  */
-export function compileSchemaValidatorsCode<S extends StrictRJSFSchema = RJSFSchema>(
+export function compileSchemaValidatorsCode<S extends RJSFSchema = RJSFSchema>(
   schema: S,
   options: CustomValidatorOptionsType = {},
 ) {

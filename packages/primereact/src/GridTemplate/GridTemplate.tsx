@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import type { GridTemplateProps } from '@rjsf/utils';
 
+import { getPrimeLayoutGrid } from '../util';
+
 const breakpoints = {
   xs: 0,
   sm: 576,
@@ -48,7 +50,7 @@ export default function GridTemplate(props: GridTemplateProps) {
 
 function GridTemplateRow(props: GridTemplateProps) {
   const { children, column, uiSchema, style, ...rest } = props;
-  const layoutGrid = uiSchema?.['ui:layoutGrid'] ?? {};
+  const layoutGrid = getPrimeLayoutGrid(uiSchema);
   const totalColumns = layoutGrid.columns ?? 12;
   const gap = layoutGrid.gap ?? '16px';
 

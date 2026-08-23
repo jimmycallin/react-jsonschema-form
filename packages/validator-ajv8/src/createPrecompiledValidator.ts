@@ -1,4 +1,4 @@
-import type { FormContextType, RJSFSchema, StrictRJSFSchema, ValidatorType } from '@rjsf/utils';
+import type { FormContextType, RJSFSchema, ValidatorType } from '@rjsf/utils';
 
 import AJV8PrecompiledValidator from './precompiledValidator';
 import type { Localizer, SuppressDuplicateFilteringType, ValidatorFunctions } from './types';
@@ -16,9 +16,9 @@ import type { Localizer, SuppressDuplicateFilteringType, ValidatorFunctions } fr
  * @returns - The precompiled validator implementation resulting from the set of parameters provided
  */
 export default function createPrecompiledValidator<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(
   validateFns: ValidatorFunctions,
   rootSchema: S,

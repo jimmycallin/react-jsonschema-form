@@ -1,9 +1,9 @@
-import type { FormContextType, RJSFSchema, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
+import type { FormContextType, RJSFSchema, WidgetProps } from '@rjsf/utils';
 import { ariaDescribedByIds, descriptionId, getTemplate, labelValue, schemaRequiresTrueValue } from '@rjsf/utils';
 import type { CheckboxChangeEvent } from 'primereact/checkbox';
 import { Checkbox } from 'primereact/checkbox';
 
-import { Label } from '../util';
+import { Label, getPrimeProps } from '../util';
 
 /** The `CheckBoxWidget` is a widget for rendering boolean properties.
  *  It is typically used to represent a boolean.
@@ -11,9 +11,9 @@ import { Label } from '../util';
  * @param props - The `WidgetProps` for this component
  */
 export default function CheckboxWidget<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(props: WidgetProps<T, S, F>) {
   const {
     id,
@@ -45,7 +45,7 @@ export default function CheckboxWidget<
   const handleBlur: React.FocusEventHandler<HTMLInputElement> = () => onBlur?.(id, value);
   const handleFocus: React.FocusEventHandler<HTMLInputElement> = () => onFocus?.(id, value);
   const description = options.description ?? schema.description;
-  const primeProps = (options.prime || {}) as object;
+  const primeProps = getPrimeProps<T, S, F>(options);
 
   return (
     <>

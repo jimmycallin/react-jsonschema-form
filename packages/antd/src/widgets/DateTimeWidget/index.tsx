@@ -1,4 +1,4 @@
-import type { FormContextType, RJSFSchema, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
+import type { FormContextType, RJSFSchema, WidgetProps } from '@rjsf/utils';
 
 import DateWidget from '../DateWidget';
 
@@ -8,9 +8,9 @@ import DateWidget from '../DateWidget';
  * @param props - The `WidgetProps` for this component
  */
 export default function DateTimeWidget<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(props: WidgetProps<T, S, F>) {
   return <DateWidget showTime {...props} />;
 }

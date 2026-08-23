@@ -1,5 +1,3 @@
-import get from 'lodash/get';
-
 import type { RJSFSchema, SchemaUtilsType } from '../../src';
 import { createSchemaUtils, getClosestMatchingOption } from '../../src';
 import { calculateIndexScore } from '../../src/schema/getClosestMatchingOption';
@@ -123,96 +121,94 @@ export default function getClosestMatchingOptionTest(testValidator: TestValidato
     });
     it('returns the second option when data matches for oneOf', () => {
       // From https://github.com/rjsf-team/react-jsonschema-form/issues/2944
+      const oneOf: RJSFSchema[] = [
+        {
+          properties: {
+            lorem: {
+              type: 'string',
+            },
+          },
+          required: ['lorem'],
+        },
+        {
+          properties: {
+            ipsum: {
+              oneOf: [
+                {
+                  properties: {
+                    day: {
+                      type: 'string',
+                    },
+                  },
+                },
+                {
+                  properties: {
+                    night: {
+                      type: 'string',
+                    },
+                  },
+                },
+              ],
+            },
+          },
+          required: ['ipsum'],
+        },
+      ];
       const schema: RJSFSchema = {
         type: 'array',
-        items: {
-          oneOf: [
-            {
-              properties: {
-                lorem: {
-                  type: 'string',
-                },
-              },
-              required: ['lorem'],
-            },
-            {
-              properties: {
-                ipsum: {
-                  oneOf: [
-                    {
-                      properties: {
-                        day: {
-                          type: 'string',
-                        },
-                      },
-                    },
-                    {
-                      properties: {
-                        night: {
-                          type: 'string',
-                        },
-                      },
-                    },
-                  ],
-                },
-              },
-              required: ['ipsum'],
-            },
-          ],
-        },
+        items: { oneOf },
       };
       const formData = { ipsum: { night: 'nicht' } };
       // Mock to return true for the last of the second one-ofs
       testValidator.setReturnValues({
         isValid: [false, false, false, false, false, false, false, true],
       });
-      expect(getClosestMatchingOption(testValidator, schema, formData, get(schema, 'items.oneOf'))).toEqual(1);
+      expect(getClosestMatchingOption(testValidator, schema, formData, oneOf)).toEqual(1);
     });
     it('returns the second option when data matches for anyOf', () => {
+      const anyOf: RJSFSchema[] = [
+        {
+          properties: {
+            lorem: {
+              type: 'string',
+            },
+          },
+          required: ['lorem'],
+        },
+        {
+          properties: {
+            ipsum: {
+              anyOf: [
+                {
+                  properties: {
+                    day: {
+                      type: 'string',
+                    },
+                  },
+                },
+                {
+                  properties: {
+                    night: {
+                      type: 'string',
+                    },
+                  },
+                },
+              ],
+            },
+          },
+          required: ['ipsum'],
+        },
+      ];
       const schema: RJSFSchema = {
         type: 'array',
-        items: {
-          anyOf: [
-            {
-              properties: {
-                lorem: {
-                  type: 'string',
-                },
-              },
-              required: ['lorem'],
-            },
-            {
-              properties: {
-                ipsum: {
-                  anyOf: [
-                    {
-                      properties: {
-                        day: {
-                          type: 'string',
-                        },
-                      },
-                    },
-                    {
-                      properties: {
-                        night: {
-                          type: 'string',
-                        },
-                      },
-                    },
-                  ],
-                },
-              },
-              required: ['ipsum'],
-            },
-          ],
-        },
+        items: { anyOf },
       };
       const formData = { ipsum: { night: 'nicht' } };
       // Mock to return true for the last of the second anyOfs
       testValidator.setReturnValues({
         isValid: [false, false, false, false, false, false, false, true],
       });
-      expect(getClosestMatchingOption(testValidator, schema, formData, get(schema, 'items.anyOf'))).toEqual(1);
+      expect(getClosestMatchingOption(testValidator, schema, formData, anyOf)).toEqual(1);
     });
     it('should return 0 when schema has discriminator but no matching data', () => {
       // Mock isValid to fail both values

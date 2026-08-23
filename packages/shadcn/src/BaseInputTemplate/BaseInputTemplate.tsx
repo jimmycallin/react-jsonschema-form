@@ -1,7 +1,7 @@
-import type { ChangeEvent, FocusEvent, MouseEvent } from 'react';
+import type { ChangeEvent, FocusEvent, InputHTMLAttributes, MouseEvent } from 'react';
 import { useCallback } from 'react';
 import { SchemaExamples } from '@rjsf/core';
-import type { BaseInputTemplateProps, FormContextType, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
+import type { BaseInputTemplateProps, FormContextType, RJSFSchema } from '@rjsf/utils';
 import { ariaDescribedByIds, examplesId, getInputProps } from '@rjsf/utils';
 
 import { Input } from '../components/ui/input';
@@ -14,9 +14,9 @@ import { cn } from '../lib/utils';
  * @param props - The `WidgetProps` for this template
  */
 export default function BaseInputTemplate<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >({
   id,
   htmlName,
@@ -38,7 +38,13 @@ export default function BaseInputTemplate<
   extraProps,
   className,
   registry,
-}: BaseInputTemplateProps<T, S, F>) {
+}: BaseInputTemplateProps<T, S, F> & {
+  /** `extraProps` reaches a widget through the `WidgetProps` index signature, so it is typed `unknown` there. It is
+   * spread onto the `<input>`, so the only thing it can usefully carry is extra input attributes; saying so here keeps
+   * the spread below type-safe without an assertion.
+   */
+  extraProps?: InputHTMLAttributes<HTMLInputElement>;
+}) {
   const { ClearButton } = registry.templates.ButtonTemplates;
   const inputProps = {
     ...extraProps,
@@ -62,7 +68,6 @@ export default function BaseInputTemplate<
       <Input
         id={id}
         name={htmlName || id}
-        type={type}
         placeholder={placeholder}
         autoFocus={autofocus}
         required={required}

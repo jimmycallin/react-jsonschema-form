@@ -1,4 +1,4 @@
-import type { FormContextType, TitleFieldProps, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
+import type { FormContextType, TitleFieldProps, RJSFSchema } from '@rjsf/utils';
 import { Grid, Header } from 'semantic-ui-react';
 
 import { getSemanticProps } from '../util';
@@ -12,12 +12,11 @@ const DEFAULT_OPTIONS = {
  *
  * @param props - The `TitleFieldProps` for this component
  */
-export default function TitleField<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>({
-  id,
-  title,
-  uiSchema,
-  optionalDataControl,
-}: TitleFieldProps<T, S, F>) {
+export default function TitleField<
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>({ id, title, uiSchema, optionalDataControl }: TitleFieldProps<T, S, F>) {
   const semanticProps = getSemanticProps<T, S, F>({
     uiSchema,
     defaultSchemaProps: DEFAULT_OPTIONS,

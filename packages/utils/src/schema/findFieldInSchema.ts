@@ -8,7 +8,6 @@ import type {
   FoundFieldType,
   RJSFSchema,
   SchemaFieldPath,
-  StrictRJSFSchema,
   ValidatorType,
 } from '../types';
 import findSelectedOptionInXxxOf from './findSelectedOptionInXxxOf';
@@ -32,8 +31,8 @@ export const NOT_FOUND_SCHEMA = { title: '!@#$_UNKNOWN_$#@!' };
  */
 export default function findFieldInSchema<
   T = undefined,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(
   validator: ValidatorType<T, S, F>,
   rootSchema: S,

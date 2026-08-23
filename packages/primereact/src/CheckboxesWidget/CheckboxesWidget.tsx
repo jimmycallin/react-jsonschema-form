@@ -1,4 +1,4 @@
-import type { FormContextType, RJSFSchema, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
+import type { FormContextType, RJSFSchema, WidgetProps } from '@rjsf/utils';
 import {
   ariaDescribedByIds,
   enumOptionsDeselectValue,
@@ -11,7 +11,7 @@ import {
 import type { CheckboxChangeEvent } from 'primereact/checkbox';
 import { Checkbox } from 'primereact/checkbox';
 
-import { Label } from '../util';
+import { Label, getPrimeProps } from '../util';
 
 /** The `CheckboxesWidget` is a widget for rendering checkbox groups.
  *  It is typically used to represent an array of enums.
@@ -19,9 +19,9 @@ import { Label } from '../util';
  * @param props - The `WidgetProps` for this component
  */
 export default function CheckboxesWidget<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(props: WidgetProps<T, S, F>) {
   const {
     id,
@@ -40,7 +40,7 @@ export default function CheckboxesWidget<
     hideLabel,
   } = props;
   const { enumOptions, enumDisabled } = options;
-  const primeProps = (options.prime || {}) as object;
+  const primeProps = getPrimeProps<T, S, F>(options);
   const checkboxesValues = Array.isArray(value) ? value : [value];
 
   const handleChange = (index: number) => (e: CheckboxChangeEvent) => {

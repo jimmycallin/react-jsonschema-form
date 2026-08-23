@@ -1,4 +1,4 @@
-import type { FormContextType, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
+import type { FormContextType, RJSFSchema } from '@rjsf/utils';
 import { TranslatableString } from '@rjsf/utils';
 import type { ButtonProps } from 'semantic-ui-react';
 import { Button, Icon } from 'semantic-ui-react';
@@ -7,12 +7,11 @@ import type { SemanticIconButtonProps } from '../IconButton';
 
 /** The `AddButton` renders a button that represent the `Add` action on a form
  */
-export default function AddButton<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>({
-  uiSchema,
-  registry,
-  color,
-  ...props
-}: SemanticIconButtonProps<T, S, F>) {
+export default function AddButton<
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>({ uiSchema, registry, color, ...props }: SemanticIconButtonProps<T, S, F>) {
   const { translateString } = registry;
   return (
     <Button

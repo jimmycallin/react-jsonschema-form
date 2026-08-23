@@ -10,7 +10,6 @@ import type {
   FormContextType,
   RJSFSchema,
   RJSFValidationError,
-  StrictRJSFSchema,
   UiSchema,
   ValidationData,
   ValidatorType,
@@ -18,7 +17,7 @@ import type {
 
 /** The type of the map of schema hash to schema
  */
-export type SchemaMap<S extends StrictRJSFSchema = RJSFSchema> = Record<string, S>;
+export type SchemaMap<S extends RJSFSchema = RJSFSchema> = Record<string, S>;
 
 /** An implementation of the `ValidatorType` interface that is designed for use in capturing schemas used by the
  * `isValid()` function. The rest of the implementation of the interface throws errors when it is attempted to be used.
@@ -28,9 +27,9 @@ export type SchemaMap<S extends StrictRJSFSchema = RJSFSchema> = Record<string, 
  * schema IF that schema doesn't already have an $id, prior to putting the schema into the map.
  */
 export default class ParserValidator<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 > implements ValidatorType<T, S, F> {
   /** The rootSchema provided during construction of the class */
   readonly rootSchema: S;
@@ -106,7 +105,7 @@ export default class ParserValidator<
    * @param _schema - The schema parameter that is ignored
    * @param _formData - The formData parameter that is ignored
    */
-  rawValidation<Result = any>(_schema: S, _formData?: T): { errors?: Result[]; validationError?: Error } {
+  rawValidation<Result = unknown>(_schema: S, _formData?: T): { errors?: Result[]; validationError?: Error } {
     throw new Error('Unexpectedly calling the `rawValidation()` method during schema parsing');
   }
 

@@ -1,9 +1,11 @@
-import type { ChangeEvent } from 'react';
 import { useState } from 'react';
-import type { FormContextType, RJSFSchema, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
+import type { FormContextType, RJSFSchema } from '@rjsf/utils';
 import { ariaDescribedByIds, getInputProps } from '@rjsf/utils';
-import type { AutoCompleteCompleteEvent } from 'primereact/autocomplete';
+import type { AutoCompleteChangeEvent, AutoCompleteCompleteEvent } from 'primereact/autocomplete';
 import { AutoComplete } from 'primereact/autocomplete';
+
+import type { PrimeWidgetProps } from '../util';
+import { getPrimeProps } from '../util';
 
 /** The `AutoCompleteWidget` is a widget for rendering a field with options.
  *  This is used instead of the base input template if the schema has examples.
@@ -11,10 +13,10 @@ import { AutoComplete } from 'primereact/autocomplete';
  * @param props - The `WidgetProps` for this component
  */
 export default function AutoCompleteWidget<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
->(props: WidgetProps<T, S, F>) {
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>(props: PrimeWidgetProps<AutoCompleteChangeEvent, T, S, F>) {
   const {
     id,
     placeholder,
@@ -33,8 +35,8 @@ export default function AutoCompleteWidget<
     rawErrors = [],
   } = props;
   const inputProps = getInputProps<T, S, F>(schema, type, options);
-  const primeProps = (options.prime || {}) as object;
-  const handleChange = ({ target: { value: newValue } }: ChangeEvent<HTMLInputElement>) =>
+  const primeProps = getPrimeProps<T, S, F>(options);
+  const handleChange = ({ target: { value: newValue } }: AutoCompleteChangeEvent) =>
     onChange(newValue === '' ? options.emptyValue : newValue);
   const handleBlur = () => onBlur?.(id, value);
   const handleFocus = () => onFocus?.(id, value);

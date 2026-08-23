@@ -3,14 +3,15 @@ import get from 'lodash/get';
 import { CONST_KEY, DEFAULT_KEY, PROPERTIES_KEY } from './constants';
 import getDiscriminatorFieldFromSchema from './getDiscriminatorFieldFromSchema';
 import getUiOptions from './getUiOptions';
+import isObject from './isObject';
 import toConstant from './toConstant';
-import type { RJSFSchema, EnumOptionsType, EnumValue, StrictRJSFSchema, FormContextType, UiSchema } from './types';
+import type { RJSFSchema, EnumOptionsType, EnumValue, FormContextType, UiSchema } from './types';
 
 /** Reorders `options` according to `order`, which may contain a `'*'` wildcard representing all
  * remaining options in their original order. Options not listed in `order` (and not covered by
  * a wildcard) are dropped.
  */
-function applyEnumOrder<S extends StrictRJSFSchema = RJSFSchema>(
+function applyEnumOrder<S extends RJSFSchema = RJSFSchema>(
   options: EnumOptionsType<S>[],
   order: EnumValue[],
 ): EnumOptionsType<S>[] {
@@ -40,10 +41,11 @@ function applyEnumOrder<S extends StrictRJSFSchema = RJSFSchema>(
  * @param [uiSchema] - The optional uiSchema from which to get alternate labels for the options
  * @returns - The list of options from the schema
  */
-export default function optionsList<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
-  schema: S,
-  uiSchema?: UiSchema<T, S, F>,
-): EnumOptionsType<S>[] | undefined {
+export default function optionsList<
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>(schema: S, uiSchema?: UiSchema<T, S, F>): EnumOptionsType<S>[] | undefined {
   if (schema.enum) {
     let enumNames: string[] | Record<string | number, string> | undefined;
     let enumOrder: EnumValue[] | undefined;
@@ -52,7 +54,7 @@ export default function optionsList<T = any, S extends StrictRJSFSchema = RJSFSc
       enumNames = uiEnumNames;
       enumOrder = uiEnumOrder;
     }
-    let options = schema.enum.map((value, i) => {
+    let options: EnumOptionsType<S>[] = schema.enum.map((value, i) => {
       const label = Array.isArray(enumNames)
         ? enumNames[i] || String(value)
         : enumNames?.[String(value)] || String(value);
@@ -64,13 +66,13 @@ export default function optionsList<T = any, S extends StrictRJSFSchema = RJSFSc
     return options;
   }
   let altSchemas: S['anyOf'] | S['oneOf'] = undefined;
-  let altUiSchemas: UiSchema<T, S, F> | undefined = undefined;
+  let altUiSchemas: unknown[] | undefined = undefined;
   if (schema.anyOf) {
     altSchemas = schema.anyOf;
-    altUiSchemas = uiSchema?.anyOf;
+    altUiSchemas = Array.isArray(uiSchema?.anyOf) ? uiSchema.anyOf : undefined;
   } else if (schema.oneOf) {
     altSchemas = schema.oneOf;
-    altUiSchemas = uiSchema?.oneOf;
+    altUiSchemas = Array.isArray(uiSchema?.oneOf) ? uiSchema.oneOf : undefined;
   }
   // See if there is a discriminator path specified in the schema, and if so, use it as the selectorField, otherwise
   // pull one from the uiSchema
@@ -80,7 +82,8 @@ export default function optionsList<T = any, S extends StrictRJSFSchema = RJSFSc
     selectorField = optionsSchemaSelector;
   }
   return altSchemas?.map((aSchemaDef, index) => {
-    const { title } = getUiOptions<T, S, F>(altUiSchemas?.[index]);
+    const altUiSchema = altUiSchemas?.[index];
+    const { title } = getUiOptions<T, S, F>(isObject(altUiSchema) ? altUiSchema : undefined);
     const aSchema = aSchemaDef as S;
     let value: EnumOptionsType<S>['value'];
     let label = title;

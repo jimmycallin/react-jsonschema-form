@@ -3,7 +3,6 @@ import type {
   ErrorTransformer,
   FormContextType,
   RJSFSchema,
-  StrictRJSFSchema,
   UiSchema,
   ValidationData,
   ValidatorType,
@@ -20,9 +19,9 @@ import type { CompiledValidateFunction, Localizer, SuppressDuplicateFilteringTyp
  * `compileSchemaValidators()` function provided by the `@rjsf/validator-ajv8` library.
  */
 export default class AJV8PrecompiledValidator<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 > implements ValidatorType<T, S, F> {
   /** The root schema object used to construct this validator
    *
@@ -118,7 +117,7 @@ export default class AJV8PrecompiledValidator<
    * @param [formData] - The form data to validate, if any
    * @throws - Error when the schema provided does not match the base schema of the precompiled validator
    */
-  rawValidation<Result = any>(schema: S, formData?: T): RawValidationErrorsType<Result> {
+  rawValidation<Result = unknown>(schema: S, formData?: T): RawValidationErrorsType<Result> {
     this.ensureSameRootSchema(schema, formData);
     this.mainValidator(formData);
 

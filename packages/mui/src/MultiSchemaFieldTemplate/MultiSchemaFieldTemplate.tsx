@@ -2,13 +2,7 @@ import type { BoxProps } from '@mui/material/Box';
 import Box from '@mui/material/Box';
 import type { FormControlProps } from '@mui/material/FormControl';
 import FormControl from '@mui/material/FormControl';
-import type {
-  FormContextType,
-  GenericObjectType,
-  MultiSchemaFieldTemplateProps,
-  RJSFSchema,
-  StrictRJSFSchema,
-} from '@rjsf/utils';
+import type { FormContextType, GenericObjectType, MultiSchemaFieldTemplateProps, RJSFSchema } from '@rjsf/utils';
 import { getUiOptions } from '@rjsf/utils';
 
 import { getMuiProps } from '../util';
@@ -25,9 +19,9 @@ export interface MultiSchemaFieldTemplateMuiProps extends GenericObjectType {
 }
 
 export default function MultiSchemaFieldTemplate<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(props: MultiSchemaFieldTemplateProps<T, S, F>) {
   const { optionSchemaField, selector, uiSchema } = props;
 

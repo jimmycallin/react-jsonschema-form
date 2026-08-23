@@ -393,7 +393,10 @@ describe('ErrorSchemaBuilder', () => {
       const result = builder.resetAllErrors(initial).ErrorSchema;
       builder.addErrors('added later', ARRAY_PATH);
       expect(result).not.toBe(initial);
-      expect(initial[ARRAY_PATH[0]]?.[ARRAY_PATH[1]]?.[ERRORS_KEY]).toEqual([INITIAL_ARRAY]);
+      // Indexing `ErrorSchema` collapses the recursive alias to `FieldErrors`, so the second level has to
+      // be re-stated as an `ErrorSchema` to stay indexable
+      const nested = initial[ARRAY_PATH[0]] as ErrorSchema | undefined;
+      expect(nested?.[ARRAY_PATH[1]]?.[ERRORS_KEY]).toEqual([INITIAL_ARRAY]);
     });
   });
 });

@@ -1,5 +1,5 @@
 import type { FocusEvent } from 'react';
-import type { FormContextType, WidgetProps, RJSFSchema, StrictRJSFSchema, GenericObjectType } from '@rjsf/utils';
+import type { FormContextType, WidgetProps, RJSFSchema } from '@rjsf/utils';
 import {
   ariaDescribedByIds,
   enumOptionSelectedValue,
@@ -10,15 +10,17 @@ import {
 } from '@rjsf/utils';
 import { Checkbox } from 'antd';
 
+import { getAntdFormContext } from '../../utils';
+
 /** The `CheckboxesWidget` is a widget for rendering checkbox groups.
  *  It is typically used to represent an array of enums.
  *
  * @param props - The `WidgetProps` for this component
  */
 export default function CheckboxesWidget<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >({
   autofocus,
   disabled,
@@ -33,12 +35,12 @@ export default function CheckboxesWidget<
   value,
 }: WidgetProps<T, S, F>) {
   const { formContext } = registry;
-  const { readonlyAsDisabled = true } = formContext as GenericObjectType;
+  const { readonlyAsDisabled = true } = getAntdFormContext(formContext);
 
   const { enumOptions, enumDisabled, inline, emptyValue } = options;
   const optionValueFormat = getOptionValueFormat(options);
 
-  const handleChange = (nextValue: any) =>
+  const handleChange = (nextValue: string[]) =>
     onChange(enumOptionValueDecoder<S>(nextValue, enumOptions, optionValueFormat, emptyValue));
 
   const handleBlur = ({ target }: FocusEvent<HTMLInputElement>) =>

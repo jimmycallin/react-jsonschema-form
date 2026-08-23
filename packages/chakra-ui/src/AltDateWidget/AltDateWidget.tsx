@@ -1,10 +1,11 @@
+import type { FieldsetRootProps } from '@chakra-ui/react';
 import { Box, Button, FieldsetRoot } from '@chakra-ui/react';
-import type { DateElementProp, FormContextType, RJSFSchema, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
+import type { DateElementProp, FormContextType, RJSFSchema, WidgetProps } from '@rjsf/utils';
 import { DateElement, TranslatableString, useAltDateWidgetProps } from '@rjsf/utils';
 
 import { getChakra } from '../utils';
 
-function AltDateWidget<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>({
+function AltDateWidget<T = unknown, S extends RJSFSchema = RJSFSchema, F extends FormContextType = FormContextType>({
   autofocus = false,
   disabled = false,
   readonly = false,
@@ -22,8 +23,9 @@ function AltDateWidget<T = any, S extends StrictRJSFSchema = RJSFSchema, F exten
 
   const chakraProps = getChakra({ uiSchema: props.uiSchema });
 
+  // `getChakra` returns Field.RootProps; the styling props it carries are shared with the Fieldset root
   return (
-    <FieldsetRoot {...(chakraProps as any)}>
+    <FieldsetRoot {...(chakraProps as FieldsetRootProps)}>
       <Box display='flex' flexWrap='wrap' alignItems='center'>
         {elements.map((elemProps: DateElementProp, i) => {
           const elemId = `${id}_${elemProps.type}`;

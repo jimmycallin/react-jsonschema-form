@@ -6,13 +6,7 @@ import type { InputLabelProps as MuiInputLabelProps } from '@mui/material/InputL
 import type { TextFieldProps } from '@mui/material/TextField';
 import TextField from '@mui/material/TextField';
 import { SchemaExamples } from '@rjsf/core';
-import type {
-  BaseInputTemplateProps,
-  FormContextType,
-  GenericObjectType,
-  RJSFSchema,
-  StrictRJSFSchema,
-} from '@rjsf/utils';
+import type { BaseInputTemplateProps, FormContextType, GenericObjectType, RJSFSchema } from '@rjsf/utils';
 import { ariaDescribedByIds, examplesId, getInputProps, labelValue } from '@rjsf/utils';
 
 import { getMuiProps } from '../util';
@@ -32,6 +26,17 @@ export interface BaseInputTemplateMuiProps extends GenericObjectType {
   };
 }
 
+/** The MUI `TextField` props a caller may pass straight through to this template. `WidgetProps` carries
+ * any key it does not declare as `unknown`, so declare the ones this template reads to keep them typed. */
+interface BaseInputTemplatePassthroughProps {
+  /** MUI `TextField` `slotProps`, merged with the ones coming from `ui:options.mui`. */
+  slotProps?: BaseInputTemplateMuiProps['slotProps'];
+  /** Props applied to the MUI `Input` element. */
+  InputProps?: MuiInputProps;
+  /** Props applied to the MUI `InputLabel` element. */
+  InputLabelProps?: MuiInputLabelProps;
+}
+
 const TYPES_THAT_SHRINK_LABEL = ['date', 'datetime-local', 'file', 'time'];
 
 /** The `BaseInputTemplate` is the template to use to render the basic `<input>` component for the `core` theme.
@@ -41,10 +46,10 @@ const TYPES_THAT_SHRINK_LABEL = ['date', 'datetime-local', 'file', 'time'];
  * @param props - The `WidgetProps` for this template
  */
 export default function BaseInputTemplate<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
->(props: BaseInputTemplateProps<T, S, F>) {
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>(props: BaseInputTemplateProps<T, S, F> & BaseInputTemplatePassthroughProps) {
   const {
     id,
     name, // remove this from textFieldProps
@@ -94,7 +99,7 @@ export default function BaseInputTemplate<
     onChange(newValue === '' ? options.emptyValue : newValue);
   const handleBlur = ({ target }: FocusEvent<HTMLInputElement>) => onBlur(id, target?.value);
   const handleFocus = ({ target }: FocusEvent<HTMLInputElement>) => onFocus(id, target?.value);
-  const DisplayInputLabelProps = TYPES_THAT_SHRINK_LABEL.includes(type)
+  const DisplayInputLabelProps = TYPES_THAT_SHRINK_LABEL.includes(type ?? '')
     ? { ...slotProps?.inputLabel, ...muiSlotProps?.inputLabel, ...InputLabelProps, shrink: true }
     : { ...slotProps?.inputLabel, ...muiSlotProps?.inputLabel, ...InputLabelProps };
   const handleClear = useCallback(

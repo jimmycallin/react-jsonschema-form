@@ -7,7 +7,6 @@ import type {
   GlobalUISchemaOptions,
   RJSFMarkedSchema,
   RJSFSchema,
-  StrictRJSFSchema,
   UiSchema,
   ValidatorType,
   Experimental_CustomMergeAllOf,
@@ -27,9 +26,9 @@ import isMultiSelect from './isMultiSelect';
  * @returns - True if the label should be displayed or false if it should not
  */
 export default function getDisplayLabel<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(
   validator: ValidatorType<T, S, F>,
   schema: S,

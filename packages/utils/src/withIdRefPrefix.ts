@@ -1,15 +1,15 @@
 import isObject from 'lodash/isObject';
 
 import { REF_KEY, ROOT_SCHEMA_PREFIX } from './constants';
-import type { RJSFSchema, StrictRJSFSchema } from './types';
+import type { GenericObjectType, RJSFSchema } from './types';
 
 /** Takes a `node` object and transforms any contained `$ref` node variables with a prefix, recursively calling
  * `withIdRefPrefix` for any other elements.
  *
  * @param node - The object node to which a ROOT_SCHEMA_PREFIX is added when a REF_KEY is part of it
  */
-function withIdRefPrefixObject<S extends StrictRJSFSchema = RJSFSchema>(node: S): S {
-  const realObj: Record<string, any> = node;
+function withIdRefPrefixObject<S extends RJSFSchema = RJSFSchema>(node: S): S {
+  const realObj: GenericObjectType = node;
   for (const key in realObj) {
     /* v8 ignore next -- spread in caller guarantees only own properties reach this loop */
     if (Object.hasOwn(realObj, key)) {
@@ -17,7 +17,8 @@ function withIdRefPrefixObject<S extends StrictRJSFSchema = RJSFSchema>(node: S)
       if (key === REF_KEY && typeof value === 'string' && value.startsWith('#')) {
         realObj[key] = ROOT_SCHEMA_PREFIX + value;
       } else {
-        realObj[key] = withIdRefPrefix<S>(value);
+        // Every value of a schema object is itself a schema node, which is what `withIdRefPrefix` walks
+        realObj[key] = withIdRefPrefix<S>(value as S[keyof S]);
       }
     }
   }
@@ -29,7 +30,7 @@ function withIdRefPrefixObject<S extends StrictRJSFSchema = RJSFSchema>(node: S)
  *
  * @param node - The list of object nodes to which a ROOT_SCHEMA_PREFIX is added when a REF_KEY is part of it
  */
-function withIdRefPrefixArray<S extends StrictRJSFSchema = RJSFSchema>(node: S[]): S[] {
+function withIdRefPrefixArray<S extends RJSFSchema = RJSFSchema>(node: S[]): S[] {
   return node.map((item) => withIdRefPrefix<S>(item) as S);
 }
 
@@ -39,7 +40,7 @@ function withIdRefPrefixArray<S extends StrictRJSFSchema = RJSFSchema>(node: S[]
  * @param schemaNode - The object node to which a ROOT_SCHEMA_PREFIX is added when a REF_KEY is part of it
  * @returns - A copy of the `schemaNode` with updated `$ref`s
  */
-export default function withIdRefPrefix<S extends StrictRJSFSchema = RJSFSchema>(
+export default function withIdRefPrefix<S extends RJSFSchema = RJSFSchema>(
   schemaNode: S | S[] | S[keyof S],
 ): S | S[] | S[keyof S] {
   if (Array.isArray(schemaNode)) {

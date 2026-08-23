@@ -745,11 +745,11 @@ In this case, `thing` is an object if it has the type `object` but is NOT null, 
 
 #### Parameters
 
-- thing: any - The thing to check to see whether it is an object
+- thing: unknown - The thing to check to see whether it is an object
 
 #### Returns
 
-- boolean: True if it is a non-null, non-array, non-File object
+- boolean: True if it is a non-null, non-array, non-File object, narrowing `thing` to a `GenericObjectType`
 
 ### isRootSchema&lt;T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>()
 
@@ -767,6 +767,20 @@ resolved schema matches the `schemaToCompare` the function will return `true`. O
 #### Returns
 
 - boolean: True if the `uiSchema` describes a custom widget, false otherwise
+
+### isUiSchema&lt;T = unknown, S extends RJSFSchema = RJSFSchema, F extends FormContextType = FormContextType>()
+
+Determines whether `value` is a `UiSchema`. Because a `UiSchema` supports arbitrary user-defined keys, reading a nested
+uiSchema out of a parent one (or out of a `formContext`) yields an `unknown`; anything that is not an object cannot be a
+uiSchema, so this type guard is how such a value is narrowed before being passed to something like `getUiOptions()`.
+
+#### Parameters
+
+- value: unknown - The value to check to see whether it is a `UiSchema`
+
+#### Returns
+
+- boolean: True if `value` is a non-null, non-array, non-File object, narrowing it to `UiSchema<T, S, F>`
 
 ### isValueEmpty()
 

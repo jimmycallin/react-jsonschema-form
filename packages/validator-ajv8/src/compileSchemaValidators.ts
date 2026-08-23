@@ -1,4 +1,4 @@
-import type { RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
+import type { RJSFSchema } from '@rjsf/utils';
 import fs from 'fs';
 
 import { compileSchemaValidatorsCode } from './compileSchemaValidatorsCode';
@@ -17,7 +17,7 @@ export { compileSchemaValidatorsCode };
  *        compiling the schema. They are the same options that are passed to the `customizeValidator()` function in
  *        order to modify the behavior of the regular AJV-based validator.
  */
-export default function compileSchemaValidators<S extends StrictRJSFSchema = RJSFSchema>(
+export default function compileSchemaValidators<S extends RJSFSchema = RJSFSchema>(
   schema: S,
   output: string,
   options: CustomValidatorOptionsType = {},

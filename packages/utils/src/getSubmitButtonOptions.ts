@@ -1,6 +1,6 @@
 import { SUBMIT_BTN_OPTIONS_KEY } from './constants';
 import getUiOptions from './getUiOptions';
-import type { FormContextType, RJSFSchema, StrictRJSFSchema, UiSchema, UISchemaSubmitButtonOptions } from './types';
+import type { FormContextType, RJSFSchema, UiSchema, UISchemaSubmitButtonOptions } from './types';
 
 /** The default submit button options, exported for testing purposes
  */
@@ -18,9 +18,9 @@ export const DEFAULT_OPTIONS: UISchemaSubmitButtonOptions = {
  * @returns - The merging of the `DEFAULT_OPTIONS` with any custom ones
  */
 export default function getSubmitButtonOptions<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(uiSchema: UiSchema<T, S, F> = {}): UISchemaSubmitButtonOptions {
   const uiOptions = getUiOptions<T, S, F>(uiSchema);
   if (uiOptions?.[SUBMIT_BTN_OPTIONS_KEY]) {

@@ -4,7 +4,6 @@ import type {
   ErrorTransformer,
   FormContextType,
   RJSFSchema,
-  StrictRJSFSchema,
   UiSchema,
   ValidationData,
   ValidatorType,
@@ -55,9 +54,9 @@ export function normalizeFormDataForValidation<D>(data: D): D {
 
 /** `ValidatorType` implementation backed by `@cfworker/json-schema`. */
 export default class CFWorkerValidator<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 > implements ValidatorType<T, S, F> {
   /** The resolved options used to configure this validator.
    *
@@ -136,7 +135,7 @@ export default class CFWorkerValidator<
    * @param [formData] - The form data to validate
    * @returns - The raw cfworker errors and any engine exception
    */
-  rawValidation<Result = any>(schema: S, formData?: T): RawValidationErrorsType<Result> {
+  rawValidation<Result = unknown>(schema: S, formData?: T): RawValidationErrorsType<Result> {
     let validationError: Error | undefined;
     let errors: OutputUnit[] | undefined;
     try {

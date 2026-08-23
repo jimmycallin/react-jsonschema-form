@@ -1,4 +1,4 @@
-import type { ArrayFieldItemTemplateProps, FormContextType, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
+import type { ArrayFieldItemTemplateProps, FormContextType, RJSFSchema } from '@rjsf/utils';
 import { getUiOptions, getTemplate } from '@rjsf/utils';
 import { Button, Grid, Segment } from 'semantic-ui-react';
 
@@ -14,9 +14,9 @@ const gridStyle = (vertical: boolean) => ({
  * @param props - The `ArrayFieldItemTemplateProps` props for the component
  */
 export default function ArrayFieldItemTemplate<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(props: ArrayFieldItemTemplateProps<T, S, F>) {
   const { children, buttonsProps, displayLabel, hasDescription, hasToolbar, uiSchema, registry, parentUiSchema } =
     props;
@@ -35,7 +35,7 @@ export default function ArrayFieldItemTemplate<
   const margin = hasDescription ? 5 : 24;
   return (
     <div className='rjsf-array-item'>
-      <MaybeWrap wrap={wrapItem} component={Segment}>
+      <MaybeWrap wrap={Boolean(wrapItem)} component={Segment}>
         <Grid style={{ ...gridStyle(!horizontalButtons), alignItems: 'center' }}>
           <Grid.Column width={16} verticalAlign='middle'>
             {children}

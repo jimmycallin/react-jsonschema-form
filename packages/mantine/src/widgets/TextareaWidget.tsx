@@ -1,7 +1,7 @@
 import type { ReactElement, ChangeEvent, FocusEvent } from 'react';
 import { useCallback } from 'react';
 import { Textarea } from '@mantine/core';
-import type { StrictRJSFSchema, RJSFSchema, FormContextType, WidgetProps } from '@rjsf/utils';
+import type { RJSFSchema, FormContextType, WidgetProps } from '@rjsf/utils';
 import { labelValue, ariaDescribedByIds } from '@rjsf/utils';
 
 import { cleanupOptions } from '../utils';
@@ -11,9 +11,9 @@ import { cleanupOptions } from '../utils';
  * @param props - The `WidgetProps` for this component
  */
 export default function TextareaWidget<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(props: WidgetProps<T, S, F>): ReactElement {
   const {
     id,

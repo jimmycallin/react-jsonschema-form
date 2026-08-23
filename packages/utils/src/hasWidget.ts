@@ -1,5 +1,5 @@
 import getWidget from './getWidget';
-import type { FormContextType, RegistryWidgetsType, RJSFSchema, StrictRJSFSchema, Widget } from './types';
+import type { FormContextType, RegistryWidgetsType, RJSFSchema, Widget } from './types';
 
 /** Detects whether the `widget` exists for the `schema` with the associated `registryWidgets` and returns true if it
  * does, or false if it doesn't.
@@ -9,11 +9,11 @@ import type { FormContextType, RegistryWidgetsType, RJSFSchema, StrictRJSFSchema
  * @param [registeredWidgets={}] - A registry of widget name to `Widget` implementation
  * @returns - True if the widget exists, false otherwise
  */
-export default function hasWidget<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
-  schema: RJSFSchema,
-  widget: Widget<T, S, F> | string,
-  registeredWidgets: RegistryWidgetsType<T, S, F> = {},
-) {
+export default function hasWidget<
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>(schema: RJSFSchema, widget: Widget<T, S, F> | string, registeredWidgets: RegistryWidgetsType<T, S, F> = {}) {
   try {
     getWidget(schema, widget, registeredWidgets);
     return true;

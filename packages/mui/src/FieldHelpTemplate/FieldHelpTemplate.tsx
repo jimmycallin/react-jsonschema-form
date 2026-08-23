@@ -1,7 +1,7 @@
 import type { FormHelperTextProps } from '@mui/material/FormHelperText';
 import FormHelperText from '@mui/material/FormHelperText';
 import { RichHelp } from '@rjsf/core';
-import type { FieldHelpProps, FormContextType, RJSFSchema, StrictRJSFSchema, GenericObjectType } from '@rjsf/utils';
+import type { FieldHelpProps, FormContextType, RJSFSchema, GenericObjectType } from '@rjsf/utils';
 import { helpId, getUiOptions } from '@rjsf/utils';
 
 import { computeSxProps, getMuiProps } from '../util';
@@ -20,9 +20,9 @@ export interface FieldHelpTemplateMuiProps extends GenericObjectType {
  * @param props - The `FieldHelpProps` to be rendered
  */
 export default function FieldHelpTemplate<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(props: FieldHelpProps<T, S, F>) {
   const { fieldPathId, help, uiSchema, registry } = props;
   if (!help) {

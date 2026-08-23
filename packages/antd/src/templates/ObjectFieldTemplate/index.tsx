@@ -1,16 +1,16 @@
 import { useContext } from 'react';
 import type {
   FormContextType,
-  GenericObjectType,
   ObjectFieldTemplateProps,
   ObjectFieldTemplatePropertyType,
   RJSFSchema,
-  StrictRJSFSchema,
   UiSchema,
 } from '@rjsf/utils';
 import { canExpand, getTemplate, getUiOptions, titleId, buttonId } from '@rjsf/utils';
 import { Col, Row, ConfigProvider } from 'antd';
 import classNames from 'classnames';
+
+import { getAntdFormContext } from '../../utils';
 
 /** The `ObjectFieldTemplate` is the template to use to render all the inner properties of an object along with the
  * title and description if available. If the object is expandable, then an `AddButton` is also rendered after all
@@ -19,9 +19,9 @@ import classNames from 'classnames';
  * @param props - The `ObjectFieldTemplateProps` for this component
  */
 export default function ObjectFieldTemplate<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(props: ObjectFieldTemplateProps<T, S, F>) {
   const {
     disabled,
@@ -45,7 +45,7 @@ export default function ObjectFieldTemplate<
   const {
     ButtonTemplates: { AddButton },
   } = registry.templates;
-  const { colSpan = 24, labelAlign = 'right', rowGutter = 24 } = formContext as GenericObjectType;
+  const { colSpan = 24, labelAlign = 'right', rowGutter = 24 } = getAntdFormContext(formContext);
 
   const findSchema = (element: ObjectFieldTemplatePropertyType): S => element.content.props.schema;
 

@@ -1,7 +1,9 @@
 import type { ChangeEvent, FocusEvent } from 'react';
-import type { FormContextType, GenericObjectType, RJSFSchema, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
+import type { FormContextType, RJSFSchema, WidgetProps } from '@rjsf/utils';
 import { ariaDescribedByIds } from '@rjsf/utils';
 import { Input } from 'antd';
+
+import { getAntdFormContext } from '../../utils';
 
 const INPUT_STYLE = {
   width: '100%',
@@ -12,9 +14,9 @@ const INPUT_STYLE = {
  * @param props - The `WidgetProps` for this component
  */
 export default function TextareaWidget<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >({
   disabled,
   registry,
@@ -29,7 +31,7 @@ export default function TextareaWidget<
   value,
 }: WidgetProps<T, S, F>) {
   const { formContext } = registry;
-  const { readonlyAsDisabled = true } = formContext as GenericObjectType;
+  const { readonlyAsDisabled = true } = getAntdFormContext(formContext);
 
   const handleChange = ({ target }: ChangeEvent<HTMLTextAreaElement>) =>
     onChange(target.value === '' ? options.emptyValue : target.value);

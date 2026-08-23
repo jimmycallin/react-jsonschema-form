@@ -1,4 +1,5 @@
-import type { ErrorListProps, FormValidation, GenericObjectType, RJSFSchema } from '@rjsf/utils';
+import { isObject } from '@rjsf/utils';
+import type { ErrorListProps, FormValidation, RJSFSchema } from '@rjsf/utils';
 import { customizeValidator as customizeV8Validator } from '@rjsf/validator-ajv8';
 import userEvent from '@testing-library/user-event';
 import draft06 from 'ajv/lib/refs/json-schema-draft-06.json';
@@ -249,8 +250,7 @@ describe('Validation', () => {
         const formData = { pass1: 'aaa', pass2: 'b' };
 
         function customValidate(formData: FormProps['formData'], errors: FormValidation) {
-          const { pass1, pass2 } = formData;
-          if (pass1 !== pass2) {
+          if (isObject(formData) && formData.pass1 !== formData.pass2) {
             (errors.pass2 as FormValidation).addError("Passwords don't match");
           }
           return errors;
@@ -298,9 +298,13 @@ describe('Validation', () => {
         ];
 
         function customValidate(formData: FormProps['formData'], errors: FormValidation) {
-          formData.forEach(({ pass1, pass2 }: GenericObjectType, i: number) => {
-            if (pass1 !== pass2) {
-              (errors as GenericObjectType)[i].pass2.addError("Passwords don't match");
+          const items = Array.isArray(formData) ? formData : [];
+          items.forEach((item: unknown, i: number) => {
+            // Indexing `errors` by array position yields the recursive alias in its unresolved form, whose nested
+            // keys are not visible, so restate it as a `FormValidation` the way `errors.pass2` is elsewhere here
+            const itemErrors = errors[i] as FormValidation;
+            if (isObject(item) && item.pass1 !== item.pass2) {
+              itemErrors?.pass2?.addError("Passwords don't match");
             }
           });
           return errors;
@@ -333,7 +337,7 @@ describe('Validation', () => {
         const formData = ['aaa', 'bbb', 'ccc'];
 
         function customValidate(formData: FormProps['formData'], errors: FormValidation) {
-          if (formData.indexOf('bbb') !== -1) {
+          if (Array.isArray(formData) && formData.indexOf('bbb') !== -1) {
             errors.addError('Forbidden value: bbb');
           }
           return errors;
@@ -425,15 +429,18 @@ describe('Validation', () => {
         registry: {
           formContext: { className },
         },
-      }: ErrorListProps) => (
-        <div>
-          <div className='CustomErrorList'>{errors.length} custom</div>
-          <div className='ErrorSchema'>{errorSchema.__errors?.[0]}</div>
-          <div className='Schema'>{schema.type}</div>
-          <div className='UiSchema'>{uiSchema?.foo}</div>
-          <div className={className} />
-        </div>
-      );
+      }: ErrorListProps<unknown, RJSFSchema, { className: string }>) => {
+        const foo = uiSchema?.foo;
+        return (
+          <div>
+            <div className='CustomErrorList'>{errors.length} custom</div>
+            <div className='ErrorSchema'>{errorSchema.__errors?.[0]}</div>
+            <div className='Schema'>{schema.type}</div>
+            <div className='UiSchema'>{typeof foo === 'string' ? foo : undefined}</div>
+            <div className={className} />
+          </div>
+        );
+      };
 
       it('should use CustomErrorList', async () => {
         const { node } = createFormComponent({

@@ -1,17 +1,15 @@
-import type { FormContextType, IconButtonProps, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
+import type { FormContextType, IconButtonProps, RJSFSchema } from '@rjsf/utils';
 import { TranslatableString } from '@rjsf/utils';
 
 import IconButton from './IconButton';
 
 /** The `AddButton` renders a button that represent the `Add` action on a form
  */
-export default function AddButton<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>({
-  id,
-  className,
-  onClick,
-  disabled,
-  registry,
-}: IconButtonProps<T, S, F>) {
+export default function AddButton<
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>({ id, className, onClick, disabled, registry }: IconButtonProps<T, S, F>) {
   const { translateString } = registry;
   return (
     <div className='row'>

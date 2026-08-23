@@ -1,5 +1,5 @@
 import type { FieldProps, FieldTemplateProps, FieldPathId, RJSFSchema } from '@rjsf/utils';
-import { ID_KEY, getTemplate } from '@rjsf/utils';
+import { ID_KEY, getTemplate, isObject } from '@rjsf/utils';
 import noop from 'lodash/noop';
 
 import type { Sample } from './Sample';
@@ -7,7 +7,9 @@ import type { Sample } from './Sample';
 function UiField(props: FieldProps) {
   const { fieldPathId, formData, onChange, registry, schema, uiSchema, ...otherProps } = props;
   const { fields, schemaUtils } = registry;
-  const changeHandlerFactory = (fieldName: string) => (value: any) => {
+  // The form data for this field is the location object; read its properties once it is known to be one
+  const location = isObject(formData) ? formData : {};
+  const changeHandlerFactory = (fieldName: string) => (value: unknown) => {
     onChange(value, [fieldName]);
   };
 
@@ -32,6 +34,7 @@ function UiField(props: FieldProps) {
     registry,
     schema,
     uiSchema,
+    fieldPathId,
     displayLabel: true,
     disabled: false,
     readonly: false,
@@ -61,7 +64,7 @@ function UiField(props: FieldProps) {
               name={cityLabel}
               required={citySchema.isRequired}
               fieldPathId={cityFieldPathId}
-              formData={formData.city}
+              formData={location.city}
               onChange={changeHandlerFactory(cityKey)}
             />
           </FieldTemplate>
@@ -82,7 +85,7 @@ function UiField(props: FieldProps) {
               name={latLabel}
               required={latSchema.isRequired}
               fieldPathId={latFieldPathId}
-              formData={formData.lat}
+              formData={location.lat}
               onChange={changeHandlerFactory(latKey)}
             />
           </FieldTemplate>
@@ -94,7 +97,7 @@ function UiField(props: FieldProps) {
               name={lonLabel}
               required={lonSchema.isRequired}
               fieldPathId={lonFieldPathId}
-              formData={formData.lon}
+              formData={location.lon}
               onChange={changeHandlerFactory(lonKey)}
             />
           </FieldTemplate>

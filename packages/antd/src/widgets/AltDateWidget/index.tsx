@@ -1,16 +1,23 @@
-import type { FormContextType, GenericObjectType, RJSFSchema, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
+import type { FormContextType, RJSFSchema, WidgetProps } from '@rjsf/utils';
 import { DateElement, TranslatableString, useAltDateWidgetProps } from '@rjsf/utils';
 import { Row, Col, Button } from 'antd';
 
+import { getAntdFormContext } from '../../utils';
+
 export default function AltDateWidget<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >({ autofocus = false, disabled = false, options, readonly = false, time = false, ...props }: WidgetProps<T, S, F>) {
   const { id, name, onBlur, onFocus, registry } = props;
   const { formContext, translateString } = registry;
-  const { rowGutter = 24 } = formContext as GenericObjectType;
-  const realOptions = { yearsRange: [1900, new Date().getFullYear() + 2], ...options };
+  const { rowGutter = 24 } = getAntdFormContext(formContext);
+  // the date elements sit tighter than a normal row; a responsive/array gutter isn't halveable so it becomes NaN here
+  const halfRowGutter = Math.floor(Number(rowGutter) / 2);
+  const realOptions = {
+    yearsRange: [1900, new Date().getFullYear() + 2],
+    ...options,
+  };
   const { elements, handleChange, handleClear, handleSetNow } = useAltDateWidgetProps({
     ...props,
     autofocus,
@@ -18,7 +25,7 @@ export default function AltDateWidget<
   });
 
   return (
-    <Row gutter={[Math.floor(rowGutter / 2), Math.floor(rowGutter / 2)]}>
+    <Row gutter={[halfRowGutter, halfRowGutter]}>
       {elements.map((elemProps, i) => {
         const elemId = `${id}_${elemProps.type}`;
         return (

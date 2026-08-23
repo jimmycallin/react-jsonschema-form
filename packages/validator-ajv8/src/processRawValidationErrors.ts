@@ -4,7 +4,6 @@ import type {
   FormContextType,
   RJSFSchema,
   RJSFValidationError,
-  StrictRJSFSchema,
   UiSchema,
   ValidatorType,
 } from '@rjsf/utils';
@@ -13,6 +12,7 @@ import {
   createErrorHandler,
   getDefaultFormState,
   getUiOptions,
+  isUiSchema,
   ONE_OF_KEY,
   PROPERTIES_KEY,
   toErrorSchema,
@@ -24,7 +24,7 @@ import get from 'lodash/get';
 
 import type { SuppressDuplicateFilteringType } from './types';
 
-export interface RawValidationErrorsType<Result = any> {
+export interface RawValidationErrorsType<Result = unknown> {
   errors?: Result[];
   validationError?: Error;
 }
@@ -77,15 +77,22 @@ export function filterDuplicateErrors(
  * @param [schema] - The schema for the validation
  */
 export function transformRJSFValidationErrors<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(
   errors: ErrorObject[] = [],
   uiSchema?: UiSchema<T, S, F>,
   suppressDuplicateFiltering?: SuppressDuplicateFilteringType,
   schema?: S,
 ): RJSFValidationError[] {
+  /** Reads the nested uiSchema at `path`. The lookup yields `unknown`, and anything that is not an object cannot be a
+   * uiSchema, so it is treated as absent.
+   */
+  const uiSchemaAt = (path: string | string[]): UiSchema<T, S, F> | undefined => {
+    const value = get(uiSchema, path);
+    return isUiSchema<T, S, F>(value) ? value : undefined;
+  };
   const errorList = errors.map((e: ErrorObject) => {
     const { instancePath, keyword, params, schemaPath, parentSchema, ...rest } = e;
     let { message = '' } = rest;
@@ -101,7 +108,7 @@ export function transformRJSFValidationErrors<
     if (rawPropertyNames.length > 0) {
       rawPropertyNames.forEach((currentProperty) => {
         const path = property ? `${property}.${currentProperty}` : currentProperty;
-        let uiSchemaTitle = getUiOptions(get(uiSchema, path.replace(/^\./, ''))).title;
+        let uiSchemaTitle = getUiOptions<T, S, F>(uiSchemaAt(path.replace(/^\./, ''))).title;
         if (uiSchemaTitle === undefined) {
           // To retrieve a title from UI schema, construct a path to UI schema from `schemaPath` and `currentProperty`.
           // For example, when `#/properties/A/properties/B/required` and `C` are given, they are converted into `['A', 'B', 'C']`.
@@ -110,7 +117,7 @@ export function transformRJSFValidationErrors<
             .split('/')
             .slice(1, -1)
             .concat([currentProperty]);
-          uiSchemaTitle = getUiOptions(get(uiSchema, uiSchemaPath)).title;
+          uiSchemaTitle = getUiOptions<T, S, F>(uiSchemaAt(uiSchemaPath)).title;
         }
         if (uiSchemaTitle === undefined) {
           // schemaPath may include non-property segments (e.g. allOf/if/then) that do
@@ -147,7 +154,7 @@ export function transformRJSFValidationErrors<
 
       stack = message;
     } else {
-      const uiSchemaTitle = getUiOptions<T, S, F>(get(uiSchema, property.replace(/^\./, ''))).title;
+      const uiSchemaTitle = getUiOptions<T, S, F>(uiSchemaAt(property.replace(/^\./, ''))).title;
 
       if (uiSchemaTitle) {
         stack = `'${uiSchemaTitle}' ${message}`.trim();
@@ -196,9 +203,9 @@ export function transformRJSFValidationErrors<
  * @param [suppressDuplicateFiltering] - Controls which duplicate filtering is suppressed; see `filterDuplicateErrors`
  */
 export default function processRawValidationErrors<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(
   validator: ValidatorType<T, S, F>,
   rawErrors: RawValidationErrorsType<ErrorObject>,

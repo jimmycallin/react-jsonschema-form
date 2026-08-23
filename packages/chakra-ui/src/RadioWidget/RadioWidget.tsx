@@ -1,6 +1,6 @@
 import type { ChangeEvent, FocusEvent } from 'react';
 import { Stack } from '@chakra-ui/react';
-import type { FormContextType, RJSFSchema, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
+import type { FormContextType, RJSFSchema, WidgetProps } from '@rjsf/utils';
 import {
   ariaDescribedByIds,
   enumOptionSelectedValue,
@@ -15,7 +15,11 @@ import { Field } from '../components/ui/field';
 import { Radio, RadioGroup } from '../components/ui/radio';
 import { getChakra } from '../utils';
 
-export default function RadioWidget<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>({
+export default function RadioWidget<
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>({
   id,
   htmlName,
   options,
@@ -41,7 +45,10 @@ export default function RadioWidget<T = any, S extends StrictRJSFSchema = RJSFSc
     onFocus(id, enumOptionValueDecoder<S>(enumValue, enumOptions, optionValueFormat, emptyValue));
 
   const row = options ? options.inline : false;
-  const selectValue = enumOptionSelectedValue<S>(value, enumOptions, false, optionValueFormat, null);
+  // Chakra's `RadioGroup` wants `null` (and not `undefined`) for "nothing selected", so map the empty
+  // result of the single-select lookup, which is never an array here, onto `null`.
+  const selected = enumOptionSelectedValue<S>(value, enumOptions, false, optionValueFormat);
+  const selectValue = typeof selected === 'string' ? selected : null;
 
   const chakraProps = getChakra({ uiSchema });
 

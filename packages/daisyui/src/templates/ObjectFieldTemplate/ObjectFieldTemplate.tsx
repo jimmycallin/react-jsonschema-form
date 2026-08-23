@@ -1,4 +1,4 @@
-import type { FormContextType, ObjectFieldTemplateProps, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
+import type { FormContextType, ObjectFieldTemplateProps, RJSFSchema } from '@rjsf/utils';
 import { canExpand, descriptionId, getTemplate, getUiOptions, titleId, buttonId } from '@rjsf/utils';
 
 /** The `ObjectFieldTemplate` component renders a layout for object fields in the form
@@ -13,9 +13,9 @@ import { canExpand, descriptionId, getTemplate, getUiOptions, titleId, buttonId 
  * @param props - The `ObjectFieldTemplateProps` for the component
  */
 export default function ObjectFieldTemplate<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(props: ObjectFieldTemplateProps<T, S, F>) {
   const {
     description,

@@ -4,7 +4,6 @@ import type {
   FormContextType,
   OptionValueFormat,
   RJSFSchema,
-  StrictRJSFSchema,
   WidgetProps,
   UIOptionsType,
 } from '@rjsf/utils';
@@ -31,7 +30,7 @@ import { getSemanticProps } from '../util';
  * @param {string} placeholder - placeholder option label
  * @returns {*}
  */
-function createDefaultValueOptionsForDropDown<S extends StrictRJSFSchema = RJSFSchema>(
+function createDefaultValueOptionsForDropDown<S extends RJSFSchema = RJSFSchema>(
   enumOptions?: EnumOptionsType<S>[],
   enumDisabled?: UIOptionsType['enumDisabled'],
   showPlaceholderOption?: boolean,
@@ -56,9 +55,11 @@ function createDefaultValueOptionsForDropDown<S extends StrictRJSFSchema = RJSFS
  *
  * @param props - The `WidgetProps` for this component
  */
-export default function SelectWidget<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
-  props: WidgetProps<T, S, F>,
-) {
+export default function SelectWidget<
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>(props: WidgetProps<T, S, F>) {
   const {
     uiSchema,
     registry,

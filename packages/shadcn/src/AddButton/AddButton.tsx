@@ -1,4 +1,4 @@
-import type { FormContextType, IconButtonProps, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
+import type { FormContextType, IconButtonProps, RJSFSchema } from '@rjsf/utils';
 import { TranslatableString } from '@rjsf/utils';
 import { PlusCircle } from 'lucide-react';
 
@@ -12,12 +12,11 @@ import { cn } from '../lib/utils';
  * @param className - Allow custom class names to be passed for Tailwind CSS styling
  * @param props - The component properties
  */
-export default function AddButton<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>({
-  uiSchema,
-  registry,
-  className,
-  ...props
-}: IconButtonProps<T, S, F>) {
+export default function AddButton<
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>({ uiSchema, registry, className, ...props }: IconButtonProps<T, S, F>) {
   const { translateString } = registry;
   return (
     <div className='p-0 m-0'>
