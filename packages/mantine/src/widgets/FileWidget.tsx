@@ -33,11 +33,14 @@ export default function FileWidget<T = any, S extends StrictRJSFSchema = RJSFSch
   const themeProps = cleanupOptions(options);
 
   const handleOnChange = useCallback(
-    (files: any) => {
-      if (typeof files === 'object') {
+    (files: File[] | File | null) => {
+      // Mantine's `FileInput` hands back a `File[]` when `multiple`, a single `File` otherwise, and `null` when
+      // cleared. `typeof null === 'object'`, so clearing used to reach `handleChange` and throw, and a lone `File`
+      // is not iterable, so `Array.from()` produced `[]` and the file was silently dropped.
+      if (files) {
         // handleChange is async; DOM event handlers are void-returning, so we intentionally don't await
         // oxlint-disable-next-line no-floating-promises, no-void
-        void handleChange(files);
+        void handleChange(Array.isArray(files) ? files : [files]);
       }
     },
     [handleChange],

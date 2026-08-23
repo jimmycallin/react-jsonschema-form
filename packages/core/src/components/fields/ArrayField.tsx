@@ -193,7 +193,6 @@ function ArrayAsMultiSelect<T = any, S extends StrictRJSFSchema = RJSFSchema, F 
     readonly = false,
     autofocus = false,
     required = false,
-    placeholder,
     onBlur,
     onFocus,
     registry,
@@ -207,7 +206,12 @@ function ArrayAsMultiSelect<T = any, S extends StrictRJSFSchema = RJSFSchema, F 
   // Avoids a breaking change reported in https://github.com/rjsf-team/react-jsonschema-form/issues/4985
   const itemsUiSchema = (uiSchema?.items ?? uiSchema) as UiSchema<T[], S, F>;
   const enumOptions = optionsList<T[], S, F>(itemsSchema, itemsUiSchema);
-  const { widget = 'select', title: uiTitle, ...options } = getUiOptions<T[], S, F>(uiSchema, globalUiOptions);
+  const {
+    widget = 'select',
+    title: uiTitle,
+    placeholder,
+    ...options
+  } = getUiOptions<T[], S, F>(uiSchema, globalUiOptions);
   const Widget = getWidget<T[], S, F>(schema, widget, widgets);
   const label = uiTitle ?? schema.title ?? name;
   const displayLabel = schemaUtils.getDisplayLabel(schema, uiSchema, globalUiOptions);
@@ -253,7 +257,6 @@ function ArrayAsCustomWidget<T = any, S extends StrictRJSFSchema = RJSFSchema, F
     autofocus = false,
     required = false,
     hideError,
-    placeholder,
     onBlur,
     onFocus,
     formData: items = [],
@@ -263,7 +266,7 @@ function ArrayAsCustomWidget<T = any, S extends StrictRJSFSchema = RJSFSchema, F
     onSelectChange,
   } = props;
   const { widgets, schemaUtils, globalFormOptions, globalUiOptions } = registry;
-  const { widget, title: uiTitle, ...options } = getUiOptions<T[], S, F>(uiSchema, globalUiOptions);
+  const { widget, title: uiTitle, placeholder, ...options } = getUiOptions<T[], S, F>(uiSchema, globalUiOptions);
   const Widget = getWidget<T[], S, F>(schema, widget, widgets);
   const label = uiTitle ?? schema.title ?? name;
   const displayLabel = schemaUtils.getDisplayLabel(schema, uiSchema, globalUiOptions);
