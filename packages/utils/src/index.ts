@@ -16,6 +16,7 @@ import enumOptionsValueForIndex from './enumOptionsValueForIndex';
 import enumOptionValueDecoder from './enumOptionValueDecoder';
 import enumOptionValueEncoder from './enumOptionValueEncoder';
 import ErrorSchemaBuilder from './ErrorSchemaBuilder';
+import { ROOT_FIELD_PATH, fieldPathToId, fieldPathToList, fieldPathToName, toFieldPath } from './fieldPath';
 import findSchemaDefinition from './findSchemaDefinition';
 import getChangedFields from './getChangedFields';
 import type { DateElementFormat, DateElementProp } from './getDateElementProps';
@@ -83,7 +84,6 @@ import toConstant from './toConstant';
 import toDateString from './toDateString';
 import toErrorList from './toErrorList';
 import toErrorSchema from './toErrorSchema';
-import toFieldPathId from './toFieldPathId';
 import unwrapErrorHandler from './unwrapErrorHandler';
 import type { DateElementProps, UseAltDateWidgetResult } from './useAltDateWidgetProps';
 import useAltDateWidgetProps, { DateElement } from './useAltDateWidgetProps';
@@ -199,11 +199,16 @@ export {
   toDateString,
   toErrorList,
   toErrorSchema,
-  toFieldPathId,
+  ROOT_FIELD_PATH,
+  toFieldPath,
+  fieldPathToId,
+  fieldPathToList,
+  fieldPathToName,
   toPath,
   unsetByPath,
   unwrapErrorHandler,
   useAltDateWidgetProps,
+  // oxlint-disable-next-line typescript/no-deprecated
   useDeepCompareMemo,
   useFileWidgetProps,
   utcToLocal,

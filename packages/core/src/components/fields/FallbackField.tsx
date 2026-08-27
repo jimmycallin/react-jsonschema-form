@@ -1,12 +1,13 @@
 import { useMemo, useState } from 'react';
-import type { FallbackFieldProps, FieldPathId, FormContextType, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
+import type { FallbackFieldProps, FormContextType, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
 import {
   getTemplate,
   getUiOptions,
   hashObject,
-  toFieldPathId,
+  toFieldPath,
+  fieldPathToId,
+  fieldPathToList,
   TranslatableString,
-  useDeepCompareMemo,
 } from '@rjsf/utils';
 import type { JSONSchema7TypeName } from 'json-schema';
 
@@ -81,7 +82,7 @@ export default function FallbackField<
     onBlur,
     onFocus,
     registry,
-    fieldPathId,
+    fieldPath,
     onChange,
     errorSchema,
   } = props;
@@ -90,9 +91,7 @@ export default function FallbackField<
 
   const uiOptions = getUiOptions<T, S, F>(uiSchema);
 
-  const typeSelectorInnerFieldPathId = useDeepCompareMemo<FieldPathId>(
-    toFieldPathId('__internal_type_selector', globalFormOptions, fieldPathId),
-  );
+  const typeSelectorFieldPath = toFieldPath('__internal_type_selector', fieldPath);
 
   const schemaTitle = translateString(TranslatableString.Type);
   const typesOptionSchema = useMemo(() => getFallbackTypeSelectionSchema(schemaTitle), [schemaTitle]);
@@ -100,7 +99,12 @@ export default function FallbackField<
   const onTypeChange = (newType: T | undefined) => {
     if (newType != null) {
       setType(newType as JSONSchema7TypeName);
-      onChange(castToNewType<T>(formData as T, newType as JSONSchema7TypeName), fieldPathId.path, errorSchema, id);
+      onChange(
+        castToNewType<T>(formData as T, newType as JSONSchema7TypeName),
+        fieldPathToList(fieldPath),
+        errorSchema,
+        id,
+      );
     }
   };
 
@@ -112,7 +116,7 @@ export default function FallbackField<
       uiOptions,
     );
 
-    return <UnsupportedFieldTemplate schema={schema} fieldPathId={fieldPathId} reason={reason} registry={registry} />;
+    return <UnsupportedFieldTemplate schema={schema} id={id} reason={reason} registry={registry} />;
   }
 
   const FallbackFieldTemplate = getTemplate<'FallbackFieldTemplate', T, S, F>(
@@ -130,7 +134,8 @@ export default function FallbackField<
       typeSelector={
         <SchemaField
           key={formData ? hashObject(formData) : '__empty__'}
-          fieldPathId={typeSelectorInnerFieldPathId}
+          fieldPath={typeSelectorFieldPath}
+          id={fieldPathToId(typeSelectorFieldPath, globalFormOptions)}
           name={`${name}__fallback_type`}
           schema={typesOptionSchema as S}
           formData={type as T}

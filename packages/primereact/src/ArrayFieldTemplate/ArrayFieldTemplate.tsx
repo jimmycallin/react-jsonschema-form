@@ -15,7 +15,7 @@ export default function ArrayFieldTemplate<
 >(props: ArrayFieldTemplateProps<T, S, F>) {
   const {
     uiSchema,
-    fieldPathId,
+    id,
     canAdd,
     className,
     disabled,
@@ -49,7 +49,7 @@ export default function ArrayFieldTemplate<
   return (
     <>
       <ArrayFieldTitleTemplate
-        fieldPathId={fieldPathId}
+        id={id}
         title={uiOptions.title || title}
         schema={schema}
         uiSchema={uiSchema}
@@ -57,19 +57,15 @@ export default function ArrayFieldTemplate<
         registry={registry}
         optionalDataControl={showOptionalDataControlInTitle ? optionalDataControl : undefined}
       />
-      <Fieldset
-        {...rest}
-        id={fieldPathId.$id}
-        className={`${className}${isFixedItems<S>(schema) ? '' : ' sortable-form-fields'}`}
-      >
+      <Fieldset {...rest} id={id} className={`${className}${isFixedItems<S>(schema) ? '' : ' sortable-form-fields'}`}>
         <ArrayFieldDescriptionTemplate
-          fieldPathId={fieldPathId}
+          id={id}
           description={uiOptions.description || schema.description}
           schema={schema}
           uiSchema={uiSchema}
           registry={registry}
         />
-        <div key={`array-item-list-${fieldPathId.$id}`}>
+        <div key={`array-item-list-${id}`}>
           <div>
             {!showOptionalDataControlInTitle ? optionalDataControl : undefined}
             {items}
@@ -83,7 +79,7 @@ export default function ArrayFieldTemplate<
               }}
             >
               <AddButton
-                id={buttonId(fieldPathId, 'add')}
+                id={buttonId(id, 'add')}
                 className='rjsf-array-item-add'
                 onClick={onAddClick}
                 disabled={disabled || readonly}

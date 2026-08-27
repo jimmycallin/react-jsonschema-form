@@ -4,7 +4,7 @@ import type {
   CustomValidator,
   ErrorSchema,
   ErrorTransformer,
-  FieldPathId,
+  FieldPath,
   FieldPathList,
   FormContextType,
   PathSchema,
@@ -41,7 +41,9 @@ import {
   shouldRender,
   SUBMIT_BTN_OPTIONS_KEY,
   toErrorList,
-  toFieldPathId,
+  toFieldPath,
+  fieldPathToId,
+  ROOT_FIELD_PATH,
   UI_DEFINITIONS_KEY,
   UI_GLOBAL_OPTIONS_KEY,
   UI_OPTIONS_KEY,
@@ -49,7 +51,6 @@ import {
   DEFAULT_ID_SEPARATOR,
   DEFAULT_ID_PREFIX,
   ERRORS_KEY,
-  ID_KEY,
   getUsedFormData,
   getFieldNames,
   ANY_OF_KEY,
@@ -288,10 +289,10 @@ export interface FormState<T = any, S extends StrictRJSFSchema = RJSFSchema, F e
   schema: S;
   /** The uiSchema for the form */
   uiSchema: UiSchema<T, S, F>;
-  /** The `FieldPathId` for the form, computed from the `schema`, the `rootFieldId`, the `idPrefix` and
-   * `idSeparator` props.
-   */
-  fieldPathId: FieldPathId;
+  /** The `FieldPath` identifying the root of the form */
+  fieldPath: FieldPath;
+  /** The id for the root of the form, computed from the `idPrefix` and `idSeparator` props */
+  id: string;
   /** The schemaUtils implementation used by the `Form`, created from the `validator` and the `schema` */
   schemaUtils: SchemaUtilsType<T, S, F>;
   /** The current data for the form, computed from the `formData` prop and the changes made by the user */
@@ -330,7 +331,7 @@ export interface IChangeEvent<
   F extends FormContextType = any,
 > extends Pick<
   FormState<T, S, F>,
-  'schema' | 'uiSchema' | 'fieldPathId' | 'schemaUtils' | 'formData' | 'edit' | 'errors' | 'errorSchema'
+  'schema' | 'uiSchema' | 'fieldPath' | 'schemaUtils' | 'formData' | 'edit' | 'errors' | 'errorSchema'
 > {
   /** The status of the form when submitted */
   status?: 'submitted';
@@ -346,11 +347,11 @@ function toIChangeEvent<T = any, S extends StrictRJSFSchema = RJSFSchema, F exte
   state: FormState<T, S, F>,
   status?: IChangeEvent['status'],
 ): IChangeEvent<T, S, F> {
-  const { schema, uiSchema, fieldPathId, schemaUtils, formData, edit, errors, errorSchema } = state;
+  const { schema, uiSchema, fieldPath, schemaUtils, formData, edit, errors, errorSchema } = state;
   return {
     schema,
     uiSchema,
-    fieldPathId,
+    fieldPath,
     schemaUtils,
     formData,
     edit,
@@ -717,16 +718,12 @@ export default class Form<
     const newRegistry = Form.getRegistry(props, rootSchema, schemaUtils);
     const registry = deepEquals(state.registry, newRegistry) ? state.registry : newRegistry;
 
-    // Only compute a new `fieldPathId` when the `idPrefix` is different than the existing fieldPathId's ID_KEY
-    const fieldPathId =
-      state.fieldPathId && state.fieldPathId?.[ID_KEY] === registry.globalFormOptions.idPrefix
-        ? state.fieldPathId
-        : toFieldPathId('', registry.globalFormOptions);
     const nextState: FormState<T, S, F> = {
       schemaUtils,
       schema: rootSchema,
       uiSchema,
-      fieldPathId,
+      fieldPath: ROOT_FIELD_PATH,
+      id: registry.globalFormOptions.idPrefix,
       formData,
       edit,
       errors,
@@ -908,8 +905,8 @@ export default class Form<
   setFieldValue = (fieldPath: string | FieldPathList, newValue?: T) => {
     const { registry } = this.state;
     const path = Array.isArray(fieldPath) ? fieldPath : fieldPath.split('.');
-    const fieldPathId = toFieldPathId('', registry.globalFormOptions, path);
-    this.onChange(newValue, path, undefined, fieldPathId[ID_KEY]);
+    const targetFieldPath = path.reduce<FieldPath>((acc, segment) => toFieldPath(segment, acc), ROOT_FIELD_PATH);
+    this.onChange(newValue, path, undefined, fieldPathToId(targetFieldPath, registry.globalFormOptions));
   };
 
   /** Pushes the given change information into the `pendingChanges` array and then calls `processPendingChanges()` if
@@ -947,15 +944,13 @@ export default class Form<
     const { newErrorSchema } = this.pendingChanges[0];
     // oxlint-disable-next-line typescript/no-deprecated
     const { extraErrors, omitExtraData, liveOmit, noValidate, liveValidate, onChange, disabled, readonly } = this.props;
-    const { formData: oldFormData, schemaUtils, schema, fieldPathId, schemaValidationErrorSchema, errors } = this.state;
+    const { formData: oldFormData, schemaUtils, schema, schemaValidationErrorSchema, errors } = this.state;
     let { customErrors, retrievedSchema } = this.state;
     // Use the un-merged AJV-only schema as the base for re-merging extraErrors. Mirrors the
     // pattern in getStateFromProps/getDerivedStateFromProps and avoids the duplication that
     // happened when state.errorSchema (already containing merged extraErrors) was passed in.
     let mergeBaseErrorSchema: ErrorSchema<T> = schemaValidationErrorSchema;
-    const rootPathId = fieldPathId.path[0] || '';
-
-    const isRootPath = !path || path.length === 0 || (path.length === 1 && path[0] === rootPathId);
+    const isRootPath = !path || path.length === 0 || (path.length === 1 && path[0] === '');
     let formData = isRootPath ? newValue : structuredClone(oldFormData);
 
     // When switching from null to an object option in oneOf, MultiSchemaField sends
@@ -1464,7 +1459,7 @@ export default class Form<
       _internalFormWrapper,
     } = this.props;
 
-    const { schema, uiSchema, formData, errorSchema, fieldPathId, registry } = this.state;
+    const { schema, uiSchema, formData, errorSchema, fieldPath, id: rootFieldId, registry } = this.state;
     const { SchemaField: SchemaFieldComponent } = registry.fields;
     const { SubmitButton } = registry.templates.ButtonTemplates;
     // The `semantic-ui` and `material-ui` themes have `_internalFormWrapper`s that take an `as` prop that is the
@@ -1501,7 +1496,8 @@ export default class Form<
           schema={schema}
           uiSchema={uiSchema}
           errorSchema={errorSchema}
-          fieldPathId={fieldPathId}
+          fieldPath={fieldPath}
+          id={rootFieldId}
           formData={formData}
           onChange={this.onChange}
           onBlur={this.onBlur}

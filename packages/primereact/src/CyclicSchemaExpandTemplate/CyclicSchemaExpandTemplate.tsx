@@ -1,5 +1,5 @@
 import type { CyclicSchemaExpandProps, FormContextType, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
-import { ID_KEY, TranslatableString } from '@rjsf/utils';
+import { TranslatableString } from '@rjsf/utils';
 import { Button } from 'primereact/button';
 import { Message } from 'primereact/message';
 
@@ -12,9 +12,9 @@ export default function CyclicSchemaExpandTemplate<
   S extends StrictRJSFSchema = RJSFSchema,
   F extends FormContextType = any,
 >(props: CyclicSchemaExpandProps<T, S, F>) {
-  const { name, fieldPathId, registry, onExpand } = props;
+  const { name, id, registry, onExpand } = props;
   const { translateString } = registry;
-  const buttonId = `${fieldPathId[ID_KEY]}-button`;
+  const buttonId = `${id}-button`;
   return (
     <div style={{ marginTop: '1rem' }}>
       <Message
@@ -29,7 +29,7 @@ export default function CyclicSchemaExpandTemplate<
         size='small'
         outlined
         label={translateString(TranslatableString.ExpandButton)}
-        onClick={() => onExpand(fieldPathId[ID_KEY])}
+        onClick={() => onExpand(id)}
       />
     </div>
   );

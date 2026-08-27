@@ -2000,7 +2000,7 @@ describeRepeated('Form common', (createFormComponent) => {
             errorSchema: {},
             errors: [],
             formData: 'foobar',
-            fieldPathId: { $id: 'root', path: [] },
+            fieldPath: '',
             schema: formProps.schema,
             uiSchema: {},
             schemaUtils: expect.any(Object),
@@ -5183,7 +5183,8 @@ describe('setFieldValue()', () => {
       expect.objectContaining({
         formData: 'populated value',
       }),
-      'root_',
+      // An empty segment names no field, so the id is the root id rather than the trailing-separator `root_`
+      'root',
     );
 
     expect(node.querySelector<HTMLInputElement>('input')).toHaveAttribute('value', 'populated value');

@@ -1,5 +1,5 @@
 import type { CyclicSchemaExpandProps, FormContextType, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
-import { ID_KEY, TranslatableString } from '@rjsf/utils';
+import { TranslatableString } from '@rjsf/utils';
 import { Alert, Button, Space, version } from 'antd';
 
 const antdMajor = parseInt(version.split('.')[0], 10);
@@ -13,9 +13,9 @@ export default function CyclicSchemaExpandTemplate<
   S extends StrictRJSFSchema = RJSFSchema,
   F extends FormContextType = any,
 >(props: CyclicSchemaExpandProps<T, S, F>) {
-  const { name, fieldPathId, registry, onExpand } = props;
+  const { name, id, registry, onExpand } = props;
   const { translateString } = registry;
-  const buttonId = `${fieldPathId[ID_KEY]}-button`;
+  const buttonId = `${id}-button`;
 
   const headerProp =
     antdMajor >= 6
@@ -28,7 +28,7 @@ export default function CyclicSchemaExpandTemplate<
       {...headerProp}
       action={
         <Space>
-          <Button id={buttonId} size='small' type='default' onClick={() => onExpand(fieldPathId[ID_KEY])}>
+          <Button id={buttonId} size='small' type='default' onClick={() => onExpand(id)}>
             {translateString(TranslatableString.ExpandButton)}
           </Button>
         </Space>

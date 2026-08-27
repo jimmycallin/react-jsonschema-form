@@ -14,7 +14,7 @@ import {
   getByPath,
   ErrorSchemaBuilder,
   getDiscriminatorFieldFromSchema,
-  ID_KEY,
+  fieldPathToList,
   ONE_OF_KEY,
   optionsList,
   PROPERTIES_KEY,
@@ -185,7 +185,8 @@ describe('LayoutMultiSchemaField', () => {
   function getProps(overrideProps: Partial<FieldProps> = {}): FieldProps {
     const {
       formData,
-      fieldPathId = { [ID_KEY]: DEFAULT_ID, path: [DEFAULT_ID] },
+      fieldPath = DEFAULT_ID,
+      id = DEFAULT_ID,
       options = SIMPLE_ONEOF[ONE_OF_KEY],
       schema = SIMPLE_ONEOF,
       uiSchema = {},
@@ -205,7 +206,8 @@ describe('LayoutMultiSchemaField', () => {
       baseType: 'object',
       disabled,
       formData,
-      fieldPathId,
+      fieldPath,
+      id,
       options,
       registry: getTestRegistry(
         schema,
@@ -282,7 +284,7 @@ describe('LayoutMultiSchemaField', () => {
     // OnChange was called with the correct event
     expect(props.onChange).toHaveBeenCalledWith(
       { [selectorField]: '2' },
-      props.fieldPathId.path,
+      fieldPathToList(props.fieldPath),
       undefined,
       DEFAULT_ID,
     );
@@ -367,7 +369,7 @@ describe('LayoutMultiSchemaField', () => {
           ...props.registry.schemaUtils.getDefaultFormState(retrievedOptions[0], sanitizedFormData),
           [selectorField]: 'first_option',
         },
-        props.fieldPathId.path,
+        fieldPathToList(props.fieldPath),
         undefined,
         DEFAULT_ID,
       );
@@ -433,7 +435,7 @@ describe('LayoutMultiSchemaField', () => {
     await user.selectOptions(button, '');
 
     // OnChange was called with the correct event
-    expect(props.onChange).toHaveBeenCalledWith(undefined, props.fieldPathId.path, undefined, DEFAULT_ID);
+    expect(props.onChange).toHaveBeenCalledWith(undefined, fieldPathToList(props.fieldPath), undefined, DEFAULT_ID);
   });
   test('no options for radio widget, ui:hideError true, props.hideError false, no errors to hide', () => {
     const props = getProps({
@@ -489,9 +491,10 @@ describe('LayoutMultiSchemaField', () => {
     const fakeFieldErrorTemplate = screen.queryByTestId(FIELD_ERROR_TEST_ID);
     expect(fakeFieldErrorTemplate).not.toBeInTheDocument();
   });
-  test('explicitly disabled, additional ui props, fieldPathId, has error, hideError prop true', () => {
+  test('explicitly disabled, additional ui props, fieldPath, has error, hideError prop true', () => {
     const props = getProps({
-      fieldPathId: { [ID_KEY]: 'testid', path: ['testid'] },
+      fieldPath: 'testid',
+      id: 'testid',
       disabled: true,
       options: SIMPLE_ONEOF[ONE_OF_KEY],
       schema: SIMPLE_ONEOF,

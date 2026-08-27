@@ -8,6 +8,10 @@ import deepEquals from './deepEquals';
  * returned to avoid having a component rerender due it being a different object. Otherwise, the `newValue` is stored
  * and returned.
  *
+ * @deprecated - Deep comparison on every render is what React's `memo` docs warn against. Prefer passing primitive
+ * values as props, whose identity is their value, so that no laundering is needed. RJSF no longer uses this hook
+ * internally now that field identity is the `FieldPath` string.
+ *
  * @param newValue - The potential new `T` value
  * @returns - The latest stored `T` value
  */
