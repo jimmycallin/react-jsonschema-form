@@ -2,7 +2,7 @@ import type { FocusEvent } from 'react';
 import { memo, useCallback, useMemo, useRef, useState } from 'react';
 import type {
   ErrorSchema,
-  FieldPathList,
+  FieldPath,
   FieldProps,
   FormContextType,
   GenericObjectType,
@@ -25,7 +25,6 @@ import {
   shouldRenderOptionalField,
   toFieldPath,
   fieldPathToId,
-  fieldPathToList,
   ONE_OF_KEY,
   PROPERTIES_KEY,
   REF_KEY,
@@ -138,7 +137,7 @@ function ObjectFieldPropertyFn<T = any, S extends StrictRJSFSchema = RJSFSchema,
    * @returns - The onPropertyChange callback for the `name` property
    */
   const onPropertyChange = useCallback(
-    (value: T | undefined, path: FieldPathList, newErrorSchema?: ErrorSchema<T>, id?: string) => {
+    (value: T | undefined, path: FieldPath, newErrorSchema?: ErrorSchema<T>, id?: string) => {
       // Don't set value = undefined for fields added by additionalProperties. Doing so removes them from the
       // formData, which causes them to completely disappear (including the input field for the property name). Unlike
       // fields which are "mandated" by the schema, these fields can be set to undefined by clicking a "delete field"
@@ -247,8 +246,6 @@ export default function ObjectField<T = any, S extends StrictRJSFSchema = RJSFSc
   );
   const uiOptions = useMemo(() => getUiOptions<T, S, F>(uiSchema, globalUiOptions), [uiSchema, globalUiOptions]);
   const schemaProperties = useMemo(() => schema.properties ?? {}, [schema.properties]);
-  // All the children will use childFieldPath if present in the props, falling back to the fieldPath
-  const childFieldPath = props.childFieldPath ?? fieldPath;
   const lastRenamedProperty = useRef({ previousKey: '', currentKey: undefined as string | undefined });
   const [additionalPropertyOrder, setAdditionalPropertyOrder] = useState(() =>
     getAdditionalPropertyOrder<S>(schemaProperties),
@@ -326,8 +323,8 @@ export default function ObjectField<T = any, S extends StrictRJSFSchema = RJSFSc
       lastRenamedProperty.current.previousKey = getAvailableKey(newKey, newFormData);
     }
     setAdditionalPropertyOrder((order) => [...order, newKey]);
-    onChange(newFormData, fieldPathToList(childFieldPath));
-  }, [formData, onChange, translateString, schemaUtils, childFieldPath, getAvailableKey, schema]);
+    onChange(newFormData, fieldPath);
+  }, [formData, onChange, translateString, schemaUtils, fieldPath, getAvailableKey, schema]);
 
   /** Returns a callback function that deals with the rename of a key for an additional property for a schema. That
    * callback will attempt to rename the key and move the existing data to that key, calling `onChange` when it does.
@@ -358,10 +355,10 @@ export default function ObjectField<T = any, S extends StrictRJSFSchema = RJSFSc
         }
         lastRenamedProperty.current.currentKey = actualNewKey;
         setAdditionalPropertyOrder((order) => order.map((property) => (property === oldKey ? actualNewKey : property)));
-        onChange(renamedObj, fieldPathToList(childFieldPath));
+        onChange(renamedObj, fieldPath);
       }
     },
-    [onChange, childFieldPath, getAvailableKey],
+    [onChange, fieldPath, getAvailableKey],
   );
 
   /** Handles the remove click which calls the `onChange` callback with the special ADDITIONAL_PROPERTY_FIELD_REMOVE
@@ -370,9 +367,9 @@ export default function ObjectField<T = any, S extends StrictRJSFSchema = RJSFSc
   const handleRemoveProperty = useCallback(
     (key: string) => {
       setAdditionalPropertyOrder((order) => order.filter((property) => property !== key));
-      onChange(ADDITIONAL_PROPERTY_KEY_REMOVE as T, [...fieldPathToList(childFieldPath), key]);
+      onChange(ADDITIONAL_PROPERTY_KEY_REMOVE as T, toFieldPath(key, fieldPath));
     },
-    [onChange, childFieldPath],
+    [onChange, fieldPath],
   );
 
   /** Returns the stable React key for a property. For the most recently renamed
@@ -412,8 +409,8 @@ export default function ObjectField<T = any, S extends StrictRJSFSchema = RJSFSc
   const optionalDataControl = renderOptionalField ? (
     <OptionalDataControlsField
       {...props}
-      fieldPath={childFieldPath}
-      id={fieldPathToId(childFieldPath, globalFormOptions)}
+      fieldPath={fieldPath}
+      id={fieldPathToId(fieldPath, globalFormOptions)}
       schema={schema}
     />
   ) : undefined;
@@ -434,7 +431,7 @@ export default function ObjectField<T = any, S extends StrictRJSFSchema = RJSFSc
           schema={getPropertySchema<S>(schema, propertyName)}
           uiSchema={fieldUiSchema}
           errorSchema={getByPath(errorSchema, propertyName)}
-          fieldPath={childFieldPath}
+          fieldPath={fieldPath}
           formData={getByPath(formData, propertyName)}
           handleKeyRename={handleKeyRename}
           handleRemoveProperty={handleRemoveProperty}

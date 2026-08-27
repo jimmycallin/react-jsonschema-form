@@ -563,10 +563,10 @@ export interface FieldProps<T = any, S extends StrictRJSFSchema = RJSFSchema, F 
   formData?: T;
   /** The tree of errors for this field and its children */
   errorSchema?: ErrorSchema<T>;
-  /** The field change event handler; called with the updated field value, the change path for the value
-   * (defaults to an empty array), an optional ErrorSchema and the optional id of the field being changed
+  /** The field change event handler; called with the updated field value, the `FieldPath` of the value
+   * (the root of the form is `''`), an optional ErrorSchema and the optional id of the field being changed
    */
-  onChange: (newValue: T | undefined, path: FieldPathList, es?: ErrorSchema<T>, id?: string) => void;
+  onChange: (newValue: T | undefined, fieldPath: FieldPath, es?: ErrorSchema<T>, id?: string) => void;
   /** The input blur event handler; call it with the field id and value */
   onBlur: (id: string, value: any) => void;
   /** The input focus event handler; call it with the field id and value */

@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ErrorSchema, FieldProps, FormContextType, RJSFSchema, StrictRJSFSchema, UiSchema } from '@rjsf/utils';
 import {
-  fieldPathToList,
   ANY_OF_KEY,
   deepEquals,
   ERRORS_KEY,
@@ -126,7 +125,7 @@ function AnyOfField<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends 
 
       setSelectedOption(intOption);
       skipNextOptionRecalculation.current = true;
-      onChange(newFormData, fieldPathToList(fieldPath), undefined, fieldId);
+      onChange(newFormData, fieldPath, undefined, fieldId);
     },
     // setSelectedOption is stable (guaranteed by useState); skipNextOptionRecalculation is a ref
     [selectedOption, retrievedOptions, disabled, readonly, schemaUtils, formData, fieldPath, onChange, fieldId],

@@ -4,7 +4,6 @@ import type {
   ErrorSchema,
   Field,
   FieldPath,
-  FieldPathList,
   FieldProps,
   FieldTemplateProps,
   FormContextType,
@@ -22,14 +21,12 @@ import {
   getSchemaType,
   getTemplate,
   getUiOptions,
-  fieldPathToId,
   isFormDataAvailable,
   ONE_OF_KEY,
   resolveUiSchema,
   RJSF_REF_CYCLE_KEY,
   shallowEquals,
   shouldRenderOptionalField,
-  toFieldPath,
   isObject,
   TranslatableString,
   UI_OPTIONS_KEY,
@@ -124,9 +121,9 @@ function SchemaFieldRender<T = any, S extends StrictRJSFSchema = RJSFSchema, F e
    * `onChange` chain if it is not already being provided from a deeper level in the hierarchy
    */
   const handleFieldComponentChange = useCallback(
-    (newFormData: T | undefined, path: FieldPathList, newErrorSchema?: ErrorSchema<T>, id?: string) => {
+    (newFormData: T | undefined, changedFieldPath: FieldPath, newErrorSchema?: ErrorSchema<T>, id?: string) => {
       const theId = id || fieldId;
-      return onChange(newFormData, path, newErrorSchema, theId);
+      return onChange(newFormData, changedFieldPath, newErrorSchema, theId);
     },
     [fieldId, onChange],
   );
@@ -172,9 +169,9 @@ function SchemaFieldRender<T = any, S extends StrictRJSFSchema = RJSFSchema, F e
   const isReplacingAnyOrOneOf = uiOptions.field && uiOptions.fieldReplacesAnyOrOneOf === true;
   let XxxOfField: Field<T, S, F> | undefined;
   let XxxOfOptions: S[] | undefined;
-  // When rendering the `XxxOfField` we'll need to change the fieldPath of the main component, remembering the
-  // fieldPath of the children for the ObjectField and ArrayField
-  let fieldPathProps: { fieldPath: FieldPath; id: string; childFieldPath?: FieldPath } = { fieldPath, id: fieldId };
+  // When rendering the `XxxOfField` we'll need to change the id of the main component, since the `XxxOfField`
+  // renders the selected option for the same data address
+  let fieldPathProps: { fieldPath: FieldPath; id: string } = { fieldPath, id: fieldId };
   if ((ANY_OF_KEY in schema || ONE_OF_KEY in schema) && !isReplacingAnyOrOneOf && !schemaUtils.isSelect(schema)) {
     if (schema[ANY_OF_KEY]) {
       XxxOfField = _AnyOfField;
@@ -191,13 +188,11 @@ function SchemaFieldRender<T = any, S extends StrictRJSFSchema = RJSFSchema, F e
     const isOptionalRender = shouldRenderOptionalField<T, S, F>(registry, schema, required, uiSchema);
     const hasFormData = isFormDataAvailable<T>(formData);
     displayLabel = displayLabel && (!isOptionalRender || hasFormData);
-    const xxxOfFieldPath = toFieldPath('XxxOf', fieldPath);
     fieldPathProps = {
-      childFieldPath: fieldPath,
-      // The main FieldComponent will add `XxxOf` onto the fieldPath to avoid duplication with the rendering of the
-      // same FieldComponent by the `XxxOfField`
-      fieldPath: xxxOfFieldPath,
-      id: fieldPathToId(xxxOfFieldPath, globalFormOptions),
+      fieldPath,
+      // The main FieldComponent gets an `XxxOf`-suffixed id to avoid DOM id duplication with the rendering of the
+      // same data address by the `XxxOfField`; the fieldPath itself stays the truthful data address
+      id: `${fieldId}${globalFormOptions.idSeparator}XxxOf`,
     };
   }
 

@@ -43,6 +43,7 @@ import {
   toErrorList,
   toFieldPath,
   fieldPathToId,
+  fieldPathToList,
   ROOT_FIELD_PATH,
   UI_DEFINITIONS_KEY,
   UI_GLOBAL_OPTIONS_KEY,
@@ -364,8 +365,8 @@ function toIChangeEvent<T = any, S extends StrictRJSFSchema = RJSFSchema, F exte
 /** The definition of a pending change that will be processed in the `onChange` handler
  */
 interface PendingChange<T> {
-  /** The path into the formData/errorSchema at which the `newValue`/`newErrorSchema` will be set */
-  path: FieldPathList;
+  /** The `FieldPath` into the formData/errorSchema at which the `newValue`/`newErrorSchema` will be set */
+  fieldPath: FieldPath;
   /** The new value to set into the formData */
   newValue?: T;
   /** The new errors to be set into the errorSchema, if any */
@@ -906,19 +907,19 @@ export default class Form<
     const { registry } = this.state;
     const path = Array.isArray(fieldPath) ? fieldPath : fieldPath.split('.');
     const targetFieldPath = path.reduce<FieldPath>((acc, segment) => toFieldPath(segment, acc), ROOT_FIELD_PATH);
-    this.onChange(newValue, path, undefined, fieldPathToId(targetFieldPath, registry.globalFormOptions));
+    this.onChange(newValue, targetFieldPath, undefined, fieldPathToId(targetFieldPath, registry.globalFormOptions));
   };
 
   /** Pushes the given change information into the `pendingChanges` array and then calls `processPendingChanges()` if
    * the array only contains a single pending change.
    *
    * @param newValue - The new form data from a change to a field
-   * @param path - The path to the change into which to set the formData
+   * @param fieldPath - The `FieldPath` of the change at which to set the formData
    * @param [newErrorSchema] - The new `ErrorSchema` based on the field change
    * @param [id] - The id of the field that caused the change
    */
-  onChange = (newValue: T | undefined, path: FieldPathList, newErrorSchema?: ErrorSchema<T>, id?: string) => {
-    this.pendingChanges.push({ newValue, path, newErrorSchema, id });
+  onChange = (newValue: T | undefined, fieldPath: FieldPath, newErrorSchema?: ErrorSchema<T>, id?: string) => {
+    this.pendingChanges.push({ newValue, fieldPath, newErrorSchema, id });
     if (this.pendingChanges.length === 1) {
       this.processPendingChange();
     }
@@ -940,8 +941,10 @@ export default class Form<
     // Mark that we're processing a user-initiated change.
     // This prevents componentDidUpdate from reverting oneOf/anyOf option switches.
     this.isProcessingUserChange = true;
-    const { newValue, path, id } = this.pendingChanges[0];
+    const { newValue, fieldPath, id } = this.pendingChanges[0];
     const { newErrorSchema } = this.pendingChanges[0];
+    // The single place where a `FieldPath` is parsed back into segments for writing into the formData
+    const path = fieldPathToList(fieldPath);
     // oxlint-disable-next-line typescript/no-deprecated
     const { extraErrors, omitExtraData, liveOmit, noValidate, liveValidate, onChange, disabled, readonly } = this.props;
     const { formData: oldFormData, schemaUtils, schema, schemaValidationErrorSchema, errors } = this.state;
@@ -950,7 +953,7 @@ export default class Form<
     // pattern in getStateFromProps/getDerivedStateFromProps and avoids the duplication that
     // happened when state.errorSchema (already containing merged extraErrors) was passed in.
     let mergeBaseErrorSchema: ErrorSchema<T> = schemaValidationErrorSchema;
-    const isRootPath = !path || path.length === 0 || (path.length === 1 && path[0] === '');
+    const isRootPath = path.length === 0;
     let formData = isRootPath ? newValue : structuredClone(oldFormData);
 
     // When switching from null to an object option in oneOf, MultiSchemaField sends

@@ -6,7 +6,6 @@ import type {
   StrictRJSFSchema,
 } from '@rjsf/utils';
 import {
-  fieldPathToList,
   getSchemaType,
   getTemplate,
   getUiOptions,
@@ -58,7 +57,7 @@ export default function OptionalDataControlsField<
     label = translateString(labelEnum);
     if (hasFormData) {
       id = optionalControlsId(fieldId, 'Remove');
-      onRemoveClick = () => onChange(undefined as T, fieldPathToList(fieldPath), errorSchema);
+      onRemoveClick = () => onChange(undefined as T, fieldPath, errorSchema);
     } else {
       id = optionalControlsId(fieldId, 'Add');
       onAddClick = () => {
@@ -68,7 +67,7 @@ export default function OptionalDataControlsField<
           // If new form data ended up being undefined, and we have pushed the add button we need to actually add data
           newFormData = getSchemaType<S>(schema) === 'array' ? [] : {};
         }
-        onChange(newFormData as T, fieldPathToList(fieldPath), errorSchema);
+        onChange(newFormData as T, fieldPath, errorSchema);
       };
     }
   }

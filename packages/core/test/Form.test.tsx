@@ -14,6 +14,7 @@ import {
   bracketNameGenerator,
   buttonId,
   dotNotationNameGenerator,
+  toFieldPath,
   getTemplate,
   getUiOptions,
   optionalControlsId,
@@ -4762,7 +4763,10 @@ describe('Calling onChange right after updating a Form with props formData', () 
         return;
       }
       changed = true;
-      latestProps.current.onChange('test', [latestProps.current.formData.length]);
+      latestProps.current.onChange(
+        'test',
+        toFieldPath(latestProps.current.formData.length, latestProps.current.fieldPath),
+      );
     });
     return <ArrayField {...fieldProps} />;
   };

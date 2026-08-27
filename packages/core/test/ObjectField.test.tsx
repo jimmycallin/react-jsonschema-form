@@ -2,7 +2,7 @@ import { createRef } from 'react';
 import type {
   RJSFSchema,
   FieldProps,
-  FieldPathList,
+  FieldPath,
   ErrorSchema,
   TitleFieldProps,
   DescriptionFieldProps,
@@ -21,7 +21,7 @@ import { createFormComponent, expectToHaveBeenCalledWithFormData, submitForm } f
 const user = userEvent.setup();
 
 const ObjectFieldTest = (props: FieldProps) => {
-  const onChangeTest = (newFormData: any, path: FieldPathList, errorSchema?: ErrorSchema, id?: string) => {
+  const onChangeTest = (newFormData: any, path: FieldPath, errorSchema?: ErrorSchema, id?: string) => {
     let newErrorSchema = errorSchema;
     if (newFormData !== 'test') {
       newErrorSchema = {

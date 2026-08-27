@@ -7,15 +7,7 @@ import type {
   RJSFSchema,
   StrictRJSFSchema,
 } from '@rjsf/utils';
-import {
-  TranslatableString,
-  fieldPathToList,
-  fieldPathToName,
-  getUiOptions,
-  getWidget,
-  isObject,
-  optionsList,
-} from '@rjsf/utils';
+import { TranslatableString, fieldPathToName, getUiOptions, getWidget, isObject, optionsList } from '@rjsf/utils';
 
 /** The `BooleanField` component is used to render a field in the schema is boolean. It constructs `enumOptions` for the
  * two boolean values based on the various alternatives in the schema.
@@ -94,8 +86,7 @@ function BooleanField<T = any, S extends StrictRJSFSchema = RJSFSchema, F extend
     }
   }
   const onWidgetChange = useCallback(
-    (value: T | undefined, errorSchema?: ErrorSchema, id?: string) =>
-      onChange(value, fieldPathToList(fieldPath), errorSchema, id),
+    (value: T | undefined, errorSchema?: ErrorSchema, id?: string) => onChange(value, fieldPath, errorSchema, id),
     [onChange, fieldPath],
   );
 

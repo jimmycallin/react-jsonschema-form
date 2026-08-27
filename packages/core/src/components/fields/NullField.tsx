@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 import type { FieldProps, FormContextType, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
-import { fieldPathToList } from '@rjsf/utils';
 
 /** The `NullField` component is used to render a field in the schema is null. It also ensures that the `formData` is
  * also set to null if it has no value.
@@ -13,7 +12,7 @@ function NullField<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends F
   const { formData, onChange, fieldPath } = props;
   useEffect(() => {
     if (formData === undefined) {
-      onChange(null as unknown as T, fieldPathToList(fieldPath));
+      onChange(null as unknown as T, fieldPath);
     }
   }, [fieldPath, formData, onChange]);
 

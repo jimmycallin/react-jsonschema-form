@@ -1,14 +1,6 @@
 import { useMemo, useState } from 'react';
 import type { FallbackFieldProps, FormContextType, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
-import {
-  getTemplate,
-  getUiOptions,
-  hashObject,
-  toFieldPath,
-  fieldPathToId,
-  fieldPathToList,
-  TranslatableString,
-} from '@rjsf/utils';
+import { getTemplate, getUiOptions, hashObject, toFieldPath, fieldPathToId, TranslatableString } from '@rjsf/utils';
 import type { JSONSchema7TypeName } from 'json-schema';
 
 /**
@@ -99,12 +91,7 @@ export default function FallbackField<
   const onTypeChange = (newType: T | undefined) => {
     if (newType != null) {
       setType(newType as JSONSchema7TypeName);
-      onChange(
-        castToNewType<T>(formData as T, newType as JSONSchema7TypeName),
-        fieldPathToList(fieldPath),
-        errorSchema,
-        id,
-      );
+      onChange(castToNewType<T>(formData as T, newType as JSONSchema7TypeName), fieldPath, errorSchema, id);
     }
   };
 

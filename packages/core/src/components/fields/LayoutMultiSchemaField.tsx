@@ -18,7 +18,6 @@ import {
   ERRORS_KEY,
   getDiscriminatorFieldFromSchema,
   hashObject,
-  fieldPathToList,
   fieldPathToName,
   ONE_OF_KEY,
   optionsList,
@@ -177,7 +176,7 @@ export default function LayoutMultiSchemaField<
       setByPath(newFormData, selectorField, opt);
     }
     // Pass the component name in the path
-    onChange(newFormData, fieldPathToList(fieldPath), undefined, id);
+    onChange(newFormData, fieldPath, undefined, id);
   };
 
   // filtering the options based on the type of widget because `selectField` does not recognize the `convertOther` prop

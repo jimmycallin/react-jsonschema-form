@@ -671,7 +671,7 @@ function FakeSchemaField({ 'data-testid': testId, ...props }: Readonly<FieldProp
   // Special test case that will pass an error schema into on change to allow coverage
   const error = hasByPath(uiSchema, UI_GLOBAL_OPTIONS_KEY) ? EXTRA_ERROR : undefined;
   const onTextChange = ({ target: { value: val } }: ChangeEvent<HTMLInputElement>) => {
-    onChange(val, fieldPathToList(fieldPath), error, id);
+    onChange(val, fieldPath, error, id);
   };
   const onTextBlur = ({ target: { value: val } }: FocusEvent<HTMLInputElement>) => onBlur(id, val);
   const onTextFocus = ({ target: { value: val } }: FocusEvent<HTMLInputElement>) => onFocus(id, val);
@@ -1463,7 +1463,7 @@ describe('LayoutGridField', () => {
     expect(props.onFocus).toHaveBeenCalledWith(fieldId, '');
     // Type to trigger the onChange
     await userEvent.type(input, 'foo');
-    expect(props.onChange).toHaveBeenCalledWith('foo', fieldPathToList(fieldPath), undefined, fieldId);
+    expect(props.onChange).toHaveBeenCalledWith('foo', fieldPath, undefined, fieldId);
     // Tab out of the input field to cause the blur
     await userEvent.tab();
     expect(props.onBlur).toHaveBeenCalledWith(fieldId, 'foo');
@@ -1489,7 +1489,7 @@ describe('LayoutGridField', () => {
     expect(props.onFocus).toHaveBeenCalledWith(fieldId, '');
     // Type to trigger the onChange
     await userEvent.type(input, 'foo');
-    expect(props.onChange).toHaveBeenCalledWith('foo', fieldPathToList(fieldPath), undefined, fieldId);
+    expect(props.onChange).toHaveBeenCalledWith('foo', fieldPath, undefined, fieldId);
     // Tab out of the input field to cause the blur
     await userEvent.tab();
     expect(props.onBlur).toHaveBeenCalledWith(fieldId, 'foo');
@@ -1515,7 +1515,7 @@ describe('LayoutGridField', () => {
     expect(props.onFocus).toHaveBeenCalledWith(fieldId, '');
     // Type to trigger the onChange
     await userEvent.type(input, 'foo');
-    expect(props.onChange).toHaveBeenCalledWith('foo', fieldPathToList(fieldPath), undefined, fieldId);
+    expect(props.onChange).toHaveBeenCalledWith('foo', fieldPath, undefined, fieldId);
     // Tab out of the input field to cause the blur
     await userEvent.tab();
     expect(props.onBlur).toHaveBeenCalledWith(fieldId, 'foo');
@@ -1697,7 +1697,7 @@ describe('LayoutGridField', () => {
     const input = within(fields[0]).getByRole('textbox');
     expect(input).toHaveValue(props.formData[fieldName]);
     await userEvent.type(input, '!');
-    expect(props.onChange).toHaveBeenCalledWith('foo!', fieldPathToList(fieldPath), EXTRA_ERROR, fieldId);
+    expect(props.onChange).toHaveBeenCalledWith('foo!', fieldPath, EXTRA_ERROR, fieldId);
   });
   test('renderCondition, condition fails, field and null value, NONE operator, no data', () => {
     const gridProps = {
