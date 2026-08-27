@@ -8,7 +8,7 @@ export default defineConfig({
   // prerequisite build. The custom name (rather than "development") keeps
   // consumers' dev servers on the published lib/ output.
   resolve: {
-    conditions: ['source'],
+    conditions: ['@rjsf/source'],
   },
   test: {
     globals: true,

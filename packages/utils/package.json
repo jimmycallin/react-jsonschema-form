@@ -9,7 +9,7 @@
   "description": "Utility functions for @rjsf/core",
   "exports": {
     ".": {
-      "source": "./src/index.ts",
+      "@rjsf/source": "./src/index.ts",
       "types": "./lib/index.d.ts",
       "require": "./dist/index.cjs",
       "import": "./lib/index.js"
