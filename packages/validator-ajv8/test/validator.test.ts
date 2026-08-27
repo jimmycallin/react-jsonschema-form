@@ -19,6 +19,17 @@ import AJV8Validator from '../src/validator';
 
 const illFormedKey = "bar`'()=+*&^%$#@!";
 
+function expectWarn<T>(fn: () => T, ...expectedWarning: unknown[]): T {
+  const warnSpy = vi.spyOn(console, 'warn').mockImplementation(noop);
+  try {
+    const result = fn();
+    expect(warnSpy).toHaveBeenCalledWith(...expectedWarning);
+    return result;
+  } finally {
+    warnSpy.mockRestore();
+  }
+}
+
 describe('AJV8Validator', () => {
   let builder: ErrorSchemaBuilder;
   beforeAll(() => {
@@ -56,10 +67,12 @@ describe('AJV8Validator', () => {
       it('should return false if the schema is invalid', () => {
         const schema: RJSFSchema = 'foobarbaz' as unknown as RJSFSchema;
 
-        const warnSpy = vi.spyOn(console, 'warn').mockImplementation(noop);
-        expect(validator.isValid(schema, { foo: 'bar' }, schema)).toBe(false);
-        expect(warnSpy).toHaveBeenCalledWith('Error encountered compiling schema:', expect.any(Error));
-        warnSpy.mockRestore();
+        const isValid = expectWarn(
+          () => validator.isValid(schema, { foo: 'bar' }, schema),
+          'Error encountered compiling schema:',
+          expect.any(Error),
+        );
+        expect(isValid).toBe(false);
       });
       it('should return true if the data is valid against the schema including refs to rootSchema', () => {
         const schema: RJSFSchema = {
@@ -144,11 +157,14 @@ describe('AJV8Validator', () => {
 
         // Call isValid twice with the same schema; the mocked getSchema forces the
         // addSchema path to throw ("already exists"), which isValid warns about
-        const warnSpy = vi.spyOn(console, 'warn').mockImplementation(noop);
-        validator.isValid(schema, formData, rootSchema);
-        validator.isValid(schema, formData, rootSchema);
-        expect(warnSpy).toHaveBeenCalledWith('Error encountered compiling schema:', expect.any(Error));
-        warnSpy.mockRestore();
+        expectWarn(
+          () => {
+            validator.isValid(schema, formData, rootSchema);
+            validator.isValid(schema, formData, rootSchema);
+          },
+          'Error encountered compiling schema:',
+          expect.any(Error),
+        );
 
         getSchemaSpy.mockRestore();
         expect(compileSpy).toHaveBeenCalledTimes(1);
@@ -754,10 +770,12 @@ describe('AJV8Validator', () => {
       it('should return false if the schema is invalid', () => {
         const schema: RJSFSchema = 'foobarbaz' as unknown as RJSFSchema;
 
-        const warnSpy = vi.spyOn(console, 'warn').mockImplementation(noop);
-        expect(validator.isValid(schema, { foo: 'bar' }, schema)).toBe(false);
-        expect(warnSpy).toHaveBeenCalledWith('Error encountered compiling schema:', expect.any(Error));
-        warnSpy.mockRestore();
+        const isValid = expectWarn(
+          () => validator.isValid(schema, { foo: 'bar' }, schema),
+          'Error encountered compiling schema:',
+          expect.any(Error),
+        );
+        expect(isValid).toBe(false);
       });
       it('should return true if the data is valid against the schema including refs to rootSchema', () => {
         const schema: RJSFSchema = {
@@ -1233,10 +1251,12 @@ describe('AJV8Validator', () => {
       it('should return false if the schema is invalid', () => {
         const schema: RJSFSchema = 'foobarbaz' as unknown as RJSFSchema;
 
-        const warnSpy = vi.spyOn(console, 'warn').mockImplementation(noop);
-        expect(validator.isValid(schema, { foo: 'bar' }, schema)).toBe(false);
-        expect(warnSpy).toHaveBeenCalledWith('Error encountered compiling schema:', expect.any(Error));
-        warnSpy.mockRestore();
+        const isValid = expectWarn(
+          () => validator.isValid(schema, { foo: 'bar' }, schema),
+          'Error encountered compiling schema:',
+          expect.any(Error),
+        );
+        expect(isValid).toBe(false);
       });
       it('should return true if the data is valid against the schema including refs to rootSchema', () => {
         const schema: RJSFSchema = {
@@ -2438,11 +2458,11 @@ describe('AJV8Validator', () => {
         };
       });
       it('should not return a validation error if unknown string format is used', () => {
-        const warnSpy = vi.spyOn(console, 'warn').mockImplementation(noop);
-        const result = validator.validateFormData({ phone: '800.555.2368' }, schema);
+        const result = expectWarn(
+          () => validator.validateFormData({ phone: '800.555.2368' }, schema),
+          expect.stringContaining('unknown format'),
+        );
         expect(result.errors).toHaveLength(0);
-        expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('unknown format'));
-        warnSpy.mockRestore();
       });
       describe('validating using a custom formats', () => {
         let errors: RJSFValidationError[];
@@ -2625,11 +2645,11 @@ describe('AJV8Validator', () => {
         };
       });
       it('should not return a validation error if unknown string format is used', () => {
-        const warnSpy = vi.spyOn(console, 'warn').mockImplementation(noop);
-        const result = validator.validateFormData({ phone: '800.555.2368' }, schema);
+        const result = expectWarn(
+          () => validator.validateFormData({ phone: '800.555.2368' }, schema),
+          expect.stringContaining('unknown format'),
+        );
         expect(result.errors).toHaveLength(0);
-        expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('unknown format'));
-        warnSpy.mockRestore();
       });
       describe('validating using a custom formats', () => {
         let errors: RJSFValidationError[];
@@ -3016,11 +3036,11 @@ describe('AJV8Validator', () => {
         };
       });
       it('should not return a validation error if unknown string format is used', () => {
-        const warnSpy = vi.spyOn(console, 'warn').mockImplementation(noop);
-        const result = validator.validateFormData({ phone: '800.555.2368' }, schema);
+        const result = expectWarn(
+          () => validator.validateFormData({ phone: '800.555.2368' }, schema),
+          expect.stringContaining('unknown format'),
+        );
         expect(result.errors).toHaveLength(0);
-        expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('unknown format'));
-        warnSpy.mockRestore();
       });
       describe('validating using a custom formats', () => {
         let errors: RJSFValidationError[];

@@ -4,6 +4,7 @@ import base, { fullCoverage } from '../../testing/vitest.base';
 
 export default mergeConfig(base, {
   test: {
-    coverage: fullCoverage(),
+    globalSetup: ['./test/harness/globalSetup.ts'],
+    coverage: fullCoverage('validator-ajv8'),
   },
 });

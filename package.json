@@ -6,8 +6,8 @@
     "node": ">=20"
   },
   "scripts": {
-    "test": "pnpm --filter @rjsf/validator-ajv8 run compileSchemas && vitest run",
-    "test:update": "pnpm --filter @rjsf/validator-ajv8 run compileSchemas && vitest run --update",
+    "test": "vitest run",
+    "test:update": "vitest run --update",
     "lint": "nx run-many --target=lint",
     "cs-check": "nx run-many --target=cs-check",
     "cs-format": "nx run-many --target=cs-format",

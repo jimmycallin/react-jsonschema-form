@@ -70,6 +70,8 @@ function SingleSelectWidget<T = any, S extends StrictRJSFSchema = RJSFSchema, F 
     onBlur(id, enumOptionValueDecoder<S>(target?.value, enumOptions, optionValueFormat, optEmptyVal));
   const handleFocus = ({ target }: FocusEvent<HTMLInputElement>) =>
     onFocus(id, enumOptionValueDecoder<S>(target?.value, enumOptions, optionValueFormat, optEmptyVal));
+  // autoComplete is spread conditionally below: a plain autoComplete={undefined} would still
+  // override a consumer-supplied options.prime.autoComplete from the earlier primeProps spread
   const { autocomplete, ...dropdownRemainingProps } = dropdownProps;
 
   return (

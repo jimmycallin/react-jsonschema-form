@@ -1,4 +1,3 @@
-/** @vitest-environment jsdom */
 import { mergeSchemas } from '../src';
 
 describe('mergeSchemas()', () => {

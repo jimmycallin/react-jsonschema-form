@@ -1,4 +1,3 @@
-/** @vitest-environment jsdom */
 import { isObject } from '../src';
 
 const NON_OBJECTS = ['string', 10, NaN, true, null, undefined];

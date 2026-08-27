@@ -8,6 +8,6 @@ export default mergeConfig(base, {
     // into jsdom with a /** @vitest-environment jsdom */ pragma.
     environment: 'node',
     exclude: ['node_modules/**', 'lib-test/**'],
-    coverage: fullCoverage(),
+    coverage: fullCoverage('utils'),
   },
 });

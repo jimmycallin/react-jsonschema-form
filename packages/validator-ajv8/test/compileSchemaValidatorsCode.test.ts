@@ -1,5 +1,5 @@
 import type { RJSFSchema } from '@rjsf/utils';
-import { schemaParser } from '@rjsf/utils';
+import { noop, schemaParser } from '@rjsf/utils';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 
@@ -25,7 +25,7 @@ describe('compileSchemaValidatorsCode()', () => {
       schemas = Object.values(schemaParser(superSchema as unknown as RJSFSchema));
       expectedCode = readFileSync(join(__dirname, 'harness/superSchema.cjs')).toString();
       // superSchema deliberately uses the unregistered "phone-us" format, which AJV warns about
-      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(noop);
       generatedCode = compileSchemaValidatorsCode(superSchema as unknown as RJSFSchema);
       expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('unknown format'));
       warnSpy.mockRestore();

@@ -1,4 +1,3 @@
-/** @vitest-environment jsdom */
 import { mergeObjects } from '../src';
 
 describe('mergeObjects()', () => {
