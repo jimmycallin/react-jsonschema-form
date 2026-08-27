@@ -113,25 +113,26 @@ Add the following line to your equivalent global.css
 
 #### Use the theme on demo site
 
-All shadcn's default color theme are included in the npm packages. Simply do
+All bundled themes are included in the npm package. Simply do
 
 ```
-import '@rjsf/shadcn/dist/[color].css';
+import '@rjsf/shadcn/dist/[theme].css';
 e.g:
-import '@rjsf/shadcn/dist/zinc.css';
+import '@rjsf/shadcn/dist/default.css';
 ```
 
-Supported colors are:
+Supported themes are:
 
 - default
-- zinc
-- red
-- rose
-- orange
-- green
-- blue
-- yellow
-- violet
+- amethyst-haze
+- caffeine
+- claude
+- clean-slate
+- neo-brutalism
+- pastel-dreams
+- soft-pop
+- twitter
+- vercel
 
 #### Coloring
 

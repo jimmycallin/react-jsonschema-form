@@ -89,7 +89,7 @@ function SingleSelectWidget<T = any, S extends StrictRJSFSchema = RJSFSchema, F 
       placeholder={placeholder}
       disabled={disabled || readonly}
       autoFocus={autofocus}
-      autoComplete={autocomplete}
+      {...(autocomplete === undefined ? {} : { autoComplete: autocomplete })}
       aria-describedby={ariaDescribedByIds(id)}
       {...dropdownRemainingProps}
     />
