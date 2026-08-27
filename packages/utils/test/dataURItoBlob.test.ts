@@ -1,3 +1,4 @@
+/** @vitest-environment jsdom */
 import { dataURItoBlob } from '../src';
 
 describe('dataURItoBlob()', () => {

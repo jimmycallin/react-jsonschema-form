@@ -6,8 +6,8 @@
     "node": ">=20"
   },
   "scripts": {
-    "test": "nx run-many --parallel=2 --target=test",
-    "test:update": "nx run-many --parallel=2 --target=test:update",
+    "test": "vitest run",
+    "test:update": "vitest run --update",
     "lint": "nx run-many --target=lint",
     "cs-check": "nx run-many --target=cs-check",
     "cs-format": "nx run-many --target=cs-format",
@@ -30,20 +30,21 @@
   "devDependencies": {
     "@nx/js": "^23.0.1",
     "@size-limit/preset-small-lib": "^13.0.3",
-    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.2",
     "@types/estree": "^1.0.9",
     "@types/node": "^24.13.2",
     "@types/react": "^18.3.31",
     "@types/react-dom": "^18.3.7",
     "@types/react-test-renderer": "^18.3.1",
-    "@vitest/coverage-v8": "^4.1.9",
+    "@vitest/coverage-v8": "^4.1.11",
     "ajv": "^8.20.0",
     "cross-env": "^10.1.0",
     "esbuild": "^0.28.1",
     "husky": "^9.1.7",
     "is-ci": "^4.1.0",
-    "jsdom": "^29.1.1",
+    "jsdom": "^30.0.1",
     "jsdom-testing-mocks": "^1.16.0",
     "lint-staged": "^17.0.8",
     "move-file-cli": "^3.0.0",
@@ -60,7 +61,7 @@
     "tslib": "^2.8.1",
     "tsx": "^4.22.4",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.9"
+    "vitest": "^4.1.11"
   },
   "workspaces": [
     "packages/antd",
