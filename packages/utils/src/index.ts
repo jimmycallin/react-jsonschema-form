@@ -16,7 +16,14 @@ import enumOptionsValueForIndex from './enumOptionsValueForIndex';
 import enumOptionValueDecoder from './enumOptionValueDecoder';
 import enumOptionValueEncoder from './enumOptionValueEncoder';
 import ErrorSchemaBuilder from './ErrorSchemaBuilder';
-import { ROOT_FIELD_PATH, fieldPathToId, fieldPathToList, fieldPathToName, toFieldPath } from './fieldPath';
+import {
+  ROOT_FIELD_PATH,
+  fieldPathEndsWithIndex,
+  fieldPathToId,
+  fieldPathToList,
+  fieldPathToName,
+  toFieldPath,
+} from './fieldPath';
 import findSchemaDefinition from './findSchemaDefinition';
 import getChangedFields from './getChangedFields';
 import type { DateElementFormat, DateElementProp } from './getDateElementProps';
@@ -201,6 +208,7 @@ export {
   ROOT_FIELD_PATH,
   toFieldPath,
   fieldPathToId,
+  fieldPathEndsWithIndex,
   fieldPathToList,
   fieldPathToName,
   toPath,

@@ -1,5 +1,5 @@
 import type { FieldProps, Registry, TitleFieldProps } from '@rjsf/utils';
-import { noop, titleId } from '@rjsf/utils';
+import { noop, ROOT_FIELD_PATH, titleId } from '@rjsf/utils';
 import { render, screen, within } from '@testing-library/react';
 
 import LayoutHeaderField from '../src/components/fields/LayoutHeaderField';
@@ -25,7 +25,7 @@ function TestTitleField(props: TitleFieldProps) {
 describe('LayoutHeaderField', () => {
   function getProps(overrideProps: Partial<FieldProps> = {}): FieldProps {
     const {
-      fieldPath = '',
+      fieldPath = ROOT_FIELD_PATH,
       id = 'root',
       schema = {},
       name = '',

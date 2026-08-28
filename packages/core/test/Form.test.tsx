@@ -2001,7 +2001,6 @@ describeRepeated('Form common', (createFormComponent) => {
             errorSchema: {},
             errors: [],
             formData: 'foobar',
-            fieldPath: '',
             schema: formProps.schema,
             uiSchema: {},
             schemaUtils: expect.any(Object),

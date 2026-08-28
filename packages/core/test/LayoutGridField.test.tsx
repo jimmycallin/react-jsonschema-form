@@ -23,6 +23,7 @@ import {
   toFieldPath,
   fieldPathToId,
   fieldPathToList,
+  ROOT_FIELD_PATH,
   UI_GLOBAL_OPTIONS_KEY,
   getByPath,
   hasByPath,
@@ -1536,7 +1537,7 @@ describe('LayoutGridField', () => {
       },
       formData: {},
       errorSchema: { employment: {} },
-      fieldPath: '',
+      fieldPath: ROOT_FIELD_PATH,
       id: gridFormSchemaRegistry.globalFormOptions.idPrefix,
       layoutGridSchema: {
         name: fieldName,
@@ -1557,7 +1558,7 @@ describe('LayoutGridField', () => {
       uiSchema: readonlyUISchema,
       formData: {},
       errorSchema: { string: {} },
-      fieldPath: '',
+      fieldPath: ROOT_FIELD_PATH,
       id: readonlySchemaRegistry.globalFormOptions.idPrefix,
       layoutGridSchema: {
         name: fieldName,

@@ -26,6 +26,7 @@ import {
   optionsList,
   shouldRenderOptionalField,
   toFieldPath,
+  fieldPathEndsWithIndex,
   fieldPathToId,
   fieldPathToName,
   ITEMS_KEY,
@@ -1035,8 +1036,7 @@ export default function ArrayField<T = any, S extends StrictRJSFSchema = RJSFSch
    */
   const handleChange = useCallback(
     (value: any, changedFieldPath: FieldPath, newErrorSchema?: ErrorSchema<T>, id?: string) => {
-      // An unescaped trailing `[n]` can only be an array index; an escaped `]` in a name renders as `\]`
-      const lastPathIsItemIndex = /\[\d+\]$/.test(changedFieldPath);
+      const lastPathIsItemIndex = fieldPathEndsWithIndex(changedFieldPath);
       onChange(
         // We need to treat undefined items as nulls to have validation.
         // See https://github.com/tdegrunt/jsonschema/issues/206

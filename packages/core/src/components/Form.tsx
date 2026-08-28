@@ -330,8 +330,6 @@ export interface IChangeEvent<
   FormState<T, S, F>,
   'schema' | 'uiSchema' | 'schemaUtils' | 'formData' | 'edit' | 'errors' | 'errorSchema'
 > {
-  /** The `FieldPath` identifying the root of the form, always `ROOT_FIELD_PATH` */
-  fieldPath: FieldPath;
   /** The status of the form when submitted */
   status?: 'submitted';
 }
@@ -350,7 +348,6 @@ function toIChangeEvent<T = any, S extends StrictRJSFSchema = RJSFSchema, F exte
   return {
     schema,
     uiSchema,
-    fieldPath: ROOT_FIELD_PATH,
     schemaUtils,
     formData,
     edit,

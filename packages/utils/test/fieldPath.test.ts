@@ -5,8 +5,15 @@ import {
   fieldPathToId,
   fieldPathToList,
   fieldPathToName,
+  fieldPathEndsWithIndex,
   toFieldPath,
 } from '../src';
+import type { FieldPath } from '../src';
+
+/** The grammar tests exercise the parser on raw literal paths, which is the one place a cast is legitimate */
+function fp(path: string): FieldPath {
+  return path as FieldPath;
+}
 
 const GLOBAL_FORM_OPTIONS = {
   idPrefix: DEFAULT_ID_PREFIX,
@@ -22,7 +29,7 @@ describe('toFieldPath()', () => {
   });
   test('an empty segment names no field, so the parent is returned unchanged', () => {
     expect(toFieldPath('')).toEqual(ROOT_FIELD_PATH);
-    expect(toFieldPath('', 'one')).toEqual('one');
+    expect(toFieldPath('', fp('one'))).toEqual('one');
   });
   test('appends a property name to a parent', () => {
     expect(toFieldPath('two', toFieldPath('one'))).toEqual('one.two');
@@ -31,9 +38,9 @@ describe('toFieldPath()', () => {
     expect(toFieldPath(1, toFieldPath('one'))).toEqual('one[1]');
   });
   test('escapes reserved characters in a property name', () => {
-    expect(toFieldPath('a.b', 'one')).toEqual('one.a\\.b');
-    expect(toFieldPath('a[0]', 'one')).toEqual('one.a\\[0\\]');
-    expect(toFieldPath('a\\b', 'one')).toEqual('one.a\\\\b');
+    expect(toFieldPath('a.b', fp('one'))).toEqual('one.a\\.b');
+    expect(toFieldPath('a[0]', fp('one'))).toEqual('one.a\\[0\\]');
+    expect(toFieldPath('a\\b', fp('one'))).toEqual('one.a\\\\b');
   });
 });
 
@@ -42,21 +49,21 @@ describe('fieldPathToList()', () => {
     expect(fieldPathToList(ROOT_FIELD_PATH)).toEqual([]);
   });
   test('array indexes come back as numbers, property names as strings', () => {
-    expect(fieldPathToList('tasks[0].title')).toEqual(['tasks', 0, 'title']);
+    expect(fieldPathToList(fp('tasks[0].title'))).toEqual(['tasks', 0, 'title']);
   });
   test('a numeric property name stays a string', () => {
-    expect(fieldPathToList(toFieldPath('0', 'a'))).toEqual(['a', '0']);
+    expect(fieldPathToList(toFieldPath('0', fp('a')))).toEqual(['a', '0']);
   });
   test('round-trips property names containing reserved characters', () => {
     const tricky = ['a.b', 'c[0]', 'd\\e', '[1]'];
-    const path = tricky.reduce((acc, segment) => toFieldPath(segment, acc), ROOT_FIELD_PATH);
+    const path = tricky.reduce<FieldPath>((acc, segment) => toFieldPath(segment, acc), ROOT_FIELD_PATH);
     expect(fieldPathToList(path)).toEqual(tricky);
   });
   test('a trailing escape character is dropped rather than producing a stray segment', () => {
-    expect(fieldPathToList('a\\')).toEqual(['a']);
+    expect(fieldPathToList(fp('a\\'))).toEqual(['a']);
   });
   test('handles adjacent array indexes', () => {
-    const path = toFieldPath(1, toFieldPath(0, 'matrix'));
+    const path = toFieldPath(1, toFieldPath(0, fp('matrix')));
     expect(path).toEqual('matrix[0][1]');
     expect(fieldPathToList(path)).toEqual(['matrix', 0, 1]);
   });
@@ -67,12 +74,14 @@ describe('fieldPathToId()', () => {
     expect(fieldPathToId(ROOT_FIELD_PATH, GLOBAL_FORM_OPTIONS)).toEqual(DEFAULT_ID_PREFIX);
   });
   test('joins the segments with the idSeparator', () => {
-    expect(fieldPathToId('tasks[0].title', GLOBAL_FORM_OPTIONS)).toEqual(
+    expect(fieldPathToId(fp('tasks[0].title'), GLOBAL_FORM_OPTIONS)).toEqual(
       `${DEFAULT_ID_PREFIX}${DEFAULT_ID_SEPARATOR}tasks${DEFAULT_ID_SEPARATOR}0${DEFAULT_ID_SEPARATOR}title`,
     );
   });
   test('is a plain string, so equal paths produce equal ids', () => {
-    expect(fieldPathToId('a.b', GLOBAL_FORM_OPTIONS)).toBe(fieldPathToId(toFieldPath('b', 'a'), GLOBAL_FORM_OPTIONS));
+    expect(fieldPathToId(fp('a.b'), GLOBAL_FORM_OPTIONS)).toBe(
+      fieldPathToId(toFieldPath('b', fp('a')), GLOBAL_FORM_OPTIONS),
+    );
   });
 });
 
@@ -87,16 +96,53 @@ describe('fieldPathToName()', () => {
   const OPTIONS_WITH_NAME_GENERATOR = { ...GLOBAL_FORM_OPTIONS, nameGenerator: phpNameGenerator };
 
   test('undefined when no nameGenerator is configured', () => {
-    expect(fieldPathToName('firstName', GLOBAL_FORM_OPTIONS)).toBeUndefined();
+    expect(fieldPathToName(fp('firstName'), GLOBAL_FORM_OPTIONS)).toBeUndefined();
   });
   test('undefined for the root path', () => {
     expect(fieldPathToName(ROOT_FIELD_PATH, OPTIONS_WITH_NAME_GENERATOR)).toBeUndefined();
   });
   test('generates a name for a nested path', () => {
-    expect(fieldPathToName('tasks[0].title', OPTIONS_WITH_NAME_GENERATOR)).toEqual('root[tasks][0][title]');
+    expect(fieldPathToName(fp('tasks[0].title'), OPTIONS_WITH_NAME_GENERATOR)).toEqual('root[tasks][0][title]');
   });
   test('the isMultiValue flag is passed through', () => {
-    expect(fieldPathToName('hobbies', OPTIONS_WITH_NAME_GENERATOR, true)).toEqual('root[hobbies][]');
-    expect(fieldPathToName('hobbies', OPTIONS_WITH_NAME_GENERATOR, false)).toEqual('root[hobbies]');
+    expect(fieldPathToName(fp('hobbies'), OPTIONS_WITH_NAME_GENERATOR, true)).toEqual('root[hobbies][]');
+    expect(fieldPathToName(fp('hobbies'), OPTIONS_WITH_NAME_GENERATOR, false)).toEqual('root[hobbies]');
+  });
+});
+
+describe('fieldPathToId() matches the segment-list derivation', () => {
+  test.each([
+    ROOT_FIELD_PATH,
+    toFieldPath('one'),
+    toFieldPath(0, toFieldPath('tasks')),
+    toFieldPath('title', toFieldPath(0, toFieldPath('tasks'))),
+    toFieldPath(1, toFieldPath(0, toFieldPath('matrix'))),
+    toFieldPath('a.b', toFieldPath('one')),
+    toFieldPath('a[0]', toFieldPath('one')),
+    toFieldPath('a\\b', toFieldPath('one')),
+    toFieldPath(2),
+  ])('single-pass id for %j equals joining the parsed segments', (path) => {
+    const expected = [GLOBAL_FORM_OPTIONS.idPrefix, ...fieldPathToList(path)].join(GLOBAL_FORM_OPTIONS.idSeparator);
+    expect(fieldPathToId(path, GLOBAL_FORM_OPTIONS)).toEqual(expected);
+  });
+  test('a trailing escape character is dropped, matching the parser', () => {
+    expect(fieldPathToId(fp('a\\'), GLOBAL_FORM_OPTIONS)).toEqual(
+      [GLOBAL_FORM_OPTIONS.idPrefix, ...fieldPathToList(fp('a\\'))].join(GLOBAL_FORM_OPTIONS.idSeparator),
+    );
+  });
+});
+
+describe('fieldPathEndsWithIndex()', () => {
+  test('true for a path addressing an array element', () => {
+    expect(fieldPathEndsWithIndex(toFieldPath(0, toFieldPath('tasks')))).toBe(true);
+    expect(fieldPathEndsWithIndex(toFieldPath(12))).toBe(true);
+  });
+  test('false for a property path, the root, and a numeric object key', () => {
+    expect(fieldPathEndsWithIndex(toFieldPath('title'))).toBe(false);
+    expect(fieldPathEndsWithIndex(ROOT_FIELD_PATH)).toBe(false);
+    expect(fieldPathEndsWithIndex(toFieldPath('0', toFieldPath('a')))).toBe(false);
+  });
+  test('false for a property name that merely ends with an escaped bracket', () => {
+    expect(fieldPathEndsWithIndex(toFieldPath('a[0]', toFieldPath('one')))).toBe(false);
   });
 });

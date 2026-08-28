@@ -16,6 +16,7 @@ import {
   getDiscriminatorFieldFromSchema,
   ONE_OF_KEY,
   optionsList,
+  toFieldPath,
   PROPERTIES_KEY,
   UI_OPTIONS_KEY,
   UI_WIDGET_KEY,
@@ -184,7 +185,7 @@ describe('LayoutMultiSchemaField', () => {
   function getProps(overrideProps: Partial<FieldProps> = {}): FieldProps {
     const {
       formData,
-      fieldPath = DEFAULT_ID,
+      fieldPath = toFieldPath(DEFAULT_ID),
       id = DEFAULT_ID,
       options = SIMPLE_ONEOF[ONE_OF_KEY],
       schema = SIMPLE_ONEOF,
@@ -487,7 +488,7 @@ describe('LayoutMultiSchemaField', () => {
   });
   test('explicitly disabled, additional ui props, fieldPath, has error, hideError prop true', () => {
     const props = getProps({
-      fieldPath: 'testid',
+      fieldPath: toFieldPath('testid'),
       id: 'testid',
       disabled: true,
       options: SIMPLE_ONEOF[ONE_OF_KEY],
