@@ -7,7 +7,7 @@ function UiField(props: FieldProps) {
   const { fieldPath: _fieldPath, id: _id, formData, onChange, registry, schema, uiSchema, ...otherProps } = props;
   const { fields, schemaUtils } = registry;
   const changeHandlerFactory = (fieldName: string) => (value: any) => {
-    onChange(value, [fieldName]);
+    onChange(value, fieldName);
   };
 
   const { StringField, NumberField } = fields;
