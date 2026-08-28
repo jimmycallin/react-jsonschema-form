@@ -290,10 +290,6 @@ export interface FormState<T = any, S extends StrictRJSFSchema = RJSFSchema, F e
   schema: S;
   /** The uiSchema for the form */
   uiSchema: UiSchema<T, S, F>;
-  /** The `FieldPath` identifying the root of the form */
-  fieldPath: FieldPath;
-  /** The id for the root of the form, computed from the `idPrefix` and `idSeparator` props */
-  id: string;
   /** The schemaUtils implementation used by the `Form`, created from the `validator` and the `schema` */
   schemaUtils: SchemaUtilsType<T, S, F>;
   /** The current data for the form, computed from the `formData` prop and the changes made by the user */
@@ -332,8 +328,10 @@ export interface IChangeEvent<
   F extends FormContextType = any,
 > extends Pick<
   FormState<T, S, F>,
-  'schema' | 'uiSchema' | 'fieldPath' | 'schemaUtils' | 'formData' | 'edit' | 'errors' | 'errorSchema'
+  'schema' | 'uiSchema' | 'schemaUtils' | 'formData' | 'edit' | 'errors' | 'errorSchema'
 > {
+  /** The `FieldPath` identifying the root of the form, always `ROOT_FIELD_PATH` */
+  fieldPath: FieldPath;
   /** The status of the form when submitted */
   status?: 'submitted';
 }
@@ -348,11 +346,11 @@ function toIChangeEvent<T = any, S extends StrictRJSFSchema = RJSFSchema, F exte
   state: FormState<T, S, F>,
   status?: IChangeEvent['status'],
 ): IChangeEvent<T, S, F> {
-  const { schema, uiSchema, fieldPath, schemaUtils, formData, edit, errors, errorSchema } = state;
+  const { schema, uiSchema, schemaUtils, formData, edit, errors, errorSchema } = state;
   return {
     schema,
     uiSchema,
-    fieldPath,
+    fieldPath: ROOT_FIELD_PATH,
     schemaUtils,
     formData,
     edit,
@@ -723,8 +721,6 @@ export default class Form<
       schemaUtils,
       schema: rootSchema,
       uiSchema,
-      fieldPath: ROOT_FIELD_PATH,
-      id: registry.globalFormOptions.idPrefix,
       formData,
       edit,
       errors,
@@ -1462,7 +1458,7 @@ export default class Form<
       _internalFormWrapper,
     } = this.props;
 
-    const { schema, uiSchema, formData, errorSchema, fieldPath, id: rootFieldId, registry } = this.state;
+    const { schema, uiSchema, formData, errorSchema, registry } = this.state;
     const { SchemaField: SchemaFieldComponent } = registry.fields;
     const { SubmitButton } = registry.templates.ButtonTemplates;
     // The `semantic-ui` and `material-ui` themes have `_internalFormWrapper`s that take an `as` prop that is the
@@ -1499,8 +1495,8 @@ export default class Form<
           schema={schema}
           uiSchema={uiSchema}
           errorSchema={errorSchema}
-          fieldPath={fieldPath}
-          id={rootFieldId}
+          fieldPath={ROOT_FIELD_PATH}
+          id={registry.globalFormOptions.idPrefix}
           formData={formData}
           onChange={this.onChange}
           onBlur={this.onBlur}

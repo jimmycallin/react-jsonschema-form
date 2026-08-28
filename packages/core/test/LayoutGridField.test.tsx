@@ -946,33 +946,33 @@ describe('LayoutGridField', () => {
     });
   });
   describe('computeArraySchemasIfPresent()', () => {
-    test('returns undefined rawSchema and the property path for non-numeric potentialIndex', () => {
-      expect(computeArraySchemasIfPresent(undefined, FIELD_PATH, 'string')).toEqual({
+    test('returns undefined rawSchema and index for non-numeric potentialIndex', () => {
+      expect(computeArraySchemasIfPresent(undefined, 'string')).toEqual({
         rawSchema: undefined,
-        fieldPath: toFieldPath('string', FIELD_PATH),
+        index: undefined,
       });
     });
-    test('returns undefined rawSchema and the property path for numeric potentialIndex, no schema', () => {
-      expect(computeArraySchemasIfPresent(undefined, FIELD_PATH, '0')).toEqual({
+    test('returns undefined rawSchema and index for numeric potentialIndex, no schema', () => {
+      expect(computeArraySchemasIfPresent(undefined, '0')).toEqual({
         rawSchema: undefined,
-        fieldPath: toFieldPath('0', FIELD_PATH),
+        index: undefined,
       });
     });
-    test('returns undefined rawSchema and the property path for numeric potentialIndex, non-array schema', () => {
-      expect(computeArraySchemasIfPresent(readonlySchema, FIELD_PATH, '0')).toEqual({
+    test('returns undefined rawSchema and index for numeric potentialIndex, non-array schema', () => {
+      expect(computeArraySchemasIfPresent(readonlySchema, '0')).toEqual({
         rawSchema: undefined,
-        fieldPath: toFieldPath('0', FIELD_PATH),
+        index: undefined,
       });
     });
-    test('returns outer array rawSchema and an indexed fieldPath for numeric potentialIndex, array schema', () => {
-      const result = computeArraySchemasIfPresent(outerArraySchema, FIELD_PATH, '0');
+    test('returns outer array rawSchema and the numeric index for numeric potentialIndex, array schema', () => {
+      const result = computeArraySchemasIfPresent(outerArraySchema, '0');
       expect(result).toEqual({
         rawSchema: outerArraySchema.items,
-        fieldPath: toFieldPath(0, FIELD_PATH),
+        index: 0,
       });
       // The index is recorded as a number, but the generated id is unchanged
-      expect(fieldPathToList(result.fieldPath)).toEqual([DEFAULT_ID, 0]);
-      expect(fieldPathToId(result.fieldPath, arraySchemaRegistry.globalFormOptions)).toEqual(
+      expect(fieldPathToList(toFieldPath(result.index!, FIELD_PATH))).toEqual([DEFAULT_ID, 0]);
+      expect(fieldPathToId(toFieldPath(result.index!, FIELD_PATH), arraySchemaRegistry.globalFormOptions)).toEqual(
         fieldPathToId(toFieldPath('0', FIELD_PATH), arraySchemaRegistry.globalFormOptions),
       );
     });

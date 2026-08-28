@@ -87,7 +87,6 @@ import toErrorSchema from './toErrorSchema';
 import unwrapErrorHandler from './unwrapErrorHandler';
 import type { DateElementProps, UseAltDateWidgetResult } from './useAltDateWidgetProps';
 import useAltDateWidgetProps, { DateElement } from './useAltDateWidgetProps';
-import useDeepCompareMemo from './useDeepCompareMemo';
 import type { FileInfoType, UseFileWidgetPropsResult } from './useFileWidgetProps';
 import useFileWidgetProps from './useFileWidgetProps';
 import utcToLocal from './utcToLocal';
@@ -208,8 +207,6 @@ export {
   unsetByPath,
   unwrapErrorHandler,
   useAltDateWidgetProps,
-  // oxlint-disable-next-line typescript/no-deprecated
-  useDeepCompareMemo,
   useFileWidgetProps,
   utcToLocal,
   validationDataMerge,

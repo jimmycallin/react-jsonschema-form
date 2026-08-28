@@ -743,7 +743,6 @@ export type ArrayFieldDescriptionProps<
 > = Omit<DescriptionFieldProps<T, S, F>, 'id' | 'description'> & {
   /** The description of the field being rendered */
   description?: string | ReactElement;
-  /** An object containing the id and path for this field */
   /** The id of the field in the hierarchy */
   id: string;
 };

@@ -252,31 +252,29 @@ export function findChildrenAndProps<T = any, S extends StrictRJSFSchema = RJSFS
   return { children: children as LayoutGridSchemaType[], gridProps };
 }
 
-/** Computes the `rawSchema` and `fieldPath` for a `schema` and a `potentialIndex`. If the `schema` is of type array,
- * has an `ITEMS_KEY` element and `potentialIndex` represents a numeric value, the element at `ITEMS_KEY` is checked
- * to see if it is an array. If it is AND the `potentialIndex`th element is available, it is used as the `rawSchema`,
- * otherwise the last value of the element is used. If it is not, then the element is used as the `rawSchema`. In
- * either case, an `fieldPath` is computed for the array index. If the `schema` does not represent an array or the
- * `potentialIndex` is not a numeric value, then `rawSchema` is returned as undefined and given `fieldPath` is returned
- * as is.
+/** Computes the `rawSchema` and array `index` for a `schema` and a `potentialIndex`. If the `schema` is of type
+ * array, has an `ITEMS_KEY` element and `potentialIndex` represents a numeric value, the element at `ITEMS_KEY` is
+ * checked to see if it is an array. If it is AND the `potentialIndex`th element is available, it is used as the
+ * `rawSchema`, otherwise the last value of the element is used. If it is not, then the element is used as the
+ * `rawSchema`. In either case, the numeric `index` is returned so the caller can record the path segment as a number,
+ * addressing an array element rather than an object key. If the `schema` does not represent an array or the
+ * `potentialIndex` is not a numeric value, then both are returned as undefined.
  *
- * @param schema - The schema to generate the fieldPath for
- * @param fieldPath - The FieldPathId for the schema
+ * @param schema - The schema to check for an array item schema
  * @param potentialIndex - A string containing a potential index
- * @returns - An object containing the `rawSchema` and `fieldPath` of an array item, otherwise an undefined `rawSchema`
+ * @returns - An object containing the `rawSchema` and numeric `index` of an array item, otherwise both undefined
  */
 export function computeArraySchemasIfPresent<S extends StrictRJSFSchema = RJSFSchema>(
   schema: S | undefined,
-  parentFieldPath: FieldPath,
   potentialIndex: string,
 ): {
   rawSchema?: S;
-  fieldPath: FieldPath;
+  index?: number;
 } {
   let rawSchema: S | undefined;
-  let fieldPath = toFieldPath(potentialIndex, parentFieldPath);
+  let index: number | undefined;
   if (isNumericIndex(potentialIndex) && schema && schema?.type === 'array' && ITEMS_KEY in schema) {
-    const index = Number(potentialIndex);
+    index = Number(potentialIndex);
     const items = schema[ITEMS_KEY];
     if (Array.isArray(items)) {
       if (index > items.length) {
@@ -287,10 +285,8 @@ export function computeArraySchemasIfPresent<S extends StrictRJSFSchema = RJSFSc
     } else {
       rawSchema = items as S;
     }
-    // The segment is recorded as a number so the path addresses an array element rather than an object key
-    fieldPath = toFieldPath(index, parentFieldPath);
   }
-  return { rawSchema, fieldPath };
+  return { rawSchema, index };
 }
 
 /** Given a `dottedPath` to a field in the `initialSchema`, iterate through each individual path in the schema until
@@ -335,8 +331,7 @@ export function getSchemaDetailsForField<
   // For all the remaining path parts
   parts.forEach((part) => {
     // dive into the properties of the current schema (when it exists) and get the schema for the next part
-    const parentFieldPath = fieldPath;
-    fieldPath = toFieldPath(part, fieldPath);
+    let segment: string | number = part;
     const schemaProperties = schema?.[PROPERTIES_KEY];
     if (schemaProperties) {
       rawSchema = (schemaProperties[part] ?? {}) as S;
@@ -346,10 +341,11 @@ export function getSchemaDetailsForField<
       const selectedSchema = schemaUtils.findSelectedOptionInXxxOf(schema, part, xxx, innerData);
       rawSchema = getPropertySchema<S>(selectedSchema, part);
     } else {
-      const result = computeArraySchemasIfPresent<S>(schema, parentFieldPath, part);
+      const result = computeArraySchemasIfPresent<S>(schema, part);
       rawSchema = result.rawSchema ?? ({} as S);
-      fieldPath = result.fieldPath;
+      segment = result.index ?? part;
     }
+    fieldPath = toFieldPath(segment, fieldPath);
     // Now drill into the innerData for the part, returning an empty object by default if it doesn't exist
     innerData = getByPath<T>(innerData, part, {} as T);
     // Resolve any `$ref`s for the current rawSchema
@@ -370,13 +366,11 @@ export function getSchemaDetailsForField<
       // Grab the selected schema for the oneOf/anyOf value for the leafPath using the innerData
       schema = schemaUtils.findSelectedOptionInXxxOf(schema, leafPath, xxx, innerData);
     }
-    const leafParentFieldPath = fieldPath;
-    fieldPath = toFieldPath(leafPath, fieldPath);
     isRequired = schema !== undefined && Array.isArray(schema.required) && schema.required.includes(leafPath);
-    const result = computeArraySchemasIfPresent<S>(schema, leafParentFieldPath, leafPath);
+    const result = computeArraySchemasIfPresent<S>(schema, leafPath);
+    fieldPath = toFieldPath(result.index ?? leafPath, fieldPath);
     if (result.rawSchema) {
       schema = result.rawSchema;
-      fieldPath = result.fieldPath;
     } else {
       // Now grab the schema from the leafPath of the current schema properties
       schema = schema?.[PROPERTIES_KEY]?.[leafPath] as S | undefined;

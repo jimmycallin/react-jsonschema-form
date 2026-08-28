@@ -27,7 +27,6 @@ import {
   shouldRenderOptionalField,
   toFieldPath,
   fieldPathToId,
-  fieldPathToList,
   fieldPathToName,
   ITEMS_KEY,
   TranslatableString,
@@ -609,7 +608,7 @@ function NormalArray<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends
   const actualFormData = hasFormData ? keyedFormData : [];
   const extraClass = renderOptionalField ? ' rjsf-optional-array-field' : '';
   const optionalDataControl = renderOptionalField ? (
-    <OptionalDataControlsField {...props} fieldPath={fieldPath} id={fieldPathToId(fieldPath, globalFormOptions)} />
+    <OptionalDataControlsField {...props} id={fieldPathToId(fieldPath, globalFormOptions)} />
   ) : undefined;
   const arrayProps: ArrayFieldTemplateProps<T[], S, F> = {
     canAdd,
@@ -721,7 +720,7 @@ function FixedArray<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends 
   const actualFormData = hasFormData ? keyedFormData : [];
   const extraClass = renderOptionalField ? ' rjsf-optional-array-field' : '';
   const optionalDataControl = renderOptionalField ? (
-    <OptionalDataControlsField {...props} fieldPath={fieldPath} id={fieldPathToId(fieldPath, globalFormOptions)} />
+    <OptionalDataControlsField {...props} id={fieldPathToId(fieldPath, globalFormOptions)} />
   ) : undefined;
 
   // These are the props passed into the render function
@@ -1036,7 +1035,8 @@ export default function ArrayField<T = any, S extends StrictRJSFSchema = RJSFSch
    */
   const handleChange = useCallback(
     (value: any, changedFieldPath: FieldPath, newErrorSchema?: ErrorSchema<T>, id?: string) => {
-      const lastPathIsItemIndex = typeof fieldPathToList(changedFieldPath).at(-1) === 'number';
+      // An unescaped trailing `[n]` can only be an array index; an escaped `]` in a name renders as `\]`
+      const lastPathIsItemIndex = /\[\d+\]$/.test(changedFieldPath);
       onChange(
         // We need to treat undefined items as nulls to have validation.
         // See https://github.com/tdegrunt/jsonschema/issues/206

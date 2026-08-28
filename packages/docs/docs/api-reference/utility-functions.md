@@ -1387,19 +1387,6 @@ and to handle the clicking of the `clear` and `setNow` buttons.
 
 - UseAltDateWidgetResult: The `UseAltDateWidgetResult` to be used within a `AltDateWidget` implementation
 
-### useDeepCompareMemo&lt;T = unknown>()
-
-Hook that stores and returns a `T`. If `newValue` is the same as the stored one, then the stored one is returned to
-avoid having a component rerender due it being a different object. Otherwise, the `newValue` is stored and returned.
-
-#### Parameters
-
-- newValue: T - The potential new `T` value
-
-#### Returns
-
-- T: The latest stored `T` value
-
 ### useFileWidgetProps()
 
 Hook which encapsulates the logic needed to read and convert a `value` of `File` or `File[]` into the
