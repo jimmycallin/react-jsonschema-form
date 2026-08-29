@@ -80,6 +80,7 @@ import rangeSpec from './rangeSpec';
 import removeOptionalEmptyObjects from './removeOptionalEmptyObjects';
 import replaceStringParameters from './replaceStringParameters';
 import resolveUiSchema from './resolveUiSchema';
+import retainObjectIdentity from './retainObjectIdentity';
 import schemaRequiresTrueValue from './schemaRequiresTrueValue';
 import SelectedOptionDescription from './SelectedOptionDescription';
 import type { SelectedOptionDescriptionProps } from './SelectedOptionDescription';
@@ -195,6 +196,7 @@ export {
   setByPath,
   SelectedOptionDescription,
   shallowEquals,
+  retainObjectIdentity,
   shouldRender,
   shouldRenderOptionalField,
   sortedJSONStringify,

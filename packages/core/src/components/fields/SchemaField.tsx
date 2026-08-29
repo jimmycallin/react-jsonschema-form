@@ -1,5 +1,5 @@
 import type { ComponentType } from 'react';
-import { useCallback, memo } from 'react';
+import { useCallback, useMemo, memo } from 'react';
 import type {
   ErrorSchema,
   Field,
@@ -127,13 +127,38 @@ function SchemaFieldRender<T = any, S extends StrictRJSFSchema = RJSFSchema, F e
     [fieldId, onChange],
   );
 
+  // Memoized on stable inputs so the resolved object keeps its reference across re-renders; child callbacks and
+  // memo boundaries depend on that reference staying put
+  const uiSchema = useMemo(
+    () => resolveUiSchema<T, S, F>(_schema, _uiSchema, registry),
+    [_schema, _uiSchema, registry],
+  );
+  // See #439: uiSchema: Don't pass consumed class names or style to child components. Memoized so the stripped
+  // object keeps its reference while the uiSchema is unchanged
+  const fieldUiSchema = useMemo(() => {
+    const {
+      'ui:classNames': consumedUiClassNames,
+      classNames: consumedClassNames,
+      'ui:style': consumedUiStyle,
+      ...strippedUiSchema
+    } = uiSchema;
+    if (UI_OPTIONS_KEY in strippedUiSchema) {
+      const {
+        classNames: consumedOptionClassNames,
+        style: consumedOptionStyle,
+        ...fieldUiOptions
+      } = strippedUiSchema[UI_OPTIONS_KEY]!;
+      strippedUiSchema[UI_OPTIONS_KEY] = fieldUiOptions;
+    }
+    return strippedUiSchema;
+  }, [uiSchema]);
+
   // Stop $ref cycles: when resolveAllReferences detects a repeated property $ref it tags the schema with this flag.
   // The check must come after all hook calls to satisfy React's rules of hooks.
   if ((_schema as RJSFMarkedSchema)[RJSF_REF_CYCLE_KEY]) {
     return <CyclicSchemaField {...props} />;
   }
 
-  const uiSchema = resolveUiSchema<T, S, F>(_schema, _uiSchema, registry);
   const uiOptions = getUiOptions<T, S, F>(uiSchema, globalUiOptions);
   const FieldTemplate = getTemplate<'FieldTemplate', T, S, F>('FieldTemplate', registry, uiOptions);
   const DescriptionFieldTemplate = getTemplate<'DescriptionFieldTemplate', T, S, F>(
@@ -196,21 +221,6 @@ function SchemaFieldRender<T = any, S extends StrictRJSFSchema = RJSFSchema, F e
   }
 
   const { __errors, ...fieldErrorSchema } = errorSchema || {};
-  // See #439: uiSchema: Don't pass consumed class names or style to child components
-  const {
-    'ui:classNames': consumedUiClassNames,
-    classNames: consumedClassNames,
-    'ui:style': consumedUiStyle,
-    ...fieldUiSchema
-  } = uiSchema;
-  if (UI_OPTIONS_KEY in fieldUiSchema) {
-    const {
-      classNames: consumedOptionClassNames,
-      style: consumedOptionStyle,
-      ...fieldUiOptions
-    } = fieldUiSchema[UI_OPTIONS_KEY]!;
-    fieldUiSchema[UI_OPTIONS_KEY] = fieldUiOptions;
-  }
 
   const field = (
     <FieldComponent

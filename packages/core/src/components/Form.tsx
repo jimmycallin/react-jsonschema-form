@@ -38,6 +38,7 @@ import {
   hashObject,
   isObject,
   mergeObjects,
+  retainObjectIdentity,
   shouldRender,
   SUBMIT_BTN_OPTIONS_KEY,
   toErrorList,
@@ -1077,6 +1078,16 @@ export default class Form<
         customErrors,
       );
       state = { ...state, formData: newFormData, ...mergedErrors, customErrors };
+    }
+
+    // Graft the previous state's references back into every unchanged subtree so sibling fields keep reference
+    // equality across the change; SchemaField's shallow memo comparison depends on it to skip their re-renders
+    state.formData = retainObjectIdentity(this.state.formData, state.formData);
+    if (state.errorSchema) {
+      state.errorSchema = retainObjectIdentity(this.state.errorSchema, state.errorSchema);
+    }
+    if (state.errors) {
+      state.errors = retainObjectIdentity(this.state.errors, state.errors);
     }
 
     this.setState(state as FormState<T, S, F>, () => {
