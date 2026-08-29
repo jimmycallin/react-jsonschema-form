@@ -1,11 +1,3 @@
-import { defineConfig } from 'vitest/config';
+import base from '../../testing/vitest.base';
 
-export default defineConfig({
-  test: {
-    globals: true,
-    environment: 'jsdom',
-    coverage: {
-      provider: 'v8',
-    },
-  },
-});
+export default base;

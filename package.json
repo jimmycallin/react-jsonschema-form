@@ -6,8 +6,8 @@
     "node": ">=20"
   },
   "scripts": {
-    "test": "nx run-many --parallel=2 --target=test",
-    "test:update": "nx run-many --parallel=2 --target=test:update",
+    "test": "vitest run",
+    "test:update": "vitest run --update",
     "lint": "nx run-many --target=lint",
     "cs-check": "nx run-many --target=cs-check",
     "cs-format": "nx run-many --target=cs-format",

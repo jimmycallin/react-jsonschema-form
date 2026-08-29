@@ -1,13 +1,3 @@
-import { defineConfig } from 'vitest/config';
+import base from '../../testing/vitest.base';
 
-export default defineConfig({
-  test: {
-    globals: true,
-    environment: 'jsdom',
-    setupFiles: ['../../testing/testSetup.ts'],
-    coverage: {
-      provider: 'v8',
-      exclude: ['node_modules/**', 'test/**'],
-    },
-  },
-});
+export default base;
