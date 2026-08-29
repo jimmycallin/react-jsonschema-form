@@ -88,7 +88,6 @@ import schemaRequiresTrueValue from './schemaRequiresTrueValue.ts';
 import SelectedOptionDescription from './SelectedOptionDescription.tsx';
 import type { SelectedOptionDescriptionProps } from './SelectedOptionDescription.tsx';
 import shallowEquals from './shallowEquals.ts';
-import type { ComponentUpdateStrategy } from './shouldRender.ts';
 import shouldRender from './shouldRender.ts';
 import shouldRenderOptionalField from './shouldRenderOptionalField.ts';
 import toConstant from './toConstant.ts';
@@ -114,7 +113,6 @@ export * from './parser/index.ts';
 export * from './schema/index.ts';
 
 export type {
-  ComponentUpdateStrategy,
   DateElementFormat,
   DateElementProp,
   DateElementProps,
