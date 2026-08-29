@@ -16,6 +16,14 @@ import enumOptionsValueForIndex from './enumOptionsValueForIndex';
 import enumOptionValueDecoder from './enumOptionValueDecoder';
 import enumOptionValueEncoder from './enumOptionValueEncoder';
 import ErrorSchemaBuilder from './ErrorSchemaBuilder';
+import {
+  ROOT_FIELD_PATH,
+  fieldPathEndsWithIndex,
+  fieldPathToId,
+  fieldPathToList,
+  fieldPathToName,
+  toFieldPath,
+} from './fieldPath';
 import findSchemaDefinition from './findSchemaDefinition';
 import getChangedFields from './getChangedFields';
 import type { DateElementFormat, DateElementProp } from './getDateElementProps';
@@ -76,18 +84,15 @@ import schemaRequiresTrueValue from './schemaRequiresTrueValue';
 import SelectedOptionDescription from './SelectedOptionDescription';
 import type { SelectedOptionDescriptionProps } from './SelectedOptionDescription';
 import shallowEquals from './shallowEquals';
-import type { ComponentUpdateStrategy } from './shouldRender';
 import shouldRender from './shouldRender';
 import shouldRenderOptionalField from './shouldRenderOptionalField';
 import toConstant from './toConstant';
 import toDateString from './toDateString';
 import toErrorList from './toErrorList';
 import toErrorSchema from './toErrorSchema';
-import toFieldPathId from './toFieldPathId';
 import unwrapErrorHandler from './unwrapErrorHandler';
 import type { DateElementProps, UseAltDateWidgetResult } from './useAltDateWidgetProps';
 import useAltDateWidgetProps, { DateElement } from './useAltDateWidgetProps';
-import useDeepCompareMemo from './useDeepCompareMemo';
 import type { FileInfoType, UseFileWidgetPropsResult } from './useFileWidgetProps';
 import useFileWidgetProps from './useFileWidgetProps';
 import utcToLocal from './utcToLocal';
@@ -102,7 +107,6 @@ export * from './parser';
 export * from './schema';
 
 export type {
-  ComponentUpdateStrategy,
   DateElementFormat,
   DateElementProp,
   DateElementProps,
@@ -199,12 +203,16 @@ export {
   toDateString,
   toErrorList,
   toErrorSchema,
-  toFieldPathId,
+  ROOT_FIELD_PATH,
+  toFieldPath,
+  fieldPathToId,
+  fieldPathEndsWithIndex,
+  fieldPathToList,
+  fieldPathToName,
   toPath,
   unsetByPath,
   unwrapErrorHandler,
   useAltDateWidgetProps,
-  useDeepCompareMemo,
   useFileWidgetProps,
   utcToLocal,
   validationDataMerge,

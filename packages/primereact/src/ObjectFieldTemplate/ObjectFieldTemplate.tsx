@@ -24,7 +24,7 @@ export default function ObjectFieldTemplate<
     uiSchema,
     schema,
     formData,
-    fieldPathId,
+    id,
     registry,
   } = props;
   const uiOptions = getUiOptions<T, S, F>(uiSchema);
@@ -43,7 +43,7 @@ export default function ObjectFieldTemplate<
     <>
       {title && (
         <TitleFieldTemplate
-          id={titleId(fieldPathId)}
+          id={titleId(id)}
           title={title}
           required={required}
           schema={schema}
@@ -55,7 +55,7 @@ export default function ObjectFieldTemplate<
       {description && (
         <div style={{ marginBottom: '1rem' }}>
           <DescriptionFieldTemplate
-            id={descriptionId(fieldPathId)}
+            id={descriptionId(id)}
             description={description}
             schema={schema}
             uiSchema={uiSchema}
@@ -68,7 +68,7 @@ export default function ObjectFieldTemplate<
       {canExpand<T, S, F>(schema, uiSchema, formData) && (
         <div style={{ marginTop: '1rem', textAlign: 'right' }}>
           <AddButton
-            id={buttonId(fieldPathId, 'add')}
+            id={buttonId(id, 'add')}
             className='rjsf-object-property-expand'
             icon='pi pi-plus'
             onClick={onAddProperty}

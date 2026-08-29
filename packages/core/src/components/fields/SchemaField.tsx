@@ -3,8 +3,7 @@ import { useCallback, memo } from 'react';
 import type {
   ErrorSchema,
   Field,
-  FieldPathId,
-  FieldPathList,
+  FieldPath,
   FieldProps,
   FieldTemplateProps,
   FormContextType,
@@ -17,19 +16,16 @@ import type {
 import {
   ADDITIONAL_PROPERTY_FLAG,
   ANY_OF_KEY,
-  deepEquals,
   descriptionId,
   getSchemaType,
   getTemplate,
   getUiOptions,
-  ID_KEY,
   isFormDataAvailable,
   ONE_OF_KEY,
   resolveUiSchema,
   RJSF_REF_CYCLE_KEY,
   shallowEquals,
   shouldRenderOptionalField,
-  toFieldPathId,
   isObject,
   TranslatableString,
   UI_OPTIONS_KEY,
@@ -103,7 +99,8 @@ function SchemaFieldRender<T = any, S extends StrictRJSFSchema = RJSFSchema, F e
 ) {
   const {
     schema: _schema,
-    fieldPathId,
+    fieldPath,
+    id: fieldId,
     uiSchema: _uiSchema,
     formData,
     errorSchema,
@@ -118,15 +115,14 @@ function SchemaFieldRender<T = any, S extends StrictRJSFSchema = RJSFSchema, F e
   } = props;
   const { schemaUtils, globalFormOptions, globalUiOptions, fields } = registry;
   const { AnyOfField: _AnyOfField, OneOfField: _OneOfField, CyclicSchemaField } = fields;
-  const fieldId = fieldPathId[ID_KEY];
 
   /** Intermediary `onChange` handler for field components that will inject the `id` of the current field into the
    * `onChange` chain if it is not already being provided from a deeper level in the hierarchy
    */
   const handleFieldComponentChange = useCallback(
-    (newFormData: T | undefined, path: FieldPathList, newErrorSchema?: ErrorSchema<T>, id?: string) => {
+    (newFormData: T | undefined, changedFieldPath: FieldPath, newErrorSchema?: ErrorSchema<T>, id?: string) => {
       const theId = id || fieldId;
-      return onChange(newFormData, path, newErrorSchema, theId);
+      return onChange(newFormData, changedFieldPath, newErrorSchema, theId);
     },
     [fieldId, onChange],
   );
@@ -172,9 +168,9 @@ function SchemaFieldRender<T = any, S extends StrictRJSFSchema = RJSFSchema, F e
   const isReplacingAnyOrOneOf = uiOptions.field && uiOptions.fieldReplacesAnyOrOneOf === true;
   let XxxOfField: Field<T, S, F> | undefined;
   let XxxOfOptions: S[] | undefined;
-  // When rendering the `XxxOfField` we'll need to change the fieldPathId of the main component, remembering the
-  // fieldPathId of the children for the ObjectField and ArrayField
-  let fieldPathIdProps: { fieldPathId: FieldPathId; childFieldPathId?: FieldPathId } = { fieldPathId };
+  // When rendering the `XxxOfField` we'll need to change the id of the main component, since the `XxxOfField`
+  // renders the selected option for the same data address
+  let fieldPathProps: { fieldPath: FieldPath; id: string } = { fieldPath, id: fieldId };
   if ((ANY_OF_KEY in schema || ONE_OF_KEY in schema) && !isReplacingAnyOrOneOf && !schemaUtils.isSelect(schema)) {
     if (schema[ANY_OF_KEY]) {
       XxxOfField = _AnyOfField;
@@ -191,11 +187,11 @@ function SchemaFieldRender<T = any, S extends StrictRJSFSchema = RJSFSchema, F e
     const isOptionalRender = shouldRenderOptionalField<T, S, F>(registry, schema, required, uiSchema);
     const hasFormData = isFormDataAvailable<T>(formData);
     displayLabel = displayLabel && (!isOptionalRender || hasFormData);
-    fieldPathIdProps = {
-      childFieldPathId: fieldPathId,
-      // The main FieldComponent will add `XxxOf` onto the fieldPathId to avoid duplication with the rendering of the
-      // same FieldComponent by the `XxxOfField`
-      fieldPathId: toFieldPathId('XxxOf', globalFormOptions, fieldPathId),
+    fieldPathProps = {
+      fieldPath,
+      // The main FieldComponent gets an `XxxOf`-suffixed id to avoid DOM id duplication with the rendering of the
+      // same data address by the `XxxOfField`; the fieldPath itself stays the truthful data address
+      id: `${fieldId}${globalFormOptions.idSeparator}XxxOf`,
     };
   }
 
@@ -220,7 +216,7 @@ function SchemaFieldRender<T = any, S extends StrictRJSFSchema = RJSFSchema, F e
     <FieldComponent
       {...props}
       onChange={handleFieldComponentChange}
-      {...fieldPathIdProps}
+      {...fieldPathProps}
       schema={schema}
       uiSchema={fieldUiSchema}
       disabled={disabled}
@@ -231,8 +227,6 @@ function SchemaFieldRender<T = any, S extends StrictRJSFSchema = RJSFSchema, F e
       rawErrors={__errors}
     />
   );
-
-  const id = fieldPathId[ID_KEY];
 
   // If this schema has a title defined, but the user has set a new key/label, retain their input.
   let label;
@@ -264,7 +258,7 @@ function SchemaFieldRender<T = any, S extends StrictRJSFSchema = RJSFSchema, F e
   const helpComponent = (
     <FieldHelpTemplate
       help={help}
-      fieldPathId={fieldPathId}
+      id={fieldId}
       schema={schema}
       uiSchema={uiSchema}
       hasErrors={!hideError && __errors && __errors.length > 0}
@@ -280,7 +274,7 @@ function SchemaFieldRender<T = any, S extends StrictRJSFSchema = RJSFSchema, F e
       <FieldErrorTemplate
         errors={__errors}
         errorSchema={errorSchema}
-        fieldPathId={fieldPathId}
+        id={fieldId}
         schema={schema}
         uiSchema={uiSchema}
         registry={registry}
@@ -289,7 +283,7 @@ function SchemaFieldRender<T = any, S extends StrictRJSFSchema = RJSFSchema, F e
   const fieldProps: Omit<FieldTemplateProps<T, S, F>, 'children'> = {
     description: (
       <DescriptionFieldTemplate
-        id={descriptionId(id)}
+        id={descriptionId(fieldId)}
         description={description}
         schema={schema}
         uiSchema={uiSchema}
@@ -301,8 +295,8 @@ function SchemaFieldRender<T = any, S extends StrictRJSFSchema = RJSFSchema, F e
     rawHelp: typeof help === 'string' ? help : undefined,
     errors: errorsComponent,
     rawErrors: hideError ? undefined : __errors,
-    fieldPathId,
-    id,
+    fieldPath,
+    id: fieldId,
     label,
     hidden,
     onChange,
@@ -334,7 +328,8 @@ function SchemaFieldRender<T = any, S extends StrictRJSFSchema = RJSFSchema, F e
             hideError={hideError}
             errorSchema={errorSchema}
             formData={formData}
-            fieldPathId={fieldPathId}
+            fieldPath={fieldPath}
+            id={fieldId}
             onBlur={props.onBlur}
             onChange={props.onChange}
             onFocus={props.onFocus}
@@ -350,22 +345,13 @@ function SchemaFieldRender<T = any, S extends StrictRJSFSchema = RJSFSchema, F e
   );
 }
 
-/** The `SchemaField` component wraps `SchemaFieldRender` with a custom memoization comparator that  determines whether it is necessary to rerender the component based on any props changes
- * using `experimental_componentUpdateStrategy`.
+/** The `SchemaField` component wraps `SchemaFieldRender` in `memo` with a shallow props comparator. Field identity
+ * props are primitives, so shallow comparison is correct; object props bail out of memoization until their references
+ * are stabilized.
  *
  * The cast to `typeof SchemaFieldRender` preserves the generic type signature (<T, S, F>) for consumers,
  * since React.memo's return type erases generic parameters.
  */
-const SchemaField = memo(SchemaFieldRender, (prevProps, nextProps) => {
-  const { experimental_componentUpdateStrategy = 'customDeep' } = nextProps.registry.globalFormOptions;
-  if (experimental_componentUpdateStrategy === 'always') {
-    return false; // always re-render — never consider props equal
-  }
-  if (experimental_componentUpdateStrategy === 'shallow') {
-    return shallowEquals(prevProps, nextProps);
-  }
-  // default: 'customDeep'
-  return deepEquals(prevProps, nextProps);
-}) as unknown as typeof SchemaFieldRender;
+const SchemaField = memo(SchemaFieldRender, shallowEquals) as unknown as typeof SchemaFieldRender;
 
 export default SchemaField;

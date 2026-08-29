@@ -12,7 +12,7 @@ export default function ArrayFieldTemplate<
   const {
     canAdd,
     disabled,
-    fieldPathId,
+    id,
     uiSchema,
     items,
     optionalDataControl,
@@ -44,7 +44,7 @@ export default function ArrayFieldTemplate<
       <Row className='p-0 m-0'>
         <Col className='p-0 m-0'>
           <ArrayFieldTitleTemplate
-            fieldPathId={fieldPathId}
+            id={id}
             title={uiOptions.title || title}
             schema={schema}
             uiSchema={uiSchema}
@@ -53,13 +53,13 @@ export default function ArrayFieldTemplate<
             optionalDataControl={showOptionalDataControlInTitle ? optionalDataControl : undefined}
           />
           <ArrayFieldDescriptionTemplate
-            fieldPathId={fieldPathId}
+            id={id}
             description={uiOptions.description || schema.description}
             schema={schema}
             uiSchema={uiSchema}
             registry={registry}
           />
-          <Container fluid key={`array-item-list-${fieldPathId.$id}`} className='p-0 m-0'>
+          <Container fluid key={`array-item-list-${id}`} className='p-0 m-0'>
             {!showOptionalDataControlInTitle ? optionalDataControl : undefined}
             {items}
             {canAdd && (
@@ -68,7 +68,7 @@ export default function ArrayFieldTemplate<
                   <Col xs={9} md={10} lg={11} />
                   <Col xs={3} md={2} lg={1} className='py-4'>
                     <AddButton
-                      id={buttonId(fieldPathId, 'add')}
+                      id={buttonId(id, 'add')}
                       className='rjsf-array-item-add'
                       onClick={onAddClick}
                       disabled={disabled || readonly}

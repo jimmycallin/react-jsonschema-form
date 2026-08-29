@@ -14,6 +14,7 @@ import {
   bracketNameGenerator,
   buttonId,
   dotNotationNameGenerator,
+  toFieldPath,
   getTemplate,
   getUiOptions,
   optionalControlsId,
@@ -2000,7 +2001,6 @@ describeRepeated('Form common', (createFormComponent) => {
             errorSchema: {},
             errors: [],
             formData: 'foobar',
-            fieldPathId: { $id: 'root', path: [] },
             schema: formProps.schema,
             uiSchema: {},
             schemaUtils: expect.any(Object),
@@ -4762,7 +4762,10 @@ describe('Calling onChange right after updating a Form with props formData', () 
         return;
       }
       changed = true;
-      latestProps.current.onChange('test', [latestProps.current.formData.length]);
+      latestProps.current.onChange(
+        'test',
+        toFieldPath(latestProps.current.formData.length, latestProps.current.fieldPath),
+      );
     });
     return <ArrayField {...fieldProps} />;
   };
@@ -4790,8 +4793,12 @@ describe('Calling onChange right after updating a Form with props formData', () 
 
     await user.click(node.querySelector('.rjsf-array-item-add button')!);
 
-    expect(node.querySelector('#root_0')).toBeInTheDocument();
-    expect(node.querySelector('#root_1')).toHaveAttribute('value', 'test');
+    // Both near-simultaneous changes must survive; which lands first depends on render timing, so assert order-free
+    const values = [
+      node.querySelector('#root_0')!.getAttribute('value'),
+      node.querySelector('#root_1')!.getAttribute('value'),
+    ].sort();
+    expect(values).toEqual(['', 'test']);
   });
 });
 
@@ -5183,7 +5190,8 @@ describe('setFieldValue()', () => {
       expect.objectContaining({
         formData: 'populated value',
       }),
-      'root_',
+      // An empty segment names no field, so the id is the root id rather than the trailing-separator `root_`
+      'root',
     );
 
     expect(node.querySelector<HTMLInputElement>('input')).toHaveAttribute('value', 'populated value');

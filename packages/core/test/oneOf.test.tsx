@@ -562,11 +562,11 @@ describe('oneOf', () => {
     function CustomSchemaField(props: FieldProps) {
       const {
         registry: { formContext },
-        fieldPathId,
+        id,
       } = props;
       return (
         <>
-          <code id={formContext[fieldPathId.$id]}>Ha</code>
+          <code id={formContext[id]}>Ha</code>
           <SchemaField {...props} />
         </>
       );

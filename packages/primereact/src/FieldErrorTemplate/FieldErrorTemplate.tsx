@@ -10,9 +10,9 @@ export default function FieldErrorTemplate<
   T = any,
   S extends StrictRJSFSchema = RJSFSchema,
   F extends FormContextType = any,
->({ errors, fieldPathId }: FieldErrorProps<T, S, F>) {
+>({ errors, id: fieldId }: FieldErrorProps<T, S, F>) {
   if (errors && errors.length > 0) {
-    const id = errorId(fieldPathId);
+    const id = errorId(fieldId);
     // oxlint-disable-next-line react/no-array-index-key
     const content = errors.map((error, i: number) => <div key={i}>{error}</div>);
 
