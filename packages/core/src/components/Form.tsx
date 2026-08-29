@@ -38,6 +38,7 @@ import {
   hashObject,
   isObject,
   mergeObjects,
+  retainObjectIdentity,
   shouldRender,
   SUBMIT_BTN_OPTIONS_KEY,
   toErrorList,
@@ -248,17 +249,6 @@ export interface FormProps<T = any, S extends StrictRJSFSchema = RJSFSchema, F e
    * `emptyObjectFields`
    */
   experimental_defaultFormStateBehavior?: Experimental_DefaultFormStateBehavior;
-  /**
-   * Controls the component update strategy used by the Form's `shouldComponentUpdate` lifecycle method.
-   *
-   * - `'customDeep'`: Uses RJSF's custom deep equality checks via the `deepEquals` utility function,
-   *   which treats all functions as equivalent and provides optimized performance for form data comparisons.
-   * - `'shallow'`: Uses shallow comparison of props and state (only compares direct properties). This matches React's PureComponent behavior.
-   * - `'always'`: Always rerenders when called. This matches React's Component behavior.
-   *
-   * @default 'customDeep'
-   */
-  experimental_componentUpdateStrategy?: 'customDeep' | 'shallow' | 'always';
   /** Optional function that allows for custom merging of `allOf` schemas
    */
   experimental_customMergeAllOf?: Experimental_CustomMergeAllOf<S>;
@@ -738,8 +728,7 @@ export default class Form<
    * @returns - True if the component should be updated, false otherwise
    */
   shouldComponentUpdate(nextProps: FormProps<T, S, F>, nextState: FormState<T, S, F>): boolean {
-    const { experimental_componentUpdateStrategy = 'customDeep' } = this.props;
-    return shouldRender(this, nextProps, nextState, experimental_componentUpdateStrategy);
+    return shouldRender(this, nextProps, nextState);
   }
 
   /** Validates the `formData` against the `schema` using the `altSchemaUtils` (if provided otherwise it uses the
@@ -1091,6 +1080,16 @@ export default class Form<
       state = { ...state, formData: newFormData, ...mergedErrors, customErrors };
     }
 
+    // Graft the previous state's references back into every unchanged subtree so sibling fields keep reference
+    // equality across the change; SchemaField's shallow memo comparison depends on it to skip their re-renders
+    state.formData = retainObjectIdentity(this.state.formData, state.formData);
+    if (state.errorSchema) {
+      state.errorSchema = retainObjectIdentity(this.state.errorSchema, state.errorSchema);
+    }
+    if (state.errors) {
+      state.errors = retainObjectIdentity(this.state.errors, state.errors);
+    }
+
     this.setState(state as FormState<T, S, F>, () => {
       if (onChange) {
         onChange(toIChangeEvent({ ...this.state, ...state }), id);
@@ -1269,7 +1268,6 @@ export default class Form<
   >(props: FormProps<T, S, F>): GlobalFormOptions {
     const {
       uiSchema = {},
-      experimental_componentUpdateStrategy,
       idSeparator = DEFAULT_ID_SEPARATOR,
       idPrefix = DEFAULT_ID_PREFIX,
       nameGenerator,
@@ -1282,7 +1280,6 @@ export default class Form<
       idPrefix: rootFieldId || idPrefix,
       idSeparator,
       useFallbackUiForUnsupportedType,
-      ...(experimental_componentUpdateStrategy !== undefined && { experimental_componentUpdateStrategy }),
       ...(nameGenerator !== undefined && { nameGenerator }),
     };
   }

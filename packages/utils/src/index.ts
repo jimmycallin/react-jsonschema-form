@@ -80,11 +80,11 @@ import rangeSpec from './rangeSpec';
 import removeOptionalEmptyObjects from './removeOptionalEmptyObjects';
 import replaceStringParameters from './replaceStringParameters';
 import resolveUiSchema from './resolveUiSchema';
+import retainObjectIdentity from './retainObjectIdentity';
 import schemaRequiresTrueValue from './schemaRequiresTrueValue';
 import SelectedOptionDescription from './SelectedOptionDescription';
 import type { SelectedOptionDescriptionProps } from './SelectedOptionDescription';
 import shallowEquals from './shallowEquals';
-import type { ComponentUpdateStrategy } from './shouldRender';
 import shouldRender from './shouldRender';
 import shouldRenderOptionalField from './shouldRenderOptionalField';
 import toConstant from './toConstant';
@@ -108,7 +108,6 @@ export * from './parser';
 export * from './schema';
 
 export type {
-  ComponentUpdateStrategy,
   DateElementFormat,
   DateElementProp,
   DateElementProps,
@@ -197,6 +196,7 @@ export {
   setByPath,
   SelectedOptionDescription,
   shallowEquals,
+  retainObjectIdentity,
   shouldRender,
   shouldRenderOptionalField,
   sortedJSONStringify,
