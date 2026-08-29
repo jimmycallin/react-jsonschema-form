@@ -84,6 +84,7 @@ import type { ObjectPath } from './pathUtils.ts';
 import rangeSpec from './rangeSpec.ts';
 import replaceStringParameters from './replaceStringParameters.ts';
 import resolveUiSchema from './resolveUiSchema.ts';
+import retainObjectIdentity from './retainObjectIdentity.ts';
 import schemaRequiresTrueValue from './schemaRequiresTrueValue.ts';
 import SelectedOptionDescription from './SelectedOptionDescription.tsx';
 import type { SelectedOptionDescriptionProps } from './SelectedOptionDescription.tsx';
@@ -201,6 +202,7 @@ export {
   rangeSpec,
   replaceStringParameters,
   resolveUiSchema,
+  retainObjectIdentity,
   schemaRequiresTrueValue,
   setByPath,
   SelectedOptionDescription,
