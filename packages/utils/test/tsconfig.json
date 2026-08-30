@@ -3,16 +3,17 @@
   "include": ["./"],
   "compilerOptions": {
     "rootDir": "./",
-    // todo: noEmit: true
-    // maybe better to move this to some separate package
-    // this is needed for packages/validator-ajv8/test/utilsTests
+    // Declarations only: packages/validator-*/test/utilsTests consume these helpers through a project
+    // reference, but every test runs from source, so no JavaScript is needed here.
+    "emitDeclarationOnly": true,
     "outDir": "../lib-test",
-    "jsx": "react-jsx",
-    "types": ["vitest/globals", "node"]
+    // Vitest owns this module graph, so it is checked the way it runs.
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "rewriteRelativeImportExtensions": false,
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "types": ["vitest/globals", "node", "@testing-library/jest-dom/vitest"]
   },
-  "references": [
-    {
-      "path": "../src"
-    }
-  ]
+  "references": [{ "path": ".." }]
 }

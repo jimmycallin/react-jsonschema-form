@@ -4,15 +4,14 @@
   "compilerOptions": {
     "rootDir": "./",
     "noEmit": true,
-    "jsx": "react-jsx",
-    "types": ["vitest/globals", "node"]
+    // Vitest owns this module graph, so it is checked the way it runs: bundler resolution over the
+    // `.ts` sources, with no rewriting because nothing is emitted.
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "rewriteRelativeImportExtensions": false,
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "types": ["vitest/globals", "node", "@testing-library/jest-dom/vitest"]
   },
-  "references": [
-    {
-      "path": "../src"
-    },
-    {
-      "path": "../../snapshot-tests"
-    }
-  ]
+  "references": [{ "path": ".." }, { "path": "../../snapshot-tests" }]
 }

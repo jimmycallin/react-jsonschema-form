@@ -1,10 +1,9 @@
 import { isObject, RJSF_ADDITIONAL_PROPERTIES_FLAG } from '@rjsf/utils';
 import type { Options } from 'ajv';
-import Ajv from 'ajv';
 import type { FormatsPluginOptions } from 'ajv-formats';
-import addFormats from 'ajv-formats';
 
-import type { CustomValidatorOptionsType } from './types';
+import { addFormats, Ajv } from './ajv.ts';
+import type { CustomValidatorOptionsType } from './types.ts';
 
 export const AJV_CONFIG: Options = {
   allErrors: true,

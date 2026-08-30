@@ -46,6 +46,8 @@
     "import/consistent-type-specifier-style": ["error", "prefer-top-level"],
     "import/default": "error",
     "import/export": "off",
+    // Relative TypeScript imports name the real source file so `rewriteRelativeImportExtensions`
+    // can emit `.js`, and so Node's native type stripping can resolve them later.
     "import/extensions": [
       "error",
       "ignorePackages",
@@ -54,10 +56,10 @@
         "mjs": "never",
         "cjs": "never",
         "jsx": "never",
-        "ts": "never",
-        "cts": "never",
-        "mts": "never",
-        "tsx": "never"
+        "ts": "always",
+        "cts": "always",
+        "mts": "always",
+        "tsx": "always"
       }
     ],
     "import/first": "error",

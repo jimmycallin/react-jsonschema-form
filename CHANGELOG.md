@@ -80,6 +80,7 @@ should change the heading of the (upcoming) version to include a major version b
 
 - Updated `CheckboxWidget` to append a `*` onto the end of the label when the field is required AND the schema value is hardcoded to `true`, fixing [#4136](https://github.com/rjsf-team/react-jsonschema-form/issues/4136)
 - Declared `"sideEffects": false` in `package.json`, allowing bundlers to tree-shake unused exports
+- Switched the `react-bootstrap` and `@react-icons/all-files` imports from deep subpaths (`react-bootstrap/Col`, `@react-icons/all-files/bs/BsPlus`) to the package entry point and explicit file paths. The old specifiers were directory/extensionless imports that Node's ESM resolver rejects, so `lib/index.js` could not be loaded by Node at all; it now can
 
 ## @rjsf/semantic-ui
 
@@ -112,6 +113,7 @@ should change the heading of the (upcoming) version to include a major version b
 - Replaced all `lodash/get` usage with the new `@rjsf/utils` path utilities
 - Replaced `lodash/isObject` with `isObject` from `@rjsf/utils` and dropped the `lodash`/`lodash-es` dependencies entirely
 - Declared `"sideEffects": false` in `package.json`, allowing bundlers to tree-shake unused exports
+- Added an internal `ajv` compatibility module that models the actual CommonJS runtime exports of `ajv`, `ajv-formats` and `ajv/dist/standalone`, replacing the `tsc-alias` replacer that used to rewrite `ajv/dist/standalone` in the emitted output. No public API changed
 
 ## @rjsf/validator-ata
 
@@ -136,6 +138,8 @@ should change the heading of the (upcoming) version to include a major version b
 - Upgraded the test tooling: `@testing-library/jest-dom` 6→7, `jsdom` 29→30, `@testing-library/user-event` to 14.6.6, `vitest` to 4.1.11, and declared the `@testing-library/dom` peer explicitly at the root. Self-anchored test selectors were rewritten to `:scope` to match jsdom 30's corrected element-scoped `querySelectorAll` behavior
 - Tests now resolve `@rjsf/*` workspace imports to TypeScript source via a custom `@rjsf/source` export condition (declared in a new shared `testing/vitest.base.ts` that every package's vitest config extends), so `git clone && pnpm install && pnpm vitest run` works with no build step and tests always exercise current source; a root vitest `projects` config also lets vitest run across every package from the repo root, while the nx-driven test scripts remain unchanged
 - Simplified `@rjsf/validator-ajv8`'s precompiled-validator test harness: the tests now compile `superSchema` in memory via a small `compileSuperSchema()` helper, replacing the generated gitignored `superSchema*.cjs` fixtures and with them the `compileSchemas` npm script and the vitest `globalSetup` that regenerated them
+- Migrated the TypeScript build off `tsc-alias`: relative imports now name their real `.ts`/`.tsx` source file and TypeScript's `rewriteRelativeImportExtensions` emits `.js` specifiers directly, so there is no post-emit rewriting step, no `tsc-alias-replacer/` directory and no `move-file-cli`. Published libraries are checked with `module: "node20"` and `verbatimModuleSyntax`; `@rjsf/chakra-ui` keeps bundler resolution because `@chakra-ui/react` ships declarations Node resolution cannot read, and the Vite/Vitest-owned projects (playground, every `test/` project) keep bundler resolution because those module graphs are owned by the bundler
+- Collapsed each published package's `tsconfig.json` + `tsconfig.build.json` + `src/tsconfig.json` chain into a single source config at the package root plus one test config, so a source build no longer pulls its dependencies' test projects into the project-reference graph. The root solution now lists every package exactly once, and a new `tsconfig.test.json` type-checks all the test projects in one command
 
 # 6.8.0
 

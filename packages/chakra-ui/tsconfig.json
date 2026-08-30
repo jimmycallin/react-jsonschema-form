@@ -1,12 +1,15 @@
 {
   "extends": "../../tsconfig.base.json",
-  "files": [],
-  "references": [
-    {
-      "path": "./src"
-    },
-    {
-      "path": "./test"
-    }
-  ]
+  "include": ["src"],
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "lib",
+    // @chakra-ui/react ships declarations with extensionless relative specifiers inside a `"type": "module"`
+    // package, which Node module resolution rejects; every re-export from its entrypoint then resolves to
+    // nothing. Bundler resolution is the only mode that can read them, so this package opts out of `node20`
+    // until the dependency ships Node-resolvable declarations.
+    "module": "esnext",
+    "moduleResolution": "bundler"
+  },
+  "references": [{ "path": "../core" }, { "path": "../utils" }, { "path": "../validator-ajv8" }]
 }

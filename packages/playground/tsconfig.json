@@ -1,19 +1,11 @@
 {
   "extends": "../../tsconfig.base.json",
-  "include": [
-    "./",
-    "src",
-    "test",
-  ],
+  "include": ["./", "src", "test"],
   "compilerOptions": {
     "rootDir": "./",
     "target": "ESNext",
     "useDefineForClassFields": true,
-    "lib": [
-      "DOM",
-      "DOM.Iterable",
-      "ESNext"
-    ],
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
     "allowJs": false,
     "composite": true,
     "skipLibCheck": true,
