@@ -45,17 +45,13 @@
     "node": ">=20"
   },
   "scripts": {
-    "build:ts": "rimraf ./lib tsconfig.tsbuildinfo && tsc -b .",
-    "build:cjs": "esbuild ./src/index.ts --bundle --outfile=dist/index.cjs --sourcemap --packages=external --format=cjs",
-    "build:esm": "esbuild ./src/index.ts --bundle --outfile=dist/validator-cfworker.esm.js --sourcemap --packages=external --format=esm",
-    "build:umd": "rollup dist/validator-cfworker.esm.js --format=umd --file=dist/validator-cfworker.umd.js --name=@rjsf/validator-cfworker",
-    "build": "pnpm run build:ts && pnpm run build:cjs && pnpm run build:esm && pnpm run build:umd",
+    "build": "tsdown -c ../../tsdown.base.mts",
     "cs-check": "oxfmt --check \"{src,test}/**/*.{ts,tsx}\"",
     "cs-format": "oxfmt \"{src,test}/**/*.{ts,tsx}\"",
     "lint": "oxlint src test",
     "precommit": "lint-staged",
     "test": "vitest run",
-    "typecheck": "tsc -b tsconfig.json test/tsconfig.json --pretty false"
+    "typecheck": "tsc -p tsconfig.json --noEmit --pretty false && tsc -p test/tsconfig.json --pretty false"
   },
   "lint-staged": {
     "{src,test}/**/*.{ts,tsx}": [
