@@ -2,7 +2,7 @@ import type { RJSFSchema, Widget } from '../src/index.ts';
 import { hasWidget } from '../src/index.ts';
 
 // Mock the getWidget() function for the purposes of this test
-vi.mock('../src/getWidget', () => ({
+vi.mock('../src/getWidget.tsx', () => ({
   default: vi
     .fn()
     .mockImplementationOnce(() => {

@@ -3,7 +3,7 @@ import type { Localizer } from '../src/index.ts';
 import AJV8PrecompiledValidator from '../src/precompiledValidator.ts';
 import { compileSuperSchema, superSchema } from './harness/compileSuperSchema.ts';
 
-vi.mock('../src/precompiledValidator');
+vi.mock('../src/precompiledValidator.ts');
 
 interface TestType {
   foo: string;
