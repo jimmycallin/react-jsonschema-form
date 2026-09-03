@@ -1,8 +1,7 @@
-import noop from 'lodash/noop';
 import type { MockInstance } from 'vitest';
 
-import type { Experimental_DefaultFormStateBehavior, RJSFSchema } from '../../src';
-import { createSchemaUtils, getDefaultFormState } from '../../src';
+import type { Experimental_DefaultFormStateBehavior, RJSFSchema } from '../../src/index.ts';
+import { createSchemaUtils, getDefaultFormState, noop } from '../../src/index.ts';
 import {
   AdditionalItemsHandling,
   computeDefaultBasedOnSchemaTypeAndDefaults,
@@ -12,10 +11,10 @@ import {
   getInnerSchemaForArrayItem,
   getObjectDefaults,
   ensureFormDataMatchingSchema,
-} from '../../src/schema/getDefaultFormState';
-import { resolveDependencies } from '../../src/schema/retrieveSchema';
-import { RECURSIVE_REF, RECURSIVE_REF_ALLOF } from '../testUtils/testData';
-import type { TestValidatorType } from './types';
+} from '../../src/schema/getDefaultFormState.ts';
+import { resolveDependencies } from '../../src/schema/retrieveSchema.ts';
+import { RECURSIVE_REF, RECURSIVE_REF_ALLOF } from '../testUtils/testData.ts';
+import type { TestValidatorType } from './types.ts';
 
 export default function getDefaultFormStateTest(testValidator: TestValidatorType) {
   describe('getDefaultFormState()', () => {
@@ -26,6 +25,31 @@ export default function getDefaultFormStateTest(testValidator: TestValidatorType
     afterAll(() => {
       consoleWarnSpy.mockRestore();
     });
+    describe('an explicitly undefined property schema', () => {
+      // A JS-authored schema can conditionally omit a property with `{ properties: { foo: cond ? {...} : undefined } }`
+      const schema = {
+        type: 'object',
+        properties: { foo: undefined, bar: { type: 'string' } },
+      } as unknown as RJSFSchema;
+
+      test('getObjectDefaults treats it as an empty schema', () => {
+        expect(getObjectDefaults(testValidator, schema, { rootSchema: schema })).toEqual({});
+      });
+
+      test('ensureFormDataMatchingSchema treats it as an empty schema', () => {
+        const allOfSchema = {
+          allOf: [schema],
+          type: 'object',
+          properties: { foo: undefined },
+        } as unknown as RJSFSchema;
+        expect(
+          ensureFormDataMatchingSchema(testValidator, allOfSchema, allOfSchema, { foo: 'a value' }, {
+            allOf: 'populateDefaults',
+          } as Experimental_DefaultFormStateBehavior),
+        ).toEqual({ foo: 'a value' });
+      });
+    });
+
     it('throws error when schema is not an object', () => {
       expect(() => getDefaultFormState(testValidator, null as unknown as RJSFSchema)).toThrow('Invalid schema:');
     });
@@ -483,6 +507,62 @@ export default function getDefaultFormStateTest(testValidator: TestValidatorType
           expect(getObjectDefaults(testValidator, schema, { rootSchema: schema, includeUndefinedValues })).toEqual(
             expected,
           );
+        });
+      });
+
+      describe('required boolean properties default to false when no default is provided', () => {
+        it('sets required boolean to false when no default is given', () => {
+          const schema: RJSFSchema = {
+            type: 'object',
+            properties: {
+              agree: { type: 'boolean' },
+            },
+            required: ['agree'],
+          };
+          expect(getDefaultFormState(testValidator, schema, undefined, schema)).toEqual({ agree: false });
+        });
+
+        it('preserves an explicit schema default of true for a required boolean', () => {
+          const schema: RJSFSchema = {
+            type: 'object',
+            properties: {
+              agree: { type: 'boolean', default: true },
+            },
+            required: ['agree'],
+          };
+          expect(getDefaultFormState(testValidator, schema, undefined, schema)).toEqual({ agree: true });
+        });
+
+        it('does not set a default for an optional boolean', () => {
+          const schema: RJSFSchema = {
+            type: 'object',
+            properties: {
+              agree: { type: 'boolean' },
+            },
+          };
+          expect(getDefaultFormState(testValidator, schema, undefined, schema)).toEqual({});
+        });
+
+        it('preserves existing formData true for a required boolean', () => {
+          const schema: RJSFSchema = {
+            type: 'object',
+            properties: {
+              agree: { type: 'boolean' },
+            },
+            required: ['agree'],
+          };
+          expect(getDefaultFormState(testValidator, schema, { agree: true }, schema)).toEqual({ agree: true });
+        });
+
+        it('preserves existing formData false for a required boolean', () => {
+          const schema: RJSFSchema = {
+            type: 'object',
+            properties: {
+              agree: { type: 'boolean' },
+            },
+            required: ['agree'],
+          };
+          expect(getDefaultFormState(testValidator, schema, { agree: false }, schema)).toEqual({ agree: false });
         });
       });
 

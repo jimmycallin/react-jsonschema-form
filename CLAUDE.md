@@ -93,6 +93,8 @@ Every theme package follows the same structure:
 
 Fields select which widget to render based on schema `type` and `ui:widget`. Templates wrap the output for consistent styling.
 
+When making a change to a widget or template, consider if the change should be generalized to all theme packages. If substantial logic is duplicated across themes, consider refactoring the logic to `@rjsf/utils` or `@rjsf/core`.
+
 ### Form rendering flow
 
 1. Caller provides `schema`, `validator` (required), `formData`, and `uiSchema`
@@ -115,6 +117,16 @@ Fields select which widget to render based on schema `type` and `ui:widget`. Tem
 - **Prettier**: single quotes, JSX single quotes, 120-char print width
 - **ESLint**: enforces semicolons, curly braces, no-console, React Hooks rules
 - Pre-commit hook (Husky + lint-staged) auto-formats and lints staged files
+
+## Code comments
+
+- Default to no comments. Write self-documenting code — clear names and structure — as the primary means of explanation.
+- When a comment is warranted, explain the WHY (rationale, constraints, non-obvious tradeoffs), not the WHAT — well-named code already says what it does.
+- Don't leave "before/after" or diff-style commentary in code comments or in this file. That belongs in commit messages and PR descriptions, not in code that has to keep reading true after the change ships.
+
+## Changelog
+
+- When adding an entry to `CHANGELOG.md`, append it as the last bullet under the relevant package's heading (e.g. `## @rjsf/daisyui`) — after the existing bullets, not inserted above or among them.
 
 ## Testing
 

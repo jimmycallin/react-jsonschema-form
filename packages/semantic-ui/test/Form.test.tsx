@@ -3,13 +3,7 @@ import type { RJSFSchema } from '@rjsf/utils';
 import validator from '@rjsf/validator-ajv8';
 import { render } from '@testing-library/react';
 
-import Form from '../src';
-
-/** Mock the `react-component-ref` component used by semantic-ui to simply render the children, otherwise tests fail */
-vi.mock('@fluentui/react-component-ref', async (importOriginal) => ({
-  ...(await importOriginal()),
-  Ref: vi.fn().mockImplementation(({ children }) => children),
-}));
+import Form from '../src/index.ts';
 
 formTests(Form);
 

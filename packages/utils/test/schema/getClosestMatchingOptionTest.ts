@@ -1,8 +1,6 @@
-import get from 'lodash/get';
-
-import type { RJSFSchema, SchemaUtilsType } from '../../src';
-import { createSchemaUtils, getClosestMatchingOption } from '../../src';
-import { calculateIndexScore } from '../../src/schema/getClosestMatchingOption';
+import type { RJSFSchema, SchemaUtilsType } from '../../src/index.ts';
+import { createSchemaUtils, getByPath, getClosestMatchingOption } from '../../src/index.ts';
+import { calculateIndexScore } from '../../src/schema/getClosestMatchingOption.ts';
 import {
   oneOfData,
   oneOfSchema,
@@ -11,8 +9,8 @@ import {
   OPTIONAL_ONE_OF_SCHEMA,
   ONE_OF_SCHEMA_OPTIONS,
   OPTIONAL_ONE_OF_SCHEMA_ONEOF,
-} from '../testUtils/testData';
-import type { TestValidatorType } from './types';
+} from '../testUtils/testData.ts';
+import type { TestValidatorType } from './types.ts';
 
 const firstOption = oneOfSchema.definitions!.first_option_def as RJSFSchema;
 const secondOption = oneOfSchema.definitions!.second_option_def as RJSFSchema;
@@ -166,7 +164,9 @@ export default function getClosestMatchingOptionTest(testValidator: TestValidato
       testValidator.setReturnValues({
         isValid: [false, false, false, false, false, false, false, true],
       });
-      expect(getClosestMatchingOption(testValidator, schema, formData, get(schema, 'items.oneOf'))).toEqual(1);
+      expect(
+        getClosestMatchingOption(testValidator, schema, formData, getByPath<RJSFSchema[]>(schema, ['items', 'oneOf'])),
+      ).toEqual(1);
     });
     it('returns the second option when data matches for anyOf', () => {
       const schema: RJSFSchema = {
@@ -212,7 +212,9 @@ export default function getClosestMatchingOptionTest(testValidator: TestValidato
       testValidator.setReturnValues({
         isValid: [false, false, false, false, false, false, false, true],
       });
-      expect(getClosestMatchingOption(testValidator, schema, formData, get(schema, 'items.anyOf'))).toEqual(1);
+      expect(
+        getClosestMatchingOption(testValidator, schema, formData, getByPath<RJSFSchema[]>(schema, ['items', 'anyOf'])),
+      ).toEqual(1);
     });
     it('should return 0 when schema has discriminator but no matching data', () => {
       // Mock isValid to fail both values
@@ -224,14 +226,24 @@ export default function getClosestMatchingOptionTest(testValidator: TestValidato
             title: 'Foo',
             type: 'object',
             properties: {
-              code: { title: 'Code', default: 'foo_coding', enum: ['foo_coding'], type: 'string' },
+              code: {
+                title: 'Code',
+                default: 'foo_coding',
+                enum: ['foo_coding'],
+                type: 'string',
+              },
             },
           },
           Bar: {
             title: 'Bar',
             type: 'object',
             properties: {
-              code: { title: 'Code', default: 'bar_coding', enum: ['bar_coding'], type: 'string' },
+              code: {
+                title: 'Code',
+                default: 'bar_coding',
+                enum: ['bar_coding'],
+                type: 'string',
+              },
             },
           },
         },
@@ -253,14 +265,24 @@ export default function getClosestMatchingOptionTest(testValidator: TestValidato
             title: 'Foo',
             type: 'object',
             properties: {
-              code: { title: 'Code', default: 'foo_coding', enum: ['foo_coding'], type: 'string' },
+              code: {
+                title: 'Code',
+                default: 'foo_coding',
+                enum: ['foo_coding'],
+                type: 'string',
+              },
             },
           },
           Bar: {
             title: 'Bar',
             type: 'object',
             properties: {
-              code: { title: 'Code', default: 'bar_coding', enum: ['bar_coding'], type: 'string' },
+              code: {
+                title: 'Code',
+                default: 'bar_coding',
+                enum: ['bar_coding'],
+                type: 'string',
+              },
             },
           },
         },

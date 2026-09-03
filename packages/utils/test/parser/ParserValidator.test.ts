@@ -1,10 +1,9 @@
-import noop from 'lodash/noop';
 import type { MockInstance } from 'vitest';
 
-import type { RJSFSchema } from '../../src';
-import { hashForSchema, ID_KEY } from '../../src';
-import ParserValidator from '../../src/parser/ParserValidator';
-import { RECURSIVE_REF } from '../testUtils/testData';
+import type { RJSFSchema } from '../../src/index.ts';
+import { ID_KEY, hashForSchema, noop } from '../../src/index.ts';
+import ParserValidator from '../../src/parser/ParserValidator.ts';
+import { RECURSIVE_REF } from '../testUtils/testData.ts';
 
 const TINY_SCHEMA: RJSFSchema = {
   type: 'string',

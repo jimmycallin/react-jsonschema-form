@@ -1,7 +1,5 @@
-import isEmpty from 'lodash/isEmpty';
-
-import { REF_KEY } from '../constants';
-import { getByPath, hasByPath, toPath } from '../pathUtils';
+import { REF_KEY } from '../constants.ts';
+import { getByPath, hasByPath, toPath } from '../pathUtils.ts';
 import type {
   Experimental_CustomMergeAllOf,
   FormContextType,
@@ -9,8 +7,8 @@ import type {
   SchemaFieldPath,
   StrictRJSFSchema,
   ValidatorType,
-} from '../types';
-import retrieveSchema from './retrieveSchema';
+} from '../types.ts';
+import retrieveSchema from './retrieveSchema.ts';
 
 /** Internal helper function that acts like `getByPath` but additionally retrieves `$ref`s as needed to get the path
  * for schemas containing potentially nested `$ref`s.
@@ -34,7 +32,7 @@ function getFromSchemaInternal<T = any, S extends StrictRJSFSchema = RJSFSchema,
   if (hasByPath(schema, REF_KEY)) {
     fieldSchema = retrieveSchema<T, S, F>(validator, schema, rootSchema, undefined, experimental_customMergeAllOf);
   }
-  if (isEmpty(path)) {
+  if (path.length === 0) {
     return fieldSchema;
   }
   const pathList = Array.isArray(path) ? [...path] : toPath(path);

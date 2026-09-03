@@ -3,15 +3,15 @@ import { parseDateString, toDateString, TranslatableString, utcToLocal } from '@
 import { fireEvent, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import StringField from '../src/components/fields/StringField';
-import TextWidget from '../src/components/widgets/TextWidget';
+import StringField from '../src/components/fields/StringField.tsx';
 import {
   createFormComponent,
   getSelectedOptionValue,
   setupConsoleErrorSuppression,
   submitForm,
   expectToHaveBeenCalledWithFormData,
-} from './testUtils';
+} from './testUtils.tsx';
+import { TextWidgetTest } from './TextWidgetTest.tsx';
 
 const consoleErrorSuppression = setupConsoleErrorSuppression();
 
@@ -36,20 +36,6 @@ function StringFieldTest(props: FieldProps) {
     props.onChange(newFormData, path, raiseError, id);
   };
   return <StringField {...props} onChange={onChangeTest} />;
-}
-
-export function TextWidgetTest(props: WidgetProps) {
-  const onChangeTest = (newFormData: any, errorSchema?: ErrorSchema, id?: string) => {
-    const value = newFormData;
-    let raiseError = errorSchema;
-    if (value !== 'test') {
-      raiseError = {
-        __errors: ['Value must be "test"'],
-      } as ErrorSchema;
-    }
-    props.onChange(newFormData, raiseError, id);
-  };
-  return <TextWidget {...props} onChange={onChangeTest} />;
 }
 
 const user = userEvent.setup();
@@ -246,6 +232,30 @@ describe('StringField', () => {
       });
 
       await user.clear(node.querySelector('input')!);
+
+      expectToHaveBeenCalledWithFormData(onChange, 'default', 'root');
+    });
+
+    it('should handle the allowClearTextInputs clear button the same as an empty string change event', async () => {
+      const { node, onChange } = createFormComponent({
+        schema: { type: 'string' },
+        uiSchema: { 'ui:allowClearTextInputs': true },
+        formData: 'x',
+      });
+
+      await user.click(node.querySelector('button.btn-clear')!);
+
+      expectToHaveBeenCalledWithFormData(onChange, undefined, 'root');
+    });
+
+    it('should handle the allowClearTextInputs clear button with custom ui:emptyValue the same as an empty string change event', async () => {
+      const { node, onChange } = createFormComponent({
+        schema: { type: 'string' },
+        uiSchema: { 'ui:allowClearTextInputs': true, 'ui:emptyValue': 'default' },
+        formData: 'x',
+      });
+
+      await user.click(node.querySelector('button.btn-clear')!);
 
       expectToHaveBeenCalledWithFormData(onChange, 'default', 'root');
     });

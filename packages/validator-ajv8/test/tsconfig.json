@@ -1,8 +1,9 @@
 {
   "extends": "../../../tsconfig.base.json",
   "include": ["./", "./**/*.json"],
-  "exclude": ["./harness/*.cjs"],
   "compilerOptions": {
+    "rewriteRelativeImportExtensions": false,
+    "allowImportingTsExtensions": true,
     "rootDir": "./",
     "noEmit": true,
     "resolveJsonModule": true,

@@ -1,14 +1,14 @@
 import type { ComponentType } from 'react';
 import type { GenericObjectType, ValidatorType } from '@rjsf/utils';
+import { noop } from '@rjsf/utils';
 import validator from '@rjsf/validator-ajv8';
 import '@testing-library/jest-dom';
 import { act, render, fireEvent } from '@testing-library/react';
 import type { UserEvent } from '@testing-library/user-event';
-import noop from 'lodash/noop';
 import type { Mock, MockInstance } from 'vitest';
 
-import type { FormProps } from '../src';
-import Form from '../src';
+import type { FormProps } from '../src/index.ts';
+import Form from '../src/index.ts';
 
 export type NoValFormProps = Omit<FormProps, 'validator'>;
 
@@ -57,13 +57,15 @@ export function createFormComponent(props: NoValFormProps, v: ValidatorType = va
   return createComponent(Form, { validator: v, ...props });
 }
 
-// oxlint-disable-next-line no-unused-vars
-type CreatorFn = (creatorFn: typeof createFormComponent) => void;
+interface FormExtraProps {
+  omitExtraData: FormProps['omitExtraData'];
+  liveOmit?: FormProps['liveOmit'];
+}
 
-/* Run a group of tests with different combinations of omitExtraData and liveOmit as form props.
+/* Run a group of tests with each combination of omitExtraData and liveOmit as form props.
  */
-export function describeRepeated(title: string, fn: CreatorFn) {
-  const formExtraPropsList: { omitExtraData: FormProps['omitExtraData']; liveOmit?: FormProps['liveOmit'] }[] = [
+export function describeRepeated(title: string, fn: (creatorFn: typeof createFormComponent) => void) {
+  const formExtraPropsList: FormExtraProps[] = [
     { omitExtraData: false },
     { omitExtraData: true },
     { omitExtraData: true, liveOmit: true },

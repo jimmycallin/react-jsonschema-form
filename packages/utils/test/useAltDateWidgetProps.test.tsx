@@ -1,7 +1,8 @@
+/** @vitest-environment jsdom */
 import type { ChangeEvent, MouseEvent } from 'react';
 import { fireEvent, render, renderHook } from '@testing-library/react';
 
-import type { DateElementProp, Registry, UseAltDateWidgetResult, WidgetProps } from '../src';
+import type { DateElementProp, Registry, UseAltDateWidgetResult, WidgetProps } from '../src/index.ts';
 import {
   DateElement,
   enumOptionsIndexForValue,
@@ -9,7 +10,7 @@ import {
   getDateElementProps,
   parseDateString,
   useAltDateWidgetProps,
-} from '../src';
+} from '../src/index.ts';
 
 function SelectWidget({ id, options, value, required, disabled, readonly, onChange }: WidgetProps) {
   const { enumOptions } = options;

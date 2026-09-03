@@ -1,10 +1,11 @@
 {
   "name": "@rjsf/validator-cfworker",
-  "version": "6.8.0",
+  "version": "6.9.0",
   "main": "dist/index.js",
   "module": "lib/index.js",
   "typings": "lib/index.d.ts",
   "type": "module",
+  "sideEffects": false,
   "description": "@cfworker/json-schema based validator for @rjsf/core",
   "exports": {
     ".": {
@@ -44,7 +45,7 @@
     "node": ">=20"
   },
   "scripts": {
-    "build:ts": "rimraf ./lib && tsc -b tsconfig.build.json && tsc-alias -p tsconfig.build.json",
+    "build:ts": "rimraf ./lib && tsc -b tsconfig.build.json",
     "build:cjs": "esbuild ./src/index.ts --bundle --outfile=dist/index.cjs --sourcemap --packages=external --format=cjs",
     "build:esm": "esbuild ./src/index.ts --bundle --outfile=dist/validator-cfworker.esm.js --sourcemap --packages=external --format=esm",
     "build:umd": "rollup dist/validator-cfworker.esm.js --format=umd --file=dist/validator-cfworker.umd.js --name=@rjsf/validator-cfworker",
@@ -69,8 +70,7 @@
     "@rjsf/utils": "workspace:^"
   },
   "devDependencies": {
-    "@rjsf/utils": "workspace:^",
-    "@types/json-schema": "^7.0.15"
+    "@rjsf/utils": "workspace:^"
   },
   "publishConfig": {
     "access": "public"

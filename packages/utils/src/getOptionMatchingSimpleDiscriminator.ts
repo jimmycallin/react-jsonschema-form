@@ -1,6 +1,6 @@
-import { PROPERTIES_KEY } from './constants';
-import { getByPath } from './pathUtils';
-import type { RJSFSchema, StrictRJSFSchema } from './types';
+import getPropertySchema from './getPropertySchema.ts';
+import { getByPath } from './pathUtils.ts';
+import type { RJSFSchema, StrictRJSFSchema } from './types.ts';
 
 /** Compares the value of `discriminatorField` within `formData` against the value of `discriminatorField` within schema for each `option`.
  * Returns index of first `option` whose discriminator matches formData. Returns `undefined` if there is no match.
@@ -26,7 +26,7 @@ export default function getOptionMatchingSimpleDiscriminator<T = any, S extends 
 
     for (let i = 0; i < options.length; i += 1) {
       const option = options[i];
-      const discriminator: S = (option[PROPERTIES_KEY]?.[discriminatorField] ?? {}) as S;
+      const discriminator = getPropertySchema<S>(option, discriminatorField);
 
       if (discriminator.type !== 'object' && discriminator.type !== 'array') {
         if (discriminator.const === value) {

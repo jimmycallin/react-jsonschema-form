@@ -13,13 +13,13 @@ import type {
   WidgetProps,
   FormValidation,
 } from '@rjsf/utils';
+import { noop } from '@rjsf/utils';
 import userEvent from '@testing-library/user-event';
-import noop from 'lodash/noop';
 
-import ArrayField from '../src/components/fields/ArrayField';
-import SchemaField from '../src/components/fields/SchemaField';
-import { TextWidgetTest } from './StringField.test';
-import { createFormComponent, expectToHaveBeenCalledWithFormData, submitForm } from './testUtils';
+import ArrayField from '../src/components/fields/ArrayField.tsx';
+import SchemaField from '../src/components/fields/SchemaField.tsx';
+import { createFormComponent, expectToHaveBeenCalledWithFormData, submitForm } from './testUtils.tsx';
+import { TextWidgetTest } from './TextWidgetTest.tsx';
 
 const user = userEvent.setup();
 
@@ -2943,6 +2943,35 @@ describe('ArrayField', () => {
         }),
         'root',
       );
+    });
+
+    it('does not leave a stale, duplicated error behind when removing a valid element between two invalid ones', async () => {
+      const threeItemFormData = [{}, { text: 'y' }, {}];
+      const { node, onChange } = createFormComponent({
+        schema,
+        formData: threeItemFormData,
+        templates,
+      });
+
+      // forceFireEvent=true: seeds errorSchema in form state via fireEvent.submit to avoid
+      // user.click(button) focusing the button, blurring a field, and firing onChange which
+      // would mutate formData before the submit runs.
+      await submitForm(node, user, true);
+
+      // Remove the middle (valid) element so the last (invalid) element reindexes from 2 down to 1.
+      const button = node.querySelectorAll('[title="remove"]')[1];
+
+      await user.click(button);
+
+      expect(onChange).toHaveBeenCalledTimes(1);
+      const lastCall = onChange.mock.calls[onChange.mock.calls.length - 1][0];
+      // Only the reindexed element (now at 1) should have an error; no stale entry should remain at 2,
+      // and the flat errors list must not contain a duplicated message.
+      expect(lastCall.errorSchema).toEqual({
+        0: { text: { __errors: ["must have required property 'text'"] } },
+        1: { text: { __errors: ["must have required property 'text'"] } },
+      });
+      expect(lastCall.errors).toHaveLength(2);
     });
 
     it('leaves errors in place when inserting elements', async () => {

@@ -50,7 +50,8 @@ export default function BaseInputTemplate<
   const { readonlyAsDisabled = true } = formContext as GenericObjectType;
   const { ClearButton } = registry.templates.ButtonTemplates;
 
-  const handleNumberChange = (nextValue: number | null) => onChange(nextValue);
+  const handleNumberChange = (nextValue: number | null) =>
+    onChange(nextValue === null ? options.emptyValue : nextValue);
 
   const handleTextChange =
     onChangeOverride ||
@@ -64,7 +65,7 @@ export default function BaseInputTemplate<
     (e: MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      onChange(options.emptyValue ?? '');
+      onChange(options.emptyValue);
     },
     [onChange, options.emptyValue],
   );

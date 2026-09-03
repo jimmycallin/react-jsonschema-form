@@ -1,9 +1,10 @@
-import { CONST_KEY, DEFAULT_KEY, PROPERTIES_KEY } from './constants';
-import getDiscriminatorFieldFromSchema from './getDiscriminatorFieldFromSchema';
-import getUiOptions from './getUiOptions';
-import { getByPath } from './pathUtils';
-import toConstant from './toConstant';
-import type { RJSFSchema, EnumOptionsType, EnumValue, StrictRJSFSchema, FormContextType, UiSchema } from './types';
+import { CONST_KEY, DEFAULT_KEY } from './constants.ts';
+import getDiscriminatorFieldFromSchema from './getDiscriminatorFieldFromSchema.ts';
+import getPropertySchema from './getPropertySchema.ts';
+import getUiOptions from './getUiOptions.ts';
+import { getByPath } from './pathUtils.ts';
+import toConstant from './toConstant.ts';
+import type { RJSFSchema, EnumOptionsType, EnumValue, StrictRJSFSchema, FormContextType, UiSchema } from './types.ts';
 
 /** Reorders `options` according to `order`, which may contain a `'*'` wildcard representing all
  * remaining options in their original order. Options not listed in `order` (and not covered by
@@ -84,7 +85,7 @@ export default function optionsList<T = any, S extends StrictRJSFSchema = RJSFSc
     let value: EnumOptionsType<S>['value'];
     let label = title;
     if (selectorField) {
-      const innerSchema: S = (aSchema[PROPERTIES_KEY]?.[selectorField] ?? {}) as S;
+      const innerSchema = getPropertySchema<S>(aSchema, selectorField);
       value = getByPath(innerSchema, DEFAULT_KEY, getByPath(innerSchema, CONST_KEY));
       // Use nullish coalescing so that an explicitly empty string title is preserved
       label = label ?? innerSchema?.title ?? aSchema.title ?? String(value);

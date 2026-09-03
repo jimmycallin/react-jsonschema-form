@@ -1,8 +1,14 @@
 import deepFreeze from 'deep-freeze-es6';
-import reduce from 'lodash/reduce';
 
-import type { EnumOptionsType, ErrorSchema, RJSFSchema, RJSFValidationError } from '../../src';
-import { ANY_OF_KEY, DEFAULT_ID_PREFIX, DEFAULT_ID_SEPARATOR, ErrorSchemaBuilder, ID_KEY, ONE_OF_KEY } from '../../src';
+import type { EnumOptionsType, ErrorSchema, RJSFSchema, RJSFValidationError } from '../../src/index.ts';
+import {
+  ANY_OF_KEY,
+  DEFAULT_ID_PREFIX,
+  DEFAULT_ID_SEPARATOR,
+  ErrorSchemaBuilder,
+  ID_KEY,
+  ONE_OF_KEY,
+} from '../../src/index.ts';
 
 export const GLOBAL_FORM_OPTIONS = {
   idPrefix: DEFAULT_ID_PREFIX,
@@ -260,22 +266,6 @@ export const OPTIONAL_ONE_OF_SCHEMA: RJSFSchema = deepFreeze<RJSFSchema>({
 });
 export const OPTIONAL_ONE_OF_SCHEMA_ONEOF = OPTIONAL_ONE_OF_SCHEMA[ONE_OF_KEY] as RJSFSchema[];
 export const OPTIONAL_ONE_OF_DATA = { flag: true, inner_obj: { foo: 'bar' } };
-export const SIMPLE_ONE_OF_SCHEMA = {
-  oneOf: [
-    {}, // object with no type should take the type from its parent schema
-    { type: 'string' },
-    { type: 'array', items: { type: 'string' } },
-  ],
-} as RJSFSchema;
-export const FIRST_OPTION_ONE_OF_DATA = {
-  flag: true,
-  inner_spec: {
-    name: 'inner_spec_2',
-    special_spec: undefined,
-  },
-  name: 'first_option',
-  unique_to_second: undefined,
-};
 export const ONE_OF_SCHEMA_DATA = { ...oneOfData, unique_to_second: 5 };
 
 export const ALL_OPTIONS: EnumOptionsType[] = [
@@ -374,9 +364,8 @@ export const TEST_FORM_DATA = {
   },
 };
 
-export const TEST_ERROR_SCHEMA: ErrorSchema = reduce(
-  ERROR_MAPPER,
-  (builder: ErrorSchemaBuilder, value, key) => {
+export const TEST_ERROR_SCHEMA: ErrorSchema = Object.entries(ERROR_MAPPER).reduce(
+  (builder: ErrorSchemaBuilder, [key, value]) => {
     if (value) {
       return builder.addErrors(value, key === '' ? undefined : key);
     }
@@ -385,25 +374,17 @@ export const TEST_ERROR_SCHEMA: ErrorSchema = reduce(
   new ErrorSchemaBuilder(),
 ).ErrorSchema;
 
-export const TEST_ERROR_LIST: RJSFValidationError[] = reduce(
-  ERROR_MAPPER,
-  (list: RJSFValidationError[], value, key) => {
-    list.push({ property: `.${key}`, message: value, stack: `.${key} ${value}` });
-    return list;
-  },
-  [],
-);
+const toValidationError = ([key, value]: [string, string]): RJSFValidationError => ({
+  property: `.${key}`,
+  message: value,
+  stack: `.${key} ${value}`,
+});
 
-export const TEST_ERROR_LIST_OUTPUT: RJSFValidationError[] = reduce(
-  ERROR_MAPPER,
-  (list: RJSFValidationError[], value, key) => {
-    if (value) {
-      list.push({ property: `.${key}`, message: value, stack: `.${key} ${value}` });
-    }
-    return list;
-  },
-  [],
-);
+export const TEST_ERROR_LIST: RJSFValidationError[] = Object.entries(ERROR_MAPPER).map(toValidationError);
+
+export const TEST_ERROR_LIST_OUTPUT: RJSFValidationError[] = Object.entries(ERROR_MAPPER)
+  .filter(([, value]) => value)
+  .map(toValidationError);
 
 export const SUPER_SCHEMA: RJSFSchema = deepFreeze<RJSFSchema>({
   [ID_KEY]: 'super-schema',

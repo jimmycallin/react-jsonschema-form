@@ -3,7 +3,7 @@ import { ariaDescribedByIds, descriptionId, getTemplate, labelValue, schemaRequi
 import type { CheckboxChangeEvent } from 'primereact/checkbox';
 import { Checkbox } from 'primereact/checkbox';
 
-import { Label } from '../util';
+import { Label } from '../util.tsx';
 
 /** The `CheckBoxWidget` is a widget for rendering boolean properties.
  *  It is typically used to represent a boolean.
@@ -31,6 +31,7 @@ export default function CheckboxWidget<
     schema,
     uiSchema,
     registry,
+    required,
   } = props;
 
   const DescriptionFieldTemplate = getTemplate<'DescriptionFieldTemplate', T, S, F>(
@@ -39,7 +40,7 @@ export default function CheckboxWidget<
     options,
   );
 
-  const required = schemaRequiresTrueValue<S>(schema);
+  const trueValueRequired = schemaRequiresTrueValue<S>(schema) && required;
   const checked = value === 'true' || value === true;
   const handleChange = (e: CheckboxChangeEvent) => onChange?.(e.checked);
   const handleBlur: React.FocusEventHandler<HTMLInputElement> = () => onBlur?.(id, value);
@@ -72,7 +73,7 @@ export default function CheckboxWidget<
           required={required}
           aria-describedby={ariaDescribedByIds(id)}
         />
-        {labelValue(<Label id={id} text={label} />, hideLabel, false)}
+        {labelValue(<Label id={id} text={label} required={trueValueRequired} />, hideLabel, false)}
       </div>
     </>
   );

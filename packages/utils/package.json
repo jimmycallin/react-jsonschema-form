@@ -1,13 +1,15 @@
 {
   "name": "@rjsf/utils",
-  "version": "6.8.0",
+  "version": "6.9.0",
   "main": "dist/index.js",
   "module": "lib/index.js",
   "typings": "lib/index.d.ts",
   "type": "module",
+  "sideEffects": false,
   "description": "Utility functions for @rjsf/core",
   "exports": {
     ".": {
+      "@rjsf/source": "./src/index.ts",
       "types": "./lib/index.d.ts",
       "require": "./dist/index.cjs",
       "import": "./lib/index.js"
@@ -43,8 +45,7 @@
     "node": ">=20"
   },
   "scripts": {
-    "compileReplacer": "tsc -p tsconfig.replacer.json && move-file lodashReplacer.js lodashReplacer.cjs",
-    "build:ts": "pnpm run compileReplacer && rimraf ./lib && tsc -b tsconfig.build.json && tsc-alias -p tsconfig.build.json",
+    "build:ts": "rimraf ./lib && tsc -b tsconfig.build.json",
     "build:cjs": "esbuild ./src/index.ts --bundle --outfile=dist/index.cjs --sourcemap --packages=external --format=cjs",
     "build:esm": "esbuild ./src/index.ts --bundle --outfile=dist/utils.esm.js --sourcemap --packages=external --format=esm",
     "build:umd": "rollup dist/utils.esm.js --format=umd --file=dist/utils.umd.js --name=@rjsf/utils",
@@ -68,10 +69,8 @@
   "dependencies": {
     "@x0k/json-schema-merge": "^1.0.3",
     "fast-equals": "^6.0.0",
-    "fast-uri": "^4.1.2",
+    "fast-uri": "^4.1.3",
     "jsonpointer": "^5.0.1",
-    "lodash": "^4.18.1",
-    "lodash-es": "^4.18.1",
     "react-is": "^18.3.1"
   },
   "devDependencies": {

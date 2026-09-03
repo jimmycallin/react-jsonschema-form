@@ -1,10 +1,11 @@
 {
   "name": "@rjsf/mui",
-  "version": "6.8.0",
+  "version": "6.9.0",
   "main": "./dist/index.cjs",
   "module": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "type": "module",
+  "sideEffects": false,
   "description": "Material UI 7 theme, fields and widgets for react-jsonschema-form",
   "exports": {
     ".": {
@@ -39,7 +40,7 @@
     "src"
   ],
   "scripts": {
-    "build:ts": "rimraf ./lib && tsc -b tsconfig.build.json && tsc-alias -p tsconfig.build.json",
+    "build:ts": "rimraf ./lib && tsc -b tsconfig.build.json",
     "build:cjs": "esbuild ./src/index.ts --bundle --outfile=dist/index.cjs --sourcemap --packages=external --format=cjs",
     "build:esm": "esbuild ./src/index.ts --bundle --outfile=dist/mui.esm.js --sourcemap --packages=external --format=esm",
     "build:umd": "rollup dist/mui.esm.js --format=umd --file=dist/mui.umd.js --name=@rjsf/mui",

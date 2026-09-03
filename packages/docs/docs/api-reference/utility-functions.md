@@ -430,16 +430,20 @@ getByPath({}, 'toString', 'fallback'); // 'fallback', inherited members are not 
 getByPath({ a: 1 }, [], 'fallback'); // 'fallback', an empty path resolves to nothing
 ```
 
-### getChangedFields(a: unknown, b: unknown)
+### getChangedFields(a: unknown, b: unknown, deep?: boolean)
 
 Compares two objects and returns the names of the fields that have changed.
 This function iterates over each field of object `a`, using `_.isEqual` to compare the field value with the corresponding field value in object `b`.
 If the values are different, the field name will be included in the returned array.
 
+When `deep` is true, a field holding a nested object or a same-length array is descended into and the dotted path of the deepest field that changed is returned instead of the name of the top-level field holding it.
+A key that contains a `.` or a `[` is descended into like any other: the path it produces cannot be told apart from a path through nested keys, and neither can the entry an `ErrorSchema` keeps for it, since [toErrorSchema()](#toerrorschema) spells such a name out as a path in the same way.
+
 #### Parameters
 
 - a: unknown - The first object, representing the original data to compare.
 - b: unknown - The second object, representing the updated data to compare.
+- [deep=false]: boolean - Optional flag that, when true, returns the dotted path of the deepest field that changed.
 
 #### Returns
 
@@ -452,6 +456,15 @@ const a = { name: 'John', age: 30 };
 const b = { name: 'John', age: 31 };
 const changedFields = getChangedFields(a, b);
 console.log(changedFields); // Output: ['age']
+```
+
+#### Example (deep)
+
+```typescript
+const a = { items: [{ qux: '', corge: '' }] };
+const b = { items: [{ qux: 'a', corge: '' }] };
+console.log(getChangedFields(a, b)); // Output: ['items']
+console.log(getChangedFields(a, b, true)); // Output: ['items.0.qux']
 ```
 
 ### getDecimalSeparator(languages?: string | string[])
@@ -546,6 +559,20 @@ Widgets should call this helper once and pass the result to `enumOptionValueEnco
 #### Returns
 
 - OptionValueFormat: The resolved `OptionValueFormat`, defaulting to `'indexed'` when not set
+
+### getPropertySchema&lt;S extends StrictRJSFSchema = RJSFSchema>()
+
+Returns the sub-schema declared for `property` in the `properties` of `schema`, falling back to an empty schema when the schema has no such property.
+Callers treat the properties of a schema as schemas of the same type `S`, which the `JSONSchema7` typing of `properties` cannot express, so this function owns that single assertion rather than repeating it at every lookup.
+
+#### Parameters
+
+- schema: S | undefined - The schema, if any, from which to read the property sub-schema
+- property: string - The name of the property whose sub-schema is desired
+
+#### Returns
+
+- S: The sub-schema for `property`, or an empty schema when it is not declared
 
 ### getSchemaType()
 
@@ -808,6 +835,19 @@ In this case, `thing` is an object if it has the type `object` but is NOT null, 
 
 - boolean: True if it is a non-null, non-array, non-File object
 
+### isPlainObject()
+
+Determines whether `thing` is a plain object, i.e. one created by the `Object` constructor or with a `null` prototype.
+Unlike [isObject()](#isobject), class instances such as `Error` are not plain objects, which matters when recursively walking a structure whose nested values are expected to be plain data.
+
+#### Parameters
+
+- thing: unknown - The thing to check to see whether it is a plain object
+
+#### Returns
+
+- boolean: True if it is a plain object, otherwise false. When true, `thing` is narrowed to `Record<string, unknown>`
+
 ### isRootSchema&lt;T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>()
 
 Helper to check whether a JSON schema object is the root schema. The schema is a root schema with root `properties`
@@ -958,6 +998,14 @@ Return a consistent `id` for the `optionIndex`s of a `Radio` or `Checkboxes` wid
 #### Returns
 
 - string: An id for the option index based on the parent `id`
+
+### noop()
+
+A function that does nothing and returns `undefined`, useful as a placeholder for an optional callback or as the implementation of a mocked function.
+
+#### Returns
+
+- void
 
 ### optionsList&lt;T = any, S extends StrictRJSFSchema = RJSFSchema,F extends FormContextType = any>()
 

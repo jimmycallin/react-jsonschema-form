@@ -15,7 +15,7 @@ import type {
 } from '@rjsf/utils';
 import { ariaDescribedByIds, examplesId, getInputProps, labelValue } from '@rjsf/utils';
 
-import { getMuiProps } from '../util';
+import { getMuiProps } from '../util.ts';
 
 /** Properties available for the MUI `ui:options` of the BaseInputTemplate.
  *  Unlike RJSF templates, `slotProps` here maps directly to MUI's native `TextField` `slotProps`,
@@ -101,7 +101,7 @@ export default function BaseInputTemplate<
     (e: MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      onChange(options.emptyValue ?? '');
+      onChange(options.emptyValue);
     },
     [onChange, options.emptyValue],
   );

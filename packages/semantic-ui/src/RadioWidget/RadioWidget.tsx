@@ -11,7 +11,7 @@ import {
 import type { CheckboxProps } from 'semantic-ui-react';
 import { Form, Radio } from 'semantic-ui-react';
 
-import { getSemanticProps } from '../util';
+import { getSemanticProps } from '../util.tsx';
 
 /** The `RadioWidget` is a widget for rendering a radio group.
  *  It is typically used with a string property constrained with enum options.
@@ -42,6 +42,9 @@ export default function RadioWidget<T = any, S extends StrictRJSFSchema = RJSFSc
     formContext: registry.formContext,
     options,
     uiSchema,
+    // Radio supports neither `fluid` nor `inverted`, so don't default them; they
+    // would be forwarded to the DOM element and trigger React unknown-attribute warnings
+    defaultSchemaProps: {},
   });
   const handleChange = (_: FormEvent<HTMLInputElement>, { value: eventValue }: CheckboxProps) =>
     onChange(enumOptionValueDecoder<S>(String(eventValue!), enumOptions, optionValueFormat, emptyValue));

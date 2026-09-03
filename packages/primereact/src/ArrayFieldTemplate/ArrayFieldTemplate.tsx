@@ -2,7 +2,7 @@ import type { ArrayFieldTemplateProps, FormContextType, RJSFSchema, StrictRJSFSc
 import { getTemplate, getUiOptions, isFixedItems, buttonId } from '@rjsf/utils';
 import { Fieldset } from 'primereact/fieldset';
 
-import AddButton from '../AddButton';
+import AddButton from '../AddButton/index.ts';
 
 /** The `ArrayFieldTemplate` component is the template used to render all items in an array.
  *
@@ -30,6 +30,7 @@ export default function ArrayFieldTemplate<
     // Destructure the following props out so that they aren't put into the DOM
     formData,
     rawErrors,
+    errorSchema,
     ...rest
   } = props;
 

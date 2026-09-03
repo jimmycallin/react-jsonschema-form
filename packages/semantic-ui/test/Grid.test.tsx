@@ -1,12 +1,6 @@
 import { gridTests } from '@rjsf/snapshot-tests';
 
-import Form from '../src';
-
-/** Mock the `react-component-ref` component used by semantic-ui to simply render the children, otherwise tests fail */
-vi.mock('@fluentui/react-component-ref', async (importOriginal) => ({
-  ...(await importOriginal()),
-  Ref: vi.fn().mockImplementation(({ children }) => children),
-}));
+import Form from '../src/index.ts';
 
 gridTests(Form, {
   ColumnWidthAll: { width: 18, style: { paddingBottom: 0 } },
