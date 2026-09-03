@@ -54,6 +54,7 @@ jobs:
           name: docs
           path: packages/docs/build
       - run: pnpm test
+      - run: pnpm run verify-entrypoints
 
   deploy_playground_and_docs:
     runs-on: ubuntu-latest
