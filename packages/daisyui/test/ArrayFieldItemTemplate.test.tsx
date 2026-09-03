@@ -1,5 +1,5 @@
 // Mock the ArrayFieldItemButtonsTemplate component
-vi.mock('../src/templates/ArrayFieldItemButtonsTemplate/ArrayFieldItemButtonsTemplate', () => ({
+vi.mock('../src/templates/ArrayFieldItemButtonsTemplate/ArrayFieldItemButtonsTemplate.tsx', () => ({
   default: function MockArrayFieldItemButtonsTemplate() {
     return <div data-testid='mock-buttons'>Mock Buttons</div>;
   },

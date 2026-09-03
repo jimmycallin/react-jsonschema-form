@@ -10,7 +10,7 @@ vi.mock('fs', () => {
   return { writeFileSync, default: { writeFileSync } };
 });
 
-vi.mock('../src/compileSchemaValidatorsCode', () => ({
+vi.mock('../src/compileSchemaValidatorsCode.ts', () => ({
   compileSchemaValidatorsCode: vi.fn(),
 }));
 

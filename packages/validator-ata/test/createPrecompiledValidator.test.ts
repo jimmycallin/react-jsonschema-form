@@ -6,7 +6,7 @@ import type { Localizer, ValidatorFunctions } from '../src/index.ts';
 import ATAPrecompiledValidator from '../src/precompiledValidator.ts';
 import superSchemaObj from './harness/superSchema.json';
 
-vi.mock('../src/precompiledValidator');
+vi.mock('../src/precompiledValidator.ts');
 
 interface TestType {
   foo: string;

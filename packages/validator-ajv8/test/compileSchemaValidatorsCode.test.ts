@@ -6,7 +6,7 @@ import createAjvInstance from '../src/createAjvInstance.ts';
 import { SUPER_SCHEMA_OPTIONS, superSchema } from './harness/compileSuperSchema.ts';
 import { CUSTOM_OPTIONS, expectWarn } from './harness/testData.ts';
 
-vi.mock('../src/createAjvInstance', async (importOriginal) => {
+vi.mock('../src/createAjvInstance.ts', async (importOriginal) => {
   const { default: realCreateAjvInstance } = await importOriginal<{
     default: typeof createAjvInstance;
   }>();
