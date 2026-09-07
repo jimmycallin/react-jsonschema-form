@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { FileInput, Pill } from '@mantine/core';
-import type { FormContextType, RJSFSchema, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
+import type { FormContextType, RJSFSchema, WidgetProps } from '@rjsf/utils';
 import { ariaDescribedByIds, labelValue, useFileWidgetProps } from '@rjsf/utils';
 
 import { cleanupOptions } from '../utils.ts';
@@ -10,9 +10,11 @@ import { cleanupOptions } from '../utils.ts';
  *
  * @param props - The `WidgetProps` for this component
  */
-export default function FileWidget<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
-  props: WidgetProps<T, S, F>,
-) {
+export default function FileWidget<
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>(props: WidgetProps<T, S, F>) {
   const {
     id,
     name,
@@ -33,11 +35,14 @@ export default function FileWidget<T = any, S extends StrictRJSFSchema = RJSFSch
   const themeProps = cleanupOptions(options);
 
   const handleOnChange = useCallback(
-    (files: any) => {
-      if (typeof files === 'object') {
+    (files: File[] | File | null) => {
+      // Mantine's `FileInput` hands back a `File[]` when `multiple`, a single `File` otherwise, and `null` when
+      // cleared. `typeof null === 'object'`, so clearing used to reach `handleChange` and throw, and a lone `File`
+      // is not iterable, so `Array.from()` produced `[]` and the file was silently dropped.
+      if (files) {
         // handleChange is async; DOM event handlers are void-returning, so we intentionally don't await
         // oxlint-disable-next-line no-floating-promises, no-void
-        void handleChange(files);
+        void handleChange(Array.isArray(files) ? files : [files]);
       }
     },
     [handleChange],
