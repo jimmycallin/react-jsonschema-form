@@ -2,13 +2,7 @@ import { CONST_KEY, DEFAULT_KEY, PROPERTIES_KEY } from '../constants.ts';
 import deepEquals from '../deepEquals.ts';
 import getDiscriminatorFieldFromSchema from '../getDiscriminatorFieldFromSchema.ts';
 import { getByPath } from '../pathUtils.ts';
-import type {
-  Experimental_CustomMergeAllOf,
-  FormContextType,
-  RJSFSchema,
-  StrictRJSFSchema,
-  ValidatorType,
-} from '../types.ts';
+import type { Experimental_CustomMergeAllOf, FormContextType, RJSFSchema, ValidatorType } from '../types.ts';
 import retrieveSchema from './retrieveSchema.ts';
 
 /** Finds the option inside the `schema['any/oneOf']` list which has the `properties[selectorField].default` or
@@ -26,9 +20,9 @@ import retrieveSchema from './retrieveSchema.ts';
  * @returns - The anyOf/oneOf option that matches the selector field in the schema or undefined if nothing is selected
  */
 export default function findSelectedOptionInXxxOf<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(
   validator: ValidatorType<T, S, F>,
   rootSchema: S,

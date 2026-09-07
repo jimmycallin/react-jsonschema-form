@@ -1,13 +1,13 @@
-import type { FormContextType, ObjectFieldTemplateProps, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
+import type { FormContextType, ObjectFieldTemplateProps, RJSFSchema } from '@rjsf/utils';
 import { buttonId, canExpand, descriptionId, getTemplate, getUiOptions, titleId } from '@rjsf/utils';
 import Col from 'react-bootstrap/Col';
 import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
 
 export default function ObjectFieldTemplate<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >({
   description,
   title,
@@ -59,7 +59,7 @@ export default function ObjectFieldTemplate<
       )}
       <Container fluid className='p-0'>
         {!showOptionalDataControlInTitle ? optionalDataControl : undefined}
-        {properties.map((element: any) => (
+        {properties.map((element) => (
           <Row key={element.name} style={{ marginBottom: '10px' }} className={element.hidden ? 'd-none' : undefined}>
             <Col xs={12}> {element.content}</Col>
           </Row>

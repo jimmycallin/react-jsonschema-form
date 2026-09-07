@@ -1,5 +1,5 @@
 import type { ChangeEvent, FocusEvent } from 'react';
-import type { FormContextType, RJSFSchema, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
+import type { FormContextType, RJSFSchema, WidgetProps } from '@rjsf/utils';
 import {
   ariaDescribedByIds,
   enumOptionValueDecoder,
@@ -10,18 +10,11 @@ import {
 } from '@rjsf/utils';
 import Form from 'react-bootstrap/Form';
 
-export default function RadioWidget<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>({
-  id,
-  htmlName,
-  options,
-  value,
-  required,
-  disabled,
-  readonly,
-  onChange,
-  onBlur,
-  onFocus,
-}: WidgetProps<T, S, F>) {
+export default function RadioWidget<
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>({ id, htmlName, options, value, required, disabled, readonly, onChange, onBlur, onFocus }: WidgetProps<T, S, F>) {
   const { enumOptions, enumDisabled, emptyValue } = options;
   const optionValueFormat = getOptionValueFormat(options);
 

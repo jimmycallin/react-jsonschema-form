@@ -1,5 +1,5 @@
 import { RichHelp } from '@rjsf/core';
-import type { FieldHelpProps, FormContextType, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
+import type { FieldHelpProps, FormContextType, RJSFSchema } from '@rjsf/utils';
 import { helpId } from '@rjsf/utils';
 
 /** The `FieldHelpTemplate` component renders any help desired for a field
@@ -7,9 +7,9 @@ import { helpId } from '@rjsf/utils';
  * @param props - The `FieldHelpProps` to be rendered
  */
 export default function FieldHelpTemplate<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(props: FieldHelpProps<T, S, F>) {
   const { fieldPathId, help, uiSchema, registry } = props;
   if (help) {

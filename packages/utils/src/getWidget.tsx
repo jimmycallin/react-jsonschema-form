@@ -2,7 +2,7 @@ import { createElement } from 'react';
 import ReactIs from 'react-is';
 
 import getSchemaType from './getSchemaType.ts';
-import type { FormContextType, RJSFSchema, Widget, RegistryWidgetsType, StrictRJSFSchema } from './types.ts';
+import type { FormContextType, RJSFSchema, Widget, RegistryWidgetsType } from './types.ts';
 
 /** The map of schema types to widget type to widget name
  */
@@ -66,9 +66,11 @@ const widgetMap: Record<string, Record<string, string>> = {
  * @param AWidget - A widget that will be wrapped or one that is already wrapped
  * @returns - The wrapper widget
  */
-function mergeWidgetOptions<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
-  AWidget: Widget<T, S, F>,
-) {
+function mergeWidgetOptions<
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>(AWidget: Widget<T, S, F>) {
   let { MergedWidget } = AWidget;
   // cache return value as property of widget for proper react reconciliation
   if (!MergedWidget) {
@@ -93,7 +95,11 @@ function mergeWidgetOptions<T = any, S extends StrictRJSFSchema = RJSFSchema, F 
  * @returns - The `Widget` component to use
  * @throws - An error if there is no `Widget` component that can be returned
  */
-export default function getWidget<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
+export default function getWidget<
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>(
   schema: RJSFSchema,
   widget?: Widget<T, S, F> | string,
   registeredWidgets: RegistryWidgetsType<T, S, F> = {},

@@ -1,15 +1,7 @@
 import { ANY_OF_KEY, ONE_OF_KEY, REF_KEY, RJSF_REF_KEY } from './constants.ts';
 import findSchemaDefinition from './findSchemaDefinition.ts';
 import mergeObjects from './mergeObjects.ts';
-import type {
-  FormContextType,
-  GenericObjectType,
-  Registry,
-  RJSFMarkedSchema,
-  RJSFSchema,
-  StrictRJSFSchema,
-  UiSchema,
-} from './types.ts';
+import type { FormContextType, GenericObjectType, Registry, RJSFMarkedSchema, RJSFSchema, UiSchema } from './types.ts';
 
 /** Resolves the uiSchema for a given schema, considering `ui:definitions` stored in the registry.
  *
@@ -28,9 +20,9 @@ import type {
  * @returns - The resolved uiSchema with definitions merged in
  */
 export default function resolveUiSchema<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(schema: S, localUiSchema: UiSchema<T, S, F> | undefined, registry: Registry<T, S, F>): UiSchema<T, S, F> {
   const ref = ((schema as RJSFMarkedSchema)[RJSF_REF_KEY] ?? schema[REF_KEY]) as string | undefined;
   const definitions = registry.uiSchemaDefinitions;

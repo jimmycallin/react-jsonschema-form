@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import type { FormContextType, RJSFSchema, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
+import type { FormContextType, RJSFSchema, WidgetProps } from '@rjsf/utils';
 import { getTemplate } from '@rjsf/utils';
 
 /** The `TimeWidget` component uses the `BaseInputTemplate` changing the type to `time` and transforms
@@ -7,15 +7,17 @@ import { getTemplate } from '@rjsf/utils';
  *
  * @param props - The `WidgetProps` for this component
  */
-export default function TimeWidget<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
-  props: WidgetProps<T, S, F>,
-) {
+export default function TimeWidget<
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>(props: WidgetProps<T, S, F>) {
   const { onChange, options, registry, schema, value } = props;
   const BaseInputTemplate = getTemplate<'BaseInputTemplate', T, S, F>('BaseInputTemplate', registry, options);
   const hasSecondPrecision =
     typeof schema.multipleOf === 'number' && Number.isFinite(schema.multipleOf) && schema.multipleOf < 60;
   const handleChange = useCallback(
-    (newValue: any) => {
+    (newValue?: string) => {
       if (!newValue) {
         onChange(undefined);
       } else if (hasSecondPrecision) {

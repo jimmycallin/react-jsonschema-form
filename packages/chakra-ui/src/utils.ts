@@ -14,15 +14,13 @@ type ChakraUiOptions = UiSchema['ui:options'] & { chakra?: ChakraField.RootProps
 export function getChakra(uiSchema: ChakraUiSchema = {}): ChakraField.RootProps {
   const chakraProps = uiSchema['ui:options']?.chakra || {};
 
-  Object.keys(chakraProps).forEach((key) => {
-    /**
-     * Leveraging `shouldForwardProp` to remove props
-     * https://chakra-ui.com/docs/styling/chakra-factory#forwarding-props
-     */
-    if (!isValidProperty(key) || shouldForwardProp(key)) {
-      delete (chakraProps as any)[key];
-    }
-  });
+  /**
+   * Leveraging `shouldForwardProp` to remove props
+   * https://chakra-ui.com/docs/styling/chakra-factory#forwarding-props
+   *
+   * This builds a filtered copy rather than deleting from `chakraProps`, which is the caller's `ui:options` object.
+   */
+  const forwardable = Object.entries(chakraProps).filter(([key]) => isValidProperty(key) && !shouldForwardProp(key));
 
-  return chakraProps;
+  return Object.fromEntries(forwardable) as ChakraField.RootProps;
 }

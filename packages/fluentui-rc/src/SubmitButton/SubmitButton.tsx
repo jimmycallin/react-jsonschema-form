@@ -1,5 +1,5 @@
 import { Button, makeStyles, tokens } from '@fluentui/react-components';
-import type { FormContextType, RJSFSchema, StrictRJSFSchema, SubmitButtonProps } from '@rjsf/utils';
+import type { FormContextType, RJSFSchema, SubmitButtonProps } from '@rjsf/utils';
 import { getSubmitButtonOptions } from '@rjsf/utils';
 
 const useStyles = makeStyles({
@@ -9,9 +9,9 @@ const useStyles = makeStyles({
 });
 
 export default function SubmitButton<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >({ uiSchema }: SubmitButtonProps<T, S, F>) {
   const classes = useStyles();
   const { submitText, norender, props: submitButtonProps } = getSubmitButtonOptions(uiSchema);

@@ -1,4 +1,4 @@
-import type { FallbackFieldTemplateProps, FormContextType, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
+import type { FallbackFieldTemplateProps, FormContextType, RJSFSchema } from '@rjsf/utils';
 import { getTemplate } from '@rjsf/utils';
 
 /**
@@ -6,9 +6,9 @@ import { getTemplate } from '@rjsf/utils';
  * the schema field for the form data.
  */
 export default function FallbackFieldTemplate<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(props: FallbackFieldTemplateProps<T, S, F>) {
   const { schema, registry, typeSelector, schemaField } = props;
 

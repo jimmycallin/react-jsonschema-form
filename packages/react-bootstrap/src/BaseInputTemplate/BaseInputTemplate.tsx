@@ -1,14 +1,22 @@
 import type { ChangeEvent, FocusEvent, MouseEvent } from 'react';
 import { useCallback } from 'react';
 import { SchemaExamples } from '@rjsf/core';
-import type { BaseInputTemplateProps, FormContextType, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
+import type { BaseInputTemplateProps, FormContextType, RJSFSchema } from '@rjsf/utils';
 import { ariaDescribedByIds, examplesId, getInputProps } from '@rjsf/utils';
 import Form from 'react-bootstrap/Form';
+import type { FormControlProps } from 'react-bootstrap/FormControl';
+
+/** The props a caller may pass straight through to the underlying `Form.Control`. `BaseInputTemplateProps`
+ * carries any key it does not declare as `unknown`, so declare the ones this template reads. */
+interface BaseInputTemplatePassthroughProps {
+  /** Extra props spread onto the rendered `Form.Control`. */
+  extraProps?: FormControlProps;
+}
 
 export default function BaseInputTemplate<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >({
   id,
   htmlName,
@@ -29,7 +37,7 @@ export default function BaseInputTemplate<
   children,
   extraProps,
   registry,
-}: BaseInputTemplateProps<T, S, F>) {
+}: BaseInputTemplateProps<T, S, F> & BaseInputTemplatePassthroughProps) {
   const { ClearButton } = registry.templates.ButtonTemplates;
   const inputProps = {
     ...extraProps,

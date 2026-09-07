@@ -1,4 +1,4 @@
-import type { FormContextType, RJSFSchema, StrictRJSFSchema, TemplatesType } from '@rjsf/utils';
+import type { FormContextType, RJSFSchema, TemplatesType } from '@rjsf/utils';
 
 import ArrayFieldDescriptionTemplate from './ArrayFieldDescriptionTemplate.tsx';
 import ArrayFieldItemButtonsTemplate from './ArrayFieldItemButtonsTemplate.tsx';
@@ -22,11 +22,11 @@ import TitleField from './TitleField.tsx';
 import UnsupportedField from './UnsupportedField.tsx';
 import WrapIfAdditionalTemplate from './WrapIfAdditionalTemplate.tsx';
 
-function templates<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(): TemplatesType<
-  T,
-  S,
-  F
-> {
+function templates<
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>(): TemplatesType<T, S, F> {
   return {
     ArrayFieldDescriptionTemplate,
     ArrayFieldItemTemplate,

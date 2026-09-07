@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { FieldProps, FormContextType, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
+import type { FieldProps, FormContextType, RJSFSchema } from '@rjsf/utils';
 import { getTemplate, getUiOptions, RJSF_REF_CYCLE_KEY } from '@rjsf/utils';
 
 /** The `CyclicSchemaField` component is used to render a field in the schema that is marked with RJSF_REF_CYCLE_KEY ===
@@ -8,9 +8,9 @@ import { getTemplate, getUiOptions, RJSF_REF_CYCLE_KEY } from '@rjsf/utils';
  * @param props - The `FieldProps` for this template
  */
 export default function CyclicSchemaField<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(props: FieldProps<T, S, F>) {
   const [expanded, setExpanded] = useState(false);
   const { name, registry, schema, uiSchema, fieldPathId } = props;

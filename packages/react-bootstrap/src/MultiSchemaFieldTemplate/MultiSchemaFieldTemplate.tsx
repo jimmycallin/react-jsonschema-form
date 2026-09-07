@@ -1,10 +1,10 @@
-import type { FormContextType, MultiSchemaFieldTemplateProps, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
+import type { FormContextType, MultiSchemaFieldTemplateProps, RJSFSchema } from '@rjsf/utils';
 import Card from 'react-bootstrap/Card';
 
 export default function MultiSchemaFieldTemplate<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >({ selector, optionSchemaField }: MultiSchemaFieldTemplateProps<T, S, F>) {
   return (
     <Card style={{ marginBottom: '1rem' }}>

@@ -16,6 +16,15 @@ import { resolveDependencies } from '../../src/schema/retrieveSchema.ts';
 import { RECURSIVE_REF, RECURSIVE_REF_ALLOF } from '../testUtils/testData.ts';
 import type { TestValidatorType } from './types.ts';
 
+/**
+ * Narrows a defaults result to the shape the test expects. The defaults functions return `T | T[] | undefined` with `T`
+ * pinned to `unknown` by the shared `testValidator: TestValidatorType` (i.e. `ValidatorType<unknown>`), so no call-site
+ * type argument can describe the value: passing one makes the validator argument unassignable. Hence the assertion.
+ */
+function asDefaults<T>(value: unknown): T {
+  return value as T;
+}
+
 export default function getDefaultFormStateTest(testValidator: TestValidatorType) {
   describe('getDefaultFormState()', () => {
     let consoleWarnSpy: MockInstance;
@@ -143,14 +152,18 @@ export default function getDefaultFormStateTest(testValidator: TestValidatorType
             },
           };
 
-          const result = getDefaultFormState(testValidator, schema, existingFormData, schema);
+          const result = asDefaults<{ outer?: { inner?: { str?: string } } }>(
+            getDefaultFormState(testValidator, schema, existingFormData, schema),
+          );
 
           // The user's value should be preserved, NOT overridden by the default
           expect(result?.outer?.inner?.str).toBe('user_value');
         });
 
         test('getDefaultFormState should apply defaults when formData is undefined', () => {
-          const result = getDefaultFormState(testValidator, schema, undefined, schema);
+          const result = asDefaults<{ outer?: { inner?: { str?: string } } }>(
+            getDefaultFormState(testValidator, schema, undefined, schema),
+          );
 
           // Defaults should be applied when no formData exists
           expect(result?.outer?.inner?.str).toBe('default_str');
@@ -6799,7 +6812,9 @@ export default function getDefaultFormStateTest(testValidator: TestValidatorType
       };
 
       it('should create independent object instances for array items via getDefaultFormState', () => {
-        const result = getDefaultFormState(testValidator, schema, undefined, schema);
+        const result = asDefaults<{ config: { items: { field?: string }[] } }>(
+          getDefaultFormState(testValidator, schema, undefined, schema),
+        );
 
         expect(result).toStrictEqual({ config: { items: [{}, {}] } });
 
@@ -6814,9 +6829,11 @@ export default function getDefaultFormStateTest(testValidator: TestValidatorType
       });
 
       it('should create independent object instances for array items via computeDefaults', () => {
-        const result = computeDefaults(testValidator, schema, {
-          rootSchema: schema,
-        });
+        const result = asDefaults<{ config: { items: { field?: string }[] } }>(
+          computeDefaults(testValidator, schema, {
+            rootSchema: schema,
+          }),
+        );
 
         expect(result).toStrictEqual({ config: { items: [{}, {}] } });
 
@@ -6844,9 +6861,11 @@ export default function getDefaultFormStateTest(testValidator: TestValidatorType
           },
         };
 
-        const result = getArrayDefaults(testValidator, arraySchema, {
-          rootSchema: arraySchema,
-        });
+        const result = asDefaults<{ field?: string }[] | undefined>(
+          getArrayDefaults(testValidator, arraySchema, {
+            rootSchema: arraySchema,
+          }),
+        );
 
         expect(result).toStrictEqual([{}, {}, {}]);
 
@@ -6878,9 +6897,11 @@ export default function getDefaultFormStateTest(testValidator: TestValidatorType
           },
         };
 
-        const result = getArrayDefaults(testValidator, arraySchemaWithDefaults, {
-          rootSchema: arraySchemaWithDefaults,
-        });
+        const result = asDefaults<{ field?: string }[] | undefined>(
+          getArrayDefaults(testValidator, arraySchemaWithDefaults, {
+            rootSchema: arraySchemaWithDefaults,
+          }),
+        );
 
         expect(result).toStrictEqual([{ field: 'default-value' }, { field: 'default-value' }]);
 
@@ -6914,9 +6935,11 @@ export default function getDefaultFormStateTest(testValidator: TestValidatorType
           },
         };
 
-        const result = getArrayDefaults(testValidator, nestedObjectSchema, {
-          rootSchema: nestedObjectSchema,
-        });
+        const result = asDefaults<{ nested: { value?: string } }[] | undefined>(
+          getArrayDefaults(testValidator, nestedObjectSchema, {
+            rootSchema: nestedObjectSchema,
+          }),
+        );
 
         expect(result).toStrictEqual([
           { nested: { value: 'nested-default' } },

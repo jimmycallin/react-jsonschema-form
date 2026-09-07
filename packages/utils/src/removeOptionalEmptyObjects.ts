@@ -1,6 +1,6 @@
 import isObject from './isObject.ts';
 import { isValueEmpty, retrieveSchema } from './schema/index.ts';
-import type { FormContextType, GenericObjectType, RJSFSchema, StrictRJSFSchema, ValidatorType } from './types.ts';
+import type { FormContextType, GenericObjectType, RJSFSchema, ValidatorType } from './types.ts';
 
 /** Recursively removes optional objects from the `formData` that are empty (i.e., all their fields
  * are undefined, null, empty strings, or themselves empty optional objects). This solves the problem
@@ -21,9 +21,9 @@ import type { FormContextType, GenericObjectType, RJSFSchema, StrictRJSFSchema, 
  */
 // oxlint-disable-next-line @typescript-eslint/no-deprecated
 export default function removeOptionalEmptyObjects<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(validator: ValidatorType<T, S, F>, schema: S, rootSchema?: S, formData?: T): T | undefined {
   if (!isObject(schema)) {
     return formData;

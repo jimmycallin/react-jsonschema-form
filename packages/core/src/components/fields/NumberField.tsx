@@ -1,17 +1,15 @@
 import { useState, useCallback } from 'react';
-import type {
-  ErrorSchema,
-  FieldPathList,
-  FieldProps,
-  FormContextType,
-  RJSFSchema,
-  StrictRJSFSchema,
-} from '@rjsf/utils';
+import type { ErrorSchema, FieldPathList, FieldProps, FormContextType, RJSFSchema } from '@rjsf/utils';
 import { asNumber, getDecimalSeparator, getUiOptions, optionsList } from '@rjsf/utils';
 
 // Static matchers for standard '.' separator used during normalization inside handleChange
 const trailingCharMatcherWithPrefix = /\.([0-9]*0)*$/;
 const trailingCharMatcher = /[0.]0*$/;
+
+/** The values a number widget can hand back while the user is typing: a partial string (i.e. `"3."`), a parsed number,
+ * or nothing at all when the input is cleared.
+ */
+type NumberFieldValue = string | number | null | undefined;
 
 /**
  * The NumberField class has some special handling for dealing with trailing
@@ -30,7 +28,7 @@ const trailingCharMatcher = /[0.]0*$/;
  *    value cached in the state. If it matches the cached value, the cached
  *    value is passed to the input instead of the formData value
  */
-function NumberField<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
+function NumberField<T = unknown, S extends RJSFSchema = RJSFSchema, F extends FormContextType = FormContextType>(
   props: FieldProps<T, S, F>,
 ) {
   const { registry, onChange, formData, value: initialValue } = props;
@@ -47,7 +45,7 @@ function NumberField<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends
    * @param value - The current value for the change occurring
    */
   const handleChange = useCallback(
-    (newValue: FieldProps<T, S, F>['value'], path: FieldPathList, errorSchema?: ErrorSchema<T>, id?: string) => {
+    (newValue: T | NumberFieldValue, path: FieldPathList, errorSchema?: ErrorSchema<T>, id?: string) => {
       // Cache the original value in component state
       setLastValue(newValue);
 
@@ -61,10 +59,15 @@ function NumberField<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends
       // Check that the value is a string (this can happen if the widget used is a
       // <select>, due to an enum declaration etc) then, if the value ends in a
       // trailing decimal point or multiple zeroes, strip the trailing values
-      const processed =
-        typeof normalizedValue === 'string' && trailingCharMatcherWithPrefix.exec(normalizedValue)
+      // `asNumber` only accepts strings; every other value it would return unchanged anyway, so it is skipped
+      let processed: T | NumberFieldValue;
+      if (typeof normalizedValue === 'string') {
+        processed = trailingCharMatcherWithPrefix.exec(normalizedValue)
           ? asNumber(normalizedValue.replace(trailingCharMatcher, ''))
           : asNumber(normalizedValue);
+      } else {
+        processed = normalizedValue;
+      }
 
       onChange(processed as unknown as T, path, errorSchema, id);
     },

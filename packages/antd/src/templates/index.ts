@@ -1,4 +1,4 @@
-import type { FormContextType, RJSFSchema, StrictRJSFSchema, TemplatesType } from '@rjsf/utils';
+import type { FormContextType, RJSFSchema, TemplatesType } from '@rjsf/utils';
 
 import ArrayFieldItemTemplate from './ArrayFieldItemTemplate/index.tsx';
 import ArrayFieldTemplate from './ArrayFieldTemplate/index.tsx';
@@ -18,9 +18,9 @@ import TitleField from './TitleField/index.tsx';
 import WrapIfAdditionalTemplate from './WrapIfAdditionalTemplate/index.tsx';
 
 export function generateTemplates<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(): Partial<TemplatesType<T, S, F>> {
   return {
     ArrayFieldItemTemplate,

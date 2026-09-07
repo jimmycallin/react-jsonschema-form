@@ -1,6 +1,6 @@
 import type { ChangeEvent, FocusEvent } from 'react';
 import { useCallback } from 'react';
-import type { FormContextType, RJSFSchema, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
+import type { FormContextType, RJSFSchema, WidgetProps } from '@rjsf/utils';
 import {
   ariaDescribedByIds,
   descriptionId,
@@ -15,7 +15,7 @@ import {
  *
  * @param props - The `WidgetProps` for this component
  */
-function CheckboxWidget<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>({
+function CheckboxWidget<T = unknown, S extends RJSFSchema = RJSFSchema, F extends FormContextType = FormContextType>({
   schema,
   uiSchema,
   options,

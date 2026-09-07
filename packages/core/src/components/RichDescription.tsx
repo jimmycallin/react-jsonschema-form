@@ -1,14 +1,14 @@
 import type { ReactElement } from 'react';
-import type { FormContextType, Registry, RJSFSchema, StrictRJSFSchema, UiSchema } from '@rjsf/utils';
+import type { FormContextType, Registry, RJSFSchema, UiSchema } from '@rjsf/utils';
 import { getTestIds, getUiOptions } from '@rjsf/utils';
 import { Markdown } from 'markdown-to-jsx/react';
 
 const TEST_IDS = getTestIds();
 
 export interface RichDescriptionProps<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 > {
   /** The description text for a field, potentially containing markdown */
   description: string | ReactElement;
@@ -23,9 +23,9 @@ export interface RichDescriptionProps<
  * @param props - The `RichDescriptionProps` for this component
  */
 export default function RichDescription<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >({ description, registry, uiSchema = {} }: RichDescriptionProps<T, S, F>) {
   const { globalUiOptions } = registry;
   const uiOptions = getUiOptions<T, S, F>(uiSchema, globalUiOptions);

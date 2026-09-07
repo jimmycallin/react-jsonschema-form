@@ -1,12 +1,13 @@
 import type {
   ErrorSchema,
   FormValidation,
+  GenericObjectType,
   RJSFSchema,
   RJSFValidationError,
   UiSchema,
   ValidatorType,
 } from '@rjsf/utils';
-import { ErrorSchemaBuilder, noop } from '@rjsf/utils';
+import { ErrorSchemaBuilder, isObject, noop } from '@rjsf/utils';
 import type Ajv from 'ajv';
 import localize from 'ajv-i18n';
 import Ajv2019 from 'ajv/dist/2019';
@@ -19,6 +20,15 @@ import AJV8Validator from '../src/validator.ts';
 import { expectWarn } from './harness/testData.ts';
 
 const illFormedKey = "bar`'()=+*&^%$#@!";
+
+/** AJV reports error `params` as untyped data, so narrow it before reading a single param out of it
+ *
+ * @param error - The validation error whose `params` are being read
+ * @returns - The error `params` as a keyed object, or an empty object when there are none
+ */
+function errorParams(error: RJSFValidationError): GenericObjectType {
+  return isObject(error.params) ? error.params : {};
+}
 
 describe('AJV8Validator', () => {
   let builder: ErrorSchemaBuilder;
@@ -2522,7 +2532,7 @@ describe('AJV8Validator', () => {
         expect(errors.errorSchema).toEqual({
           a: { __errors: [errMessage] },
         });
-        expect(errors.errors[0].params.missingProperty).toEqual('a');
+        expect(errorParams(errors.errors[0]).missingProperty).toEqual('a');
       });
       it('should handle the case when errors are not present', () => {
         const errors = validator.validateFormData({ a: 'some kind of text' }, schema);
@@ -2714,7 +2724,7 @@ describe('AJV8Validator', () => {
             __errors: [errMessage],
           },
         });
-        expect(errors.errors[0].params.deps).toEqual('billingAddress');
+        expect(errorParams(errors.errors[0]).deps).toEqual('billingAddress');
       });
       it('should return an error when multiple dependents are missing', () => {
         schema = {
@@ -2746,7 +2756,7 @@ describe('AJV8Validator', () => {
             __errors: [errMessage],
           },
         });
-        expect(errors.errors[0].params.deps).toEqual('holderName, billingAddress');
+        expect(errorParams(errors.errors[0]).deps).toEqual('holderName, billingAddress');
       });
       it('should return an error with title when a dependent is missing', () => {
         schema = {
@@ -2774,7 +2784,7 @@ describe('AJV8Validator', () => {
             __errors: [errMessage],
           },
         });
-        expect(errors.errors[0].params.deps).toEqual('billingAddress');
+        expect(errorParams(errors.errors[0]).deps).toEqual('billingAddress');
       });
       it('should return an error with titles when multiple dependents are missing', () => {
         schema = {
@@ -2810,7 +2820,7 @@ describe('AJV8Validator', () => {
             __errors: [errMessage],
           },
         });
-        expect(errors.errors[0].params.deps).toEqual('holderName, billingAddress');
+        expect(errorParams(errors.errors[0]).deps).toEqual('holderName, billingAddress');
       });
       it('should return an error with uiSchema title when a dependent is missing', () => {
         schema = {
@@ -2845,7 +2855,7 @@ describe('AJV8Validator', () => {
             __errors: [errMessage],
           },
         });
-        expect(errors.errors[0].params.deps).toEqual('billingAddress');
+        expect(errorParams(errors.errors[0]).deps).toEqual('billingAddress');
       });
       it('should return an error with uiSchema titles when multiple dependents are missing', () => {
         schema = {
@@ -2889,7 +2899,7 @@ describe('AJV8Validator', () => {
             __errors: [errMessage],
           },
         });
-        expect(errors.errors[0].params.deps).toEqual('holderName, billingAddress');
+        expect(errorParams(errors.errors[0]).deps).toEqual('holderName, billingAddress');
       });
       it('should handle the case when errors are not present', () => {
         schema = {

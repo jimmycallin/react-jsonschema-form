@@ -3,7 +3,6 @@ import type {
   ErrorTransformer,
   FormContextType,
   RJSFSchema,
-  StrictRJSFSchema,
   UiSchema,
   ValidationData,
   ValidatorType,
@@ -20,9 +19,9 @@ import type { CustomValidatorOptionsType, Localizer, SuppressDuplicateFilteringT
 /** `ValidatorType` implementation that uses the AJV 8 validation mechanism.
  */
 export default class AJV8Validator<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 > implements ValidatorType<T, S, F> {
   /** The AJV instance to use for all validations
    *
@@ -95,7 +94,7 @@ export default class AJV8Validator<
    * @param schema - The schema against which to validate the form data   * @param schema
    * @param formData - The form data to validate
    */
-  rawValidation<Result = any>(schema: S, formData?: T): RawValidationErrorsType<Result> {
+  rawValidation<Result = unknown>(schema: S, formData?: T): RawValidationErrorsType<Result> {
     let compilationError: Error | undefined = undefined;
     let compiledValidator: ValidateFunction | undefined;
     try {

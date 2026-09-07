@@ -27,7 +27,6 @@ import type {
   RJSFSchema,
   SchemaFieldPath,
   SchemaUtilsType,
-  StrictRJSFSchema,
   UiSchema,
   ValidatorType,
 } from './types.ts';
@@ -39,9 +38,9 @@ import type {
  * implements the `SchemaUtilsType` interface.
  */
 class SchemaUtils<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 > implements SchemaUtilsType<T, S, F> {
   rootSchema: S;
   validator: ValidatorType<T, S, F>;
@@ -344,7 +343,7 @@ class SchemaUtils<
    * @returns - The new form data, with all the fields uniquely associated with the old schema set
    *      to `undefined`. Will return `undefined` if the new schema is not an object containing properties.
    */
-  sanitizeDataForNewSchema(newSchema?: S, oldSchema?: S, data?: any): T {
+  sanitizeDataForNewSchema(newSchema?: S, oldSchema?: S, data?: unknown): T {
     return sanitizeDataForNewSchema(
       this.validator,
       this.rootSchema,
@@ -386,9 +385,9 @@ class SchemaUtils<
  * @returns - An implementation of a `SchemaUtilsType` interface
  */
 export default function createSchemaUtils<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(
   validator: ValidatorType<T, S, F>,
   rootSchema: S,

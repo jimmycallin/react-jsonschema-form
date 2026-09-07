@@ -95,7 +95,7 @@ describeRepeated('Form common: error contextualization', (createFormComponent) =
           // The form has to be controlled, since the errors are cleared by comparing the incoming
           // `formData` prop against the previous one.
           function Controlled() {
-            const [formData, setFormData] = useState<any>({ baz: [{}] });
+            const [formData, setFormData] = useState<unknown>({ baz: [{}] });
             return (
               <Form
                 schema={altSchema}
@@ -144,7 +144,7 @@ describeRepeated('Form common: error contextualization', (createFormComponent) =
           const formRef = createRef<Form>();
 
           function Controlled() {
-            const [formData, setFormData] = useState<any>({});
+            const [formData, setFormData] = useState<unknown>({});
             return (
               <Form
                 ref={formRef}
@@ -193,7 +193,7 @@ describeRepeated('Form common: error contextualization', (createFormComponent) =
           const formRef = createRef<Form>();
 
           function Controlled() {
-            const [formData, setFormData] = useState<any>({ 'has.dot': {} });
+            const [formData, setFormData] = useState<unknown>({ 'has.dot': {} });
             return (
               <Form
                 ref={formRef}
@@ -241,7 +241,7 @@ describeRepeated('Form common: error contextualization', (createFormComponent) =
           };
 
           function Controlled() {
-            const [formData, setFormData] = useState<any>({ tags: ['a', 'a'] });
+            const [formData, setFormData] = useState<unknown>({ tags: ['a', 'a'] });
             return (
               <Form
                 schema={altSchema}
@@ -284,7 +284,7 @@ describeRepeated('Form common: error contextualization', (createFormComponent) =
           };
 
           function Controlled() {
-            const [formData, setFormData] = useState<any>({ baz: [{}, { corge: 'z' }] });
+            const [formData, setFormData] = useState<unknown>({ baz: [{}, { corge: 'z' }] });
             return (
               <Form
                 schema={altSchema}

@@ -1,4 +1,4 @@
-import type { ArrayFieldItemButtonsTemplateProps, FormContextType, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
+import type { ArrayFieldItemButtonsTemplateProps, FormContextType, RJSFSchema } from '@rjsf/utils';
 import { buttonId } from '@rjsf/utils';
 
 /** The `ArrayFieldTemplateItemButtons` component is the template used to render the buttons associate3d with items of
@@ -7,9 +7,9 @@ import { buttonId } from '@rjsf/utils';
  * @param props - The `ArrayFieldItemButtonsTemplateProps` props for the component
  */
 export default function ArrayFieldItemButtonsTemplate<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(props: ArrayFieldItemButtonsTemplateProps<T, S, F>) {
   const {
     disabled,

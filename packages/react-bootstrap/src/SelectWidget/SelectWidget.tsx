@@ -1,5 +1,5 @@
 import type { ChangeEvent, FocusEvent } from 'react';
-import type { FormContextType, RJSFSchema, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
+import type { FormContextType, RJSFSchema, WidgetProps } from '@rjsf/utils';
 import {
   ariaDescribedByIds,
   enumOptionSelectedValue,
@@ -12,9 +12,9 @@ import {
 import FormSelect from 'react-bootstrap/FormSelect';
 
 export default function SelectWidget<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >({
   schema,
   id,
@@ -39,12 +39,9 @@ export default function SelectWidget<
   const emptyValue = multiple ? [] : '';
   const optionValueFormat = getOptionValueFormat(options);
 
-  function getValue(event: FocusEvent | ChangeEvent | any, isMultiple?: boolean) {
+  function getValue(event: FocusEvent<HTMLSelectElement> | ChangeEvent<HTMLSelectElement>, isMultiple?: boolean) {
     if (isMultiple) {
-      return [].slice
-        .call(event.target.options)
-        .filter((o: any) => o.selected)
-        .map((o: any) => o.value);
+      return Array.from(event.target.selectedOptions, (option) => option.value);
     }
     return event.target.value;
   }
@@ -65,26 +62,26 @@ export default function SelectWidget<
         className={rawErrors.length > 0 ? 'is-invalid' : ''}
         onBlur={
           onBlur &&
-          ((event: FocusEvent) => {
+          ((event: FocusEvent<HTMLSelectElement>) => {
             const newValue = getValue(event, multiple);
             onBlur(id, enumOptionValueDecoder<S>(newValue, enumOptions, optionValueFormat, optEmptyValue));
           })
         }
         onFocus={
           onFocus &&
-          ((event: FocusEvent) => {
+          ((event: FocusEvent<HTMLSelectElement>) => {
             const newValue = getValue(event, multiple);
             onFocus(id, enumOptionValueDecoder<S>(newValue, enumOptions, optionValueFormat, optEmptyValue));
           })
         }
-        onChange={(event: ChangeEvent) => {
+        onChange={(event: ChangeEvent<HTMLSelectElement>) => {
           const newValue = getValue(event, multiple);
           onChange(enumOptionValueDecoder<S>(newValue, enumOptions, optionValueFormat, optEmptyValue));
         }}
         aria-describedby={ariaDescribedByIds(id)}
       >
         {showPlaceholderOption && <option value=''>{placeholder}</option>}
-        {enumOptions?.map(({ value: enumValue, label: enumLabel }: any, i: number) => {
+        {enumOptions?.map(({ value: enumValue, label: enumLabel }, i: number) => {
           const isDisabled = Array.isArray(enumDisabled) && enumDisabled.includes(enumValue);
           return (
             <option

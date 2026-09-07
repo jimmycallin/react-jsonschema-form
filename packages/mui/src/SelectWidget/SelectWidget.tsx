@@ -4,7 +4,7 @@ import MenuItem from '@mui/material/MenuItem';
 import type { SelectProps as MuiSelectProps } from '@mui/material/Select';
 import type { TextFieldProps } from '@mui/material/TextField';
 import TextField from '@mui/material/TextField';
-import type { FormContextType, GenericObjectType, RJSFSchema, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
+import type { FormContextType, GenericObjectType, RJSFSchema, WidgetProps } from '@rjsf/utils';
 import {
   ariaDescribedByIds,
   enumOptionSelectedValue,
@@ -29,14 +29,27 @@ export interface SelectWidgetMuiProps extends GenericObjectType {
   };
 }
 
+/** The MUI `TextField` props a caller may pass straight through to this widget. `WidgetProps` carries
+ * any key it does not declare as `unknown`, so declare the ones this widget reads to keep them typed. */
+interface SelectWidgetPassthroughProps {
+  /** Props applied to the MUI `InputLabel` element. */
+  InputLabelProps?: MuiInputLabelProps;
+  /** Props applied to the MUI `Select` element. */
+  SelectProps?: MuiSelectProps;
+  /** The HTML `autocomplete` attribute for the rendered input. */
+  autocomplete?: string;
+}
+
 /** The `SelectWidget` is a widget for rendering dropdowns.
  *  It is typically used with string properties constrained with enum options.
  *
  * @param props - The `WidgetProps` for this component
  */
-export default function SelectWidget<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
-  props: WidgetProps<T, S, F>,
-) {
+export default function SelectWidget<
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>(props: WidgetProps<T, S, F> & SelectWidgetPassthroughProps) {
   const {
     schema,
     id,
