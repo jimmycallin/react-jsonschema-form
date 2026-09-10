@@ -1,3 +1,4 @@
+import { generateWidgets as generateCoreWidgets } from '@rjsf/core';
 import type { FormContextType, RegistryWidgetsType, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
 
 import AutoCompleteWidget from '../AutoCompleteWidget/AutoCompleteWidget.tsx';
@@ -17,6 +18,7 @@ export function generateWidgets<
   F extends FormContextType = any,
 >(): RegistryWidgetsType<T, S, F> {
   return {
+    ...generateCoreWidgets<T, S, F>(),
     AutoCompleteWidget,
     CheckboxWidget,
     CheckboxesWidget,

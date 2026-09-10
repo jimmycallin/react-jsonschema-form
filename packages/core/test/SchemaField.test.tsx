@@ -13,7 +13,8 @@ import validator from '@rjsf/validator-ajv8';
 import { userEvent } from '@testing-library/user-event';
 
 import SchemaField from '../src/components/fields/SchemaField.tsx';
-import { getDefaultRegistry } from '../src/index.ts';
+import { Theme } from '../src/index.ts';
+import MarkdownTemplate from '../src/markdown.tsx';
 import { createFormComponent, submitForm } from './testUtils.tsx';
 
 const user = userEvent.setup();
@@ -42,7 +43,7 @@ describe('SchemaField', () => {
 
       // @ts-expect-error: TS2454, because we are setting it in the field component above
       const { registry } = receivedProps;
-      const defaultRegistry = getDefaultRegistry();
+      const defaultRegistry = Theme;
       expect(registry).toEqual({
         fields: defaultRegistry.fields,
         templates: defaultRegistry.templates,
@@ -83,7 +84,7 @@ describe('SchemaField', () => {
 
       // @ts-expect-error: TS2454, because we are setting it in the field component above
       const { registry } = receivedProps;
-      const defaultRegistry = getDefaultRegistry();
+      const defaultRegistry = Theme;
       expect(registry).toEqual({
         fields: defaultRegistry.fields,
         templates: defaultRegistry.templates,
@@ -235,7 +236,7 @@ describe('SchemaField', () => {
 
       // @ts-expect-error: TS2454, because we are setting it in the field component above
       const { registry } = receivedProps;
-      const defaultRegistry = getDefaultRegistry();
+      const defaultRegistry = Theme;
       expect(registry.widgets).toEqual(defaultRegistry.widgets);
       expect(registry.rootSchema).toEqual(schema);
       expect(registry.fields).toBeInstanceOf(Object);
@@ -824,9 +825,10 @@ describe('SchemaField', () => {
     };
     const descText = 'Make things **bold** or *italic*. Embed snippets of `code`.';
 
-    it('should render description with markdown', () => {
+    it('should render description with markdown when a MarkdownTemplate is registered', () => {
       const { node } = createFormComponent({
         schema,
+        templates: { MarkdownTemplate },
         uiSchema: {
           foo: {
             'ui:description': descText,
@@ -842,12 +844,13 @@ describe('SchemaField', () => {
       expect(field).toContainHTML('<code>code</code>');
     });
 
-    it('should render description without html tags', () => {
+    it('should render description as plain text without a MarkdownTemplate', () => {
       const { node } = createFormComponent({
         schema,
         uiSchema: {
           foo: {
             'ui:description': descText,
+            'ui:enableMarkdownInDescription': true,
           },
         },
       });

@@ -14,13 +14,13 @@ For instance, in the `@rjsf/core` library the definitions of the `Form` componen
 export default class Form<
   T = any,
   S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any
+  F extends FormContextType = any,
 > extends Component<FormProps<T, S, F>, FormState<T, S, F>> {
   // ... class implementation
 }
 
 export default function withTheme<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
-  themeProps: ThemeProps<T, S, F>
+  themeProps: ThemeProps<T, S, F>,
 ) {
   // ... function implementation
 }
@@ -28,7 +28,7 @@ export default function withTheme<T = any, S extends StrictRJSFSchema = RJSFSche
 export default function getDefaultRegistry<
   T = any,
   S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any
+  F extends FormContextType = any,
 >(): Omit<Registry<T, S, F>, 'schemaUtils'> {
   // ... function implementation
 }
@@ -140,7 +140,7 @@ const validator = customizeValidator<any, RJSFSchema, FormContext>();
 
 render(
   <Form<any, RJSFSchema, FormContext> schema={schema} validator={validator} formContext={formContext} />,
-  document.getElementById('app')
+  document.getElementById('app'),
 );
 ```
 

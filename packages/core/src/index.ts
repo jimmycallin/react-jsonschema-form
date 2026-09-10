@@ -1,25 +1,18 @@
-import type { FormProps, FormState, IChangeEvent } from './components/Form.tsx';
-import Form from './components/Form.tsx';
-import type { RichDescriptionProps } from './components/RichDescription.tsx';
-import RichDescription from './components/RichDescription.tsx';
-import type { RichHelpProps } from './components/RichHelp.tsx';
-import RichHelp from './components/RichHelp.tsx';
-import type { SchemaExamplesProps } from './components/SchemaExamples.tsx';
-import SchemaExamples from './components/SchemaExamples.tsx';
-import getDefaultRegistry from './getDefaultRegistry.ts';
-import getTestRegistry from './getTestRegistry.tsx';
-import type { ThemeProps } from './withTheme.tsx';
-import withTheme from './withTheme.tsx';
-
-export type {
-  FormProps,
-  FormState,
-  IChangeEvent,
-  ThemeProps,
-  RichDescriptionProps,
-  RichHelpProps,
-  SchemaExamplesProps,
-};
-
-export { withTheme, getDefaultRegistry, getTestRegistry, RichDescription, RichHelp, SchemaExamples };
-export default Form;
+export type { FormProps, FormState, IChangeEvent, ThemeProps, CompleteThemeProps } from './components/Form.tsx';
+export type { RichDescriptionProps } from './components/RichDescription.tsx';
+export type { RichHelpProps } from './components/RichHelp.tsx';
+export type { SchemaExamplesProps } from './components/SchemaExamples.tsx';
+export { default as RichDescription } from './components/RichDescription.tsx';
+export { default as RichHelp } from './components/RichHelp.tsx';
+export { default as SchemaExamples } from './components/SchemaExamples.tsx';
+export { default as withTheme } from './withTheme.tsx';
+export { default as Theme, generateTheme } from './Theme.ts';
+export * from './components/fields/index.ts';
+export { default as Fields } from './components/fields/index.ts';
+export * from './components/widgets/index.ts';
+export { default as Widgets } from './components/widgets/index.ts';
+export * from './components/templates/index.ts';
+export { default as Templates } from './components/templates/index.ts';
+export { default, default as Form, generateForm } from './CoreForm.ts';
+export { default as createForm } from './createForm.tsx';
+export { default as getDefaultRegistry } from './getDefaultRegistry.ts';

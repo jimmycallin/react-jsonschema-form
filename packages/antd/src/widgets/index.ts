@@ -1,3 +1,4 @@
+import { generateWidgets as generateCoreWidgets } from '@rjsf/core';
 import type { FormContextType, RegistryWidgetsType, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
 
 import AltDateTimeWidget from './AltDateTimeWidget/index.tsx';
@@ -18,6 +19,7 @@ export function generateWidgets<
   F extends FormContextType = any,
 >(): RegistryWidgetsType<T, S, F> {
   return {
+    ...generateCoreWidgets<T, S, F>(),
     AltDateTimeWidget,
     AltDateWidget,
     CheckboxesWidget,

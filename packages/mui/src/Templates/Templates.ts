@@ -1,3 +1,4 @@
+import { generateTemplates as generateCoreTemplates } from '@rjsf/core';
 import type { FormContextType, RJSFSchema, StrictRJSFSchema, TemplatesType } from '@rjsf/utils';
 
 import AddButton from '../AddButton/index.ts';
@@ -23,8 +24,9 @@ export function generateTemplates<
   T = any,
   S extends StrictRJSFSchema = RJSFSchema,
   F extends FormContextType = any,
->(): Partial<TemplatesType<T, S, F>> {
+>(): TemplatesType<T, S, F> {
   return {
+    ...generateCoreTemplates<T, S, F>(),
     ArrayFieldItemTemplate,
     ArrayFieldTemplate,
     BaseInputTemplate,

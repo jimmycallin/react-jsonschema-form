@@ -957,3 +957,21 @@ const uiSchema: UiSchema = {
 - [Chakra-UI Customization](themes/chakra-ui/uiSchema.md)
 - [MUI Customization](themes/mui/uiSchema.md)
 - [PrimeReact Customization](themes/primereact/uiSchema.md)
+
+### Registering a markdown renderer in v7
+
+The `ui:enableMarkdownInDescription` and `ui:enableMarkdownInHelp` flags still default to `false` and can be set independently, including through `ui:globalOptions`. They now require an explicitly registered renderer, and `@rjsf/core/markdown` needs `markdown-to-jsx` installed (it is an optional peer dependency):
+
+```tsx
+import Form from '@rjsf/core';
+import MarkdownRenderer from '@rjsf/core/markdown';
+
+<Form
+  schema={schema}
+  validator={validator}
+  templates={{ MarkdownTemplate: MarkdownRenderer }}
+  uiSchema={{ 'ui:enableMarkdownInDescription': true, 'ui:enableMarkdownInHelp': false }}
+/>;
+```
+
+Without a renderer, text stays plain even when a flag is enabled.

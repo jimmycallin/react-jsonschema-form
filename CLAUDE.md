@@ -95,10 +95,11 @@ Override fields/widgets/templates per-form via props, or globally via `withTheme
 
 Every theme package follows the same structure:
 
-1. Imports `withTheme` from `@rjsf/core`
-2. Defines custom `Templates`, `Widgets`, and optionally `Fields`
-3. Calls `withTheme({ templates, widgets, fields })` to produce a themed `Form`
-4. Exports: `Form` (default), `Theme`, `Templates`, `Widgets`
+1. `generateTemplates()` and `generateWidgets()` spread the core `generateTemplates()`/`generateWidgets()` from `@rjsf/core` under the theme's own components; `generateTheme()` combines them with the core `generateFields()`
+2. A `Form` module calls `createForm(generateTheme())`; `index.ts` only re-exports. Anything instantiated at module level lives outside the index so that, with `sideEffects: false`, a bundler drops it when a consumer imports something else (esbuild and webpack cannot prove a call in the index pure)
+3. Exports: `Form` (default), `Theme`, `Templates`, `Widgets`, plus `generateForm`, `generateTheme`, `generateTemplates`, `generateWidgets` for custom generics
+
+`@rjsf/core` exports a generic `Form` class with core defaults. `withTheme()` merges partial overrides; `createForm()` takes a complete theme without implicit defaults.
 
 ### Field → Widget → Template hierarchy
 

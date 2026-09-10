@@ -1,39 +1,28 @@
-import type { ReactElement } from 'react';
-import type { FormContextType, Registry, RJSFSchema, StrictRJSFSchema, UiSchema } from '@rjsf/utils';
-import { getTestIds, getUiOptions } from '@rjsf/utils';
-import { Markdown } from 'markdown-to-jsx/react';
+import type { FormContextType, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
+import { getTemplate, getUiOptions, getTestIds } from '@rjsf/utils';
 
-const TEST_IDS = getTestIds();
+import type { RichDescriptionProps } from './RichDescription.tsx';
 
-export interface RichHelpProps<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any> {
-  /** The description text for a field, potentially containing markdown */
-  help: string | ReactElement;
-  /** The uiSchema object for this base component */
-  uiSchema?: UiSchema<T, S, F>;
-  /** The `registry` object */
-  registry: Registry<T, S, F>;
+export interface RichHelpProps<
+  T = any,
+  S extends StrictRJSFSchema = RJSFSchema,
+  F extends FormContextType = any,
+> extends Omit<RichDescriptionProps<T, S, F>, 'description'> {
+  help: RichDescriptionProps<T, S, F>['description'];
 }
 
-/** Renders the given `description` in the props as
- *
- * @param props - The `RichHelpProps` for this component
- */
+/** Renders help with the registered renderer when its markdown option is enabled. */
 export default function RichHelp<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>({
   help,
   registry,
   uiSchema = {},
 }: RichHelpProps<T, S, F>) {
-  const { globalUiOptions } = registry;
-  const uiOptions = getUiOptions<T, S, F>(uiSchema, globalUiOptions);
-
-  if (uiOptions.enableMarkdownInHelp && typeof help === 'string') {
-    return (
-      <Markdown options={{ disableParsingRawHTML: true }} data-testid={TEST_IDS.markdown}>
-        {help}
-      </Markdown>
-    );
+  const uiOptions = getUiOptions<T, S, F>(uiSchema, registry.globalUiOptions);
+  if (typeof help !== 'string' || !uiOptions.enableMarkdownInHelp) {
+    return help;
   }
-  return help;
+  const MarkdownTemplate = getTemplate<'MarkdownTemplate', T, S, F>('MarkdownTemplate', registry, uiOptions);
+  return <MarkdownTemplate>{help}</MarkdownTemplate>;
 }
 
-RichHelp.TEST_IDS = TEST_IDS;
+RichHelp.TEST_IDS = getTestIds();

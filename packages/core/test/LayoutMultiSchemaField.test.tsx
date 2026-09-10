@@ -30,7 +30,7 @@ import LayoutMultiSchemaField, {
 } from '../src/components/fields/LayoutMultiSchemaField.tsx';
 import RadioWidget from '../src/components/widgets/RadioWidget.tsx';
 import SelectWidget from '../src/components/widgets/SelectWidget.tsx';
-import getTestRegistry from '../src/getTestRegistry.tsx';
+import { getTestRegistry } from '../src/testing.ts';
 import { SIMPLE_ONEOF, SIMPLE_ONEOF_OPTIONS } from './testData/layoutData.ts';
 import { setupConsoleErrorSuppression } from './testUtils.tsx';
 
@@ -209,7 +209,7 @@ describe('LayoutMultiSchemaField', () => {
       options,
       registry: getTestRegistry(
         schema,
-        {},
+        undefined,
         {
           FieldErrorTemplate: FakeFieldErrorTemplate,
           FieldTemplate: FakeFieldTemplate,
@@ -565,7 +565,7 @@ describe('LayoutMultiSchemaField', () => {
       ]);
     });
     test('throws error when no enumOptions are generated', () => {
-      const { schemaUtils } = getTestRegistry({});
+      const { schemaUtils } = getTestRegistry();
       expect(() => computeEnumOptions({}, [], schemaUtils)).toThrow('No enumOptions were computed from the schema {}');
     });
   });

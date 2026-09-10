@@ -2,15 +2,16 @@ import { Component, createRef } from 'react';
 import type { RJSFSchema } from '@rjsf/utils';
 import validator from '@rjsf/validator-ajv8';
 
-import type { FormProps, ThemeProps } from '../src/index.ts';
+import type { FormProps } from '../src/index.ts';
 import type Form from '../src/index.ts';
 import { withTheme } from '../src/index.ts';
 import { createComponent } from './testUtils.tsx';
 
-function WrapperClassComponent(props: ThemeProps) {
+/** Builds a theme from the core one with the given overrides, the way a theme package composes its own */
+function WrapperClassComponent(overrides: Pick<FormProps, 'fields' | 'widgets' | 'templates'>) {
   return class extends Component<FormProps> {
     render() {
-      const Cmp = withTheme(props);
+      const Cmp = withTheme(overrides);
       return <Cmp {...this.props} />;
     }
   };

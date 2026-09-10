@@ -115,3 +115,21 @@ const ThemeObject: ThemeProps = {
 ```
 
 Thus, the user has higher priority than the withTheme HOC, and the theme has higher priority than the default values of the rjsf Form component (**User** > **Theme** > **Defaults**).
+
+## Building a theme without core defaults
+
+`withTheme()` accepts partial overrides and merges the core theme underneath them. For a smaller custom theme, use `createForm()` with a `CompleteThemeProps` object instead. It includes only the fields, widgets and templates you register; callers can still override those entries through form props.
+
+```tsx
+import { createForm, SchemaField, ObjectField, StringField, TextWidget, Templates } from '@rjsf/core';
+
+const Form = createForm({
+  fields: { SchemaField, ObjectField, StringField },
+  widgets: { TextWidget },
+  templates: Templates,
+});
+```
+
+This example supports schemas using the registered string and object fields. Register additional components when your schemas require them. All templates are required; fields and widgets are dictionaries whose contents must cover the schemas you render.
+
+Core exports `Theme`, `Fields`, `Widgets`, `Templates`, their generic `generate*` factories, and individual components. Built-in theme packages compose complete themes with `createForm()`. Keep instantiated forms in a separate module and only re-export them from the package index, so unused forms can be dropped by bundlers.

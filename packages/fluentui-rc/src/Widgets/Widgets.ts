@@ -1,3 +1,4 @@
+import { generateWidgets as generateCoreWidgets } from '@rjsf/core';
 import type { FormContextType, RegistryWidgetsType, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
 
 import CheckboxesWidget from '../CheckboxesWidget/CheckboxesWidget.tsx';
@@ -13,6 +14,7 @@ export function generateWidgets<
   F extends FormContextType = any,
 >(): RegistryWidgetsType<T, S, F> {
   return {
+    ...generateCoreWidgets<T, S, F>(),
     CheckboxWidget,
     CheckboxesWidget,
     RadioWidget,

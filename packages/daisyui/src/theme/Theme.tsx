@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { createContext, useCallback, useContext, useMemo, useState } from 'react';
-import type { ThemeProps } from '@rjsf/core';
-import { getDefaultRegistry } from '@rjsf/core';
+import type { CompleteThemeProps } from '@rjsf/core';
+import { generateFields } from '@rjsf/core';
 import type { FormContextType, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
 
 import { generateTemplates } from '../templates/Templates.tsx';
@@ -12,24 +12,18 @@ import { generateWidgets } from '../widgets/Widgets.tsx';
  * Combines templates and widgets with default fields to create a complete theme
  * that can be used with react-jsonschema-form.
  *
- * @returns A ThemeProps object containing all necessary components for the theme
+ * @returns A CompleteThemeProps object containing all necessary components for the theme
  */
 export function generateTheme<
   T = any,
   S extends StrictRJSFSchema = RJSFSchema,
   F extends FormContextType = any,
->(): ThemeProps<T, S, F> {
-  const { fields } = getDefaultRegistry<T, S, F>();
-  const generatedWidgets = generateWidgets<T, S, F>();
-  const templates = generateTemplates<T, S, F>();
-
+>(): CompleteThemeProps<T, S, F> {
+  const widgets = generateWidgets<T, S, F>();
   return {
-    templates,
-    widgets: {
-      ...generatedWidgets,
-      boolean: generatedWidgets.toggle,
-    },
-    fields,
+    fields: generateFields<T, S, F>(),
+    templates: generateTemplates<T, S, F>(),
+    widgets: { ...widgets, boolean: widgets.toggle },
   };
 }
 

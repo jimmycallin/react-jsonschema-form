@@ -25,6 +25,7 @@ import type {
   NameGeneratorFunction,
 } from '@rjsf/utils';
 import {
+  englishStringTranslator,
   getByPath,
   setByPath,
   toPath,
@@ -54,8 +55,29 @@ import {
   ONE_OF_KEY,
 } from '@rjsf/utils';
 
-import getDefaultRegistry from '../getDefaultRegistry.ts';
 import { ADDITIONAL_PROPERTY_KEY_REMOVE, IS_RESET } from './constants.ts';
+
+// A shared default so a registry built without a formContext keeps the same identity across renders
+const EMPTY_FORM_CONTEXT = {};
+
+/** The complete set of fields, widgets and templates a `Form` renders with, plus the optional form wrapper element.
+ * A theme supplies it through `createForm()`; the `Form` class has no defaults of its own, so what a theme leaves out
+ * never reaches the bundle.
+ */
+export type CompleteThemeProps<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any> = {
+  /** The dictionary of registered fields in the form */
+  fields: RegistryFieldsType<T, S, F>;
+  /** The dictionary of registered widgets in the form */
+  widgets: RegistryWidgetsType<T, S, F>;
+  /** The complete dictionary of registered templates in the form */
+  templates: TemplatesType<T, S, F>;
+} & Pick<FormProps<T, S, F>, '_internalFormWrapper'>;
+
+/** Partial core theme overrides accepted by `withTheme()`. */
+export type ThemeProps<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any> = Pick<
+  FormProps<T, S, F>,
+  'fields' | 'widgets' | 'templates' | '_internalFormWrapper'
+>;
 
 /** The properties that are passed to the `Form` */
 export interface FormProps<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any> {
@@ -710,7 +732,7 @@ export default class Form<
     }
 
     // Only store a new registry when the props cause a different one to be created
-    const newRegistry = Form.getRegistry(props, rootSchema, schemaUtils);
+    const newRegistry = (this.constructor as typeof Form).getRegistry(props, rootSchema, schemaUtils);
     const registry = deepEquals(state.registry, newRegistry) ? state.registry : newRegistry;
 
     // Only compute a new `fieldPathId` when the `idPrefix` is different than the existing fieldPathId's ID_KEY
@@ -957,12 +979,11 @@ export default class Form<
             valueForPath = null as unknown as T;
           } else {
             const { field } = schemaUtils.findFieldInSchema(schema, path, oldFormData);
-            const leaf = field as RJSFSchema | undefined;
-            const isOneOfOrAnyOfLeaf = leaf && (ONE_OF_KEY in leaf || ANY_OF_KEY in leaf);
+            const isOneOfOrAnyOfLeaf = field && (ONE_OF_KEY in field || ANY_OF_KEY in field);
             // oneOf/anyOf and unresolved leaves keep `undefined` so mergeDefaults doesn't
             // re-apply a branch default when the user clears the widget.
             // Plain resolved leaves use plainLeafWasCleared instead (see below).
-            if (!isOneOfOrAnyOfLeaf && leaf !== undefined) {
+            if (!isOneOfOrAnyOfLeaf && field !== undefined) {
               plainLeafWasCleared = true;
             }
           }
@@ -1273,23 +1294,15 @@ export default class Form<
     schema: S,
     schemaUtils: SchemaUtilsType<T, S, F>,
   ): Registry<T, S, F> {
-    const { translateString: customTranslateString, uiSchema = {} } = props;
-    const { fields, templates, widgets, formContext, translateString } = getDefaultRegistry<T, S, F>();
+    const { fields, templates, widgets, translateString = englishStringTranslator, uiSchema = {} } = props;
     return {
-      fields: { ...fields, ...props.fields },
-      templates: {
-        ...templates,
-        ...props.templates,
-        ButtonTemplates: {
-          ...templates.ButtonTemplates,
-          ...props.templates?.ButtonTemplates,
-        },
-      },
-      widgets: { ...widgets, ...props.widgets },
+      fields: fields as RegistryFieldsType<T, S, F>,
+      templates: templates as TemplatesType<T, S, F>,
+      widgets: widgets as RegistryWidgetsType<T, S, F>,
       rootSchema: schema,
-      formContext: props.formContext || formContext,
+      formContext: props.formContext ?? (EMPTY_FORM_CONTEXT as F),
       schemaUtils,
-      translateString: customTranslateString || translateString,
+      translateString,
       globalUiOptions: uiSchema[UI_GLOBAL_OPTIONS_KEY],
       globalFormOptions: Form.getGlobalFormOptions(props),
       uiSchemaDefinitions: uiSchema[UI_DEFINITIONS_KEY] ?? {},

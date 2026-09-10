@@ -29,8 +29,6 @@ const uiOptionsKeys: (keyof UIOptionsType)[] = [
   'removable',
   'duplicateKeySuffixSeparator',
   'enumOptions',
-  'enableMarkdownInDescription',
-  'enableMarkdownInHelp',
   'enableOptionalDataFieldForType',
   'globalOptions',
   'allowClearTextInputs',

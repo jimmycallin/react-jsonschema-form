@@ -21,17 +21,34 @@ should change the heading of the (upcoming) version to include a major version b
 ## @rjsf/antd
 
 - **BREAKING CHANGE** Dropped support for `antd` version 5; the peer dependency range is now `^6.3.6`. `ErrorList` and `CyclicSchemaExpandTemplate` use of `Alert` always passing `title` prop now. The `6.3.6` floor isn't arbitrary: antd 6.0.0-6.3.5 crash `@rjsf/antd` forms on first render (`getRealHeight` destructuring a `null` node), fixed upstream in [ant-design/ant-design#57636](https://github.com/ant-design/ant-design/pull/57636)
+- Registers the core fields, widgets and templates itself by spreading them under its own, using `createForm()` without implicit defaults ([#5263](https://github.com/rjsf-team/react-jsonschema-form/pull/5263))
 
 ## @rjsf/chakra-ui
 
 - Converted the internal `forwardRef`-wrapped UI primitives (`Field`, `Slider`, `Alert`, `NumberInputRoot`, `Checkbox`, `Radio`, `CloseButton`, and the `Select` family) to plain function components that accept `ref` as a regular prop, now that React 19 supports this natively
 - `SelectRoot` is now a plain generic function (`function SelectRoot<T extends CollectionItem>(...)`) instead of a non-generic arrow function cast to `ChakraSelect.RootComponent`, removing the cast and the wrapping parens it required
+- Registers the core fields, widgets and templates itself by spreading them under its own, using `createForm()` without implicit defaults ([#5263](https://github.com/rjsf-team/react-jsonschema-form/pull/5263))
 
 ## @rjsf/core
 
 - **BREAKING CHANGE:** `GridType` and `Operators` are now `as const` objects with same-named union types instead of `enum`s, so the source is valid under Node's type stripping. Values and `GridType.ROW`-style member access are unchanged; code that used a member as a type must write `typeof GridType.ROW` instead of `GridType.ROW` ([#5244](https://github.com/rjsf-team/react-jsonschema-form/pull/5244))
 - **BREAKING CHANGE** `withTheme()` now returns a plain function component instead of a `forwardRef`-wrapped one, and `FormProps['onSubmit']`'s event parameter is now typed as `SubmitEvent<any>` instead of the deprecated `FormEvent<any>`
 - **BREAKING CHANGE:** Removed deprecated `Form` APIs: the `getUsedFormData()` and `getFieldNames()` instance methods (no direct replacement), the `omitExtraData()` instance method (use `SchemaUtils.omitExtraData(schema, formData)` instead), the `removeEmptyOptionalObjects` prop (already a no-op; use `omitExtraData`, which now prunes empty optional objects itself), and `boolean` values for the `liveValidate`/`liveOmit` props (use `'onChange'` in place of `true`, or omit the prop in place of `false`). Also removed the `ui:rootFieldId` uiSchema directive; use the `Form.idPrefix` prop instead
+- **BREAKING CHANGE:** Markdown requires an explicitly registered `templates.MarkdownTemplate`; core defaults to plain text. Import the renderer from `@rjsf/core/markdown`; `markdown-to-jsx` is now an optional peer dependency that only that entry point needs. Existing description/help flags remain independent and default to false. Raw HTML parsing is disabled, including file information. ([#5263](https://github.com/rjsf-team/react-jsonschema-form/pull/5263))
+- Added `createForm(completeTheme)` and `CompleteThemeProps` for themes without implicit core defaults. `withTheme()` retains partial-theme merging and the default `Form` remains a generic class. ([#5263](https://github.com/rjsf-team/react-jsonschema-form/pull/5263))
+- Added `Theme`, `Fields`, `Widgets`, `Templates`, their `generate*` factories and individual component exports. `getDefaultRegistry()` and `Form.getRegistry()` remain available. ([#5263](https://github.com/rjsf-team/react-jsonschema-form/pull/5263))
+- **BREAKING CHANGE:** `getTestRegistry()` moved to `@rjsf/core/testing`; `@rjsf/validator-ajv8`, which it needs, is an optional peer dependency that only this entry point requires. Its positional arguments remain supported. Fixed three theme helpers that previously passed an options object instead of positional arguments. ([#5263](https://github.com/rjsf-team/react-jsonschema-form/pull/5263))
+- Added `generateForm<T, S, F>()` for typed forms, alongside the existing `<Form<T, S, F>>` generic JSX ([#5263](https://github.com/rjsf-team/react-jsonschema-form/pull/5263))
+
+## @rjsf/daisyui
+
+- **BREAKING CHANGE:** The `Widgets` export is the generated widgets object, like every other theme, rather than an alias of `generateWidgets` ([#5263](https://github.com/rjsf-team/react-jsonschema-form/pull/5263))
+- Removed the unreferenced `src/styles.css` and `tailwind.config.js`, and with them the `tailwindcss` dependency and `daisyui` devDependency only they used; the README's Tailwind setup is unchanged ([#5263](https://github.com/rjsf-team/react-jsonschema-form/pull/5263))
+- Registers the core widgets and templates itself by spreading them under its own, using `createForm()` without implicit defaults ([#5263](https://github.com/rjsf-team/react-jsonschema-form/pull/5263))
+
+## @rjsf/fluentui-rc
+
+- Registers the core fields, widgets and templates itself by spreading them under its own, using `createForm()` without implicit defaults ([#5263](https://github.com/rjsf-team/react-jsonschema-form/pull/5263))
 
 ## @rjsf/mantine
 
@@ -39,19 +56,27 @@ should change the heading of the (upcoming) version to include a major version b
 - Fixed `ObjectFieldTemplate` and the fluid variant of `GridTemplate` rendering their root `Container` at Mantine's default constrained width (960px, centered), instead of filling the space the form was given. Both now pass Mantine's `fluid` prop
 - **BREAKING CHANGE** Fixed `GridTemplate` silently dropping `gutter` from `ui:row`/`ui:col` options: Mantine 9 renamed `Grid`'s `gutter` prop to `gap`, so a `gutter` value spread onto `<Grid>` was leaking through as an unrecognized DOM attribute instead of controlling spacing. `GridTemplate` now maps `gutter` to `gap` (an explicit `gap` still wins if both are provided); existing `ui:row`/`ui:col` options that use `gutter` keep working, but should be renamed to `gap` going forward
 - Updated the README's prerequisites, which still listed `@mantine/core|hooks|dates >= 8` and didn't mention the React 19.2+ requirement
+- Registers the core fields, widgets and templates itself by spreading them under its own, using `createForm()` without implicit defaults ([#5263](https://github.com/rjsf-team/react-jsonschema-form/pull/5263))
 
 ## @rjsf/mui
 
 - Updated the README, which said "Material UI 7 requires React 18, so you will need to upgrade" — the peer requirement is now React 19
 - **BREAKING CHANGE** Dropped support for `@mui/material`/`@mui/icons-material` version 7; the peer dependency range is now `^9.0.0`
+- Registers the core fields, widgets and templates itself by spreading them under its own, using `createForm()` without implicit defaults ([#5263](https://github.com/rjsf-team/react-jsonschema-form/pull/5263))
+
+## @rjsf/primereact
+
+- Registers the core fields, widgets and templates itself by spreading them under its own, using `createForm()` without implicit defaults ([#5263](https://github.com/rjsf-team/react-jsonschema-form/pull/5263))
 
 ## @rjsf/react-bootstrap
 
 - Fixed `lib/index.js` being unloadable by Node: it imported `react-bootstrap/Col`-style directory subpaths and extensionless `@react-icons/all-files` paths, which only bundlers resolve. Components are now imported from `react-bootstrap` itself and icon files by their full `.js` name ([#5244](https://github.com/rjsf-team/react-jsonschema-form/pull/5244))
+- Registers the core fields, widgets and templates itself by spreading them under its own, using `createForm()` without implicit defaults ([#5263](https://github.com/rjsf-team/react-jsonschema-form/pull/5263))
 
 ## @rjsf/shadcn
 
 - Converted the internal `forwardRef`-wrapped `Command` and `CommandInput` components to plain function components that accept `ref` as a regular prop, now that React 19 supports this natively
+- Registers the core fields, widgets and templates itself by spreading them under its own, using `createForm()` without implicit defaults ([#5263](https://github.com/rjsf-team/react-jsonschema-form/pull/5263))
 
 ## @rjsf/utils
 
@@ -59,6 +84,8 @@ should change the heading of the (upcoming) version to include a major version b
 - **BREAKING CHANGE:** `TranslatableString` and `AdditionalItemsHandling` are now `as const` objects with same-named union types instead of `enum`s, so the source is valid under Node's type stripping. Values (`AdditionalItemsHandling` keeps `0`, `1`, `2`) and `TranslatableString.ArrayItemTitle`-style member access are unchanged; code that used a member as a type must write `typeof TranslatableString.ArrayItemTitle`, and the numeric enum's reverse mapping (`AdditionalItemsHandling[0]`) no longer exists ([#5244](https://github.com/rjsf-team/react-jsonschema-form/pull/5244))
 - **BREAKING CHANGE** `ObjectFieldTemplatePropertyType` is now generic (`<T, S, F>`, all defaulted like every other RJSF generic type) and its `content` field is typed as `ReactElement<Pick<FieldProps<T, S, F>, 'schema' | 'uiSchema'>>` instead of a bare `ReactElement`. React 19's types default a bare `ReactElement`'s props to `unknown` instead of `any`, which broke themes (e.g. `@rjsf/antd`) that read `.content.props.schema`/`.content.props.uiSchema` directly; the typed version fixes that without widening to `any`. `ObjectFieldTemplateProps['properties']` now threads its own `<T, S, F>` through to `ObjectFieldTemplatePropertyType`. This is only a breaking change if you referenced `ObjectFieldTemplatePropertyType` with explicit (non-default) generics, or relied on `content.props` being typed as `any`
 - **BREAKING CHANGE:** Removed deprecated exports: the `getUsedFormData()` and `getFieldNames()` functions (no direct replacement), `removeOptionalEmptyObjects()` (use `omitExtraData`, which has the equivalent pruning built in), `toPathSchema()` and the `PathSchema` type (no direct replacement), and the `toPathSchema()` method on `SchemaUtilsType`/`SchemaUtils`. Also removed the `'ui:rootFieldId'` property from the `UiSchema` type; use the `Form.idPrefix` prop instead
+- **BREAKING CHANGE:** Added required `MarkdownTemplate` to `TemplatesType` and its `MarkdownTemplateProps` type. The existing `enableMarkdownInDescription` and `enableMarkdownInHelp` options control the registered renderer. ([#5263](https://github.com/rjsf-team/react-jsonschema-form/pull/5263))
+- **BREAKING CHANGE:** The `InvalidObjectField`, `UnsupportedFieldWithId`, `UnsupportedFieldWithReason`, `UnsupportedFieldWithIdAndReason` and `FilesInfo` translatable strings no longer contain markdown syntax, so they read the same with or without a `MarkdownTemplate` ([#5263](https://github.com/rjsf-team/react-jsonschema-form/pull/5263))
 
 ## @rjsf/validator-ajv8
 
@@ -82,3 +109,6 @@ should change the heading of the (upcoming) version to include a major version b
 - The playground's `FormComponent` is now derived with `useMemo(() => withTheme(themes[theme].theme), [themes, theme])` instead of being kept in its own `useState` and manually synced with the `theme` state on every selection. Removes the duplicated state, the `react/hook-use-state` lint suppression, and structurally rules out the `useState(withTheme(...))` crash class fixed above
 - Bumped the root `@types/react` floor to `^19.2.18`: `SubmitEvent`, now part of the public `FormProps['onSubmit']` type, was only added to `@types/react` in that release — every earlier 19.2.x patch (verified 19.2.0 through 19.2.17) lacks it and fails to compile against `@rjsf/core`'s published types
 - Removed a dead assertion in `Form.props.test.tsx` that waited for React 18's "Function components cannot be given refs" warning; verified via a standalone repro that React 19 emits no such warning for this case, so the branch could never run. The two sibling React-18-only console assertions in this file were already removed
+- **BREAKING CHANGE** Every package exports only its root (`.`), plus `./compileSchemaValidators` for the validators and `./markdown` and `./testing` for `@rjsf/core`; the `./lib` and `./lib/*.js` deep-import paths are gone. knip no longer needs the daisyui entry override that the wildcard required ([#5263](https://github.com/rjsf-team/react-jsonschema-form/pull/5263))
+- Added bundle canaries for the default Form and the `createForm` factory to detect tree-shaking regressions, and a size row per export subpath. ([#5263](https://github.com/rjsf-team/react-jsonschema-form/pull/5263))
+- The playground registers the `@rjsf/core/markdown` renderer; samples retain their per-field markdown flags. ([#5263](https://github.com/rjsf-team/react-jsonschema-form/pull/5263))

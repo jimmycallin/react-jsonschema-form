@@ -21,7 +21,31 @@ import TimeWidget from './TimeWidget.tsx';
 import UpDownWidget from './UpDownWidget.tsx';
 import URLWidget from './URLWidget.tsx';
 
-function widgets<
+export {
+  AltDateTimeWidget,
+  AltDateWidget,
+  CheckboxesWidget,
+  CheckboxWidget,
+  ColorWidget,
+  DateTimeWidget,
+  DateWidget,
+  EmailWidget,
+  FileWidget,
+  HiddenWidget,
+  PasswordWidget,
+  RadioWidget,
+  RangeWidget,
+  RatingWidget,
+  SelectWidget,
+  TextareaWidget,
+  TextWidget,
+  TimeWidget,
+  UpDownWidget,
+  URLWidget,
+};
+
+/** The core widgets */
+export function generateWidgets<
   T = any,
   S extends StrictRJSFSchema = RJSFSchema,
   F extends FormContextType = any,
@@ -50,4 +74,4 @@ function widgets<
   };
 }
 
-export default widgets;
+export default generateWidgets();

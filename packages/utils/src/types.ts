@@ -354,6 +354,12 @@ export type RegistryWidgetsType<
   F extends FormContextType = any,
 > = Record<string, Widget<T, S, F>>;
 
+/** The properties that are passed to a `MarkdownTemplate` implementation */
+export interface MarkdownTemplateProps {
+  /** The markdown text to render */
+  children: string;
+}
+
 /** The set of RJSF templates that can be overridden by themes or users */
 export type TemplatesType<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any> = {
   /** The template to use while rendering normal or fixed array fields */
@@ -396,6 +402,11 @@ export type TemplatesType<T = any, S extends StrictRJSFSchema = RJSFSchema, F ex
   UnsupportedFieldTemplate: ComponentType<UnsupportedFieldProps<T, S, F>>;
   /** The template to use for rendering a field that allows a user to add additional properties */
   WrapIfAdditionalTemplate: ComponentType<WrapIfAdditionalTemplateProps<T, S, F>>;
+  /** The template to use for rendering markdown text in descriptions, help text and translatable strings. The core
+   * default renders it as plain text so no markdown library is bundled; `@rjsf/core/markdown` provides one built on
+   * `markdown-to-jsx`.
+   */
+  MarkdownTemplate: ComponentType<MarkdownTemplateProps>;
   /** The set of templates associated with buttons in the form */
   ButtonTemplates: {
     /** The template to use for the main `Submit` button  */
@@ -420,6 +431,10 @@ export type TemplatesType<T = any, S extends StrictRJSFSchema = RJSFSchema, F ex
  * to provide any value they need for their customizations.
  */
 export type GlobalUISchemaOptions = GenericObjectType & {
+  /** Render descriptions using the registered MarkdownTemplate. Defaults to false. */
+  enableMarkdownInDescription?: boolean;
+  /** Render help using the registered MarkdownTemplate. Defaults to false. */
+  enableMarkdownInHelp?: boolean;
   /** Flag, if set to `false`, new items cannot be added to array fields, unless overridden (defaults to true) */
   addable?: boolean;
   /** Flag, if set to `true`, array items can be copied (defaults to false) */
@@ -437,12 +452,6 @@ export type GlobalUISchemaOptions = GenericObjectType & {
    * This option allows you to change the separator between the original key name and the integer. Default is "-"
    */
   duplicateKeySuffixSeparator?: string;
-  /** Enables the displaying of description text that contains markdown
-   */
-  enableMarkdownInDescription?: boolean;
-  /** Enables the displaying of help text that contains markdown
-   */
-  enableMarkdownInHelp?: boolean;
   /** Enables the rendering of the Optional Data Field UI for specific types of schemas, either `object`, `array` or
    * both. To disable the Optional Data Field UI for a specific field, provide an empty array within the UI schema.
    */

@@ -1,5 +1,6 @@
 import type { ComponentType } from 'react';
 import type { FormProps } from '@rjsf/core';
+import MarkdownTemplate from '@rjsf/core/markdown';
 import type { RJSFSchema, ErrorSchema, UiSchema, Experimental_DefaultFormStateBehavior } from '@rjsf/utils';
 import { bracketNameGenerator, dotNotationNameGenerator } from '@rjsf/utils';
 import validator from '@rjsf/validator-ajv8';
@@ -52,22 +53,26 @@ export function formTests(Form: ComponentType<FormProps>) {
           description: 'A field with markdown help text',
         };
         const uiSchema: UiSchema = {
-          'ui:help': 'This is **markdown** help text with [a link](https://example.com)',
           'ui:enableMarkdownInHelp': true,
+          'ui:enableMarkdownInDescription': true,
+          'ui:help': 'This is **markdown** help text with [a link](https://example.com)',
         };
-        const { asFragment } = render(<Form schema={schema} uiSchema={uiSchema} validator={validator} />);
+        const { asFragment } = render(
+          <Form schema={schema} uiSchema={uiSchema} validator={validator} templates={{ MarkdownTemplate }} />,
+        );
         expect(asFragment()).toMatchSnapshot();
       });
 
-      test('field with markdown help text without enabling markdown', () => {
+      test('field with markdown help text without a MarkdownTemplate', () => {
         const schema: RJSFSchema = {
           type: 'string',
           title: 'Raw Help Test',
           description: 'A field with raw help text',
         };
         const uiSchema: UiSchema = {
+          'ui:enableMarkdownInHelp': true,
+          'ui:enableMarkdownInDescription': true,
           'ui:help': 'This is **markdown** help text with [a link](https://example.com)',
-          'ui:enableMarkdownInHelp': false,
         };
         const { asFragment } = render(<Form schema={schema} uiSchema={uiSchema} validator={validator} />);
         expect(asFragment()).toMatchSnapshot();
@@ -80,11 +85,14 @@ export function formTests(Form: ComponentType<FormProps>) {
           description: 'This is a *description* with **markdown**',
         };
         const uiSchema: UiSchema = {
-          'ui:help': 'This is **help** text with [a link](https://example.com)',
           'ui:enableMarkdownInHelp': true,
+          'ui:enableMarkdownInDescription': true,
+          'ui:help': 'This is **help** text with [a link](https://example.com)',
           'ui:description': 'This is a *description* with **markdown**',
         };
-        const { asFragment } = render(<Form schema={schema} uiSchema={uiSchema} validator={validator} />);
+        const { asFragment } = render(
+          <Form schema={schema} uiSchema={uiSchema} validator={validator} templates={{ MarkdownTemplate }} />,
+        );
         expect(asFragment()).toMatchSnapshot();
       });
 
@@ -95,10 +103,19 @@ export function formTests(Form: ComponentType<FormProps>) {
           description: 'A required field with markdown help',
         };
         const uiSchema: UiSchema = {
-          'ui:help': 'This field is **required**. Please provide a value.',
           'ui:enableMarkdownInHelp': true,
+          'ui:enableMarkdownInDescription': true,
+          'ui:help': 'This field is **required**. Please provide a value.',
         };
-        const { asFragment } = render(<Form schema={schema} uiSchema={uiSchema} validator={validator} formData={{}} />);
+        const { asFragment } = render(
+          <Form
+            schema={schema}
+            uiSchema={uiSchema}
+            validator={validator}
+            formData={{}}
+            templates={{ MarkdownTemplate }}
+          />,
+        );
         expect(asFragment()).toMatchSnapshot();
       });
       test('string field with placeholder', async () => {
@@ -446,8 +463,14 @@ export function formTests(Form: ComponentType<FormProps>) {
         title: 'test',
         description: '**test** __description__',
       };
-      const uiSchema: UiSchema = { 'ui:enableMarkdownInDescription': true };
-      const { asFragment } = render(<Form schema={schema} uiSchema={uiSchema} validator={validator} />);
+      const { asFragment } = render(
+        <Form
+          schema={schema}
+          validator={validator}
+          uiSchema={{ 'ui:globalOptions': { enableMarkdownInDescription: true, enableMarkdownInHelp: true } }}
+          templates={{ MarkdownTemplate }}
+        />,
+      );
       expect(asFragment()).toMatchSnapshot();
     });
 
@@ -643,10 +666,14 @@ export function formTests(Form: ComponentType<FormProps>) {
           },
         },
       };
-      const uiSchema = {
-        'my-field': { 'ui:enableMarkdownInDescription': true },
-      };
-      const { asFragment } = render(<Form schema={schema} uiSchema={uiSchema} validator={validator} />);
+      const { asFragment } = render(
+        <Form
+          schema={schema}
+          validator={validator}
+          uiSchema={{ 'ui:globalOptions': { enableMarkdownInDescription: true, enableMarkdownInHelp: true } }}
+          templates={{ MarkdownTemplate }}
+        />,
+      );
       expect(asFragment()).toMatchSnapshot();
     });
     test('field with markdown description in uiSchema', async () => {
@@ -662,10 +689,11 @@ export function formTests(Form: ComponentType<FormProps>) {
       const uiSchema = {
         'my-field': {
           'ui:description': 'some other description',
-          'ui:enableMarkdownInDescription': true,
         },
       };
-      const { asFragment } = render(<Form schema={schema} validator={validator} uiSchema={uiSchema} />);
+      const { asFragment } = render(
+        <Form schema={schema} validator={validator} uiSchema={uiSchema} templates={{ MarkdownTemplate }} />,
+      );
       expect(asFragment()).toMatchSnapshot();
     });
     test('title field', async () => {

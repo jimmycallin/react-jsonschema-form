@@ -47,7 +47,7 @@ import LayoutGridField, {
   LAYOUT_GRID_OPTION,
   Operators,
 } from '../src/components/fields/LayoutGridField.tsx';
-import getTestRegistry from '../src/getTestRegistry.tsx';
+import { getTestRegistry } from '../src/testing.ts';
 import { SAMPLE_SCHEMA, sampleUISchema, SIMPLE_ONEOF, SIMPLE_ONEOF_OPTIONS } from './testData/layoutData.ts';
 
 const ColumnWidth3 = 'col-xs-3';
@@ -715,33 +715,54 @@ const TEST_LAYOUT_GRID_CHILDREN = {
 
 const GRID_FORM_SCHEMA = gridFormSchema;
 const DOTTED_PATH = { idPrefix: DEFAULT_ID_PREFIX, idSeparator: '.' };
-const simpleOneOfRegistry = getTestRegistry(SIMPLE_ONEOF, REGISTRY_FIELDS, {}, {}, REGISTRY_FORM_CONTEXT, DOTTED_PATH);
+const simpleOneOfRegistry = getTestRegistry(
+  SIMPLE_ONEOF,
+  REGISTRY_FIELDS,
+  undefined,
+  undefined,
+  REGISTRY_FORM_CONTEXT,
+  DOTTED_PATH,
+);
 const gridFormSchemaRegistry = getTestRegistry(
   GRID_FORM_SCHEMA,
   REGISTRY_FIELDS,
-  {},
-  {},
+  undefined,
+  undefined,
   REGISTRY_FORM_CONTEXT,
   DOTTED_PATH,
 );
 const sampleSchemaRegistry = getTestRegistry(
   SAMPLE_SCHEMA,
   REGISTRY_FIELDS,
-  {},
-  {},
+  undefined,
+  undefined,
   REGISTRY_FORM_CONTEXT,
   DOTTED_PATH,
 );
 const readonlySchemaRegistry = getTestRegistry(
   readonlySchema,
   REGISTRY_FIELDS,
-  {},
-  {},
+  undefined,
+  undefined,
   REGISTRY_FORM_CONTEXT,
   DOTTED_PATH,
 );
-const arraySchemaRegistry = getTestRegistry(arraySchema, REGISTRY_FIELDS, {}, {}, REGISTRY_FORM_CONTEXT, DOTTED_PATH);
-const nestedSchemaRegistry = getTestRegistry(nestedSchema, REGISTRY_FIELDS, {}, {}, REGISTRY_FORM_CONTEXT, DOTTED_PATH);
+const arraySchemaRegistry = getTestRegistry(
+  arraySchema,
+  REGISTRY_FIELDS,
+  undefined,
+  undefined,
+  REGISTRY_FORM_CONTEXT,
+  DOTTED_PATH,
+);
+const nestedSchemaRegistry = getTestRegistry(
+  nestedSchema,
+  REGISTRY_FIELDS,
+  undefined,
+  undefined,
+  REGISTRY_FORM_CONTEXT,
+  DOTTED_PATH,
+);
 
 /** The list of props that will always be forwarded to fields
  */
@@ -834,7 +855,7 @@ describe('LayoutGridField', () => {
       uiSchema = {},
       disabled = false,
       layoutGridSchema,
-      registry = getTestRegistry(schema, REGISTRY_FIELDS, {}, {}, REGISTRY_FORM_CONTEXT),
+      registry = getTestRegistry(schema, REGISTRY_FIELDS, undefined, undefined, REGISTRY_FORM_CONTEXT),
     } = overrideProps;
     return {
       // required FieldProps stubbed
@@ -861,7 +882,7 @@ describe('LayoutGridField', () => {
   let retrieveSchemaSpy: MockInstance;
   let findSelectedOptionInXxxOf: MockInstance;
   beforeAll(() => {
-    registry = getTestRegistry({}, REGISTRY_FIELDS, {}, {}, REGISTRY_FORM_CONTEXT);
+    registry = getTestRegistry(undefined, REGISTRY_FIELDS, undefined, undefined, REGISTRY_FORM_CONTEXT);
   });
   describe('conditionMatches()', () => {
     test('returns false when no operator is passed', () => {

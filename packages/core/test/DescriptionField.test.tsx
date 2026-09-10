@@ -2,9 +2,9 @@ import type { DescriptionFieldProps } from '@rjsf/utils';
 import { render } from '@testing-library/react';
 
 import DescriptionField from '../src/components/templates/DescriptionField.tsx';
-import { getTestRegistry } from '../src/index.ts';
+import { getTestRegistry } from '../src/testing.ts';
 
-const registry = getTestRegistry({});
+const registry = getTestRegistry();
 
 describe('DescriptionField', () => {
   let node: Element;
