@@ -1,7 +1,7 @@
 import { createRef, useState, useCallback } from 'react';
 import type { RJSFSchema } from '@rjsf/utils';
 import validator from '@rjsf/validator-ajv8';
-import userEvent from '@testing-library/user-event';
+import { userEvent } from '@testing-library/user-event';
 import type { Mock } from 'vitest';
 
 import type { FormProps } from '../src/index.ts';
@@ -128,7 +128,7 @@ describeRepeated('Form common: form state updates', (createFormComponent) => {
         formData: {
           albums: ['Until We Have Faces'],
         },
-        experimental_defaultFormStateBehavior: { arrayMinItems: { populate: 'requiredOnly' } },
+        defaultFormStateBehavior: { arrayMinItems: { populate: 'requiredOnly' } },
       });
       await submitForm(node, user);
       expect(onError).toHaveBeenLastCalledWith([
@@ -147,7 +147,7 @@ describeRepeated('Form common: form state updates', (createFormComponent) => {
       const { node, onSubmit } = createFormComponent({
         schema,
         formData: {},
-        experimental_defaultFormStateBehavior: { arrayMinItems: { populate: 'requiredOnly' } },
+        defaultFormStateBehavior: { arrayMinItems: { populate: 'requiredOnly' } },
       });
       await submitForm(node, user);
       expectToHaveBeenCalledWithFormData(onSubmit, {}, true);
@@ -189,7 +189,6 @@ describeRepeated('Form common: form state updates', (createFormComponent) => {
             errorSchema: {},
             errors: [],
             formData: 'foobar',
-            fieldPathId: { $id: 'root', path: [] },
             schema: formProps.schema,
             uiSchema: {},
             schemaUtils: expect.any(Object),

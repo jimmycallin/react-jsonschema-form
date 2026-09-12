@@ -3,7 +3,7 @@ import type { ErrorSchema, FormValidation, RJSFSchema } from '@rjsf/utils';
 import { noop } from '@rjsf/utils';
 import validator from '@rjsf/validator-ajv8';
 import { render } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { userEvent } from '@testing-library/user-event';
 
 import type { FormProps } from '../src/index.ts';
 import Form from '../src/index.ts';
@@ -95,7 +95,7 @@ describeRepeated('Form common: error contextualization', (createFormComponent) =
           // The form has to be controlled, since the errors are cleared by comparing the incoming
           // `formData` prop against the previous one.
           function Controlled() {
-            const [formData, setFormData] = useState<any>({ baz: [{}] });
+            const [formData, setFormData] = useState<Record<string, unknown>>({ baz: [{}] });
             return (
               <Form
                 schema={altSchema}
@@ -144,7 +144,7 @@ describeRepeated('Form common: error contextualization', (createFormComponent) =
           const formRef = createRef<Form>();
 
           function Controlled() {
-            const [formData, setFormData] = useState<any>({});
+            const [formData, setFormData] = useState<Record<string, unknown>>({});
             return (
               <Form
                 ref={formRef}
@@ -193,7 +193,7 @@ describeRepeated('Form common: error contextualization', (createFormComponent) =
           const formRef = createRef<Form>();
 
           function Controlled() {
-            const [formData, setFormData] = useState<any>({ 'has.dot': {} });
+            const [formData, setFormData] = useState<Record<string, unknown>>({ 'has.dot': {} });
             return (
               <Form
                 ref={formRef}
@@ -241,7 +241,7 @@ describeRepeated('Form common: error contextualization', (createFormComponent) =
           };
 
           function Controlled() {
-            const [formData, setFormData] = useState<any>({ tags: ['a', 'a'] });
+            const [formData, setFormData] = useState<Record<string, unknown>>({ tags: ['a', 'a'] });
             return (
               <Form
                 schema={altSchema}
@@ -284,7 +284,7 @@ describeRepeated('Form common: error contextualization', (createFormComponent) =
           };
 
           function Controlled() {
-            const [formData, setFormData] = useState<any>({ baz: [{}, { corge: 'z' }] });
+            const [formData, setFormData] = useState<Record<string, unknown>>({ baz: [{}, { corge: 'z' }] });
             return (
               <Form
                 schema={altSchema}
@@ -318,7 +318,7 @@ describeRepeated('Form common: error contextualization', (createFormComponent) =
         it('should update the errorSchema when the formData changes', async () => {
           const { node, onChange } = createFormComponent({
             schema,
-            liveValidate: true,
+            liveValidate: 'onChange',
           });
 
           await user.type(node.querySelector<HTMLInputElement>('input[type=text]')!, 'short');
@@ -336,7 +336,7 @@ describeRepeated('Form common: error contextualization', (createFormComponent) =
         it('should denote the new error in the field', async () => {
           const { node } = createFormComponent({
             schema,
-            liveValidate: true,
+            liveValidate: 'onChange',
           });
 
           await user.type(node.querySelector<HTMLInputElement>('input[type=text]')!, 'short');
@@ -353,7 +353,7 @@ describeRepeated('Form common: error contextualization', (createFormComponent) =
           const { node, onChange } = createFormComponent({
             schema,
             noValidate: true,
-            liveValidate: true,
+            liveValidate: 'onChange',
           });
 
           await user.type(node.querySelector<HTMLInputElement>('input[type=text]')!, 'short');
@@ -468,7 +468,7 @@ describeRepeated('Form common: error contextualization', (createFormComponent) =
           onError,
           focusOnFirstError,
           extraErrors,
-          extraErrorsBlockSubmit: true,
+          extraErrorsAreWarnings: false,
         });
 
         const input = node.querySelector<HTMLInputElement>('input[type=text]')!;
@@ -551,7 +551,7 @@ describeRepeated('Form common: error contextualization', (createFormComponent) =
 
     describe('root level, live validation', () => {
       const formProps: Omit<FormProps, 'validator'> = {
-        liveValidate: true,
+        liveValidate: 'onChange',
         schema: {
           type: 'string',
           minLength: 8,
@@ -593,7 +593,7 @@ describeRepeated('Form common: error contextualization', (createFormComponent) =
 
     describe('root level with multiple errors, live validation', () => {
       const formProps: Omit<FormProps, 'validator'> = {
-        liveValidate: true,
+        liveValidate: 'onChange',
         schema: {
           type: 'string',
           minLength: 8,
@@ -660,7 +660,7 @@ describeRepeated('Form common: error contextualization', (createFormComponent) =
 
       const formProps: Omit<FormProps, 'validator'> = {
         schema,
-        liveValidate: true,
+        liveValidate: 'onChange',
         formData: {
           level1: {
             level2: 'short',
@@ -710,7 +710,7 @@ describeRepeated('Form common: error contextualization', (createFormComponent) =
 
       const formProps: Omit<FormProps, 'validator'> = {
         schema,
-        liveValidate: true,
+        liveValidate: 'onChange',
         formData: ['good', 'ba', 'good'],
       };
 
@@ -771,7 +771,7 @@ describeRepeated('Form common: error contextualization', (createFormComponent) =
         },
       };
 
-      const formProps: Omit<FormProps, 'validator'> = { schema, liveValidate: true };
+      const formProps: Omit<FormProps, 'validator'> = { schema, liveValidate: 'onChange' };
 
       it('should contextualize the error for nested array indices', async () => {
         const { node, onError } = createFormComponent({
@@ -851,7 +851,7 @@ describeRepeated('Form common: error contextualization', (createFormComponent) =
         ],
       };
 
-      const formProps: Omit<FormProps, 'validator'> = { schema, formData, liveValidate: true };
+      const formProps: Omit<FormProps, 'validator'> = { schema, formData, liveValidate: 'onChange' };
 
       it('should contextualize the error for nested array indices, focusing on first error', async () => {
         const { node, onError } = createFormComponent({
@@ -935,7 +935,7 @@ describeRepeated('Form common: error contextualization', (createFormComponent) =
 
       const formProps: Omit<FormProps, 'validator'> = {
         schema,
-        liveValidate: true,
+        liveValidate: 'onChange',
         formData: [{ foo: 'good' }, { foo: 'ba' }, { foo: 'good' }],
       };
 
@@ -1020,7 +1020,7 @@ describeRepeated('Form common: error contextualization', (createFormComponent) =
       it('should only show error for property in selected branch', async () => {
         const { node, onChange } = createFormComponent({
           schema,
-          liveValidate: true,
+          liveValidate: 'onChange',
         });
 
         const input = node.querySelector<HTMLInputElement>('input[type=number]');
@@ -1040,7 +1040,7 @@ describeRepeated('Form common: error contextualization', (createFormComponent) =
         const { node, onChange } = createFormComponent({
           ref: createRef(),
           schema,
-          liveValidate: true,
+          liveValidate: 'onChange',
           formData: { branch: 2 },
         });
 
@@ -1063,7 +1063,7 @@ describeRepeated('Form common: error contextualization', (createFormComponent) =
         const { node, onChange } = createFormComponent({
           ref: createRef(),
           schema,
-          liveValidate: true,
+          liveValidate: 'onChange',
           formData: { branch: 3 },
         });
 
@@ -1162,8 +1162,13 @@ describeRepeated('Form common: error contextualization', (createFormComponent) =
         };
 
         // customValidate method to raise an error when Start is larger than End field.
-        const customValidate = (formData: any, errors: FormValidation) => {
-          if (formData.Start > formData.End) {
+        interface StartEnd {
+          Start?: number;
+          End?: number;
+        }
+        const customValidate = (formData: StartEnd | undefined, errors: FormValidation) => {
+          const { Start, End } = formData ?? {};
+          if (Start !== undefined && End !== undefined && Start > End) {
             errors.Start?.addError('Validate error: Test should be LE than End');
           }
           return errors;
@@ -1171,7 +1176,7 @@ describeRepeated('Form common: error contextualization', (createFormComponent) =
 
         const { node, onChange } = createFormComponent({
           schema,
-          liveValidate: true,
+          liveValidate: 'onChange',
           formData: { Start: 2, End: 0 },
           customValidate,
         });

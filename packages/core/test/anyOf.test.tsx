@@ -1,7 +1,7 @@
 import { createRef } from 'react';
 import type { FormValidation, RJSFSchema, WidgetProps } from '@rjsf/utils';
 import { noop } from '@rjsf/utils';
-import userEvent from '@testing-library/user-event';
+import { userEvent } from '@testing-library/user-event';
 
 import SelectWidget from '../src/components/widgets/SelectWidget.tsx';
 import { createFormComponent, getSelectedOptionValue, submitForm } from './testUtils.tsx';
@@ -1811,7 +1811,7 @@ describe('anyOf', () => {
         formData: {
           items: [{ type: 'typeA', showField: true }],
         },
-        experimental_defaultFormStateBehavior: {
+        defaultFormStateBehavior: {
           mergeDefaultsIntoFormData: 'useDefaultIfFormDataUndefined',
         },
       });
@@ -1863,7 +1863,7 @@ describe('anyOf', () => {
         formData: {
           items: [{ type: 'typeA' }], // No showField defined
         },
-        experimental_defaultFormStateBehavior: {
+        defaultFormStateBehavior: {
           mergeDefaultsIntoFormData: 'useDefaultIfFormDataUndefined',
         },
       });
@@ -1904,7 +1904,7 @@ describe('anyOf', () => {
       const { node, onChange } = createFormComponent({
         schema,
         formData: { type: 'optionA', enabled: false },
-        experimental_defaultFormStateBehavior: {
+        defaultFormStateBehavior: {
           mergeDefaultsIntoFormData: 'useDefaultIfFormDataUndefined',
         },
       });

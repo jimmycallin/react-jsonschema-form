@@ -1,10 +1,10 @@
 {
   "name": "@rjsf/snapshot-tests",
-  "version": "6.9.0",
+  "version": "6.10.0",
   "type": "module",
   "description": "A set of snapshot tests to be used for testing RJSF theme.",
   "scripts": {
-    "build": "tsc -b .",
+    "build": "tsdown -c ../../tsdown.base.mts",
     "cs-check": "oxfmt --check \"src/**/*.{ts,tsx,js,jsx}\"",
     "cs-format": "oxfmt \"src/**/*.{ts,tsx,js,jsx}\"",
     "lint": "oxlint src",
@@ -22,20 +22,19 @@
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
   "files": [
-    "dist",
     "lib",
     "src"
   ],
   "engineStrict": false,
   "engines": {
-    "node": ">=20"
+    "node": "^22.18.0 || ^24.11.0 || >=26.0.0"
   },
   "peerDependencies": {
     "@rjsf/core": "workspace:^",
     "@rjsf/utils": "workspace:^",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",
-    "react": ">=18"
+    "react": ">=19"
   },
   "devDependencies": {
     "@rjsf/core": "workspace:^",
@@ -63,7 +62,6 @@
   "exports": {
     ".": {
       "@rjsf/source": "./src/index.ts",
-      "types": "./lib/index.d.ts",
       "default": "./lib/index.js"
     },
     "./package.json": "./package.json",

@@ -14,15 +14,15 @@ import {
   getByPath,
   ErrorSchemaBuilder,
   getDiscriminatorFieldFromSchema,
-  ID_KEY,
   ONE_OF_KEY,
   optionsList,
+  toFieldPath,
   PROPERTIES_KEY,
   UI_OPTIONS_KEY,
   UI_WIDGET_KEY,
 } from '@rjsf/utils';
 import { render, screen, waitFor, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { userEvent } from '@testing-library/user-event';
 
 import LayoutMultiSchemaField, {
   computeEnumOptions,
@@ -30,7 +30,7 @@ import LayoutMultiSchemaField, {
 } from '../src/components/fields/LayoutMultiSchemaField.tsx';
 import RadioWidget from '../src/components/widgets/RadioWidget.tsx';
 import SelectWidget from '../src/components/widgets/SelectWidget.tsx';
-import getTestRegistry from '../src/getTestRegistry.tsx';
+import { getTestRegistry } from '../src/testing.ts';
 import { SIMPLE_ONEOF, SIMPLE_ONEOF_OPTIONS } from './testData/layoutData.ts';
 import { setupConsoleErrorSuppression } from './testUtils.tsx';
 
@@ -185,7 +185,8 @@ describe('LayoutMultiSchemaField', () => {
   function getProps(overrideProps: Partial<FieldProps> = {}): FieldProps {
     const {
       formData,
-      fieldPathId = { [ID_KEY]: DEFAULT_ID, path: [DEFAULT_ID] },
+      fieldPath = toFieldPath(DEFAULT_ID),
+      id = DEFAULT_ID,
       options = SIMPLE_ONEOF[ONE_OF_KEY],
       schema = SIMPLE_ONEOF,
       uiSchema = {},
@@ -205,7 +206,8 @@ describe('LayoutMultiSchemaField', () => {
       baseType: 'object',
       disabled,
       formData,
-      fieldPathId,
+      fieldPath,
+      id,
       options,
       registry: getTestRegistry(
         schema,
@@ -280,12 +282,7 @@ describe('LayoutMultiSchemaField', () => {
     await user.click(input);
 
     // OnChange was called with the correct event
-    expect(props.onChange).toHaveBeenCalledWith(
-      { [selectorField]: '2' },
-      props.fieldPathId.path,
-      undefined,
-      DEFAULT_ID,
-    );
+    expect(props.onChange).toHaveBeenCalledWith({ [selectorField]: '2' }, props.fieldPath, undefined, DEFAULT_ID);
 
     // Rerender to simulate the onChange updating the value
     const newFormData = { [selectorField]: SIMPLE_ONEOF_OPTIONS[1].value };
@@ -367,7 +364,7 @@ describe('LayoutMultiSchemaField', () => {
           ...props.registry.schemaUtils.getDefaultFormState(retrievedOptions[0], sanitizedFormData),
           [selectorField]: 'first_option',
         },
-        props.fieldPathId.path,
+        props.fieldPath,
         undefined,
         DEFAULT_ID,
       );
@@ -433,7 +430,7 @@ describe('LayoutMultiSchemaField', () => {
     await user.selectOptions(button, '');
 
     // OnChange was called with the correct event
-    expect(props.onChange).toHaveBeenCalledWith(undefined, props.fieldPathId.path, undefined, DEFAULT_ID);
+    expect(props.onChange).toHaveBeenCalledWith(undefined, props.fieldPath, undefined, DEFAULT_ID);
   });
   test('no options for radio widget, ui:hideError true, props.hideError false, no errors to hide', () => {
     const props = getProps({
@@ -489,9 +486,10 @@ describe('LayoutMultiSchemaField', () => {
     const fakeFieldErrorTemplate = screen.queryByTestId(FIELD_ERROR_TEST_ID);
     expect(fakeFieldErrorTemplate).not.toBeInTheDocument();
   });
-  test('explicitly disabled, additional ui props, fieldPathId, has error, hideError prop true', () => {
+  test('explicitly disabled, additional ui props, fieldPath, has error, hideError prop true', () => {
     const props = getProps({
-      fieldPathId: { [ID_KEY]: 'testid', path: ['testid'] },
+      fieldPath: toFieldPath('testid'),
+      id: 'testid',
       disabled: true,
       options: SIMPLE_ONEOF[ONE_OF_KEY],
       schema: SIMPLE_ONEOF,

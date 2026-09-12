@@ -1,8 +1,6 @@
 import type { FormContextType, ObjectFieldTemplateProps, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
 import { buttonId, canExpand, descriptionId, getTemplate, getUiOptions, titleId } from '@rjsf/utils';
-import Col from 'react-bootstrap/Col';
-import Container from 'react-bootstrap/Container';
-import Row from 'react-bootstrap/Row';
+import { Col, Container, Row } from 'react-bootstrap';
 
 export default function ObjectFieldTemplate<
   T = any,
@@ -14,7 +12,7 @@ export default function ObjectFieldTemplate<
   properties,
   required,
   uiSchema,
-  fieldPathId,
+  id,
   schema,
   formData,
   optionalDataControl,
@@ -39,7 +37,7 @@ export default function ObjectFieldTemplate<
     <>
       {title && (
         <TitleFieldTemplate
-          id={titleId(fieldPathId)}
+          id={titleId(id)}
           title={title}
           required={required}
           schema={schema}
@@ -50,7 +48,7 @@ export default function ObjectFieldTemplate<
       )}
       {description && (
         <DescriptionFieldTemplate
-          id={descriptionId(fieldPathId)}
+          id={descriptionId(id)}
           description={description}
           schema={schema}
           uiSchema={uiSchema}
@@ -68,7 +66,7 @@ export default function ObjectFieldTemplate<
           <Row>
             <Col xs={{ offset: 11, span: 1 }} className='py-0.5'>
               <AddButton
-                id={buttonId(fieldPathId, 'add')}
+                id={buttonId(id, 'add')}
                 onClick={onAddProperty}
                 disabled={disabled || readonly}
                 className='rjsf-object-property-expand'

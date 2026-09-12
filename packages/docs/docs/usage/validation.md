@@ -31,9 +31,9 @@ The first step in the process is to compile a schema into a set of validator fun
 The `@rjsf/validator-ajv8` package exports the `compileSchemaValidators()` function that does this.
 It is expected that this function will be used in a manner similar to the following:
 
-```cjs
-const compileSchemaValidators = require('@rjsf/validator-ajv8/compileSchemaValidators').default;
-const yourSchema = require('path_to/yourSchema'); // If your schema is a js file
+```js
+import compileSchemaValidators from '@rjsf/validator-ajv8/compileSchemaValidators';
+import yourSchema from 'path_to/yourSchema.js'; // If your schema is a js file
 
 compileSchemaValidators(yourSchema, 'path_to/yourCompiledSchema.js');
 ```
@@ -42,12 +42,13 @@ If you are currently using the `customizeValidator()` function to provide `addit
 `ajvOptionsOverrides` and/or `ajvFormatOptions` then you can pass those in as the optional third parameter to the
 `compileSchemaValidators()` function in a manner similar to:
 
-```cjs
-const { compileSchemaValidators } = require('@rjsf/validator-ajv8');
-const yourSchema = require('path_to/yourSchema.json'); // If your schema is a json file
+```js
+import { compileSchemaValidators } from '@rjsf/validator-ajv8';
+import yourSchema from 'path_to/yourSchema.json' with { type: 'json' }; // If your schema is a json file
+import draft06 from 'ajv/lib/refs/json-schema-draft-06.json' with { type: 'json' };
 
 const options = {
-  additionalMetaSchemas: [require('ajv/lib/refs/json-schema-draft-06.json')],
+  additionalMetaSchemas: [draft06],
   customFormats: { 'phone-us': /\(?\d{3}\)?[\s-]?\d{3}[\s-]?\d{4}$/, 'area-code': /\d{3}/ },
   ajvOptionsOverrides: {
     $data: true,
@@ -231,7 +232,7 @@ const validator = createPrecompiledValidator(precompiledValidator, schema);
 
 By default, form data are only validated when the form is submitted or when a new `formData` prop is passed to the `Form` component.
 
-You can enable live form data validation by passing a `liveValidate` prop to the `Form` component, and set it to `true`. Then, every time a value changes within the form data tree (e.g. the user entering a character in a field), a validation operation is performed, and the validation results are reflected into the form state.
+You can enable live form data validation by passing a `liveValidate` prop to the `Form` component, and set it to `'onChange'`. Then, every time a value changes within the form data tree (e.g. the user entering a character in a field), a validation operation is performed, and the validation results are reflected into the form state.
 
 Be warned that this is an expensive strategy, with possibly strong impact on performances.
 
@@ -247,7 +248,10 @@ const schema: RJSFSchema = {
 
 const formData = 'a';
 
-render(<Form schema={schema} formData={formData} validator={validator} liveValidate />, document.getElementById('app'));
+render(
+  <Form schema={schema} formData={formData} validator={validator} liveValidate='onChange' />,
+  document.getElementById('app'),
+);
 ```
 
 ## Validate form programmatically
@@ -423,7 +427,7 @@ render((
         validator={validator}
         showErrorList='top'
         formData={""}
-        liveValidate
+        liveValidate='onChange'
         templates: {{ ErrorListTemplate }} />
 ), document.getElementById("app"));
 ```
@@ -560,7 +564,8 @@ const extraErrors: ErrorSchema = {
 render(<Form schema={schema} validator={validator} extraErrors={extraErrors} />, document.getElementById('app'));
 ```
 
-An important note is that these errors are "display only" and will not block the user from submitting the form again.
+By default, these errors also block the user from submitting the form, the same as JSON Schema validation errors.
+Set the `extraErrorsAreWarnings` prop to `true` to make them "display only" instead, so the user can still submit the form while they're the only errors shown.
 
 ### ajvOptionsOverrides
 

@@ -1,9 +1,9 @@
 import { createRef, useEffect, useRef, useState, useCallback } from 'react';
-import type { ErrorSchema, Experimental_DefaultFormStateBehavior, FieldProps, RJSFSchema, UiSchema } from '@rjsf/utils';
-import { bracketNameGenerator, buttonId, dotNotationNameGenerator, optionalControlsId } from '@rjsf/utils';
+import type { DefaultFormStateBehavior, ErrorSchema, FieldProps, RJSFSchema, UiSchema, WidgetProps } from '@rjsf/utils';
+import { bracketNameGenerator, buttonId, dotNotationNameGenerator, optionalControlsId, toFieldPath } from '@rjsf/utils';
 import validator from '@rjsf/validator-ajv8';
 import { act, render } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { userEvent } from '@testing-library/user-event';
 
 import type { FormProps, IChangeEvent } from '../src/index.ts';
 import Form from '../src/index.ts';
@@ -17,7 +17,7 @@ import {
   setupConsoleErrorSuppression,
   submitForm,
 } from './testUtils.tsx';
-import widgetsSchema from './widgets_schema.json';
+import widgetsSchema from './widgets_schema.json' with { type: 'json' };
 
 const user = userEvent.setup();
 
@@ -232,7 +232,7 @@ describe('Form omitExtraData and liveOmit', () => {
       foo: 'bar',
     };
     const omitExtraData = true;
-    const liveOmit = true;
+    const liveOmit = 'onChange';
     const ref = createRef<Form>();
 
     const { node } = createFormComponent({
@@ -243,7 +243,7 @@ describe('Form omitExtraData and liveOmit', () => {
       liveOmit,
     });
 
-    const theSpy = vi.spyOn(ref.current!, 'omitExtraData').mockReturnValue({ foo: '' });
+    const theSpy = vi.spyOn(ref.current!.state.schemaUtils, 'omitExtraData').mockReturnValue({ foo: '' });
 
     await user.clear(node.querySelector('[type=text]')!);
     await user.type(node.querySelector('[type=text]')!, 'new');
@@ -272,7 +272,7 @@ describe('Form omitExtraData and liveOmit', () => {
       omitExtraData,
     });
 
-    const theSpy = vi.spyOn(ref.current!, 'omitExtraData').mockReturnValue({ foo: '' });
+    const theSpy = vi.spyOn(ref.current!.state.schemaUtils, 'omitExtraData').mockReturnValue({ foo: '' });
 
     await user.clear(node.querySelector('[type=text]')!);
     await user.type(node.querySelector('[type=text]')!, 'new');
@@ -280,9 +280,9 @@ describe('Form omitExtraData and liveOmit', () => {
     expect(theSpy).not.toHaveBeenCalled();
   });
 
-  it('should not omit data on change with omitExtraData=false and liveOmit=false', async () => {
+  it('should not omit data on change with omitExtraData=false and liveOmit unset', async () => {
     const omitExtraData = false;
-    const liveOmit = false;
+    const liveOmit = undefined;
     const schema: RJSFSchema = {
       type: 'object',
       properties: {
@@ -310,9 +310,9 @@ describe('Form omitExtraData and liveOmit', () => {
     );
   });
 
-  it('should not omit data on change with omitExtraData=true and liveOmit=false', async () => {
+  it('should not omit data on change with omitExtraData=true and liveOmit unset', async () => {
     const omitExtraData = true;
-    const liveOmit = false;
+    const liveOmit = undefined;
     const schema: RJSFSchema = {
       type: 'object',
       properties: {
@@ -336,7 +336,7 @@ describe('Form omitExtraData and liveOmit', () => {
 
   it('should not omit data on change with omitExtraData=false and liveOmit=true', async () => {
     const omitExtraData = false;
-    const liveOmit = true;
+    const liveOmit = 'onChange';
     const schema: RJSFSchema = {
       type: 'object',
       properties: {
@@ -360,7 +360,7 @@ describe('Form omitExtraData and liveOmit', () => {
 
   it('should omit data on change with omitExtraData=true and liveOmit=true', async () => {
     const omitExtraData = true;
-    const liveOmit = true;
+    const liveOmit = 'onChange';
     const schema: RJSFSchema = {
       type: 'object',
       properties: {
@@ -384,7 +384,7 @@ describe('Form omitExtraData and liveOmit', () => {
 
   it('should not omit additionalProperties on change with omitExtraData=true and liveOmit=true', async () => {
     const omitExtraData = true;
-    const liveOmit = true;
+    const liveOmit = 'onChange';
     const schema: RJSFSchema = {
       type: 'object',
       properties: {
@@ -422,7 +422,7 @@ describe('Form omitExtraData and liveOmit', () => {
       },
       formData: { nested: { key1: 'value' } },
       omitExtraData: true,
-      liveOmit: true,
+      liveOmit: 'onChange',
     });
 
     const textNode = node.querySelector<HTMLInputElement>('#root_nested_key1-key')!;
@@ -458,7 +458,7 @@ describe('Form omitExtraData and liveOmit', () => {
       },
       formData: { lorum: '' },
       omitExtraData: true,
-      liveOmit: true,
+      liveOmit: 'onChange',
     });
 
     const textNode = node.querySelector('#root_lorem')!;
@@ -492,7 +492,7 @@ describe('Form omitExtraData and liveOmit', () => {
       },
       formData: { ipsum: '' },
       omitExtraData: true,
-      liveOmit: true,
+      liveOmit: 'onChange',
     });
 
     const textNode = node.querySelector('#root_ipsum')!;
@@ -532,7 +532,7 @@ describe('Form omitExtraData and liveOmit', () => {
       schema,
       formData,
       omitExtraData: true,
-      liveOmit: true,
+      liveOmit: 'onChange',
     });
 
     const otherPropInput = node.querySelector<HTMLInputElement>('#root_nested_otherProperty')!;
@@ -552,7 +552,7 @@ describe('Form omitExtraData and liveOmit', () => {
     );
   });
 
-  it('should keep schema errors when extraErrors set after submit and liveValidate is false', async () => {
+  it('should keep schema errors when extraErrors set after submit and liveValidate is unset', async () => {
     const schema: RJSFSchema = {
       type: 'object',
       properties: {
@@ -574,7 +574,7 @@ describe('Form omitExtraData and liveOmit', () => {
       ref: formRef,
       schema,
       onSubmit,
-      liveValidate: false,
+      liveValidate: undefined,
     };
     const { rerender, node } = createFormComponent(props);
     // forceFireEvent=true: clicking the submit button focuses it, blurring the
@@ -616,7 +616,7 @@ describe('omitExtraData on submit', () => {
       omitExtraData,
     });
 
-    const theSpy = vi.spyOn(ref.current!, 'omitExtraData').mockReturnValue({ foo: '' });
+    const theSpy = vi.spyOn(ref.current!.state.schemaUtils, 'omitExtraData').mockReturnValue({ foo: '' });
 
     await submitForm(node, user);
 
@@ -739,7 +739,7 @@ describe('omitExtraData prunes empty optional objects', () => {
       schema,
       formData: { name: 'Alice', address: { street: 'value' } },
       omitExtraData: true,
-      liveOmit: true,
+      liveOmit: 'onChange',
     });
 
     await user.clear(node.querySelector('#root_address_street')!);
@@ -798,7 +798,7 @@ describe('Async errors', () => {
     expect(node.querySelectorAll('.error-detail li')).toHaveLength(2);
   });
 
-  it('should not block form submission', async () => {
+  it('should not block form submission when extraErrorsAreWarnings is set', async () => {
     const schema: RJSFSchema = {
       type: 'object',
       properties: {
@@ -812,9 +812,30 @@ describe('Async errors', () => {
       },
     } as unknown as ErrorSchema;
 
-    const { node, onSubmit } = createFormComponent({ schema, extraErrors });
+    const { node, onSubmit } = createFormComponent({ schema, extraErrors, extraErrorsAreWarnings: true });
     await submitForm(node, user);
     expect(onSubmit).toHaveBeenCalledTimes(1);
+  });
+
+  it('should block form submission by default when extraErrors are present', async () => {
+    const schema: RJSFSchema = {
+      type: 'object',
+      properties: {
+        foo: { type: 'string' },
+      },
+    };
+
+    const extraErrors = {
+      foo: {
+        __errors: ['some error that got added as a prop'],
+      },
+    } as unknown as ErrorSchema;
+
+    const onError = vi.fn();
+    const { node, onSubmit } = createFormComponent({ schema, extraErrors, onError });
+    await submitForm(node, user);
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(onError).toHaveBeenCalled();
   });
 
   it('should reset when props extraErrors changes and noValidate is true', () => {
@@ -852,7 +873,7 @@ describe('Async errors', () => {
     expect(formRef.current!.state.errors).toEqual([]);
   });
 
-  it('should reset when props extraErrors changes and liveValidate is false', () => {
+  it('should reset when props extraErrors changes and liveValidate is unset', () => {
     const schema: RJSFSchema = {
       type: 'object',
       properties: {
@@ -870,7 +891,7 @@ describe('Async errors', () => {
     const props: NoValFormProps = {
       ref: formRef,
       schema,
-      liveValidate: false,
+      liveValidate: undefined,
     };
     const { rerender } = createFormComponent({
       ...props,
@@ -1028,7 +1049,10 @@ describe('Calling onChange right after updating a Form with props formData', () 
         return;
       }
       changed = true;
-      latestProps.current.onChange('test', [latestProps.current.formData.length]);
+      latestProps.current.onChange(
+        'test',
+        toFieldPath(latestProps.current.formData.length, latestProps.current.fieldPath),
+      );
     });
     return <ArrayField {...fieldProps} />;
   };
@@ -1044,7 +1068,7 @@ describe('Calling onChange right after updating a Form with props formData', () 
   };
 
   const Container = (containerProps: FormProps) => {
-    const [state, setState] = useState<{ formData?: any }>({});
+    const [state, setState] = useState<Pick<FormProps, 'formData'>>({});
     const onChange = useCallback(({ formData }: IChangeEvent) => {
       setState({ formData });
     }, []);
@@ -1286,7 +1310,7 @@ describe('validateForm()', () => {
     expect(errors).toHaveLength(0);
   });
 
-  it('Should keep non-blocking extraErrors in state when schema is valid and extraErrorsBlockSubmit is not set', () => {
+  it('Should keep non-blocking extraErrors in state when schema is valid and extraErrorsAreWarnings is set', () => {
     const formRef = createRef<Form>();
     const schema: RJSFSchema = {
       type: 'object',
@@ -1304,6 +1328,7 @@ describe('validateForm()', () => {
       schema,
       formData: { foo: 'valid' },
       extraErrors,
+      extraErrorsAreWarnings: true,
     };
     const { onError } = createFormComponent(props);
 
@@ -1320,7 +1345,7 @@ describe('validateForm()', () => {
     expect(onError).not.toHaveBeenCalled();
   });
 
-  it('Should return false and call onError when extraErrors are present with extraErrorsBlockSubmit set', () => {
+  it('Should return false and call onError when extraErrors are present by default', () => {
     const formRef = createRef<Form>();
     const schema: RJSFSchema = {
       type: 'object',
@@ -1338,7 +1363,6 @@ describe('validateForm()', () => {
       schema,
       formData: { foo: 'valid' },
       extraErrors,
-      extraErrorsBlockSubmit: true,
     };
     const { onError } = createFormComponent(props);
 
@@ -1356,7 +1380,7 @@ describe('validateForm()', () => {
     );
   });
 
-  it('Should show both schema and extraErrors in state when schema is invalid regardless of extraErrorsBlockSubmit', () => {
+  it('Should show both schema and extraErrors in state when schema is invalid regardless of extraErrorsAreWarnings', () => {
     const formRef = createRef<Form>();
     const schema: RJSFSchema = {
       type: 'object',
@@ -1375,7 +1399,7 @@ describe('validateForm()', () => {
       schema,
       formData: {},
       extraErrors,
-      // extraErrorsBlockSubmit intentionally omitted
+      extraErrorsAreWarnings: true,
     };
     createFormComponent(props);
 
@@ -1388,6 +1412,52 @@ describe('validateForm()', () => {
     const errorMessages = formRef.current!.state.errors.map((e) => e.message);
     expect(errorMessages).toContain("must have required property 'foo'");
     expect(errorMessages).toContain('async error for foo');
+  });
+
+  it('Should block submission and keep a customError raised by a widget in state', async () => {
+    const formRef = createRef<Form>();
+    const schema: RJSFSchema = {
+      type: 'object',
+      properties: {
+        foo: { type: 'string' },
+      },
+    };
+
+    // See "Raising errors from within a custom widget or field" in the custom-widgets-fields docs
+    function RaisingWidget(props: WidgetProps) {
+      const { id, value, onChange } = props;
+      return (
+        <input
+          id={id}
+          value={(value as string) || ''}
+          onChange={(event) => {
+            const newValue = event.target.value;
+            const errorSchema =
+              newValue === 'bad' ? ({ __errors: ['custom widget error'] } as unknown as ErrorSchema) : undefined;
+            onChange(newValue, errorSchema, id);
+          }}
+        />
+      );
+    }
+
+    const uiSchema: UiSchema = {
+      foo: { 'ui:widget': RaisingWidget },
+    };
+
+    const { node, onError } = createFormComponent({ ref: formRef, schema, uiSchema });
+
+    const input = node.querySelector<HTMLInputElement>('#root_foo')!;
+    await user.type(input, 'bad');
+
+    act(() => {
+      expect(formRef.current!.validateForm()).toBe(false);
+    });
+
+    const errorMessages = formRef.current!.state.errors.map((e) => e.message);
+    expect(errorMessages).toContain('custom widget error');
+    expect(onError).toHaveBeenCalledWith(
+      expect.arrayContaining([expect.objectContaining({ message: 'custom widget error' })]),
+    );
   });
 
   it('Should clear extraErrors from state when extraErrors prop is removed and validateForm is called again', () => {
@@ -1449,7 +1519,8 @@ describe('setFieldValue()', () => {
       expect.objectContaining({
         formData: 'populated value',
       }),
-      'root_',
+      // An empty segment names no field, so the id is the root id rather than the trailing-separator `root_`
+      'root',
     );
 
     expect(node.querySelector<HTMLInputElement>('input')).toHaveAttribute('value', 'populated value');
@@ -1498,7 +1569,7 @@ describe('setFieldValue()', () => {
       },
       formData: {},
       ref,
-      liveValidate: true,
+      liveValidate: 'onChange',
     };
     const { onChange, node } = createFormComponent(props);
     // trigger programmatic validation and make sure an error appears.
@@ -1552,7 +1623,7 @@ describe('setFieldValue()', () => {
       },
       formData: {},
       ref,
-      liveValidate: true,
+      liveValidate: 'onChange',
     };
     const { onChange, node } = createFormComponent(props);
     // trigger programmatic validation and make sure an error appears.
@@ -1623,7 +1694,7 @@ describe('optionalDataControls', () => {
       enableOptionalDataFieldForType: ['object', 'array'],
     },
   };
-  const experimental_defaultFormStateBehavior: Experimental_DefaultFormStateBehavior = {
+  const defaultFormStateBehavior: DefaultFormStateBehavior = {
     // Set the emptyObjectFields to only populate required defaults to highlight the code working
     emptyObjectFields: 'populateRequiredDefaults',
   };
@@ -1639,7 +1710,7 @@ describe('optionalDataControls', () => {
   it('does not render any optional data control messages when not turned on and readonly and disabled', () => {
     const props: NoValFormProps = {
       schema,
-      experimental_defaultFormStateBehavior,
+      defaultFormStateBehavior,
       readonly: true,
       disabled: true,
     };
@@ -1666,7 +1737,7 @@ describe('optionalDataControls', () => {
     const props: NoValFormProps = {
       schema,
       uiSchema: bothOnUiSchema,
-      experimental_defaultFormStateBehavior,
+      defaultFormStateBehavior,
       readonly: true,
     };
     const { node } = createFormComponent(props);
@@ -1692,7 +1763,7 @@ describe('optionalDataControls', () => {
     const props: NoValFormProps = {
       schema,
       uiSchema: bothOnUiSchema,
-      experimental_defaultFormStateBehavior,
+      defaultFormStateBehavior,
       disabled: true,
     };
     const { node } = createFormComponent(props);
@@ -1717,7 +1788,7 @@ describe('optionalDataControls', () => {
   it('does not render any optional data controls when not turned on', () => {
     const props: NoValFormProps = {
       schema,
-      experimental_defaultFormStateBehavior,
+      defaultFormStateBehavior,
     };
     const { node } = createFormComponent(props);
     const addArrayControlNode = node.querySelector<HTMLButtonElement>(`#${arrayControlAddId}`);
@@ -1738,7 +1809,7 @@ describe('optionalDataControls', () => {
     const props: NoValFormProps = {
       schema,
       uiSchema: objectOnUiSchema,
-      experimental_defaultFormStateBehavior,
+      defaultFormStateBehavior,
     };
     const { node } = createFormComponent(props);
     const addArrayControlNode = node.querySelector<HTMLButtonElement>(`#${arrayControlAddId}`);
@@ -1779,7 +1850,7 @@ describe('optionalDataControls', () => {
     const props: NoValFormProps = {
       schema,
       uiSchema: arrayOnUiSchema,
-      experimental_defaultFormStateBehavior,
+      defaultFormStateBehavior,
     };
     const { node } = createFormComponent(props);
     let addArrayControlNode = node.querySelector<HTMLButtonElement>(`#${arrayControlAddId}`);
@@ -1820,7 +1891,7 @@ describe('optionalDataControls', () => {
     const props: NoValFormProps = {
       schema,
       uiSchema: bothOnUiSchema,
-      experimental_defaultFormStateBehavior,
+      defaultFormStateBehavior,
     };
     const { node } = createFormComponent(props);
     let addArrayControlNode = node.querySelector<HTMLButtonElement>(`#${arrayControlAddId}`);
@@ -2130,10 +2201,13 @@ describe('initialFormData feature to prevent form reset', () => {
       name: { type: 'string', title: 'Name' },
     },
   };
-  const data = { name: 'initial_id' };
+  interface ResetData {
+    name?: string;
+  }
+  const data: ResetData = { name: 'initial_id' };
   /** This was adapted from the [example](https://playcode.io/2038613) provided in issue #391
    */
-  const FormWrapper = ({ formData, initialFormData }: { formData?: any; initialFormData?: any }) => {
+  const FormWrapper = ({ formData, initialFormData }: { formData?: ResetData; initialFormData?: ResetData }) => {
     const [isPending, setIsPending] = useState(false);
 
     const handleSubmit = () => {
@@ -2348,7 +2422,7 @@ describe('extraErrors not duplicated when sibling array field mutated (#5041)', 
 
     // The name field's extraErrors should still contain exactly one error
     const { state } = formRef.current!;
-    const nameErrors = (state.errorSchema as any)?.name?.__errors ?? [];
+    const nameErrors = (state.errorSchema as ErrorSchema<{ name?: string }>).name?.__errors ?? [];
     expect(nameErrors).toHaveLength(1);
     expect(nameErrors[0]).toBe('Name is required');
   });
@@ -2665,7 +2739,7 @@ describe('enum-based array values do not update when dependencies change (#1357 
     const { node, onChange } = createFormComponent({
       schema,
       formData: { select_item: 'item1' },
-      experimental_defaultFormStateBehavior: { arrayMinItems: { mergeExtraDefaults: true } },
+      defaultFormStateBehavior: { arrayMinItems: { mergeExtraDefaults: true } },
     });
 
     expectToHaveBeenCalledWithFormData(onChange, {

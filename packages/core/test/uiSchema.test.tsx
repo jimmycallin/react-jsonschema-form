@@ -3,7 +3,7 @@ import type { GenericObjectType, RJSFSchema, UiSchema, Widget, WidgetProps } fro
 import { noop } from '@rjsf/utils';
 import validator from '@rjsf/validator-ajv8';
 import { render, fireEvent, act, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { userEvent } from '@testing-library/user-event';
 import type { MockInstance } from 'vitest';
 
 import RadioWidget from '../src/components/widgets/RadioWidget.tsx';
@@ -225,32 +225,6 @@ describe('uiSchema', () => {
         expect(consoleErrorSpy).toHaveBeenCalledWith(
           'Setting options via ui:widget object is no longer supported, use ui:options instead',
         );
-      });
-
-      it('should cache MergedWidget instance', () => {
-        // Cast to get to the underlying cached object without typescript warnings
-        expect((widget as GenericObjectType).MergedWidget).not.toBeDefined();
-        createFormComponent({
-          schema: {
-            type: 'string',
-          },
-          uiSchema: {
-            'ui:widget': 'widget',
-          },
-          widgets,
-        });
-        const cached = (widget as GenericObjectType).MergedWidget;
-        expect(cached).toBeDefined();
-        createFormComponent({
-          schema: {
-            type: 'string',
-          },
-          uiSchema: {
-            'ui:widget': 'widget',
-          },
-          widgets,
-        });
-        expect((widget as GenericObjectType).MergedWidget).toBe(cached);
       });
 
       it('should render merged ui:widget options for widget referenced as function', () => {
@@ -1751,86 +1725,6 @@ describe('uiSchema', () => {
     });
   });
 
-  describe('custom root field id', () => {
-    it('should use a custom root field id for objects', () => {
-      const schema: RJSFSchema = {
-        type: 'object',
-        properties: {
-          foo: {
-            type: 'string',
-          },
-          bar: {
-            type: 'string',
-          },
-        },
-      };
-      const uiSchema: UiSchema = {
-        'ui:rootFieldId': 'myform',
-      };
-      const { node } = createFormComponent({ schema, uiSchema });
-
-      const ids = [].map.call(node.querySelectorAll('input[type=text]'), (node: Element) => node.id);
-      expect(ids).toEqual(['myform_foo', 'myform_bar']);
-    });
-
-    it('should use a custom root field id for arrays', () => {
-      const schema: RJSFSchema = {
-        type: 'array',
-        items: {
-          type: 'string',
-        },
-      };
-      const uiSchema: UiSchema = {
-        'ui:rootFieldId': 'myform',
-      };
-      const { node } = createFormComponent({
-        schema,
-        uiSchema,
-        formData: ['foo', 'bar'],
-      });
-
-      const ids = [].map.call(node.querySelectorAll('input[type=text]'), (node: Element) => node.id);
-      expect(ids).toEqual(['myform_0', 'myform_1']);
-    });
-
-    it('should use a custom root field id for array of objects', () => {
-      const schema: RJSFSchema = {
-        type: 'array',
-        items: {
-          type: 'object',
-          properties: {
-            foo: {
-              type: 'string',
-            },
-            bar: {
-              type: 'string',
-            },
-          },
-        },
-      };
-      const uiSchema: UiSchema = {
-        'ui:rootFieldId': 'myform',
-      };
-      const { node } = createFormComponent({
-        schema,
-        uiSchema,
-        formData: [
-          {
-            foo: 'foo1',
-            bar: 'bar1',
-          },
-          {
-            foo: 'foo2',
-            bar: 'bar2',
-          },
-        ],
-      });
-
-      const ids = [].map.call(node.querySelectorAll('input[type=text]'), (node: Element) => node.id);
-      expect(ids).toEqual(['myform_0_foo', 'myform_0_bar', 'myform_1_foo', 'myform_1_bar']);
-    });
-  });
-
   describe('Disabled', () => {
     describe('Fields', () => {
       describe('ArrayField', () => {
@@ -2877,5 +2771,15 @@ describe('uiSchema', () => {
         expect(nodeOption).toBeDefined();
       });
     });
+  });
+  it('string field with autocapitalize', () => {
+    const schema: RJSFSchema = {
+      type: 'string',
+    };
+    const uiSchema: UiSchema = {
+      'ui:autocapitalize': 'words',
+    };
+    const { container } = render(<Form schema={schema} validator={validator} uiSchema={uiSchema} />);
+    expect(container.querySelector('input')?.getAttribute('autocapitalize')).toBe('words');
   });
 });

@@ -2,7 +2,7 @@ import { createRef, useEffect } from 'react';
 import type { RJSFSchema, UiSchema, WidgetProps } from '@rjsf/utils';
 import { getTemplate, getUiOptions } from '@rjsf/utils';
 import { waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { userEvent } from '@testing-library/user-event';
 
 import type { FormProps, IChangeEvent } from '../src/index.ts';
 import { expectToHaveBeenCalledWithFormData, submitForm, describeRepeated } from './testUtils.tsx';
@@ -363,7 +363,7 @@ describeRepeated('Form common: event handlers', (createFormComponent) => {
       const { node } = createFormComponent({
         schema,
         onChange: (event: IChangeEvent, id?: string) => onChangeCalls.push({ event, id }),
-        experimental_defaultFormStateBehavior: { emptyObjectFields: 'populateAllDefaults' },
+        defaultFormStateBehavior: { emptyObjectFields: 'populateAllDefaults' },
       });
 
       // Should start with "Advanced Configuration" (index 1) based on default
@@ -439,7 +439,7 @@ describeRepeated('Form common: event handlers', (createFormComponent) => {
           onChangeCalls.push({ event, id });
           currentFormData = event.formData;
         },
-        experimental_defaultFormStateBehavior: { emptyObjectFields: 'populateAllDefaults' },
+        defaultFormStateBehavior: { emptyObjectFields: 'populateAllDefaults' },
       });
 
       // Should start with "Advanced Configuration" (index 1)
@@ -454,7 +454,7 @@ describeRepeated('Form common: event handlers', (createFormComponent) => {
         ref: createRef(),
         schema,
         formData: currentFormData,
-        experimental_defaultFormStateBehavior: { emptyObjectFields: 'populateAllDefaults' },
+        defaultFormStateBehavior: { emptyObjectFields: 'populateAllDefaults' },
       });
 
       // BUG: Without the fix, the form would revert back to index 1
@@ -641,7 +641,7 @@ describeRepeated('Form common: event handlers', (createFormComponent) => {
         const { node, onChange } = createFormComponent({
           schema,
           uiSchema,
-          experimental_defaultFormStateBehavior: {
+          defaultFormStateBehavior: {
             constAsDefaults: 'never',
           },
         });

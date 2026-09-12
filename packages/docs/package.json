@@ -1,6 +1,6 @@
 {
   "name": "@rjsf/docs",
-  "version": "6.9.0",
+  "version": "6.10.0",
   "private": true,
   "scripts": {
     "docusaurus": "docusaurus",
@@ -31,8 +31,7 @@
   "devDependencies": {
     "@docusaurus/module-type-aliases": "^3.10.1",
     "@docusaurus/plugin-content-docs": "^3.10.1",
-    "@docusaurus/types": "^3.10.1",
-    "@tsconfig/docusaurus": "^2.0.9"
+    "@docusaurus/types": "^3.10.1"
   },
   "browserslist": {
     "production": [
@@ -47,6 +46,6 @@
     ]
   },
   "engines": {
-    "node": ">=20"
+    "node": "^22.18.0 || ^24.11.0 || >=26.0.0"
   }
 }

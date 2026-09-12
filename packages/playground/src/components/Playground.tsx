@@ -1,6 +1,6 @@
 // oxlint-disable no-console
-import type { ComponentType, FormEvent } from 'react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import type { SubmitEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Box from '@mui/material/Box';
 import Divider from '@mui/material/Divider';
 import type { FormProps, IChangeEvent } from '@rjsf/core';
@@ -25,13 +25,46 @@ export interface PlaygroundProps {
   validators: Record<string, ValidatorType>;
 }
 
+/** Maps the `liveSettings` drawer's `'off' | 'onChange' | 'onBlur'` radio value onto the
+ * `liveValidate`/`liveOmit` prop shape `Form` actually accepts, since `Form` has no `'off'` value of its own.
+ */
+export function toLiveSetting(value: unknown): 'onChange' | 'onBlur' | undefined {
+  return value === 'onChange' || value === 'onBlur' ? value : undefined;
+}
+
+/** Converts a legacy boolean `liveValidate`/`liveOmit` value - `true` from a v5 shared link, `false` from a v5/v6
+ * one - into the current string value. Any other value (including `undefined`) passes through unchanged.
+ */
+function normalizeLiveFlag(value: unknown): unknown {
+  if (value === true) {
+    return 'onChange';
+  }
+  if (value === false) {
+    return 'off';
+  }
+  return value;
+}
+
+/** Normalizes `liveSettings` decoded from a shared playground URL or sample: defaults a missing object to `{}` (a
+ * shared URL predating `liveSettings` support omits it entirely) so callers never have to null-check it, and
+ * converts any legacy boolean `liveValidate`/`liveOmit` values to their current string equivalents.
+ */
+export function normalizeLiveSettings(loadedLiveSettings?: LiveSettings): LiveSettings {
+  const settings = loadedLiveSettings ?? {};
+  return {
+    ...settings,
+    liveValidate: normalizeLiveFlag(settings.liveValidate),
+    liveOmit: normalizeLiveFlag(settings.liveOmit),
+  };
+}
+
 export default function Playground({ themes, validators }: PlaygroundProps) {
   const [loaded, setLoaded] = useState(false);
   const [schema, setSchema] = useState<RJSFSchema>(samples.Simple.schema);
   const [uiSchema, setUiSchema] = useState<UiSchema>(samples.Simple.uiSchema as UiSchema);
   // Store the generator inside of an object, otherwise react treats it as an initializer function
   const [uiSchemaGenerator, setUiSchemaGenerator] = useState<{ generator: UiSchemaForTheme } | undefined>(undefined);
-  const [formData, setFormData] = useState<any>(samples.Simple.formData);
+  const [formData, setFormData] = useState<unknown>(samples.Simple.formData);
   const [extraErrors, setExtraErrors] = useState<ErrorSchema | undefined>();
   const [shareURL, setShareURL] = useState<string | null>(null);
   const [theme, setTheme] = useState<string>('default');
@@ -47,9 +80,10 @@ export default function Playground({ themes, validators }: PlaygroundProps) {
     noHtml5Validate: false,
     readonly: false,
     omitExtraData: false,
-    liveOmit: false,
+    liveOmit: 'off',
+    liveValidate: 'off',
     experimental_componentUpdateStrategy: 'customDeep',
-    experimental_defaultFormStateBehavior: {
+    defaultFormStateBehavior: {
       arrayMinItems: 'populate',
       emptyObjectFields: 'populateAllDefaults',
     },
@@ -59,19 +93,17 @@ export default function Playground({ themes, validators }: PlaygroundProps) {
 
   const playGroundFormRef = useRef<any>(null);
 
-  // oxlint-disable-next-line react/hook-use-state
-  const [FormComponent, setFormComponent] = useState<ComponentType<FormProps>>(withTheme({}));
+  const FormComponent = useMemo(() => withTheme(themes[theme].theme), [themes, theme]);
 
   const onThemeSelected = useCallback(
-    (newTheme: string, { stylesheet: newStylesheet, theme: themeObj }: ThemesType) => {
+    (newTheme: string, { stylesheet: newStylesheet }: ThemesType) => {
       setTheme(newTheme);
-      setFormComponent(withTheme(themeObj));
       setStylesheet(newStylesheet);
       if (uiSchemaGenerator) {
         setUiSchema(uiSchemaGenerator.generator(newTheme));
       }
     },
-    [uiSchemaGenerator, setTheme, setFormComponent, setStylesheet],
+    [uiSchemaGenerator, setTheme, setStylesheet],
   );
 
   const load = useCallback(
@@ -128,15 +160,7 @@ export default function Playground({ themes, validators }: PlaygroundProps) {
       setFormData(loadedFormData);
       setExtraErrors(loadedExtraErrors);
       setShowForm(true);
-      if (loadedLiveSettings?.liveValidate === true) {
-        // Convert v5 true value to `onChange`
-        loadedLiveSettings.liveValidate = 'onChange';
-      }
-      if (loadedLiveSettings?.liveOmit === true) {
-        // Convert v5 true value to `onChange`
-        loadedLiveSettings.liveOmit = 'onChange';
-      }
-      setLiveSettings(loadedLiveSettings);
+      setLiveSettings(normalizeLiveSettings(loadedLiveSettings));
       if ('validator' in data && theValidator !== undefined) {
         setValidator(theValidator);
       }
@@ -194,7 +218,7 @@ export default function Playground({ themes, validators }: PlaygroundProps) {
     [setFormData, setShareURL],
   );
 
-  const onFormDataSubmit = useCallback(({ formData: submittedFormData }: IChangeEvent, event: FormEvent<any>) => {
+  const onFormDataSubmit = useCallback(({ formData: submittedFormData }: IChangeEvent, event: SubmitEvent<any>) => {
     console.log('submitted formData', submittedFormData);
     console.log('submit event', event);
     // oxlint-disable-next-line no-alert
@@ -239,6 +263,8 @@ export default function Playground({ themes, validators }: PlaygroundProps) {
               <FormComponent
                 {...otherFormProps}
                 {...liveSettings}
+                liveValidate={toLiveSetting(liveSettings.liveValidate)}
+                liveOmit={toLiveSetting(liveSettings.liveOmit)}
                 extraErrors={extraErrors}
                 schema={schema}
                 uiSchema={uiSchema}
@@ -251,8 +277,8 @@ export default function Playground({ themes, validators }: PlaygroundProps) {
                 validator={validators[validator]}
                 onChange={onFormDataChange}
                 onSubmit={onFormDataSubmit}
-                onBlur={(id: string, value: string) => console.log(`Blurred ${id} with value ${value}`)}
-                onFocus={(id: string, value: string) => console.log(`Focused ${id} with value ${value}`)}
+                onBlur={(id: string, value: unknown) => console.log(`Blurred ${id} with value ${value}`)}
+                onFocus={(id: string, value: unknown) => console.log(`Focused ${id} with value ${value}`)}
                 onError={(errorList: RJSFValidationError[]) => console.log('errors', errorList)}
                 ref={playGroundFormRef}
               />

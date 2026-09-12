@@ -2,7 +2,7 @@ import { createRef } from 'react';
 import type {
   RJSFSchema,
   FieldProps,
-  FieldPathList,
+  FieldPath,
   ErrorSchema,
   TitleFieldProps,
   DescriptionFieldProps,
@@ -10,7 +10,7 @@ import type {
 } from '@rjsf/utils';
 import { UI_GLOBAL_OPTIONS_KEY } from '@rjsf/utils';
 import { act } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { userEvent } from '@testing-library/user-event';
 
 import ObjectField from '../src/components/fields/ObjectField.tsx';
 import SchemaField from '../src/components/fields/SchemaField.tsx';
@@ -21,7 +21,7 @@ import { TextWidgetTest } from './TextWidgetTest.tsx';
 const user = userEvent.setup();
 
 const ObjectFieldTest = (props: FieldProps) => {
-  const onChangeTest = (newFormData: any, path: FieldPathList, errorSchema?: ErrorSchema, id?: string) => {
+  const onChangeTest = (newFormData: any, path: FieldPath, errorSchema?: ErrorSchema, id?: string) => {
     let newErrorSchema = errorSchema;
     if (newFormData !== 'test') {
       newErrorSchema = {
@@ -197,11 +197,11 @@ describe('ObjectField', () => {
       function CustomSchemaField(props: FieldProps) {
         const {
           registry: { formContext },
-          fieldPathId,
+          id,
         } = props;
         return (
           <>
-            <code id={formContext[fieldPathId.$id]}>Ha</code>
+            <code id={formContext[id]}>Ha</code>
             <SchemaField {...props} />
           </>
         );
@@ -252,7 +252,7 @@ describe('ObjectField', () => {
         formData: {
           checkbox: true,
         },
-        liveValidate: true,
+        liveValidate: 'onChange',
       });
 
       // Uncheck the checkbox
@@ -293,7 +293,7 @@ describe('ObjectField', () => {
           email: 'Appie@hotmail.com',
           emailConfirm: 'wrong@wrong.com',
         },
-        liveValidate: true,
+        liveValidate: 'onChange',
       });
 
       // trigger the errors by submitting the form since initial render no longer shows them
@@ -308,7 +308,7 @@ describe('ObjectField', () => {
           email: 'Appie@hotmail.com',
           emailConfirm: 'Appie@hotmail.com',
         },
-        liveValidate: true,
+        liveValidate: 'onChange',
       });
 
       expect(node.querySelectorAll('#root_foo__error')).toHaveLength(0);
@@ -320,7 +320,7 @@ describe('ObjectField', () => {
         formData: {
           foo: null,
         },
-        liveValidate: true,
+        liveValidate: 'onChange',
       });
 
       // trigger the errors by submitting the form since initial render no longer shows them.
@@ -333,7 +333,7 @@ describe('ObjectField', () => {
       const errorMessageContent = node.querySelector('#root_foo__error .text-danger');
       expect(errorMessageContent).toHaveTextContent('must be string');
 
-      rerender({ schema, formData: { foo: 'test' }, liveValidate: true });
+      rerender({ schema, formData: { foo: 'test' }, liveValidate: 'onChange' });
 
       expect(node.querySelectorAll('#root_foo__error')).toHaveLength(0);
     });

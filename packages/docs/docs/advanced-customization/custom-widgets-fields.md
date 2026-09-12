@@ -132,7 +132,7 @@ const CustomTextWidget = function (props: WidgetProps) {
         __errors: ['Value must be "test"'],
       };
     }
-    props.onChange(value, [], raiseError, id);
+    props.onChange(value, raiseError, id);
   };
 
   return <input id={id} onChange={raiseErrorOnChange} value={value || ''} />;
@@ -251,7 +251,8 @@ This is useful if you expose the `uiSchema` as pure JSON, which can't carry func
 
 ### Custom widget options
 
-If you need to pass options to your custom widget, you can add a `ui:options` object containing those properties. If the widget has `defaultProps`, the options will be merged with the (optional) options object from `defaultProps`:
+If you need to pass options to your custom widget, you can add a `ui:options` object containing those properties.
+To provide defaults for options that aren't set via `ui:options`, apply them inside the widget itself:
 
 ```tsx
 import { RJSFSchema, UiSchema, WidgetProps } from '@rjsf/utils';
@@ -263,15 +264,9 @@ const schema: RJSFSchema = {
 
 function MyCustomWidget(props: WidgetProps) {
   const { options } = props;
-  const { color, backgroundColor } = options;
+  const { color = 'red', backgroundColor } = options;
   return <input style={{ color, backgroundColor }} />;
 }
-
-MyCustomWidget.defaultProps = {
-  options: {
-    color: 'red',
-  },
-};
 
 const uiSchema: UiSchema = {
   'ui:widget': MyCustomWidget,
@@ -299,15 +294,9 @@ Here is an example of modifying the `SelectWidget` to change the ordering of `en
 
 ```tsx
 import { WidgetProps } from '@rjsf/utils';
-import { getDefaultRegistry } from '@rjsf/core';
-import { Widgets } from '@rjsf/mui';
+import { SelectWidget } from '@rjsf/core'; // or from a theme: `const { SelectWidget } = Widgets` with `import { Widgets } from '@rjsf/mui'`
 
 import myOptionsOrderFunction from './myOptionsOrderFunction';
-
-const {
-  widgets: { SelectWidget },
-} = getDefaultRegistry(); // To get widgets from core
-// const { SelectWidget } = Widgets; // To get widgets from a theme do this
 
 function MySelectWidget(props: WidgetProps) {
   const { options } = props;
@@ -389,7 +378,8 @@ A field component will always be passed the following props:
 
 - `schema`: The JSON subschema object for this field;
 - `uiSchema`: The [uiSchema](../api-reference/uiSchema.md) for this field;
-- `idSchema`: The FieldPathId of the field in the hierarchy
+- `fieldPath`: The `FieldPath` string identifying where this field's data lives, such as `friends[0].firstName`; pass it to `onChange` when reporting a new value
+- `id`: The id of the field in the hierarchy
 - `formData`: The data for this field;
 - `errorSchema`: The tree of errors for this field and its children;
 - `registry`: A [registry](#the-registry-object) object (read next).
@@ -524,13 +514,9 @@ Here is an example of wrapping the `ObjectField` to tweak the `onChange` handler
 ```tsx
 import { useCallback } from 'react';
 import { FieldProps } from '@rjsf/utils';
-import { getDefaultRegistry } from '@rjsf/core';
+import { ObjectField } from '@rjsf/core';
 
 import checkBadData from './checkBadData';
-
-const {
-  fields: { ObjectField },
-} = getDefaultRegistry();
 
 function MyObjectField(props: FieldProps) {
   const { onChange } = props;

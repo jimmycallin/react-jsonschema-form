@@ -22,6 +22,8 @@ These types can be found on GitHub [here](https://github.com/rjsf-team/react-jso
 
 **`ObjectPath`** — Used by the path utilities (`getByPath`, `setByPath`, `hasByPath`, `unsetByPath`) to address a value inside a plain object. It is `string | number | FieldPathList`. A bare **string is always a single literal key**: `'a.b'` means the key `'a.b'`, never the nested path `a` → `b`. To walk a dotted path string, split it explicitly with [toPath()](#topath) first, or pass a `FieldPathList` (`(string | number)[]`) of segments. Reads and existence checks resolve **own** properties only, so inherited members never appear as form data.
 
+**`FieldPath`** — The identity of a field in a form: a canonical string path such as `friends[0].firstName`, with the root form as the empty string (`ROOT_FIELD_PATH`). Property names are separated by `.`, array indexes are bracketed, and `\ . [ ]` inside a property name are backslash-escaped, so the grammar is unambiguous even when property names contain dots or brackets. It is a branded `string`, so a plain string (such as a DOM id) cannot be passed where a `FieldPath` is expected; build one with [toFieldPath()](#tofieldpath) and derive the HTML id, HTML name or segment list from it with [fieldPathToId()](#fieldpathtoid), [fieldPathToName()](#fieldpathtoname) and [fieldPathToList()](#fieldpathtolist).
+
 **`SchemaFieldPath`** — Used when navigating a JSON Schema subtree (for example with `getFromSchema` and `findFieldInSchema` on `SchemaUtilsType`, documented under [Validator-based utility functions](#validator-based-utility-functions)). It is `string | FieldPathList`: either a dotted path or an array of segments with the same rules as `FieldPathList` (`(string | number)[]`). A numeric segment denotes an array index or an object key that is numeric. Navigation skips only `undefined` or empty-string segments, so segment **`0`** is always honored (this avoids the bug from treating `0` as a falsy path unit).
 
 ## Enums
@@ -51,7 +53,7 @@ Return a list of element ids that contain additional information about the field
 
 #### Parameters
 
-- id: FieldPathId | string - Either simple string id or an FieldPathId from which to extract it
+- id: string - The id of the field
 - [includeExamples=false]: boolean - Optional flag, if true, will add the `examplesId` into the list
 
 #### Returns
@@ -94,7 +96,7 @@ Return a consistent `id` for the `btn` button element
 
 #### Parameters
 
-- id: FieldPathId | string - The id of the parent component for the option
+- id: string - The id of the parent component for the option
 - btn: 'add' | 'copy' | 'moveDown' | 'moveUp' | 'remove' - The button type for which to generate the id
 
 #### Returns
@@ -179,7 +181,7 @@ Return a consistent `id` for the field description element.
 
 #### Parameters
 
-- id: FieldPathId | string - Either simple string id or an FieldPathId from which to extract it
+- id: string - The id of the field
 
 #### Returns
 
@@ -361,7 +363,7 @@ Return a consistent `id` for the field error element.
 
 #### Parameters
 
-- id: FieldPathId | string - Either simple string id or an FieldPathId from which to extract it
+- id: string - The id of the field
 
 #### Returns
 
@@ -373,11 +375,62 @@ Return a consistent `id` for the field examples element.
 
 #### Parameters
 
-- id: FieldPathId | string - Either simple string id or an FieldPathId from which to extract it
+- id: string - The id of the field
 
 #### Returns
 
 - string: The consistent id for the field examples element from the given `id`
+
+### fieldPathEndsWithIndex()
+
+Determines whether the last segment of `fieldPath` is an array index, i.e. whether the path addresses an array element.
+
+#### Parameters
+
+- fieldPath: FieldPath - The `FieldPath` to check
+
+#### Returns
+
+- boolean: True when the path addresses an array element, otherwise false
+
+### fieldPathToId()
+
+Derives the HTML `id` for `fieldPath` from the `idPrefix` and `idSeparator` in `globalFormOptions`, joining the prefix and every segment of the path with the separator.
+
+#### Parameters
+
+- fieldPath: FieldPath - The `FieldPath` of the field
+- globalFormOptions: GlobalFormOptions - The `GlobalFormOptions` used to get the `idPrefix` and `idSeparator`
+
+#### Returns
+
+- string: The id for the field
+
+### fieldPathToList()
+
+Parses `fieldPath` back into its list of segments, with array indexes as numbers and property names unescaped.
+
+#### Parameters
+
+- fieldPath: FieldPath - The `FieldPath` to parse
+
+#### Returns
+
+- FieldPathList: The `FieldPathList` for `fieldPath`
+
+### fieldPathToName()
+
+Derives the HTML `name` for `fieldPath` using the `nameGenerator` in `globalFormOptions`, when one is provided.
+
+#### Parameters
+
+- fieldPath: FieldPath - The `FieldPath` of the field
+- globalFormOptions: GlobalFormOptions - The `GlobalFormOptions` used to get the `nameGenerator` and `idPrefix`
+- [isMultiValue]: boolean | undefined - Optional flag indicating this field accepts multiple values
+
+#### Returns
+
+- string | undefined: The name for the field, or undefined when no `nameGenerator` is configured or `fieldPath` is the root
 
 ### findSchemaDefinition&lt;S extends StrictRJSFSchema = RJSFSchema>()
 
@@ -514,6 +567,19 @@ Given date & time information with optional yearRange & format, returns props fo
 #### Returns
 
 - Array of props for DateElement
+
+### getDateTimeLocalValue&lt;S extends StrictRJSFSchema = RJSFSchema>()
+
+Computes whether a date-time field's `schema.format` is `iso-date-time`, and the `value` to use for display accordingly. When `isIsoDateTime`, a stored value that happens to carry a timezone offset (legal, since that format's timezone is optional) is stripped, so it displays as the naive wall-clock time it represents instead of being converted to another timezone by a date/time picker that parses the offset as real. To be used by theme specific `DateTimeWidget` implementations.
+
+#### Parameters
+
+- schema: S - The schema for the date-time field
+- value: unknown - The current value of the field
+
+#### Returns
+
+- DateTimeLocalValueResult: The `DateTimeLocalValueResult` to be used within a `DateTimeWidget` implementation
 
 ### getInputProps&lt;T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>()
 
@@ -655,9 +721,9 @@ Any `globalOptions` will always be returned, unless they are overridden by optio
 ### getWidget&lt;T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>()
 
 Given a schema representing a field to render and either the name or actual `Widget` implementation, returns the
-React component that is used to render the widget. If the `widget` is already a React component, then it is wrapped
-with a `MergedWidget`. Otherwise an attempt is made to look up the widget inside of the `registeredWidgets` map based
-on the schema type and `widget` name. If no widget component can be found an `Error` is thrown.
+React component that is used to render the widget. If the `widget` is already a React component, it is returned
+as-is. Otherwise an attempt is made to look up the widget inside of the `registeredWidgets` map based on the
+schema type and `widget` name. If no widget component can be found an `Error` is thrown.
 
 #### Parameters
 
@@ -766,7 +832,7 @@ Return a consistent `id` for the field help element.
 
 #### Parameters
 
-- id: FieldPathId | string - Either simple string id or an FieldPathId from which to extract it
+- id: string - The id of the field
 
 #### Returns
 
@@ -894,6 +960,18 @@ Some themes require may `false` and others may require an empty string.
 
 - string | boolean | undefined: `fallback` if `hideLabel` is true, otherwise `label`
 
+### localTimeToOffsetTime()
+
+Appends the browser's current local UTC offset to a bare `time` string (`HH:MM` or `HH:MM:SS`), producing a `time` compliant with the JSON Schema `time` format (RFC 3339 `full-time`), which requires a timezone. The wall-clock value itself is left untouched; only the offset annotation is added.
+
+#### Parameters
+
+- time: string - A time string without a timezone offset
+
+#### Returns
+
+- string: The `time` string suffixed with `Z` (UTC) or a `+HH:MM`/`-HH:MM` offset
+
 ### localToUTC()
 
 Converts a local Date string into a UTC date string
@@ -1007,6 +1085,18 @@ A function that does nothing and returns `undefined`, useful as a placeholder fo
 
 - void
 
+### offsetTimeToLocalTime()
+
+Strips a trailing timezone offset (`Z` or `+HH:MM`/`-HH:MM`) from a `time` string, returning the bare `HH:MM:SS` portion suitable for a native `<input type="time">`, which does not understand offsets.
+
+#### Parameters
+
+- time: string - A time string, optionally suffixed with a timezone offset
+
+#### Returns
+
+- string: The `time` string with any trailing offset removed
+
 ### optionsList&lt;T = any, S extends StrictRJSFSchema = RJSFSchema,F extends FormContextType = any>()
 
 Gets the list of options from the `schema`. If the schema has an enum list, then those enum values are returned.
@@ -1061,6 +1151,18 @@ Returns a string representation of the `num` that is padded with leading "0"s if
 #### Returns
 
 - string: The number converted to a string with leading zero padding if the number of digits is less than `width`
+
+### padTimeSeconds()
+
+Appends `:00` seconds to a bare time-of-day (`HH:MM`) or the time portion of a naive local date-time string (`...THH:MM`) that is missing them, since RFC 3339 requires seconds for both the `time` and `date-time` formats (independent of whether a timezone offset is present or required).
+
+#### Parameters
+
+- value: string - A time or date-time string, with or without seconds
+
+#### Returns
+
+- string: The value with `:00` appended if it was missing seconds, otherwise unchanged
 
 ### parseDateString()
 
@@ -1234,7 +1336,7 @@ Return a consistent `id` for the field title element.
 
 #### Parameters
 
-- id: FieldPathId | string - Either simple string id or an FieldPathId from which to extract it
+- id: string - The id of the field
 
 #### Returns
 
@@ -1312,22 +1414,18 @@ const intoThis = {
 
 - ErrorSchema&lt;T>: The `ErrorSchema` built from the list of `RJSFValidationErrors`
 
-### toFieldPathId()
+### toFieldPath()
 
-Constructs the `FieldPathId` for `fieldPath`. If `parentPathId` is provided, the `fieldPath` is appended to the end
-of the parent path. Then the `ID_KEY` of the resulting `FieldPathId` is constructed from the `idPrefix` and
-`idSeparator` contained within the `globalFormOptions`. If `fieldPath` is passed as an empty string, it will simply
-generate the path from the `parentPath` (if provided) and the `idPrefix` and `idSeparator`
+Appends `segment` to `parentPath`, returning the `FieldPath` of the child field. Property names are separated by `.` and array indexes are bracketed, so `toFieldPath('firstName', toFieldPath(0, toFieldPath('friends')))` is `friends[0].firstName`. A property name containing `\`, `.`, `[` or `]` is backslash-escaped. An empty `segment` names no field, so the parent path is returned unchanged.
 
 #### Parameters
 
-- fieldPath: string | number - The property name or array index of the current field element
-- globalFormOptions: GlobalFormOptions - The `GlobalFormOptions` used to get the `idPrefix` and `idSeparator`
-- [parentPath]: FieldPathId | FieldPathList | undefined - The optional `FieldPathId` or `FieldPathList` of the parent element for this field element
+- segment: string | number - The property name or array index of the field
+- [parentPath=ROOT_FIELD_PATH]: FieldPath - The optional `FieldPath` of the parent field
 
 #### Returns
 
-- FieldPathId: The `FieldPathId` for the given `fieldPath` and the optional `parentPathId`
+- FieldPath: The `FieldPath` of the field
 
 ### toPath()
 
@@ -1400,19 +1498,6 @@ and to handle the clicking of the `clear` and `setNow` buttons.
 
 - UseAltDateWidgetResult: The `UseAltDateWidgetResult` to be used within a `AltDateWidget` implementation
 
-### useDeepCompareMemo&lt;T = unknown>()
-
-Hook that stores and returns a `T`. If `newValue` is the same as the stored one, then the stored one is returned to
-avoid having a component rerender due it being a different object. Otherwise, the `newValue` is stored and returned.
-
-#### Parameters
-
-- newValue: T - The potential new `T` value
-
-#### Returns
-
-- T: The latest stored `T` value
-
 ### useFileWidgetProps()
 
 Hook which encapsulates the logic needed to read and convert a `value` of `File` or `File[]` into the
@@ -1428,6 +1513,22 @@ Hook which encapsulates the logic needed to read and convert a `value` of `File`
 #### Returns
 
 - UseFileWidgetPropsResult: The `UseFileWidgetPropsResult` to be used within a `FileWidget` implementation
+
+### useTimeWidgetProps&lt;T = any, S extends StrictRJSFSchema = RJSFSchema,F extends FormContextType = any&gt;()
+
+Hook which encapsulates the logic needed to compute the local (offset-free) display value of a `time` widget, and to
+transform a newly entered value into a value compliant with the JSON Schema `time` format (RFC 3339 `full-time`,
+which requires seconds and a timezone) or, when `schema.format` is `iso-time`, into one still padded with seconds but
+without a forced timezone, since that format's timezone is optional. To be used by theme specific `TimeWidget`
+implementations.
+
+#### Parameters
+
+- props: WidgetProps&lt;T, S, F> - The `WidgetProps` for the `TimeWidget`
+
+#### Returns
+
+- UseTimeWidgetPropsResult: The `UseTimeWidgetPropsResult` to be used within a `TimeWidget` implementation
 
 ### utcToLocal()
 
@@ -1482,7 +1583,7 @@ Finds the field at the given path within the root or a nested `schema` node, fol
 - schema: S - The node within the JSON schema in which to search
 - path: SchemaFieldPath - Dotted path or segment list to the desired field; see [`SchemaFieldPath`](#types)
 - [formData={}]: T - The form data that is used to determine which anyOf/oneOf option to descend
-- [experimental_customMergeAllOf]: Experimental_CustomMergeAllOf&lt;S&gt; - See `Form` documentation for the [experimental_customMergeAllOf](./form-props.md#experimental_custommergeallof) prop
+- [customMergeAllOf]: CustomMergeAllOf&lt;S&gt; - See `Form` documentation for the [customMergeAllOf](./form-props.md#custommergeallof) prop
 
 #### Returns
 
@@ -1501,7 +1602,7 @@ For the purposes of this function, `selectorField` is either `schema.discriminat
 - fallbackField: string - The field to use as a backup selector field if the schema does not have a required field
 - xxx: 'anyOf' | 'oneOf' - Either `anyOf` or `oneOf`, defines which value is being sought
 - [formData={}]: T - The form data that is used to determine which anyOf/oneOf option to descend
-- [experimental_customMergeAllOf]: Experimental_CustomMergeAllOf&lt;S&gt; - See `Form` documentation for the [experimental_customMergeAllOf](./form-props.md#experimental_custommergeallof) prop
+- [customMergeAllOf]: CustomMergeAllOf&lt;S&gt; - See `Form` documentation for the [customMergeAllOf](./form-props.md#custommergeallof) prop
 
 #### Returns
 
@@ -1518,8 +1619,8 @@ Returns the superset of `formData` that includes the given set updated to includ
 - [formData]: T | undefined - The current formData, if any, onto which to provide any missing defaults
 - [rootSchema]: S | undefined - The root schema, used to primarily to look up `$ref`s
 - [includeUndefinedValues=false]: boolean | "excludeObjectChildren" - Optional flag, if true, cause undefined values to be added as defaults. If "excludeObjectChildren", cause undefined values for this object and pass `includeUndefinedValues` as false when computing defaults for any nested object properties.
-- [experimental_defaultFormStateBehavior]: Experimental_DefaultFormStateBehavior - See `Form` documentation for the [experimental_defaultFormStateBehavior](./form-props.md#experimental_defaultFormStateBehavior) prop
-- [experimental_customMergeAllOf]: Experimental_CustomMergeAllOf&lt;S&gt; - See `Form` documentation for the [experimental_customMergeAllOf](./form-props.md#experimental_custommergeallof) prop
+- [defaultFormStateBehavior]: DefaultFormStateBehavior - See `Form` documentation for the [defaultFormStateBehavior](./form-props.md#defaultFormStateBehavior) prop
+- [customMergeAllOf]: CustomMergeAllOf&lt;S&gt; - See `Form` documentation for the [customMergeAllOf](./form-props.md#custommergeallof) prop
 - [initialDefaultsGenerated]: boolean - Optional flag, indicates whether or not initial defaults have been generated
 
 #### Returns
@@ -1557,7 +1658,7 @@ The closest match is determined using the number of matching properties, and mor
 - options: S[] - The list of options to find a matching options from
 - [selectedOption=-1]: number - The index of the currently selected option, defaulted to -1 if not specified
 - [discriminatorField]: string | undefined - The optional name of the field within the options object whose value is used to determine which option is selected
-- [experimental_customMergeAllOf]: Experimental_CustomMergeAllOf&lt;S&gt; - See `Form` documentation for the [experimental_customMergeAllOf](./form-props.md#experimental_custommergeallof) prop
+- [customMergeAllOf]: CustomMergeAllOf&lt;S&gt; - See `Form` documentation for the [customMergeAllOf](./form-props.md#custommergeallof) prop
 
 #### Returns
 
@@ -1574,7 +1675,7 @@ Determines whether the combination of `schema` and `uiSchema` properties indicat
 - [uiSchema={}]: UiSchema&lt;T, S, F> - The UI schema from which to derive potentially displayable information
 - [rootSchema]: S | undefined - The root schema, used to primarily to look up `$ref`s
 - [globalOptions={}]: GlobalUISchemaOptions - The optional Global UI Schema from which to get any fallback `xxx` options
-- [experimental_customMergeAllOf]: Experimental_CustomMergeAllOf&lt;S&gt; - See `Form` documentation for the [experimental_customMergeAllOf](./form-props.md#experimental_custommergeallof) prop
+- [customMergeAllOf]: CustomMergeAllOf&lt;S&gt; - See `Form` documentation for the [customMergeAllOf](./form-props.md#custommergeallof) prop
 
 #### Returns
 
@@ -1592,7 +1693,7 @@ The `path` accepts a [`SchemaFieldPath`](#types) (dotted string or `FieldPathLis
 - schema: S - The current node within the JSON schema recursion
 - path: SchemaFieldPath - Dotted path or segment list to the desired field; see [`SchemaFieldPath`](#types)
 - defaultValue: T | S - The value to return if a value is not found for the `pathList` path
-- [experimental_customMergeAllOf]: Experimental_CustomMergeAllOf&lt;S&gt; - See `Form` documentation for the [experimental_customMergeAllOf](./form-props.md#experimental_custommergeallof) prop
+- [customMergeAllOf]: CustomMergeAllOf&lt;S&gt; - See `Form` documentation for the [customMergeAllOf](./form-props.md#custommergeallof) prop
 
 #### Returns
 
@@ -1624,7 +1725,7 @@ Checks to see if the `schema` combination represents a multi-select
 - validator: ValidatorType&lt;T, S, F> - An implementation of the `ValidatorType` interface that will be used when necessary
 - schema: S - The schema for which check for a multi-select flag is desired
 - [rootSchema]: S | undefined - The root schema, used to primarily to look up `$ref`s
-- [experimental_customMergeAllOf]: Experimental_CustomMergeAllOf&lt;S&gt; - See `Form` documentation for the [experimental_customMergeAllOf](./form-props.md#experimental_custommergeallof) prop
+- [customMergeAllOf]: CustomMergeAllOf&lt;S&gt; - See `Form` documentation for the [customMergeAllOf](./form-props.md#custommergeallof) prop
 
 #### Returns
 
@@ -1639,7 +1740,7 @@ Checks to see if the `schema` combination represents a select
 - validator: ValidatorType&lt;T, S, F> - An implementation of the `ValidatorType` interface that will be used when necessary
 - theSchema: S - The schema for which check for a select flag is desired
 - [rootSchema]: S | undefined - The root schema, used to primarily to look up `$ref`s
-- [experimental_customMergeAllOf]: Experimental_CustomMergeAllOf&lt;S&gt; - See `Form` documentation for the [experimental_customMergeAllOf](./form-props.md#experimental_custommergeallof) prop
+- [customMergeAllOf]: CustomMergeAllOf&lt;S&gt; - See `Form` documentation for the [customMergeAllOf](./form-props.md#custommergeallof) prop
 
 #### Returns
 
@@ -1662,25 +1763,6 @@ Any option whose `additionalProperties` is `false` is widened to `true` so that 
 
 - S[]: A new array of plain schema objects with `additionalProperties` relaxed where needed
 
-### removeOptionalEmptyObjects&lt;T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>()
-
-> NOTE: This function is deprecated and will be removed in a future release. The equivalent pruning behavior is now built into `omitExtraData` — use that instead.
-
-Recursively removes optional objects from the `formData` that are empty (i.e., all their fields are undefined, null, empty strings, or themselves empty optional objects).
-This solves the problem where interacting with fields inside an optional object "activates" it permanently, making the form unsubmittable when the optional object has required inner fields.
-An object property is considered "optional" when it is NOT listed in its parent schema's `required` array.
-
-#### Parameters
-
-- validator: ValidatorType&lt;T, S, F> - An implementation of the `ValidatorType` interface that will be used when necessary
-- schema: S - The JSON schema describing the `formData`
-- [rootSchema]: S | undefined - The root schema, used primarily to look up `$ref`s
-- [formData]: T | undefined - The current form data to prune
-
-#### Returns
-
-- T | undefined: A new copy of `formData` with empty optional objects removed, or `undefined` if the entire formData was pruned
-
 ### retrieveSchema&lt;T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>()
 
 Retrieves an expanded schema that has had all of its conditions, additional properties, references and dependencies
@@ -1693,7 +1775,7 @@ potentially recursive resolution.
 - schema: S - The schema for which retrieving a schema is desired
 - [rootSchema={}]: S - The root schema that will be forwarded to all the APIs
 - [rawFormData]: T | undefined - The current formData, if any, to assist retrieving a schema
-- [experimental_customMergeAllOf]: Experimental_CustomMergeAllOf&lt;S&gt; - See `Form` documentation for the [experimental_customMergeAllOf](./form-props.md#experimental_custommergeallof) prop
+- [customMergeAllOf]: CustomMergeAllOf&lt;S&gt; - See `Form` documentation for the [customMergeAllOf](./form-props.md#custommergeallof) prop
 
 #### Returns
 
@@ -1776,30 +1858,11 @@ Also, any properties in the old schema that are non-existent in the new schema a
 - [newSchema]: S | undefined - The new schema for which the data is being sanitized
 - [oldSchema]: S | undefined - The old schema from which the data originated
 - [data={}]: any - The form data associated with the schema, defaulting to an empty object when undefined
-- [experimental_customMergeAllOf]: Experimental_CustomMergeAllOf&lt;S&gt; - See `Form` documentation for the [experimental_customMergeAllOf](./form-props.md#experimental_custommergeallof) prop
+- [customMergeAllOf]: CustomMergeAllOf&lt;S&gt; - See `Form` documentation for the [customMergeAllOf](./form-props.md#custommergeallof) prop
 
 #### Returns
 
 - T: The new form data, with all the fields uniquely associated with the old schema set to `undefined`. Will return `undefined` if the new schema is not an object containing properties.
-
-### toPathSchema&lt;T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>()
-
-> NOTE: This function is deprecated and will be removed as an exported `@rjsf/utils` function in a future release.
-
-Generates an `PathSchema` object for the `schema`, recursively
-
-#### Parameters
-
-- validator: ValidatorType&lt;T, S, F> - An implementation of the `ValidatorType` interface that will be used when necessary
-- schema: S - The schema for which the `PathSchema` is desired
-- [name='']: string - The base name for the schema
-- [rootSchema]: S | undefined - The root schema, used to primarily to look up `$ref`s
-- [formData]: T | undefined - The current formData, if any, to assist retrieving a schema
-- [experimental_customMergeAllOf]: Experimental_CustomMergeAllOf&lt;S&gt; - See `Form` documentation for the [experimental_customMergeAllOf](./form-props.md#experimental_custommergeallof) prop
-
-#### Returns
-
-- PathSchema&lt;T> - The `PathSchema` object for the `schema`
 
 ## Schema utils creation function
 

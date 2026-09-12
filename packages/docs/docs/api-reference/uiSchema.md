@@ -163,23 +163,6 @@ const uiSchema: UiSchema = {
 };
 ```
 
-### ui:rootFieldId (deprecated)
-
-> DEPRECATED: Use `Form.idPrefix` instead, will be removed in a future major version
-
-By default, this library will generate ids unique to the form for all rendered widgets.
-If you plan on using multiple instances of the `Form` component in a same page, it's wise to declare a root prefix for these, using the `ui:rootFieldId` uiSchema directive:
-
-```ts
-import { UiSchema } from '@rjsf/utils';
-
-const uiSchema: UiSchema = {
-  'ui:rootFieldId': 'myform',
-};
-```
-
-This will make all widgets have an id prefixed with `myform`.
-
 ### ui:field
 
 The `ui:field` property overrides the `Field` implementation used for rendering any field in the form's hierarchy.
@@ -304,6 +287,20 @@ const schema: RJSFSchema = { type: 'string' };
 const uiSchema: UiSchema = {
   'ui:widget': 'textarea',
   'ui:autocomplete': 'on',
+};
+```
+
+### autocapitalize
+
+To control automatic capitalization on virtual keyboards for a text input, set the `ui:autocapitalize` uiSchema
+directive to a valid [HTML autocapitalize value](https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/autocapitalize#value).
+
+```tsx
+import { RJSFSchema, UiSchema } from '@rjsf/utils';
+
+const schema: RJSFSchema = { type: 'string' };
+const uiSchema: UiSchema = {
+  'ui:autocapitalize': 'words',
 };
 ```
 
@@ -513,7 +510,7 @@ const uiSchema = {
     enableOptionalDataFieldForType: ['object', 'array'],
   },
 };
-const experimental_defaultFormStateBehavior = {
+const defaultFormStateBehavior = {
   // Set the emptyObjectFields to only populate required defaults to highlight the code working
   emptyObjectFields: 'populateRequiredDefaults',
 };
@@ -523,7 +520,7 @@ render(
     schema={schema}
     validator={validator}
     uiSchema={uiSchema}
-    experimental_defaultFormStateBehavior={experimental_defaultFormStateBehavior}
+    defaultFormStateBehavior={defaultFormStateBehavior}
     templates={{ OptionalDataControlsTemplate }}
   />,
   document.getElementById('app'),
@@ -959,5 +956,3 @@ const uiSchema: UiSchema = {
 - [AntD Customization](themes/antd/uiSchema.md)
 - [Chakra-UI Customization](themes/chakra-ui/uiSchema.md)
 - [MUI Customization](themes/mui/uiSchema.md)
-- [PrimeReact Customization](themes/primereact/uiSchema.md)
-- [Semantic-UI Customization](themes/semantic-ui/uiSchema.md)
