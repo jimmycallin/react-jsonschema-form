@@ -2,7 +2,7 @@
 
 Status: proposed implementation contract for a breaking release. Documentation only; no runtime changes are included.
 
-Review revision: 2026-09-11. This document supersedes earlier drafts. [The research review](form-state-api-research.md) supplies evidence and rationale. Guarded controlled defaults proposals and lossless queued changes are part of this milestone. Controlled reset leaves data to the parent, with no data proposal. A controlled value mirror is not part of the design.
+Review revision: 2026-09-12. This document supersedes earlier drafts. [The research review](form-state-api-research.md) supplies evidence and rationale. Ownership is inferred from `formData`, with no explicit mode prop. Guarded controlled defaults proposals and lossless queued changes are part of this milestone. Controlled reset leaves data to the parent, with no data proposal. A controlled value mirror is not part of the design.
 
 **Migration headline: rename `formData` to `initialFormData` for an editable seeded form unless an `onChange` handler accepts updates into the supplied value.** A logging-only handler is not acceptance. Intentionally fixed/read-only controlled forms keep `formData`. Put this guidance first in release notes and the migration guide.
 
@@ -26,7 +26,7 @@ Keep `Form<T, S, F>` a class. Preserve existing schema-editing behavior and publ
 
 | Implement now                                                         | Defer to separately specified work                                                  |
 | --------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| Strict value ownership and explicit controlled-undefined support      | Function-component conversion                                                       |
+| Strict inferred value ownership, frozen at mount                      | Function-component conversion                                                       |
 | Shared transition path and removal of controlled value reconciliation | Conditional-default and sanitization policy redesign                                |
 | Necessary nested-field fixes for rejected controlled updates          | General array/field rewrite                                                         |
 | `getFormData()` and a typed `FormHandle`                              | `setFormData()`, `clearErrors()`, batch APIs                                        |
@@ -63,34 +63,38 @@ Budget for deliberate fixture migration in the form behavior, error, handler, an
 
 ### 3.1 Mode selection
 
-Retain `formData`, `initialFormData`, and `onChange`. Add only this ownership prop:
+Retain `formData`, `initialFormData`, and `onChange`. Add no ownership prop. Ownership is inferred from whether the caller supplies a value, exactly as React infers it for `<input>`:
 
 ```ts
-dataMode?: 'controlled' | 'uncontrolled';
+const controlled = props.formData !== undefined;
 ```
 
-Select once at construction:
+Select once at construction and keep that owner for the instance. `Form.tsx` already computes ownership this way, so this rule is existing behavior made strict rather than a new concept.
 
-```ts
-const controlled = props.dataMode ? props.dataMode === 'controlled' : props.formData !== undefined;
-```
-
-Keep this owner for the instance. Explicit `dataMode='controlled'` supports a root starting at undefined. Once controlled, a later undefined value remains controlled. Null is a JSON value, not a request to fall back to initial data.
+Null is a JSON value, not a request to fall back to initial data. Once controlled, a later undefined value remains controlled: an absent root is a legitimate model for an optional object, and the user clearing every field must not hand ownership to the form.
 
 | Initial props                                              | Result                                                   |
 | ---------------------------------------------------------- | -------------------------------------------------------- |
-| Defined `formData`, including null/false/zero/empty string | Controlled, unless explicitly overridden.                |
-| Omitted or undefined `formData`, no explicit mode          | Uncontrolled. Optional-prop forwarding behaves normally. |
-| `dataMode='controlled'`, undefined `formData`              | Controlled empty root.                                   |
+| Defined `formData`, including null/false/zero/empty string | Controlled.                                              |
+| Omitted or undefined `formData`                            | Uncontrolled. Optional-prop forwarding behaves normally. |
 | Only `initialFormData`, or neither data prop               | Uncontrolled, initialized using existing defaults.       |
-| Controlled plus defined `initialFormData`                  | Development warning; ignore initial data.                |
-| Explicit uncontrolled plus defined `formData`              | Development warning; ignore controlled data.             |
+| Defined `formData` plus defined `initialFormData`          | Development warning; ignore initial data.                |
 
-Use simple development diagnostics for attempted mode change after mount and conflicting data props. The latter covers controlled plus defined initial data and explicit uncontrolled plus defined controlled data. A mounted inferred-uncontrolled form later receiving defined `formData` is an attempted mode change. Keep the original owner; do not throw or transfer ownership. Changing a React `key` starts a new instance. No warning registry or elaborate per-kind deduplication mechanism is required.
+Compare against `undefined` only. Do not use own-property detection (`'formData' in props`): a wrapper that spreads its props forwards `formData: undefined` as an own property, and would silently become controlled.
 
-Add a development-only mount warning when the selected mode is controlled, `onChange` is absent, and neither `readonly` nor `disabled` is set. Use the selected mode so explicitly controlled undefined is covered too. The message should recommend `initialFormData` for seeded editing or an accepting `onChange` for controlled editing. A small instance boolean is sufficient to avoid repeating the mount warning under StrictMode; no diagnostics framework is needed. A logging-only handler cannot be detected by this check.
+No ownership prop is offered for a controlled root that starts undefined. Section 8 gives the two supported patterns for asynchronously loaded data. Adding an explicit mode later would be additive and non-breaking, so it stays out until a case appears that those patterns cannot serve.
 
-A fixed controlled value with no handler stays fixed; the warning does not select ownership. Document `readonly` for intentional fixed presentation. Keep diagnostics out of production.
+#### Development diagnostics
+
+Three checks, each a single `console.warn` at the point of detection. No warning registry or per-kind deduplication framework. Keep them out of production.
+
+1. **Uncontrolled form receiving defined `formData` after mount.** Keep the original owner; never throw or transfer ownership. This is the one diagnostic that carries real weight, because it is the only signal for the asynchronous-data trap in section 8, and the failure is otherwise silent: the loaded record is ignored and the form keeps showing its own data. The message must name both fixes, not merely report the attempt.
+2. **Conflicting data props**, meaning defined `formData` together with defined `initialFormData`. Ignore the initial data.
+3. **Controlled mount with no `onChange`** and neither `readonly` nor `disabled`. This mirrors React's own missing-handler warning and catches the headline migration break where it happens. It cannot detect a handler that ignores the event; do not try. Recommend `initialFormData` for seeded editing, or an accepting `onChange` for controlled editing.
+
+The reverse transition, a controlled form whose `formData` becomes undefined, does not warn. React treats `value={undefined}` as the absence of control, but an RJSF root model can legitimately be absent, and that direction does not silently discard caller data.
+
+A fixed controlled value with no handler stays fixed; the warning does not select ownership. Document `readonly` for intentional fixed presentation. Changing a React `key` starts a new instance, which is the supported way to switch records.
 
 Keep the existing large `FormProps` interface and generic inference. Do not add data-prop aliases or a complex union solely to enforce these combinations.
 
@@ -243,7 +247,8 @@ The composition test must issue two path changes synchronously inside one `await
 
 These are coverage requirements, not 18 more mandatory new test cases. Map them to existing suites and add tests only for gaps introduced by this work:
 
-- Mode inference and explicit controlled undefined; null/false/zero/empty-string roots; optional undefined forwarding; deterministic invalid-prop precedence. Add the missing-handler warning check and its readonly/disabled/handler suppressions.
+- Mode inference; null/false/zero/empty-string roots; a controlled root becoming undefined after mount; optional undefined forwarding through a prop-spreading wrapper. Add the three diagnostics, including the missing-handler check with its readonly/disabled/handler suppressions, and assert that a controlled root becoming undefined does not warn.
+- Both asynchronous-data patterns from section 8: a keyed remount after load, and a `record ?? {}` fallback. The broken version must produce the mode-change warning and keep uncontrolled ownership.
 - Uncontrolled initialization, post-mount default notifications, latest-seed reset, guarded schema transitions, and ordered write composition after commit.
 - Existing blur validation/omission and error-only notifications; controlled rejection; submit omission in both modes; getter/submit reading the owner; error provenance and field/ancestor error clearing.
 - Queue progress with no handler, rejection, reentrant handlers, unmount, and supported component-update strategies. Scheduling state must never appear as form data.
@@ -266,7 +271,7 @@ Exit: additive methods/types and migrated reads land independently; existing beh
 
 ### PR 2: Internal preparation and fixture classification
 
-1. Add a private pure mode resolver and unit tests for the future rules. Do not expose an ignored public `dataMode` prop or let the resolver select the live data source yet.
+1. Add a private pure mode resolver and unit tests for the future rules. Do not let the resolver select the live data source yet.
 2. Extract shared edit processing, initialization, and render-context derivation without changing domain algorithms, callback timing, reset behavior, or ownership. Preserve useful queue behavior.
 3. Add accepting/rejecting/transforming parent harnesses. Classify existing editable seeded fixtures and migrate ones whose behavior can be preserved with `initialFormData` or a genuine accepting parent.
 4. Keep tests specifically asserting legacy hybrid behavior unchanged until PR 3. Do not mechanically rename test inputs or assert future ownership semantics in a behavior-preserving PR.
@@ -276,7 +281,7 @@ Exit: existing behavior passes and the later ownership diff is smaller. The priv
 
 ### PR 3: Atomic ownership switch and necessary child fixes
 
-1. Expose `dataMode`, activate the prepared resolver/frozen ownership, and add mode/conflict/missing-handler development diagnostics. These belong with the behavior they describe.
+1. Activate the prepared resolver and frozen ownership, and add the three development diagnostics. These belong with the behavior they describe.
 2. Route render, getter, edits, reset, blur, submit, and validation through authoritative data. Preserve the operation queue and controlled commit checkpoints.
 3. Remove controlled value reconciliation and suppression flags; retain specifically guarded lifecycle defaults proposals and existing compatibility notifications.
 4. Apply the minimum array/branch/object/widget fixes needed for rejected controlled proposals. Keep each subsystem in a separate coherent commit; do not ship a parent ownership change with children that still display rejected values.
@@ -290,10 +295,10 @@ Exit: strict ownership works end to end while the class remains. Getter/handle/t
 Can be commits in PR 3 if needed for a self-contained release. Must land before release.
 
 1. Complete current API docs/examples and the active breaking-release changelog. Do not rewrite historical docs.
-2. Lead with the seeded-form rename. Explain default proposals, queue composition, committed-state getter timing, errors-only controlled reset, parent-chosen reset values, and retained blur notifications.
+2. Lead with the seeded-form rename. Explain inferred ownership frozen at mount, both asynchronous-data patterns, default proposals, queue composition, committed-state getter timing, errors-only controlled reset, parent-chosen reset values, and retained blur notifications.
 3. Audit theme prop/ref forwarding, run repository checks, and inspect snapshot changes individually.
 
-Exit: all consumers and docs match the released contract. No dormant/ignored mode prop, premature mode warning, or partially implemented strict mode is published.
+Exit: all consumers and docs match the released contract. No premature mode warning or partially implemented strict mode is published, and both asynchronous-data patterns are documented.
 
 ## 8. Intentional breaking changes and migration examples
 
@@ -302,7 +307,7 @@ Exit: all consumers and docs match the released contract. No dormant/ignored mod
 The authorized breaks are limited to:
 
 - Fixed controlled data no longer remains editable without parent acceptance.
-- Defined-value mode inference at mount, explicit `dataMode`, and stable ownership replace the hybrid behavior.
+- Defined-value mode inference at mount and stable ownership replace the hybrid behavior. A form that mounts without `formData` stays uncontrolled even when `formData` arrives later; see the asynchronous-data patterns below.
 - Controlled defaults proposals never install data internally. Mount and semantic schema changes can propose defaults once; data-only replacements no longer trigger normalization callbacks. Parent data wins until acceptance, including null/undefined.
 - Controlled `reset()` clears local errors without changing/re-defaulting data or emitting `onChange`. The parent chooses all reset values. The removed controlled reset notification is an explicit callback break.
 - Controlled path operations retain composition with a synchronously accepting parent through serialized commits. Queued callback delivery may span commits; independent caller-supplied root replacements remain replacements.
@@ -318,16 +323,39 @@ Do not remove blur error notifications, change uncontrolled reset baselines, cha
 
 // Controlled form: parent accepts proposals.
 const [data, setData] = useState({});
-<Form
-  schema={schema}
-  validator={validator}
-  dataMode='controlled'
-  formData={data}
-  onChange={(event) => setData(event.formData)}
-/>;
+<Form schema={schema} validator={validator} formData={data} onChange={(event) => setData(event.formData)} />;
 ```
 
-An accepting controlled parent receives schema defaults after mount using the form's own configuration; a separate utility call is not required. Optional precomputation with exported `getDefaultFormState(validator, schema, initialData)` is available when first-render/SSR prefilling is needed. In that case match the form's root schema and default configuration. Keying an editor by record identity remains a straightforward way to initialize a different record.
+An accepting controlled parent receives schema defaults after mount using the form's own configuration; a separate utility call is not required. Optional precomputation with exported `getDefaultFormState(validator, schema, initialData)` is available when first-render/SSR prefilling is needed. In that case match the form's root schema and default configuration.
+
+### Asynchronously loaded data
+
+A record that arrives after mount is the one case an explicit mode prop would have covered. It is covered instead by two documented patterns, following [TanStack Form's guidance for the same problem](https://tanstack.com/form/latest/docs/framework/react/guides/async-initial-values). Both must be in the migration guide, because the broken version looks reasonable:
+
+```tsx
+// Broken: mounts uncontrolled while `record` is undefined, then the arriving
+// record is ignored and the mode-change warning fires.
+<Form schema={schema} validator={validator} formData={record} onChange={onChange} />
+```
+
+**Pattern 1, mount after the data arrives. Recommend this one.** Keying by record identity makes switching records an explicit remount rather than a silent re-seed.
+
+```tsx
+if (!record) {
+  return <Spinner />;
+}
+return <Form key={recordId} schema={schema} validator={validator} formData={record} onChange={onChange} />;
+```
+
+**Pattern 2, mount immediately with a complete fallback value.** This is React's documented `value={someValue ?? ''}` rule applied to a JSON root: supply the empty model for the root type, `{}` for an object, `[]` for an array, `''` for a string.
+
+```tsx
+<Form schema={schema} validator={validator} formData={record ?? {}} onChange={onChange} />
+```
+
+Pattern 2 renders an editable empty form while loading, so an edit made in that window races the arriving record. Prefer pattern 1 whenever the form is editable before data lands.
+
+Neither pattern is specific to RJSF. React's input documentation gives the same fix for `value` from an API, and the store-owning libraries reach it from the other direction by re-seeding their own state. A background refetch landing while the user edits is a product decision, not something the form should resolve by overwriting in-progress input.
 
 For controlled multi-field edits, prefer one parent functional update or an existing root-path replacement. Update local parent state promptly; debounce persistence instead of acceptance. Parent-controlled asynchronous ordering remains the parent's responsibility.
 
@@ -367,6 +395,7 @@ pnpm run cs-check
 Inspect default and wrapped themes with controlled text, uncontrolled reset, dependency defaults, null/object branches, nested arrays, additional-property rename, and external errors. Check snapshot diffs individually.
 
 - [ ] The seven ownership contract tests and the existing domain/theme regression coverage map pass.
+- [ ] Ownership is inferred from `formData` alone, frozen at mount, with no public mode prop.
 - [ ] Controlled data has no persistent mirror or lifecycle arbitration.
 - [ ] Both modes use the shared transition pipeline.
 - [ ] Both modes retain path-change composition, with accepted/transformed/rejected controlled cases and no stronger getter timing guarantee.
