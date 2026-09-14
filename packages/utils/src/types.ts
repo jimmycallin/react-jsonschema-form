@@ -1238,12 +1238,14 @@ export type UiSchema<
     'ui:fieldReplacesAnyOrOneOf'?: boolean;
     /** An object that contains all the potential UI options in a single object */
     'ui:options'?: UIOptionsType<T, S, F>;
-    /** The uiSchema for items in an array. Can be an object for a uniform uiSchema across all items (current behavior),
-     * or a function that returns a dynamic uiSchema based on the item's data and index.
+    /** The uiSchema for items in an array. Can be an object for a uniform uiSchema across all items, an array of
+     * per-tuple-position uiSchemas for a fixed (tuple) `items` schema, or a function that returns a dynamic uiSchema
+     * based on the item's data and index.
      * When using a function, it receives the item data, index, and optionally the form context as parameters.
      */
     items?:
       | UiSchema<ArrayElement<T>, S, F>
+      | UiSchema<ArrayElement<T>, S, F>[]
       | ((itemData: ArrayElement<T>, index: number, formContext?: F) => UiSchema<ArrayElement<T>, S, F>);
     /** An object containing uiSchema definitions keyed by JSON Schema `$ref` paths.
      * When a schema with a `$ref` is resolved, the corresponding uiSchema definition is automatically
