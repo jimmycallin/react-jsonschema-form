@@ -2,7 +2,7 @@
 
 Status: proposed implementation contract for a breaking release. Documentation only; no runtime changes are included.
 
-Review revision: 2026-09-12. This document supersedes earlier drafts. [The research review](form-state-api-research.md) supplies evidence and rationale. Ownership is inferred from `formData`, with no explicit mode prop. Guarded controlled defaults proposals and lossless queued changes are part of this milestone. Controlled reset leaves data to the parent, with no data proposal. A controlled value mirror is not part of the design.
+Review revision: 2026-09-15. This document supersedes earlier drafts. [The research review](form-state-api-research.md) supplies evidence and rationale. Ownership is inferred from `formData`, with no explicit mode prop. Controlled forms never generate or propose defaults; the parent seeds them with the exported schema utility. Lossless queued changes are part of this milestone. Controlled reset leaves data to the parent, with no data proposal. A controlled value mirror is not part of the design.
 
 **Migration headline: rename `formData` to `initialFormData` for an editable seeded form unless an `onChange` handler accepts updates into the supplied value.** A logging-only handler is not acceptance. Intentionally fixed/read-only controlled forms keep `formData`. Put this guidance first in release notes and the migration guide.
 
@@ -17,7 +17,7 @@ Keep `Form<T, S, F>` a class. Preserve existing schema-editing behavior and publ
 1. Controlled render, submit, and current-value validation read current `formData` props. No persistent optimistic value or state mirror may override them.
 2. Uncontrolled render, submit, and current-value validation read committed internal state. Unrelated prop changes never restore the initial seed.
 3. Both modes use one shared change pipeline; only committing data differs.
-4. A data-only parent update never causes a data-echo `onChange`. A committed mount or semantic schema/default-configuration change may initiate one defaults proposal; it never installs data internally.
+4. No parent update, mount, or schema change causes a controlled `onChange`. Controlled defaults are the parent's; the form neither installs nor proposes them.
 5. Existing field/default/validation regressions remain covered. Do not weaken unrelated behavior to make ownership tests pass.
 6. Caller-owned data, schemas, and errors are never mutated.
 7. Retain lossless serialization of accepted controlled path changes. No new synchronous form store, optimistic value mirror, or read-before-commit guarantee is introduced.
@@ -104,13 +104,11 @@ Render the exact current prop model. Missing values may have an empty widget rep
 
 Rejected proposals leave displayed values unchanged. Transformed/replaced parent values win immediately, without an old-data commit followed by lifecycle repair. Data-only parent updates do not emit data proposals.
 
-After mount, compute defaults with the existing schema utility and the form's own default configuration. If the result differs from current data, emit one `onChange` proposal with no field id. Do the same after a semantic schema/default-configuration change commits. Never install the result internally. The normal `useState` plus accepting `onChange` pattern therefore receives defaults without duplicating configuration in the parent.
+A controlled form never generates whole-form defaults. Not on mount, not when the schema or default configuration changes, not when the parent replaces data. Controlled means the parent owns the value, and the value includes its defaults. The parent seeds them with the exported utility, section 8 shows how, and the first render then shows exactly what the parent passed, which also makes first-render and server output correct without a post-mount round trip.
 
-For each mount or committed schema/default-context transition, attempt this once, marking the attempt before notification. Unrelated rerenders, equal-valued schema objects, changed handlers, parent acceptance/transformation/rejection, and data-only replacements must not retry it. Compare schemas/default options by semantic value; respect changed default-algorithm function identity where relevant. Use existing context comparison helpers where correct. Do not retain a history keyed by every form value.
+No surveyed library emits a data-changing callback on mount, and React's own `<input value>` never calls `onChange` unprompted. A mount-time proposal accepted by `setData(event.formData)` is a state sync laundered through a child callback, the pattern React documents against, and it drags along an entire loop-prevention mechanism (single-attempt marking, semantic schema comparison, superseded-context skipping, StrictMode guards) whose only job is to police the proposal. Removing the proposal removes the mechanism and the class of bug.
 
-Process a defaults operation against the latest authoritative data when its queue turn runs, not a stale snapshot computed before child effects. If its schema context has been superseded, skip it; the newest committed context gets its own single attempt. Do not requeue on rejection or try to reach a normalization fixed point through lifecycle callbacks. A later semantic schema change or remount may deliberately request defaults again. Controlled reset is not a defaults trigger.
-
-Render and submit continue to use props until acceptance. The first render/server output can therefore be empty before post-mount acceptance; callers needing prefilled first output may optionally prepare defaults themselves. Retain current edit-time defaults and sanitization algorithms; proposing defaults does not require redesigning them.
+Edit-time defaults and sanitization inside a user operation are unchanged: a branch switch or a new array item still carries its defaults in that operation's proposal, exactly as today. This section removes lifecycle-originated defaults only.
 
 ### 3.3 Uncontrolled values
 
@@ -118,7 +116,7 @@ Initialize from `initialFormData` plus existing schema-default behavior. Edits c
 
 Preserve the existing documented reset use of the latest `initialFormData` and current schema. Do not introduce a captured reset baseline in this milestone.
 
-An unrelated prop update must not rerun value initialization. For schema/default-configuration changes that currently transform uncontrolled data, preserve the characterized behavior using the current internal value as input, never the initial seed. Put this in a specifically guarded uncontrolled transition, separate from render-context derivation. Controlled schema/default-configuration changes derive render context and initiate the single post-commit defaults proposal above; they never rewrite the parent model internally.
+An unrelated prop update must not rerun value initialization. For schema/default-configuration changes that currently transform uncontrolled data, preserve the characterized behavior using the current internal value as input, never the initial seed. Put this in a specifically guarded uncontrolled transition, separate from render-context derivation. Controlled schema/default-configuration changes derive render context only; they never rewrite the parent model internally and emit nothing.
 
 ### 3.4 Existing notifications, with a narrow compatibility boundary
 
@@ -128,14 +126,14 @@ Retain `onChange(event, id?)`, `onSubmit`, `onError`, `onBlur`, and `onFocus` si
 | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | User edit or `setFieldValue`                          | One proposal per operation in controlled mode; one committed result per operation in uncontrolled mode.                                                       |
 | Parent accepts/transforms/replaces controlled data    | No data-echo `onChange`.                                                                                                                                      |
-| Controlled mount                                      | One post-commit defaults proposal if defaults change current data; no constructor notification.                                                               |
-| Controlled schema/default-context change              | One post-commit defaults proposal if needed; no retry from a data echo or rejection.                                                                          |
+| Controlled mount                                      | No notification. Defaults are seeded by the parent; see section 8.                                                                                            |
+| Controlled schema/default-context change              | No notification. Render context re-derives; data is untouched.                                                                                                |
 | Uncontrolled mount adds defaults to the supplied seed | Preserve the existing notification condition and payload, but deliver after mount rather than from the constructor.                                           |
 | Blur validation/omission                              | Preserve existing change-notification conditions, including error-only changes. Controlled omission is a proposal; validation-only events carry current data. |
 | Explicit reset                                        | Uncontrolled reset keeps its existing notification. Controlled reset emits no `onChange`.                                                                     |
 | Uncontrolled schema/default transition changes data   | Preserve the characterized notification; no notification when only render context changes.                                                                    |
 
-The retained `onChange` is not yet a data-only event. Document that it can report validation-only changes. When a parent echoes the same value from such an event, do not create a second notification. Default generation that leaves data unchanged emits no mount notification.
+The retained `onChange` is not yet a data-only event. Document that it can report validation-only changes. When a parent echoes the same value from such an event, do not create a second notification. Uncontrolled default generation that leaves the seed unchanged emits no mount notification.
 
 Use post-commit lifecycle methods for notifications where necessary. No callback inside render, constructors, or functional state updaters. StrictMode must not duplicate a single logical operation's callback; guard post-mount compatibility notifications appropriately.
 
@@ -159,13 +157,21 @@ On submit, read authoritative data, compute the existing omitted submission copy
 
 Add `getFormData(): T | undefined` as the supported alternative to reading instance state. It returns current props in controlled mode and committed state in uncontrolled mode. It is read-only by contract. Do not return queued/unaccepted proposals.
 
+Its purpose is uncontrolled mode, where the form owns the value and `onChange` is push-only: autosave, route guards, and a submit button outside the form otherwise force the parent to mirror every keystroke. Mantine added `form.getValues()` for the same reason when it introduced uncontrolled mode. In controlled mode the getter returns the value the parent already holds; it exists there for handle symmetry, not as a feature.
+
 Set-then-immediate-read or set-then-immediate-submit before React commits has no new guarantee. For controlled forms, it cannot use a proposal the parent has not accepted. Tests and docs should wait for committed updates. Do not add `flushSync`, a synchronous shadow store, or queues replayed by getters to create a stronger API.
+
+Every store-owning library's getter is read-your-writes, so a developer arriving from React Hook Form or Mantine will assume `setFieldValue()` then `getFormData()` reflects the change. It does not, and the failure is a silently stale value. The method's TSDoc must state that it returns committed data and that an imperative write in the same tick is not yet visible; that caveat cannot live only in this document.
 
 ### 3.6 Imperative handle and event types
 
 Export `FormHandle<T, S, F>` containing `getFormData` and the supported existing methods: `submit`, `reset`, `setFieldValue`, `validateForm`, `validateFormWithFormData`, `validate`, and `focusOnError`. Reuse current signatures. The class structurally implements this handle.
 
 Type the public ref prop as `Ref<FormHandle<T, S, F>>`. Verify both handle refs and existing `createRef<Form<T, S, F>>()` consumers typecheck through plain/themed forms. Do not cast away incompatibilities. Keep the class export; remove lifecycle/state members only from the new handle, not by deleting unrelated class methods.
+
+A `ref` carrying a narrow handle is the correct shape for this component, not a compromise. Most surveyed libraries expose their methods on a hook-created form instance instead, but in every one of them that instance is the store, and the component is a renderer bound to it. RJSF's controlled mode has no store: the parent's state is the store and there is nothing for an instance to hold. For a component that does not own a store, a `ref` plus the handle `useImperativeHandle` would produce is the React idiom, and React 19's `ref`-as-prop, which `withTheme` already uses, removes the old `forwardRef` friction. The current ref exposes the whole class, `state` and lifecycle included; narrowing that is only free while the release is already breaking.
+
+`validate` and `validateFormWithFormData` are stateless and do not belong on a handle in principle. They stay for compatibility; trimming them is noted in section 9.
 
 Decouple `IChangeEvent` from `Pick<FormState, ...>` so internal state can change without forcing an event redesign. Preserve its fields and submitted status. Retain characterized `edit` semantics where possible; it is not a new ownership flag. Any unavoidable difference must have a concrete test and migration note, not an unrelated redefinition.
 
@@ -199,7 +205,7 @@ Example: starting from `{ a: '', b: '' }`, queue `a='first'` and `b='second'` wi
 
 This relies on the normal controlled-input contract: the parent accepts with a prompt ordinary state update. A delayed or transition-priority parent update is not a committed value to compose against. Never merge a late parent response into current data yourself. Do not add timers, `flushSync`, an unbounded draft, or a public batching API.
 
-Lifecycle-originated default requests use the same serialized operation mechanism and are computed against current props when processed. Reset and reentrant edits preserve request order; an errors-only controlled reset advances the queue without notifying `onChange`. On unmount discard pending work; skip invalidated lifecycle-default requests. Handle callback failures without a permanently busy queue, following existing error propagation conventions.
+Only user operations, `setFieldValue`, and reset enter the queue; no lifecycle method enqueues anything. Reset and reentrant edits preserve request order; an errors-only controlled reset advances the queue without notifying `onChange`. On unmount discard pending work. Handle callback failures without a permanently busy queue, following existing error propagation conventions.
 
 For deliberate atomic full replacement, retain `setFieldValue([], nextObject)` or a parent update. A replacement is still a replacement; do not infer patches from two caller-supplied stale root objects. Built-in compound gestures should emit a combined operation where possible, but sibling path updates must compose even if they originate from different widgets.
 
@@ -207,7 +213,7 @@ A temporary isolated React class probe verified this checkpoint approach for acc
 
 Extract pure render-context derivation separately from data transitions. Schema utilities, registry, field paths, and resolved schema must correspond to current props/data at render time. Keep useful memoization and validator schema-reference caching. Do not globally rewrite memoization or `shouldRender`; ensure changed callbacks/validators cannot be ignored by a deep comparator that treats functions as equal.
 
-Remove `getSnapshotBeforeUpdate` and `componentDidUpdate` logic that reconciles controlled data. Remove `isProcessingUserChange` once its ownership purpose disappears. Lifecycle methods may remain for guarded defaults proposals, compatibility notifications, validation metadata, or an explicitly guarded uncontrolled schema transition. They must not arbitrate ownership or call a generic props-to-form-data synchronizer.
+Remove `getSnapshotBeforeUpdate` and `componentDidUpdate` logic that reconciles controlled data. Remove `isProcessingUserChange` once its ownership purpose disappears. Lifecycle methods may remain for uncontrolled compatibility notifications, validation metadata, or an explicitly guarded uncontrolled schema transition. They must not arbitrate ownership or call a generic props-to-form-data synchronizer.
 
 `getStateFromProps` must stop selecting owners and mixing render derivation with generic value synchronization. Its domain algorithms can remain in extracted helpers. Removing clear/default workarounds, sanitizer cycle handling, all stored derivations, or all pending queues is not an acceptance requirement for this milestone.
 
@@ -229,17 +235,16 @@ Keep schema/field/external error sources correctly associated with the data they
 
 Add focused ownership tests in `packages/core/test/Form.ownership.test.tsx`. Use real accepting/rejecting/transforming parent harnesses. A spy without a React parent update is a rejecting controlled harness. Use a single `fireEvent.change` when asserting one operation's callback count.
 
-### Seven contract tests that gate the ownership switch
+### Six contract tests that gate the ownership switch
 
-| Contract                    | Required evidence                                                                                                                                                                                            |
-| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Fixed controlled data       | An edit emits a proposal but cannot change rendered data without parent acceptance.                                                                                                                          |
-| Accepted/transformed update | A plain accepting parent updates correctly; a transforming parent's value wins. Neither causes a data-echo callback.                                                                                         |
-| External replacement        | Props render immediately without a stale-data commit; unrelated rerenders do not reset data. Use a render/layout-effect recorder, not only the final DOM.                                                    |
-| Controlled reset            | Local errors clear, loaded data stays, `onChange` is not called, and no default computation is triggered. Parent can replace data and clear local errors without an old-value echo.                          |
-| Defaults proposal           | Mount and a semantic schema/default-context change propose defaults only when needed. An accepting parent receives them without duplicating configuration; rendering remains prop-owned until acceptance.    |
-| Controlled composition      | Two path changes within one `act` retain both with exactly `setData(event.formData)` as the parent handler. A transformed first value survives; a rejected first value is not resurrected.                   |
-| Defaults-loop prevention    | Rejection, transformation, data-only replacement, unrelated rerenders, and equal schema objects do not retry defaults. A later semantic context change may propose once. Cover StrictMode and child effects. |
+| Contract                    | Required evidence                                                                                                                                                                                              |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Fixed controlled data       | An edit emits a proposal but cannot change rendered data without parent acceptance.                                                                                                                            |
+| Accepted/transformed update | A plain accepting parent updates correctly; a transforming parent's value wins. Neither causes a data-echo callback.                                                                                           |
+| External replacement        | Props render immediately without a stale-data commit; unrelated rerenders do not reset data. Use a render/layout-effect recorder, not only the final DOM.                                                      |
+| Controlled reset            | Local errors clear, loaded data stays, `onChange` is not called, and no default computation is triggered. Parent can replace data and clear local errors without an old-value echo.                            |
+| No controlled defaults      | Controlled mount, a semantic schema change, and a data-only replacement emit no `onChange`. A parent seeded with `schemaUtils.getDefaultFormState` renders the defaults on the first render. Cover StrictMode. |
+| Controlled composition      | Two path changes within one `act` retain both with exactly `setData(event.formData)` as the parent handler. A transformed first value survives; a rejected first value is not resurrected.                     |
 
 The composition test must issue two path changes synchronously inside one `await act(async () => { ... })`, without a delay or rerender between calls, through actual Form/field callbacks. After React settles, assert the DOM, submitted model, and final callback retain both. Repeat with sibling mount effects and the dependent-field clear above. Do not weaken it to one root replacement or an external object-merge handler.
 
@@ -256,7 +261,7 @@ These are coverage requirements, not 18 more mandatory new test cases. Map them 
 - Defaulted-field clearing, dependencies, null/object branches, ambiguous selections, additional properties, and explicit root replacement.
 - StrictMode notification uniqueness, immutable caller inputs, replacement callbacks/validators, and plain/themed legacy refs plus the new handle/getter.
 
-The old numbered acceptance matrices are superseded by these seven contract tests and the regression coverage map. Do not duplicate established tests solely to satisfy an ID, add skipped deferred-API tests, or drop regression coverage because it is no longer separately numbered.
+The old numbered acceptance matrices are superseded by these six contract tests and the regression coverage map. Do not duplicate established tests solely to satisfy an ID, add skipped deferred-API tests, or drop regression coverage because it is no longer separately numbered.
 
 ## 7. Implementation and review sequence
 
@@ -283,9 +288,9 @@ Exit: existing behavior passes and the later ownership diff is smaller. The priv
 
 1. Activate the prepared resolver and frozen ownership, and add the three development diagnostics. These belong with the behavior they describe.
 2. Route render, getter, edits, reset, blur, submit, and validation through authoritative data. Preserve the operation queue and controlled commit checkpoints.
-3. Remove controlled value reconciliation and suppression flags; retain specifically guarded lifecycle defaults proposals and existing compatibility notifications.
+3. Remove controlled value reconciliation and suppression flags; retain existing uncontrolled compatibility notifications. No lifecycle method computes defaults for a controlled form.
 4. Apply the minimum array/branch/object/widget fixes needed for rejected controlled proposals. Keep each subsystem in a separate coherent commit; do not ship a parent ownership change with children that still display rejected values.
-5. Change only the remaining intentionally broken test expectations, implement the seven contract tests, and satisfy the regression coverage map.
+5. Change only the remaining intentionally broken test expectations, implement the six contract tests, and satisfy the regression coverage map.
 6. Include necessary consumer migrations and the headline release warning before merging. Do not leave the playground or theme packages broken between PRs.
 
 Exit: strict ownership works end to end while the class remains. Getter/handle/type additions and most mechanical fixture edits have already been reviewed. The ownership switch and inseparable rejection fixes remain atomic; splitting them into independently broken releases is not a review improvement.
@@ -295,7 +300,7 @@ Exit: strict ownership works end to end while the class remains. Getter/handle/t
 Can be commits in PR 3 if needed for a self-contained release. Must land before release.
 
 1. Complete current API docs/examples and the active breaking-release changelog. Do not rewrite historical docs.
-2. Lead with the seeded-form rename. Explain inferred ownership frozen at mount, both asynchronous-data patterns, default proposals, queue composition, committed-state getter timing, errors-only controlled reset, parent-chosen reset values, and retained blur notifications.
+2. Lead with the seeded-form rename. Explain inferred ownership frozen at mount, both asynchronous-data patterns, parent-seeded controlled defaults, queue composition, committed-state getter timing, errors-only controlled reset, parent-chosen reset values, and retained blur notifications.
 3. Audit theme prop/ref forwarding, run repository checks, and inspect snapshot changes individually.
 
 Exit: all consumers and docs match the released contract. No premature mode warning or partially implemented strict mode is published, and both asynchronous-data patterns are documented.
@@ -308,12 +313,12 @@ The authorized breaks are limited to:
 
 - Fixed controlled data no longer remains editable without parent acceptance.
 - Defined-value mode inference at mount and stable ownership replace the hybrid behavior. A form that mounts without `formData` stays uncontrolled even when `formData` arrives later; see the asynchronous-data patterns below.
-- Controlled defaults proposals never install data internally. Mount and semantic schema changes can propose defaults once; data-only replacements no longer trigger normalization callbacks. Parent data wins until acceptance, including null/undefined.
+- Controlled forms no longer generate defaults. Mount, schema changes, and data replacements emit no `onChange`; the parent seeds defaults with `schemaUtils.getDefaultFormState`. Parent data wins, including null/undefined.
 - Controlled `reset()` clears local errors without changing/re-defaulting data or emitting `onChange`. The parent chooses all reset values. The removed controlled reset notification is an explicit callback break.
 - Controlled path operations retain composition with a synchronously accepting parent through serialized commits. Queued callback delivery may span commits; independent caller-supplied root replacements remain replacements.
 - Controlled submit omission cannot silently overwrite internal current data.
 - Current data is no longer available through a controlled `.state.formData`; use `getFormData()` or event payloads.
-- Default notifications move out of the constructor to post-mount. Uncontrolled notifications retain their existing condition; controlled notifications are proposals only.
+- Uncontrolled default notifications move out of the constructor to post-mount and retain their existing condition. A controlled mount emits nothing.
 
 Do not remove blur error notifications, change uncontrolled reset baselines, change uncontrolled success-time submit storage, or redesign edit-time defaults as incidental breaks.
 
@@ -321,12 +326,13 @@ Do not remove blur error notifications, change uncontrolled reset baselines, cha
 // Editable seeded form: change the prop name.
 <Form schema={schema} validator={validator} initialFormData={record} />;
 
-// Controlled form: parent accepts proposals.
-const [data, setData] = useState({});
+// Controlled form: parent owns the value, including its defaults, and accepts proposals.
+const schemaUtils = createSchemaUtils(validator, schema, experimental_defaultFormStateBehavior);
+const [data, setData] = useState(() => schemaUtils.getDefaultFormState(schema, record));
 <Form schema={schema} validator={validator} formData={data} onChange={(event) => setData(event.formData)} />;
 ```
 
-An accepting controlled parent receives schema defaults after mount using the form's own configuration; a separate utility call is not required. Optional precomputation with exported `getDefaultFormState(validator, schema, initialData)` is available when first-render/SSR prefilling is needed. In that case match the form's root schema and default configuration.
+A controlled parent that wants schema defaults computes them once with `createSchemaUtils(...).getDefaultFormState(schema, seed)`, passing the same default-configuration options it passes to `<Form>`. That is two lines and the only added migration step for controlled forms. It also fixes first-render and server output, which a post-mount proposal never could. A parent that changes the schema recomputes if it wants new defaults; the form does not do it on the parent's behalf. Uncontrolled forms are unchanged: `initialFormData` is seeded internally exactly as today.
 
 ### Asynchronously loaded data
 
@@ -367,9 +373,13 @@ For controlled multi-field edits, prefer one parent functional update or an exis
 | Reset ergonomics                 | Controlled reset is errors-only now. Any later baseline, saved-record, or schema-default reset API needs a concrete use case and a separately reviewed contract.           |
 | Data/validation event separation | Specify replacement observation before removing errors-only `onChange`; cover mount, blur, external errors, deduplication, and ordering.                                   |
 | Additional imperative methods    | Demonstrate a concrete use case that existing root replacement/getter cannot serve. Do not add methods solely for symmetry.                                                |
+| Trimming `FormHandle`            | `validate` and `validateFormWithFormData` are stateless. Move them to utilities only in a later break, with a deprecation on the handle first.                             |
 | Function-component conversion    | After ownership review/stability, reuse the unchanged behavioral tests and `FormHandle`. Migrate remaining class-ref types deliberately; no prop-copy effects.             |
+| Hook-created form instance       | A `useForm()`-style instance implies a form-owned store, the third architecture in the research review. Decide store-or-not first; the handle shape follows from that.     |
 
 These follow-ups are independent opportunities, not required milestones or permission to expand PR 3. No synchronous shadow store, subscription engine, or new performance claim is part of this plan.
+
+Rejected, not deferred: a controlled defaults proposal on mount or schema change. An earlier revision of this document specified one, with a loop-prevention mechanism to contain it. It was removed on review because no surveyed library emits a data callback on mount, React's own controlled inputs never do, and the parent can compute the same defaults in two lines with the exported utility. Reintroducing it needs a use case the utility cannot serve, not a convenience argument.
 
 ## 10. Verification and completion
 
@@ -394,12 +404,13 @@ pnpm run cs-check
 
 Inspect default and wrapped themes with controlled text, uncontrolled reset, dependency defaults, null/object branches, nested arrays, additional-property rename, and external errors. Check snapshot diffs individually.
 
-- [ ] The seven ownership contract tests and the existing domain/theme regression coverage map pass.
+- [ ] The six ownership contract tests and the existing domain/theme regression coverage map pass.
 - [ ] Ownership is inferred from `formData` alone, frozen at mount, with no public mode prop.
 - [ ] Controlled data has no persistent mirror or lifecycle arbitration.
 - [ ] Both modes use the shared transition pipeline.
 - [ ] Both modes retain path-change composition, with accepted/transformed/rejected controlled cases and no stronger getter timing guarantee.
-- [ ] Guarded controlled defaults proposals, errors-only controlled reset, and existing uncontrolled/default-edit/validation behavior pass their tests.
+- [ ] No controlled lifecycle defaults, errors-only controlled reset, and existing uncontrolled/default-edit/validation behavior pass their tests.
+- [ ] `getFormData()` TSDoc states the committed-read timing.
 - [ ] All changed expectations map to section 8; deferred API tests/features are absent.
 - [ ] Additive handle/getter/types and internal preparation were reviewed before the ownership switch; legacy refs work and consumers/docs are migrated.
 - [ ] Class remains; retained lifecycle/state/queue uses have explicit purposes.
