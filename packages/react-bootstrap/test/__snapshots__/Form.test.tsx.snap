@@ -1,5 +1,77 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
+exports[`format iso-date-time 1`] = `
+<DocumentFragment>
+  <form
+    class="rjsf"
+  >
+    <div
+      class="rjsf-field rjsf-field-string"
+    >
+      <div>
+        <label
+          class="form-label"
+          for="root"
+        />
+        <input
+          aria-describedby="root__error root__description root__help"
+          class="form-control"
+          id="root"
+          name="root"
+          placeholder=""
+          type="datetime-local"
+          value=""
+        />
+      </div>
+    </div>
+    <div>
+      <button
+        class="btn btn-primary"
+        type="submit"
+      >
+        Submit
+      </button>
+    </div>
+  </form>
+</DocumentFragment>
+`;
+
+exports[`format iso-time 1`] = `
+<DocumentFragment>
+  <form
+    class="rjsf"
+  >
+    <div
+      class="rjsf-field rjsf-field-string"
+    >
+      <div>
+        <label
+          class="form-label"
+          for="root"
+        />
+        <input
+          aria-describedby="root__error root__description root__help"
+          class="form-control"
+          id="root"
+          name="root"
+          placeholder=""
+          type="time"
+          value=""
+        />
+      </div>
+    </div>
+    <div>
+      <button
+        class="btn btn-primary"
+        type="submit"
+      >
+        Submit
+      </button>
+    </div>
+  </form>
+</DocumentFragment>
+`;
+
 exports[`nameGenerator > bracketNameGenerator > array of objects 1`] = `
 <DocumentFragment>
   <form
@@ -10125,7 +10197,16 @@ exports[`single fields > string field > field with markdown help and description
               class="mb-3"
               id="root__description"
             >
-              This is a *description* with **markdown**
+              <span>
+                This is a 
+                <em>
+                  description
+                </em>
+                 with 
+                <strong>
+                  markdown
+                </strong>
+              </span>
             </div>
           </div>
         </small>
@@ -10227,7 +10308,7 @@ exports[`single fields > string field > field with markdown help text 1`] = `
 </DocumentFragment>
 `;
 
-exports[`single fields > string field > field with markdown help text without enabling markdown 1`] = `
+exports[`single fields > string field > field with markdown help text without a MarkdownTemplate 1`] = `
 <DocumentFragment>
   <form
     class="rjsf"
@@ -10745,17 +10826,7 @@ exports[`single fields > unsupported field 1`] = `
           class="unsupported-field"
         >
           <p>
-            <span>
-              Unsupported field schema for field 
-              <code>
-                root
-              </code>
-              : 
-              <em>
-                Unknown field type undefined
-              </em>
-              .
-            </span>
+            Unsupported field schema for field root: Unknown field type undefined.
           </p>
           <pre>
             {}
@@ -10844,5 +10915,42 @@ exports[`single fields > using custom tagName 1`] = `
       </button>
     </div>
   </div>
+</DocumentFragment>
+`;
+
+exports[`string field with autocapitalize 1`] = `
+<DocumentFragment>
+  <form
+    class="rjsf"
+  >
+    <div
+      class="rjsf-field rjsf-field-string"
+    >
+      <div>
+        <label
+          class="form-label"
+          for="root"
+        />
+        <input
+          aria-describedby="root__error root__description root__help"
+          autocapitalize="words"
+          class="form-control"
+          id="root"
+          name="root"
+          placeholder=""
+          type="text"
+          value=""
+        />
+      </div>
+    </div>
+    <div>
+      <button
+        class="btn btn-primary"
+        type="submit"
+      >
+        Submit
+      </button>
+    </div>
+  </form>
 </DocumentFragment>
 `;

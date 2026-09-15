@@ -26,7 +26,7 @@ export default function ObjectFieldTemplate<
   const {
     disabled,
     formData,
-    fieldPathId,
+    id,
     onAddProperty,
     optionalDataControl,
     properties,
@@ -47,18 +47,20 @@ export default function ObjectFieldTemplate<
   } = registry.templates;
   const { colSpan = 24, labelAlign = 'right', rowGutter = 24 } = formContext as GenericObjectType;
 
-  const findSchema = (element: ObjectFieldTemplatePropertyType): S => element.content.props.schema;
+  const findSchema = (element: ObjectFieldTemplatePropertyType<T, S, F>): S => element.content.props.schema;
 
-  const findSchemaType = (element: ObjectFieldTemplatePropertyType) => findSchema(element).type;
+  const findSchemaType = (element: ObjectFieldTemplatePropertyType<T, S, F>) => findSchema(element).type;
 
-  const findUiSchema = (element: ObjectFieldTemplatePropertyType): UiSchema<T, S, F> | undefined =>
+  const findUiSchema = (element: ObjectFieldTemplatePropertyType<T, S, F>): UiSchema<T, S, F> | undefined =>
     element.content.props.uiSchema;
 
-  const findUiSchemaField = (element: ObjectFieldTemplatePropertyType) => getUiOptions(findUiSchema(element)).field;
+  const findUiSchemaField = (element: ObjectFieldTemplatePropertyType<T, S, F>) =>
+    getUiOptions(findUiSchema(element)).field;
 
-  const findUiSchemaWidget = (element: ObjectFieldTemplatePropertyType) => getUiOptions(findUiSchema(element)).widget;
+  const findUiSchemaWidget = (element: ObjectFieldTemplatePropertyType<T, S, F>) =>
+    getUiOptions(findUiSchema(element)).widget;
 
-  const calculateColSpan = (element: ObjectFieldTemplatePropertyType) => {
+  const calculateColSpan = (element: ObjectFieldTemplatePropertyType<T, S, F>) => {
     const type = findSchemaType(element);
     const field = findUiSchemaField(element);
     const widget = findUiSchemaWidget(element);
@@ -98,12 +100,12 @@ export default function ObjectFieldTemplate<
   );
 
   return (
-    <fieldset id={fieldPathId.$id}>
+    <fieldset id={id}>
       <Row gutter={rowGutter}>
         {title && (
           <Col className={labelColClassName} span={24}>
             <TitleFieldTemplate
-              id={titleId(fieldPathId)}
+              id={titleId(id)}
               title={title}
               required={required}
               schema={schema}
@@ -116,7 +118,7 @@ export default function ObjectFieldTemplate<
         {!showOptionalDataControlInTitle ? <Col span={24}>{optionalDataControl}</Col> : undefined}
         {properties
           .filter((e) => !e.hidden)
-          .map((element: ObjectFieldTemplatePropertyType) => (
+          .map((element: ObjectFieldTemplatePropertyType<T, S, F>) => (
             <Col key={element.name} span={calculateColSpan(element)}>
               {element.content}
             </Col>
@@ -127,7 +129,7 @@ export default function ObjectFieldTemplate<
           <Row gutter={rowGutter} justify='end'>
             <Col flex='120px'>
               <AddButton
-                id={buttonId(fieldPathId, 'add')}
+                id={buttonId(id, 'add')}
                 className='rjsf-object-property-expand'
                 disabled={disabled || readonly}
                 onClick={onAddProperty}

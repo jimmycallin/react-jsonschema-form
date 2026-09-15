@@ -68,7 +68,7 @@ React's default `Component` rendering strategy is to re-render on every state ch
 | shallow    | shallow equality                                  |
 | always     | component always rerenders                        |
 
-## experimental_defaultFormStateBehavior
+## defaultFormStateBehavior
 
 Experimental features to specify different form state behavior.
 Currently, this only affects the handling of optional array fields where `minItems` is set and handling of setting defaults based on the value of `emptyObjectFields`.
@@ -145,7 +145,7 @@ render(
   <Form
     schema={schema}
     validator={validator}
-    experimental_defaultFormStateBehavior={{
+    defaultFormStateBehavior={{
       arrayMinItems: {
         computeSkipPopulate: computeSkipPopulateNumberArrays,
       },
@@ -188,7 +188,7 @@ render(
   <Form
     schema={schema}
     validator={validator}
-    experimental_defaultFormStateBehavior={{
+    defaultFormStateBehavior={{
       emptyObjectFields: 'populateRequiredDefaults',
     }}
   />,
@@ -251,7 +251,7 @@ render(
   <Form
     schema={schema}
     validator={validator}
-    experimental_defaultFormStateBehavior={{
+    defaultFormStateBehavior={{
       allOf: 'populateDefaults',
     }}
   />,
@@ -287,7 +287,7 @@ NOTE: If there is a default for a field and the `formData` is unspecified, the d
 Optional enumerated flag controlling how defaults defined on multiple levels are merged together for overlapping properties, defaulting to `descendantWins`.
 
 | Flag Value       | Description                                                                                       |
-| -----------------| --------------------------------------------------------------------------------------------------|
+| ---------------- | ------------------------------------------------------------------------------------------------- |
 | `descendantWins` | The innermost (descendant) default value definition takes precedence over its ancestor's defaults |
 | `ancestorWins`   | The outermost (ancestor) default value definition takes precedence over any descendant's defaults |
 
@@ -318,7 +318,7 @@ render(
   <Form
     schema={schema}
     validator={validator}
-    experimental_defaultFormStateBehavior={{
+    defaultFormStateBehavior={{
       nestedDefaultsPrecedence: 'ancestorWins',
     }}
   />,
@@ -326,10 +326,9 @@ render(
 );
 ```
 
+## customMergeAllOf
 
-## experimental_customMergeAllOf
-
-The `experimental_customMergeAllOf` function allows you to provide a custom implementation for merging `allOf` schemas. This can be particularly useful in case the where the default merge library ([@x0k/json-schema-merge](https://github.com/x0k/json-schema-merge/)) doesn't satisfy your functional or performance requirements.
+The `customMergeAllOf` function allows you to provide a custom implementation for merging `allOf` schemas. This can be particularly useful in case the where the default merge library ([@x0k/json-schema-merge](https://github.com/x0k/json-schema-merge/)) doesn't satisfy your functional or performance requirements.
 
 By providing your own implementation, you can potentially achieve significant performance improvements. For instance, if your use case only requires a subset of JSON Schema features, you can implement a faster, more tailored merging strategy.
 
@@ -346,7 +345,7 @@ const customMergeAllOf = (schema: RJSFSchema): RJSFSchema => {
 };
 
 render(
-  <Form schema={schema} validator={validator} experimental_customMergeAllOf={customMergeAllOf} />,
+  <Form schema={schema} validator={validator} customMergeAllOf={customMergeAllOf} />,
   document.getElementById('app'),
 );
 ```
@@ -394,12 +393,12 @@ The value of this prop will be passed to the `enctype` [HTML attribute on the fo
 ## extraErrors
 
 This prop allows passing in custom errors that are augmented with the existing JSON Schema errors on the form; it can be used to implement asynchronous validation.
-By default, these are non-blocking errors, meaning that you can still submit the form when these are the only errors displayed to the user.
+By default, these errors block form submission just like JSON Schema errors do.
 See [Validation](../usage/validation.md) for more information.
 
-## extraErrorsBlockSubmit
+## extraErrorsAreWarnings
 
-If set to true, causes the `extraErrors` to become blocking when the form is submitted.
+If set to true, treats `extraErrors` as warnings instead of blocking form submission.
 
 ## fields
 
@@ -432,7 +431,6 @@ render(<Form schema={schema} validator={validator} focusOnFirstError={focusOnErr
 You can provide a `formContext` object to the Form, which is passed down to all fields and widgets. Useful for implementing context aware fields and widgets.
 
 See [AntD Customization](themes/antd/uiSchema.md#formcontext) for formContext customizations for the `antd` theme.
-See [Semantic UI Customization](themes/semantic-ui/uiSchema.md#formcontext) for formContext customizations for the `semantic-ui` theme.
 
 ## formData
 
@@ -534,24 +532,18 @@ You can also create a custom generator by implementing the `NameGeneratorFunctio
 Flag that describes when live omit will be performed. Live omit happens only when `omitExtraData` is also set to
 to `true` and the form's data is updated by the user.
 
-If no value (or `false`) is provided, then live omit will not happen. If `true` or `onChange` is provided for
-the flag, then live omit will be performed after processing of all pending changes has completed. If `onBlur`
-is provided, then live omit will be performed when a field that was updated is blurred (as a performance
-optimization).
-
-> NOTE: The `boolean` options for this flag is deprecated and will be removed in a future major release
+If no value is provided, then live omit will not happen. If `onChange` is provided for the flag, then live omit
+will be performed after processing of all pending changes has completed. If `onBlur` is provided, then live omit
+will be performed when a field that was updated is blurred (as a performance optimization).
 
 ## liveValidate
 
 Flag that describes when live validation will be performed. Live validation means that the form will perform
 validation and show any validation errors whenever the form data is updated, rather than just on submit.
 
-If no value (or `false`) is provided, then live validation will not happen. If `true` or `onChange` is provided for
-the flag, then live validation will be performed after processing of all pending changes has completed. If `onBlur`
-is provided, then live validation will be performed when a field that was updated is blurred (as a performance
-optimization).
-
-> NOTE: The `boolean` options for this flag is deprecated and will be removed in a future major release
+If no value is provided, then live validation will not happen. If `onChange` is provided for the flag, then live
+validation will be performed after processing of all pending changes has completed. If `onBlur` is provided, then
+live validation will be performed when a field that was updated is blurred (as a performance optimization).
 
 ## method
 
@@ -628,14 +620,6 @@ render(<Form schema={schema} validator={validator} onSubmit={onSubmit} />, docum
 
 > Note: If there are fields in the `formData` that are not represented in the schema, they will be retained by default. If you would like to remove those extra values on form submission, you may need to set the `omitExtraData` and/or `liveOmit` props.
 
-## removeEmptyOptionalObjects
-
-> **Deprecated**: This prop no longer has any effect and will be removed in a future release. The behavior of pruning optional empty objects is now built into [`omitExtraData`](#omitextradata) — enable that prop instead.
-
-When a JSON Schema has a required field inside an optional object, any user interaction with that optional object "activates" it. Even if the user clears all the fields within that object, the empty object property (e.g., `{ test: {} }` or `{ test: { field1: "" } }`) remains in the `formData`. Because the object contains required fields that are now empty, the form becomes unsubmittable.
-
-Previously, setting `removeEmptyOptionalObjects` to `true` caused the form to recursively prune these optional empty objects from the `formData` during `onChange`, `onBlur`, and `onSubmit`. This pruning is now performed automatically by `omitExtraData`.
-
 ## schema
 
 **Required**! Form schema. We support JSON schema draft-07 by default. See [Schema Reference](https://json-schema.org/draft-07/json-schema-release-notes.html) for more information.
@@ -685,7 +669,7 @@ Some strings contain replaceable parameter values as indicated by `%1`, `%2`, et
 The number after the `%` indicates the order of the parameter.
 The ordering of parameters is important because some languages may choose to put the second parameter before the first in its translation. In addition to replaceable parameters, some of the strings support the use of markdown and simple html.
 
-One can use the [documentation](https://github.com/rjsf-team/react-jsonschema-form/blob/main/packages/utils/src/enums.ts) of the `TranslatableString` enums to determine which enum values contain replaceable parameters and which support markdown and simple html.
+One can use the [documentation](https://github.com/rjsf-team/react-jsonschema-form/blob/main/packages/utils/src/enums.ts) of the `TranslatableString` values to determine which contain replaceable parameters and which support markdown and simple html.
 
 One could use this function to alter one or more of the existing english strings to better suit one's application or fully translate all strings into a different language.
 Below is an example of changing a few of the english strings to something else:

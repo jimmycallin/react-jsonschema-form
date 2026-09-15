@@ -31,3 +31,13 @@ allowBuilds:
   core-js: true
   esbuild: true
   nx: true
+
+minimumReleaseAgeExclude:
+  - '@mantine/core@9.6.1'
+  - '@mantine/dates@9.6.1'
+  - '@mantine/hooks@9.6.1'
+  - '@types/react-dom@19.3.0'
+  - '@types/react@19.3.0'
+  - react-dom@19.3.0
+  - react@19.3.0
+  - scheduler@0.28.0

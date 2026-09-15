@@ -1,7 +1,7 @@
 import type { ErrorListProps, FormValidation, GenericObjectType, RJSFSchema } from '@rjsf/utils';
 import { customizeValidator as customizeV8Validator } from '@rjsf/validator-ajv8';
-import userEvent from '@testing-library/user-event';
-import draft06 from 'ajv/lib/refs/json-schema-draft-06.json';
+import { userEvent } from '@testing-library/user-event';
+import draft06 from 'ajv/lib/refs/json-schema-draft-06.json' with { type: 'json' };
 import type { Mock } from 'vitest';
 
 import type { FormProps } from '../src/index.ts';
@@ -169,7 +169,7 @@ describe('Validation', () => {
           schema,
           customValidate,
           formData,
-          liveValidate: true,
+          liveValidate: 'onChange',
         });
 
         const input = node.querySelector('input')!;
@@ -439,7 +439,7 @@ describe('Validation', () => {
         const { node } = createFormComponent({
           schema,
           uiSchema,
-          liveValidate: true,
+          liveValidate: 'onChange',
           formData,
           templates: { ErrorListTemplate: CustomErrorList },
           formContext: { className: 'foo' },
@@ -490,7 +490,7 @@ describe('Validation', () => {
           {
             schema,
             formData,
-            liveValidate: true,
+            liveValidate: 'onChange',
           },
           validator,
         );

@@ -2,8 +2,8 @@ import { createRef } from 'react';
 import type { RJSFSchema } from '@rjsf/utils';
 import { noop } from '@rjsf/utils';
 import validator, { customizeValidator } from '@rjsf/validator-ajv8';
-import userEvent from '@testing-library/user-event';
-import draft06 from 'ajv/lib/refs/json-schema-draft-06.json';
+import { userEvent } from '@testing-library/user-event';
+import draft06 from 'ajv/lib/refs/json-schema-draft-06.json' with { type: 'json' };
 import { createPortal } from 'react-dom';
 
 import type { FormProps } from '../src/index.ts';
@@ -16,7 +16,7 @@ import {
 } from './testUtils.tsx';
 
 const user = userEvent.setup();
-const renderErrorSuppression = setupConsoleErrorSuppression();
+setupConsoleErrorSuppression();
 
 describeRepeated('Form common: form props and updates', (createFormComponent) => {
   describe('Schema and formData updates', () => {
@@ -255,7 +255,7 @@ describeRepeated('Form common: form props and updates', (createFormComponent) =>
       const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(noop);
       const formProps: Omit<FormProps, 'validator'> = {
         ref: createRef(),
-        liveValidate: true,
+        liveValidate: 'onChange',
         formData: {
           areaCode: '123455',
         },
@@ -385,14 +385,6 @@ describeRepeated('Form common: form props and updates', (createFormComponent) =>
       const Component = (props: any) => <div {...props} id='test' />;
       const { node } = createFormComponent({ schema: {}, tagName: Component });
       expect(node.id).toEqual('test');
-      // React deduplicates this warning per component name — only fires on the first test iteration
-      if (renderErrorSuppression.consoleSpy.mock.calls.length > 0) {
-        expect(renderErrorSuppression.consoleSpy).toHaveBeenCalledWith(
-          expect.stringContaining('Function components cannot be given refs'),
-          expect.any(String),
-          expect.any(String),
-        );
-      }
     });
   });
 

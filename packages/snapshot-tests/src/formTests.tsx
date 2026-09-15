@@ -1,6 +1,7 @@
 import type { ComponentType } from 'react';
 import type { FormProps } from '@rjsf/core';
-import type { RJSFSchema, ErrorSchema, UiSchema, Experimental_DefaultFormStateBehavior } from '@rjsf/utils';
+import MarkdownTemplate from '@rjsf/core/markdown';
+import type { RJSFSchema, ErrorSchema, UiSchema, DefaultFormStateBehavior } from '@rjsf/utils';
 import { bracketNameGenerator, dotNotationNameGenerator } from '@rjsf/utils';
 import validator from '@rjsf/validator-ajv8';
 import { render } from '@testing-library/react';
@@ -52,22 +53,24 @@ export function formTests(Form: ComponentType<FormProps>) {
           description: 'A field with markdown help text',
         };
         const uiSchema: UiSchema = {
-          'ui:help': 'This is **markdown** help text with [a link](https://example.com)',
           'ui:enableMarkdownInHelp': true,
+          'ui:help': 'This is **markdown** help text with [a link](https://example.com)',
         };
-        const { asFragment } = render(<Form schema={schema} uiSchema={uiSchema} validator={validator} />);
+        const { asFragment } = render(
+          <Form schema={schema} uiSchema={uiSchema} validator={validator} templates={{ MarkdownTemplate }} />,
+        );
         expect(asFragment()).toMatchSnapshot();
       });
 
-      test('field with markdown help text without enabling markdown', () => {
+      test('field with markdown help text without a MarkdownTemplate', () => {
         const schema: RJSFSchema = {
           type: 'string',
           title: 'Raw Help Test',
           description: 'A field with raw help text',
         };
         const uiSchema: UiSchema = {
+          'ui:enableMarkdownInHelp': true,
           'ui:help': 'This is **markdown** help text with [a link](https://example.com)',
-          'ui:enableMarkdownInHelp': false,
         };
         const { asFragment } = render(<Form schema={schema} uiSchema={uiSchema} validator={validator} />);
         expect(asFragment()).toMatchSnapshot();
@@ -80,11 +83,14 @@ export function formTests(Form: ComponentType<FormProps>) {
           description: 'This is a *description* with **markdown**',
         };
         const uiSchema: UiSchema = {
-          'ui:help': 'This is **help** text with [a link](https://example.com)',
           'ui:enableMarkdownInHelp': true,
+          'ui:enableMarkdownInDescription': true,
+          'ui:help': 'This is **help** text with [a link](https://example.com)',
           'ui:description': 'This is a *description* with **markdown**',
         };
-        const { asFragment } = render(<Form schema={schema} uiSchema={uiSchema} validator={validator} />);
+        const { asFragment } = render(
+          <Form schema={schema} uiSchema={uiSchema} validator={validator} templates={{ MarkdownTemplate }} />,
+        );
         expect(asFragment()).toMatchSnapshot();
       });
 
@@ -95,10 +101,18 @@ export function formTests(Form: ComponentType<FormProps>) {
           description: 'A required field with markdown help',
         };
         const uiSchema: UiSchema = {
-          'ui:help': 'This field is **required**. Please provide a value.',
           'ui:enableMarkdownInHelp': true,
+          'ui:help': 'This field is **required**. Please provide a value.',
         };
-        const { asFragment } = render(<Form schema={schema} uiSchema={uiSchema} validator={validator} formData={{}} />);
+        const { asFragment } = render(
+          <Form
+            schema={schema}
+            uiSchema={uiSchema}
+            validator={validator}
+            formData={{}}
+            templates={{ MarkdownTemplate }}
+          />,
+        );
         expect(asFragment()).toMatchSnapshot();
       });
       test('string field with placeholder', async () => {
@@ -447,7 +461,9 @@ export function formTests(Form: ComponentType<FormProps>) {
         description: '**test** __description__',
       };
       const uiSchema: UiSchema = { 'ui:enableMarkdownInDescription': true };
-      const { asFragment } = render(<Form schema={schema} uiSchema={uiSchema} validator={validator} />);
+      const { asFragment } = render(
+        <Form schema={schema} uiSchema={uiSchema} validator={validator} templates={{ MarkdownTemplate }} />,
+      );
       expect(asFragment()).toMatchSnapshot();
     });
 
@@ -646,7 +662,9 @@ export function formTests(Form: ComponentType<FormProps>) {
       const uiSchema = {
         'my-field': { 'ui:enableMarkdownInDescription': true },
       };
-      const { asFragment } = render(<Form schema={schema} uiSchema={uiSchema} validator={validator} />);
+      const { asFragment } = render(
+        <Form schema={schema} uiSchema={uiSchema} validator={validator} templates={{ MarkdownTemplate }} />,
+      );
       expect(asFragment()).toMatchSnapshot();
     });
     test('field with markdown description in uiSchema', async () => {
@@ -665,7 +683,9 @@ export function formTests(Form: ComponentType<FormProps>) {
           'ui:enableMarkdownInDescription': true,
         },
       };
-      const { asFragment } = render(<Form schema={schema} validator={validator} uiSchema={uiSchema} />);
+      const { asFragment } = render(
+        <Form schema={schema} validator={validator} uiSchema={uiSchema} templates={{ MarkdownTemplate }} />,
+      );
       expect(asFragment()).toMatchSnapshot();
     });
     test('title field', async () => {
@@ -755,7 +775,7 @@ export function formTests(Form: ComponentType<FormProps>) {
     describe('optional data controls', () => {
       let schema: RJSFSchema;
       let uiSchema: UiSchema;
-      let experimental_defaultFormStateBehavior: Experimental_DefaultFormStateBehavior;
+      let defaultFormStateBehavior: DefaultFormStateBehavior;
       let formData: any;
       beforeAll(() => {
         schema = {
@@ -914,7 +934,7 @@ export function formTests(Form: ComponentType<FormProps>) {
             },
           },
         };
-        experimental_defaultFormStateBehavior = {
+        defaultFormStateBehavior = {
           // Set the emptyObjectFields to only populate required defaults to highlight the code working
           emptyObjectFields: 'populateRequiredDefaults',
         };
@@ -930,7 +950,7 @@ export function formTests(Form: ComponentType<FormProps>) {
           schema,
           uiSchema: {},
           validator,
-          experimental_defaultFormStateBehavior,
+          defaultFormStateBehavior,
         };
         const { asFragment } = render(<Form {...formProps} />);
         expect(asFragment()).toMatchSnapshot();
@@ -940,7 +960,7 @@ export function formTests(Form: ComponentType<FormProps>) {
           schema,
           uiSchema,
           validator,
-          experimental_defaultFormStateBehavior,
+          defaultFormStateBehavior,
         };
         const { asFragment } = render(<Form {...formProps} />);
         expect(asFragment()).toMatchSnapshot();
@@ -950,7 +970,7 @@ export function formTests(Form: ComponentType<FormProps>) {
           schema,
           uiSchema,
           validator,
-          experimental_defaultFormStateBehavior,
+          defaultFormStateBehavior,
           formData,
         };
         const { asFragment } = render(<Form {...formProps} />);
@@ -961,7 +981,7 @@ export function formTests(Form: ComponentType<FormProps>) {
           schema,
           uiSchema: {},
           validator,
-          experimental_defaultFormStateBehavior,
+          defaultFormStateBehavior,
           readonly: true,
         };
         const { asFragment } = render(<Form {...formProps} />);
@@ -972,7 +992,7 @@ export function formTests(Form: ComponentType<FormProps>) {
           schema,
           uiSchema,
           validator,
-          experimental_defaultFormStateBehavior,
+          defaultFormStateBehavior,
           disabled: true,
         };
         const { asFragment } = render(<Form {...formProps} />);
@@ -983,7 +1003,7 @@ export function formTests(Form: ComponentType<FormProps>) {
           schema,
           uiSchema,
           validator,
-          experimental_defaultFormStateBehavior,
+          defaultFormStateBehavior,
           formData,
           readonly: true,
         };
@@ -1307,5 +1327,35 @@ export function formTests(Form: ComponentType<FormProps>) {
         expect(asFragment()).toMatchSnapshot();
       });
     });
+  });
+
+  test('string field with autocapitalize', () => {
+    const schema: RJSFSchema = {
+      type: 'string',
+    };
+    const uiSchema: UiSchema = {
+      'ui:autocapitalize': 'words',
+    };
+    const { asFragment } = render(<Form schema={schema} validator={validator} uiSchema={uiSchema} />);
+    expect(asFragment()).toMatchSnapshot();
+  });
+
+  // Appended at the end of the suite, rather than alongside the other `format` tests, so this doesn't shift the
+  // `useId()`-derived ids baked into every snapshot that follows it in file order.
+  test('format iso-time', async () => {
+    const schema: RJSFSchema = {
+      type: 'string',
+      format: 'iso-time',
+    };
+    const { asFragment } = render(<Form schema={schema} validator={validator} />);
+    expect(asFragment()).toMatchSnapshot();
+  });
+  test('format iso-date-time', async () => {
+    const schema: RJSFSchema = {
+      type: 'string',
+      format: 'iso-date-time',
+    };
+    const { asFragment } = render(<Form schema={schema} validator={validator} />);
+    expect(asFragment()).toMatchSnapshot();
   });
 }

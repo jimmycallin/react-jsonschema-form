@@ -1,7 +1,7 @@
 import { createRef } from 'react';
 import type { FieldProps, FormValidation, GenericObjectType, RJSFSchema, WidgetProps } from '@rjsf/utils';
 import { noop } from '@rjsf/utils';
-import userEvent from '@testing-library/user-event';
+import { userEvent } from '@testing-library/user-event';
 
 import SchemaField from '../src/components/fields/SchemaField.tsx';
 import SelectWidget from '../src/components/widgets/SelectWidget.tsx';
@@ -590,11 +590,11 @@ describe('oneOf', () => {
     function CustomSchemaField(props: FieldProps) {
       const {
         registry: { formContext },
-        fieldPathId,
+        id,
       } = props;
       return (
         <>
-          <code id={formContext[fieldPathId.$id]}>Ha</code>
+          <code id={formContext[id]}>Ha</code>
           <SchemaField {...props} />
         </>
       );
@@ -1399,6 +1399,7 @@ describe('oneOf', () => {
         schema,
         uiSchema: {
           'ui:title': 'My Title',
+          // @ts-expect-error: TS2353, deliberately not an array, to exercise the runtime warning below
           oneOf: { 'ui:title': 'UiSchema title' },
         },
       });
@@ -1862,7 +1863,7 @@ describe('oneOf', () => {
         formData: {
           items: [{ type: 'typeA', showField: true }],
         },
-        experimental_defaultFormStateBehavior: {
+        defaultFormStateBehavior: {
           mergeDefaultsIntoFormData: 'useDefaultIfFormDataUndefined',
         },
       });
@@ -1913,7 +1914,7 @@ describe('oneOf', () => {
         formData: {
           items: [{ type: 'typeA' }], // No showField defined
         },
-        experimental_defaultFormStateBehavior: {
+        defaultFormStateBehavior: {
           mergeDefaultsIntoFormData: 'useDefaultIfFormDataUndefined',
         },
       });

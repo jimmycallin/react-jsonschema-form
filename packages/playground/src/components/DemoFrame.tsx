@@ -11,7 +11,6 @@ import { __createChakraFrameProvider } from '@rjsf/chakra-ui';
 import { __createDaisyUIFrameProvider } from '@rjsf/daisyui';
 import { __createFluentUIRCFrameProvider } from '@rjsf/fluentui-rc';
 import { ConfigProvider } from 'antd';
-import { PrimeReactProvider } from 'primereact/api';
 import type { FrameComponentProps } from 'react-frame-component';
 import Frame, { FrameContextConsumer } from 'react-frame-component';
 
@@ -174,7 +173,7 @@ interface DemoFrameProps extends FrameComponentProps {
   /** override children to be ReactElement to avoid Typescript issue. In this case we don't need to worry about
    * children being of the other valid ReactNode types, undefined and string as it always contains an RJSF `Form`
    */
-  children: ReactElement;
+  children: ReactElement<any>;
   subtheme: string;
 }
 
@@ -186,7 +185,7 @@ export default function DemoFrame(props: DemoFrameProps) {
   const [container, setContainer] = useState();
   const [window, setWindow] = useState();
 
-  const instanceRef = useRef<any>();
+  const instanceRef = useRef<any>(undefined);
 
   const onContentDidMount = useCallback(() => {
     setReady(true);
@@ -241,14 +240,6 @@ export default function DemoFrame(props: DemoFrameProps) {
           subtheme: { dataTheme: subtheme },
         })}
       </FrameContextConsumer>
-    ) : null;
-  } else if (theme === 'primereact') {
-    body = ready ? (
-      <>
-        <style>{`html { font-weight: 400; font-size: 14px; color: var(--text-color); }`}</style>
-        <link href='//cdn.jsdelivr.net/npm/primeicons@7.0.0/primeicons.min.css' rel='stylesheet' />
-        <PrimeReactProvider value={{ styleContainer: container, appendTo: 'self' }}>{children}</PrimeReactProvider>
-      </>
     ) : null;
   } else if (theme === 'mantine') {
     body = ready ? (

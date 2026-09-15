@@ -1,5 +1,5 @@
 import type { RJSFSchema, WidgetProps } from '@rjsf/utils';
-import userEvent from '@testing-library/user-event';
+import { userEvent } from '@testing-library/user-event';
 
 import {
   createFormComponent,
@@ -13,6 +13,18 @@ const user = userEvent.setup();
 const CustomWidget = () => <div id='custom' />;
 
 describe('BooleanField', () => {
+  it('should pass ui:placeholder to a select widget', () => {
+    const CustomSelect = ({ placeholder }: WidgetProps) => <div id='boolean-placeholder'>{placeholder}</div>;
+
+    const { node } = createFormComponent({
+      schema: { type: 'boolean' },
+      widgets: { SelectWidget: CustomSelect },
+      uiSchema: { 'ui:widget': 'select', 'ui:placeholder': 'Yes or no?' },
+    });
+
+    expect(node.querySelector('#boolean-placeholder')).toHaveTextContent('Yes or no?');
+  });
+
   it('should render a boolean field', () => {
     const { node } = createFormComponent({
       schema: {
