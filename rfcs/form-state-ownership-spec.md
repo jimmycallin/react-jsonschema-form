@@ -1,6 +1,6 @@
 # Form data ownership: specification and implementation plan
 
-Status: proposed implementation contract for a breaking release. Documentation only; no runtime changes are included.
+Status: proposed implementation contract for a breaking release. PR 1a is open as [rjsf-team#5289](https://github.com/rjsf-team/react-jsonschema-form/pull/5289) (`getFormData()`, `FormHandle`, docs); everything after it is unimplemented.
 
 Review revision: 2026-09-15. This document supersedes earlier drafts. [The research review](form-state-api-research.md) supplies evidence and rationale. Ownership is inferred from `formData`, with no explicit mode prop. Controlled forms never generate or propose defaults; the parent seeds them with the exported schema utility. Lossless queued changes are part of this milestone. Controlled reset leaves data to the parent, with no data proposal. A controlled value mirror is not part of the design.
 
@@ -52,6 +52,7 @@ Do not implement deferred work merely because the research review describes a us
 | `packages/core/test/testUtils.tsx`                             | A spy handler does not constitute an accepting controlled parent.                                                                    |
 | `packages/utils/src/schema/getDefaultFormState.ts`             | Reuse its existing behavior; do not rewrite globally.                                                                                |
 | `packages/core/src/withTheme.tsx` and theme wrappers           | Mode, optional data, and ref forwarding.                                                                                             |
+| `packages/core/src/components/FormHandle.ts`                   | The exported handle contract from PR 1a; `Form` implements it. Extend it here, never through the class alone.                        |
 
 The existing reset regression allows editing fixed `formData` without parent acceptance, then restores it after `disabled` changes. Those two tests passed during initial analysis. The controlled expectation is intentionally changed by this milestone; the uncontrolled expectation remains.
 
@@ -167,7 +168,7 @@ Every store-owning library's getter is read-your-writes, so a developer arriving
 
 Export `FormHandle<T, S, F>` containing `getFormData` and the supported existing methods: `submit`, `reset`, `setFieldValue`, `validateForm`, `validateFormWithFormData`, `validate`, and `focusOnError`. Reuse current signatures. The class structurally implements this handle.
 
-Type the public ref prop as `Ref<FormHandle<T, S, F>>`. Verify both handle refs and existing `createRef<Form<T, S, F>>()` consumers typecheck through plain/themed forms. Do not cast away incompatibilities. Keep the class export; remove lifecycle/state members only from the new handle, not by deleting unrelated class methods.
+The ref prop stays `Ref<Form<T, S, F>>` while `Form` is a class. PR 1a tried `Ref<FormHandle<T, S, F>>` and it does not typecheck: TSX types a class element's `ref` by its instance (`IntrinsicClassAttributes<Form>`), so an object ref typed as the handle is rejected on `<Form ref>`, and `withTheme`'s forward fails the same way. No cast is acceptable. The supported pattern, documented in the upgrade guide, is a class-typed ref narrowed to `FormHandle` at the use site; it needs no change when the prop type does. Changing the prop to `Ref<FormHandle>` is a deliverable of the function-component conversion in section 9, not of this milestone. Keep the class export; remove lifecycle/state members only from the handle, not by deleting unrelated class methods.
 
 A `ref` carrying a narrow handle is the correct shape for this component, not a compromise. Most surveyed libraries expose their methods on a hook-created form instance instead, but in every one of them that instance is the store, and the component is a renderer bound to it. RJSF's controlled mode has no store: the parent's state is the store and there is nothing for an instance to hold. For a component that does not own a store, a `ref` plus the handle `useImperativeHandle` would produce is the React idiom, and React 19's `ref`-as-prop, which `withTheme` already uses, removes the old `forwardRef` friction. The current ref exposes the whole class, `state` and lifecycle included; narrowing that is only free while the release is already breaking.
 
@@ -265,28 +266,31 @@ The old numbered acceptance matrices are superseded by these six contract tests 
 
 ## 7. Implementation and review sequence
 
-### PR 1: Additive public access and types
+### PR 1a: Additive public access and types (open, rjsf-team#5289)
 
-1. Inventory refs and `.state` reads, then add `getFormData()` returning the current rendered/committed value. Under the existing hybrid implementation this means `this.state.formData`, even when `formData` props exist. It must not claim the future ownership contract yet.
-2. Export `FormHandle`, update compatible ref typing, and decouple `IChangeEvent` from internal state while preserving every current event field/type.
-3. Migrate direct current-data reads to the getter where appropriate, and add type/runtime coverage for plain and themed refs. Keep legacy class refs working.
-4. Do not activate mode inference, frozen ownership, new diagnostics, reset changes, or reconciliation removal in this PR.
+1. `getFormData()` returning `this.state.formData` in both modes, with TSDoc stating the committed-read timing. It does not claim the future ownership contract; the switch changes its source, not its meaning.
+2. `FormHandle` exported from `@rjsf/core`; `Form implements FormHandle` so the compiler enforces the contract. The ref prop is unchanged for the reason in section 3.6.
+3. Runtime and `expectTypeOf` coverage in `packages/core/test/Form.handle.test.tsx`: both modes, themed form, legacy class ref, and the absence of `state`/lifecycle members from the handle.
+4. Upgrade guide: reading `.state` through a ref is deprecated with a stop/use table; `getFormData()` documented against the `value`/`defaultValue` analogy. `internals.md` documents the handle.
 
-Exit: additive methods/types and migrated reads land independently; existing behavior/tests pass. The later switch changes the getter's source to match the new owner, not its purpose of returning current rendered data.
+The inventory found no `.state.formData` reads outside `Form.tsx`; tests read `state.errorSchema`, `state.errors`, and `state.schemaUtils`, which section 3.6 allows to remain. Nothing was migrated because nothing needed it. No mode inference, diagnostics, reset change, or reconciliation removal is included.
+
+### PR 1b: Event type decoupling (after #5280)
+
+Decouple `IChangeEvent` from `Pick<FormState, ...>` while preserving every current field and type. It is the same line #5280 rewrites when it removes `fieldPathId`, and is a ten-line change once that lands. Do not open it earlier.
 
 ### PR 2: Internal preparation and fixture classification
 
-1. Add a private pure mode resolver and unit tests for the future rules. Do not let the resolver select the live data source yet.
-2. Extract shared edit processing, initialization, and render-context derivation without changing domain algorithms, callback timing, reset behavior, or ownership. Preserve useful queue behavior.
-3. Add accepting/rejecting/transforming parent harnesses. Classify existing editable seeded fixtures and migrate ones whose behavior can be preserved with `initialFormData` or a genuine accepting parent.
-4. Keep tests specifically asserting legacy hybrid behavior unchanged until PR 3. Do not mechanically rename test inputs or assert future ownership semantics in a behavior-preserving PR.
-5. Prepare targeted child changes in separate reviewable commits where they can preserve current behavior. Defer fixes inherently dependent on rejection semantics to PR 3.
+1. Extract shared edit processing, initialization, and render-context derivation without changing domain algorithms, callback timing, reset behavior, or ownership. Preserve useful queue behavior.
+2. Add accepting/rejecting/transforming parent harnesses. Classify existing editable seeded fixtures and migrate ones whose behavior can be preserved with `initialFormData` or a genuine accepting parent.
+3. Keep tests specifically asserting legacy hybrid behavior unchanged until PR 3. Do not mechanically rename test inputs or assert future ownership semantics in a behavior-preserving PR.
+4. Prepare targeted child changes in separate reviewable commits where they can preserve current behavior. Defer fixes inherently dependent on rejection semantics to PR 3.
 
-Exit: existing behavior passes and the later ownership diff is smaller. The private resolver is preparation only; no public API advertises strict behavior that is not implemented.
+Exit: existing behavior passes and the later ownership diff is smaller. No public API advertises strict behavior that is not implemented. The mode resolver planned here was dropped: it is `props.formData !== undefined`, one line with no consumer until PR 3, so it lands there with its unit tests.
 
 ### PR 3: Atomic ownership switch and necessary child fixes
 
-1. Activate the prepared resolver and frozen ownership, and add the three development diagnostics. These belong with the behavior they describe.
+1. Add the mode resolver (`props.formData !== undefined`, selected once at construction) with unit tests for the section 3.1 table, activate frozen ownership, and add the three development diagnostics. These belong with the behavior they describe.
 2. Route render, getter, edits, reset, blur, submit, and validation through authoritative data. Preserve the operation queue and controlled commit checkpoints.
 3. Remove controlled value reconciliation and suppression flags; retain existing uncontrolled compatibility notifications. No lifecycle method computes defaults for a controlled form.
 4. Apply the minimum array/branch/object/widget fixes needed for rejected controlled proposals. Keep each subsystem in a separate coherent commit; do not ship a parent ownership change with children that still display rejected values.
@@ -367,15 +371,15 @@ For controlled multi-field edits, prefer one parent functional update or an exis
 
 ## 9. Deferred work, with separate decision gates
 
-| Follow-up                        | Required decision before implementation                                                                                                                                    |
-| -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Default-policy simplification    | Define exactly when new branch/path defaults are inserted, which cleared values survive, and how cycles are handled. Then replace edit-time workarounds with domain tests. |
-| Reset ergonomics                 | Controlled reset is errors-only now. Any later baseline, saved-record, or schema-default reset API needs a concrete use case and a separately reviewed contract.           |
-| Data/validation event separation | Specify replacement observation before removing errors-only `onChange`; cover mount, blur, external errors, deduplication, and ordering.                                   |
-| Additional imperative methods    | Demonstrate a concrete use case that existing root replacement/getter cannot serve. Do not add methods solely for symmetry.                                                |
-| Trimming `FormHandle`            | `validate` and `validateFormWithFormData` are stateless. Move them to utilities only in a later break, with a deprecation on the handle first.                             |
-| Function-component conversion    | After ownership review/stability, reuse the unchanged behavioral tests and `FormHandle`. Migrate remaining class-ref types deliberately; no prop-copy effects.             |
-| Hook-created form instance       | A `useForm()`-style instance implies a form-owned store, the third architecture in the research review. Decide store-or-not first; the handle shape follows from that.     |
+| Follow-up                        | Required decision before implementation                                                                                                                                                                                |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Default-policy simplification    | Define exactly when new branch/path defaults are inserted, which cleared values survive, and how cycles are handled. Then replace edit-time workarounds with domain tests.                                             |
+| Reset ergonomics                 | Controlled reset is errors-only now. Any later baseline, saved-record, or schema-default reset API needs a concrete use case and a separately reviewed contract.                                                       |
+| Data/validation event separation | Specify replacement observation before removing errors-only `onChange`; cover mount, blur, external errors, deduplication, and ordering.                                                                               |
+| Additional imperative methods    | Demonstrate a concrete use case that existing root replacement/getter cannot serve. Do not add methods solely for symmetry.                                                                                            |
+| Trimming `FormHandle`            | `validate` and `validateFormWithFormData` are stateless. Move them to utilities only in a later break, with a deprecation on the handle first.                                                                         |
+| Function-component conversion    | After ownership review/stability, reuse the unchanged behavioral tests and `FormHandle`. Change the ref prop to `Ref<FormHandle>` here; consumers already narrowed to the handle need no change. No prop-copy effects. |
+| Hook-created form instance       | A `useForm()`-style instance implies a form-owned store, the third architecture in the research review. Decide store-or-not first; the handle shape follows from that.                                                 |
 
 These follow-ups are independent opportunities, not required milestones or permission to expand PR 3. No synchronous shadow store, subscription engine, or new performance claim is part of this plan.
 
@@ -412,7 +416,8 @@ Inspect default and wrapped themes with controlled text, uncontrolled reset, dep
 - [ ] No controlled lifecycle defaults, errors-only controlled reset, and existing uncontrolled/default-edit/validation behavior pass their tests.
 - [ ] `getFormData()` TSDoc states the committed-read timing.
 - [ ] All changed expectations map to section 8; deferred API tests/features are absent.
-- [ ] Additive handle/getter/types and internal preparation were reviewed before the ownership switch; legacy refs work and consumers/docs are migrated.
+- [x] Additive handle/getter/types landed first (PR 1a, rjsf-team#5289); legacy refs work and the deprecation is documented.
+- [ ] Event type decoupling (PR 1b) and internal preparation (PR 2) were reviewed before the ownership switch.
 - [ ] Class remains; retained lifecycle/state/queue uses have explicit purposes.
 
 If an existing behavior conflicts with ownership, reduce it to a concrete reproduction and check section 8. Preserve unrelated behavior. Report an unresolved conflict rather than introducing another parent-echo flag, silently weakening a test, or implementing a deferred API to evade it.
