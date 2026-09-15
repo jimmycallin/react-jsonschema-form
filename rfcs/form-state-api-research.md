@@ -188,7 +188,9 @@ Keep mode-change and conflicting-prop diagnostics, and add the development mount
 
 ## Reviewable delivery
 
-Separate additive `getFormData`, `FormHandle`, and event-type decoupling from the behavioral switch. Before the switch, the getter returns the existing rendered state value; afterward it reads the selected owner. Its meaning stays current rendered data throughout.
+Separate additive `getFormData`, `FormHandle`, and event-type decoupling from the behavioral switch. Before the switch, the getter returns the existing rendered state value; afterward it reads the selected owner. Its meaning stays current rendered data throughout. The getter and handle are open as [rjsf-team#5289](https://github.com/rjsf-team/react-jsonschema-form/pull/5289); the event-type decoupling follows #5280, which rewrites the same line.
+
+One finding from that PR corrects the imperative-reads survey above: a `ref` typed as the handle is the right shape, but TypeScript cannot express it on a class element, because TSX types a class element's `ref` by its instance. Formik avoids this only because `innerRef` is an ordinary prop on a function component. The ref prop therefore stays typed as the class until the function-component conversion, and the documented pattern narrows `ref.current` to `FormHandle` at the use site.
 
 A second preparation PR extracts internal logic, privately tests mode selection, and migrates compatible fixtures without changing behavior. The public mode prop and migration diagnostics activate with the ownership switch. Necessary child rejection fixes stay atomic with that switch, in separate reviewable commits, because a strict parent with optimistic child values is not a working intermediate release.
 
