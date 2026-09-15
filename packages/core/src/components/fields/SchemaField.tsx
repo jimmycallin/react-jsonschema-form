@@ -1,5 +1,5 @@
 import type { ComponentType } from 'react';
-import { useCallback, memo } from 'react';
+import { useCallback, useMemo, memo } from 'react';
 import type {
   ErrorSchema,
   Field,
@@ -17,7 +17,6 @@ import type {
 import {
   ADDITIONAL_PROPERTY_FLAG,
   ANY_OF_KEY,
-  deepEquals,
   descriptionId,
   fieldPathToId,
   getSchemaType,
@@ -131,13 +130,43 @@ function SchemaFieldRender<T = any, S extends StrictRJSFSchema = RJSFSchema, F e
     [fieldId, onChange],
   );
 
+  // Memoized on stable inputs so the resolved object keeps its reference across re-renders; child callbacks and
+  // memo boundaries depend on that reference staying put
+  const uiSchema = useMemo(
+    () => resolveUiSchema<T, S, F>(_schema, _uiSchema, registry),
+    [_schema, _uiSchema, registry],
+  );
+  // See #439: uiSchema: Don't pass consumed class names or style to child components. Most uiSchemas carry none of
+  // them, so the copy is only made when there is something to strip, leaving `uiSchema` itself untouched otherwise.
+  // Memoized so the stripped object keeps its reference while the uiSchema is unchanged
+  // `resolveUiSchema()` guarantees `uiSchema` and its `ui:options` are objects, so `in` is safe on both
+  const fieldUiSchema = useMemo<UiSchema<T, S, F>>(() => {
+    const consumedUiOptions = uiSchema[UI_OPTIONS_KEY];
+    const consumesStyling =
+      'ui:classNames' in uiSchema ||
+      'classNames' in uiSchema ||
+      'ui:style' in uiSchema ||
+      (consumedUiOptions !== undefined && ('classNames' in consumedUiOptions || 'style' in consumedUiOptions));
+    if (!consumesStyling) {
+      return uiSchema;
+    }
+    const strippedUiSchema: UiSchema<T, S, F> = { ...uiSchema };
+    delete strippedUiSchema['ui:classNames'];
+    delete strippedUiSchema.classNames;
+    delete strippedUiSchema['ui:style'];
+    if (consumedUiOptions) {
+      const { classNames: consumedOptionClassNames, style: consumedOptionStyle, ...fieldUiOptions } = consumedUiOptions;
+      strippedUiSchema[UI_OPTIONS_KEY] = fieldUiOptions;
+    }
+    return strippedUiSchema;
+  }, [uiSchema]);
+
   // Stop $ref cycles: when resolveAllReferences detects a repeated property $ref it tags the schema with this flag.
   // The check must come after all hook calls to satisfy React's rules of hooks.
   if ((_schema as RJSFMarkedSchema)[RJSF_REF_CYCLE_KEY]) {
     return <CyclicSchemaField {...props} />;
   }
 
-  const uiSchema = resolveUiSchema<T, S, F>(_schema, _uiSchema, registry);
   const uiOptions = getUiOptions<T, S, F>(uiSchema, globalUiOptions);
   const FieldTemplate = getTemplate<'FieldTemplate', T, S, F>('FieldTemplate', registry, uiOptions);
   const DescriptionFieldTemplate = getTemplate<'DescriptionFieldTemplate', T, S, F>(
@@ -197,26 +226,6 @@ function SchemaFieldRender<T = any, S extends StrictRJSFSchema = RJSFSchema, F e
   }
 
   const { __errors, ...fieldErrorSchema } = errorSchema || {};
-  // See #439: uiSchema: Don't pass consumed class names or style to child components. Most uiSchemas carry none of
-  // them, so the copy is only made when there is something to strip, leaving `uiSchema` itself untouched otherwise
-  // `resolveUiSchema()` guarantees `uiSchema` and its `ui:options` are objects, so `in` is safe on both
-  const consumedUiOptions = uiSchema[UI_OPTIONS_KEY];
-  const consumesStyling =
-    'ui:classNames' in uiSchema ||
-    'classNames' in uiSchema ||
-    'ui:style' in uiSchema ||
-    (consumedUiOptions !== undefined && ('classNames' in consumedUiOptions || 'style' in consumedUiOptions));
-  let fieldUiSchema: UiSchema<T, S, F> = uiSchema;
-  if (consumesStyling) {
-    fieldUiSchema = { ...uiSchema };
-    delete fieldUiSchema['ui:classNames'];
-    delete fieldUiSchema.classNames;
-    delete fieldUiSchema['ui:style'];
-    if (consumedUiOptions) {
-      const { classNames: consumedOptionClassNames, style: consumedOptionStyle, ...fieldUiOptions } = consumedUiOptions;
-      fieldUiSchema[UI_OPTIONS_KEY] = fieldUiOptions;
-    }
-  }
 
   const field = (
     <FieldComponent
@@ -351,22 +360,13 @@ function SchemaFieldRender<T = any, S extends StrictRJSFSchema = RJSFSchema, F e
   );
 }
 
-/** The `SchemaField` component wraps `SchemaFieldRender` with a custom memoization comparator that  determines whether it is necessary to rerender the component based on any props changes
- * using `experimental_componentUpdateStrategy`.
+/** The `SchemaField` component wraps `SchemaFieldRender` in `memo` with a shallow props comparator. Field identity
+ * props are primitives, so shallow comparison is correct; object props bail out of memoization until their references
+ * are stabilized.
  *
  * The cast to `typeof SchemaFieldRender` preserves the generic type signature (<T, S, F>) for consumers,
  * since React.memo's return type erases generic parameters.
  */
-const SchemaField = memo(SchemaFieldRender, (prevProps, nextProps) => {
-  const { experimental_componentUpdateStrategy = 'customDeep' } = nextProps.registry.globalFormOptions;
-  if (experimental_componentUpdateStrategy === 'always') {
-    return false; // always re-render — never consider props equal
-  }
-  if (experimental_componentUpdateStrategy === 'shallow') {
-    return shallowEquals(prevProps, nextProps);
-  }
-  // default: 'customDeep'
-  return deepEquals(prevProps, nextProps);
-}) as unknown as typeof SchemaFieldRender;
+const SchemaField = memo(SchemaFieldRender, shallowEquals) as unknown as typeof SchemaFieldRender;
 
 export default SchemaField;
