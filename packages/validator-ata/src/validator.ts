@@ -3,7 +3,6 @@ import type {
   ErrorTransformer,
   FormContextType,
   RJSFSchema,
-  StrictRJSFSchema,
   UiSchema,
   ValidationData,
   ValidatorType,
@@ -24,9 +23,9 @@ import type { CustomValidatorOptionsType, Localizer, SuppressDuplicateFilteringT
  * still resolves between schemas RJSF passes in.
  */
 export default class ATAValidator<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 > implements ValidatorType<T, S, F> {
   /** Stable copy of the constructor options, used when (re)building per-schema
    * `Validator` instances on demand.
@@ -129,7 +128,7 @@ export default class ATAValidator<
    * `AJV8Validator#rawValidation`: returns ata's error array (already in
    * AJV-compatible shape) plus any compilation error encountered.
    */
-  rawValidation<Result = any>(schema: S, formData?: T): RawValidationErrorsType<Result> {
+  rawValidation<Result = unknown>(schema: S, formData?: T): RawValidationErrorsType<Result> {
     let compilationError: Error | undefined;
     let errors: ValidationError[] | undefined;
 

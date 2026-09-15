@@ -133,7 +133,8 @@ describe('uiSchema', () => {
     });
 
     describe('custom options', () => {
-      let widget: Widget;
+      // `MergedWidget` is the cache that core attaches to the widget itself
+      let widget: Widget & { MergedWidget?: Widget };
       let widgets: { widget: Widget };
       let schema: RJSFSchema;
       let uiSchema: UiSchema;
@@ -348,7 +349,8 @@ describe('uiSchema', () => {
 
       const CustomWidget = (props: WidgetProps) => {
         const { value, options } = props;
-        return <input type='text' className={options.className} value={value} />;
+        const { className } = options;
+        return <input type='text' className={typeof className === 'string' ? className : undefined} value={value} />;
       };
 
       describe('direct reference', () => {
@@ -409,8 +411,9 @@ describe('uiSchema', () => {
         const { options } = props;
         const { enumOptions, className } = options;
         return (
-          <select className={className}>
-            {Array.isArray(enumOptions) && enumOptions.map(({ value }) => <option key={String(value)}>{value}</option>)}
+          <select className={typeof className === 'string' ? className : undefined}>
+            {Array.isArray(enumOptions) &&
+              enumOptions.map(({ value }) => <option key={String(value)}>{String(value)}</option>)}
           </select>
         );
       };
@@ -440,18 +443,19 @@ describe('uiSchema', () => {
           },
         },
       };
+      const enumDisabled = ['foo'];
       const uiSchema: UiSchema = {
         field: {
           'ui:widget': SelectWidget,
           'ui:options': {
             className: 'custom',
           },
-          'ui:enumDisabled': ['foo'],
+          'ui:enumDisabled': enumDisabled,
         },
       };
       it('should have atleast one option disabled', () => {
         const { node } = createFormComponent({ schema, uiSchema });
-        const disabledOptionsLen = uiSchema.field['ui:enumDisabled'].length;
+        const disabledOptionsLen = enumDisabled.length;
         expect(node.querySelectorAll('option:disabled')).toHaveLength(disabledOptionsLen);
         expect(node.querySelectorAll('option:enabled')).toHaveLength(
           // Two options, one disabled, plus the placeholder
@@ -470,18 +474,19 @@ describe('uiSchema', () => {
           },
         },
       };
+      const enumDisabled = ['foo'];
       const uiSchema: UiSchema = {
         field: {
           'ui:widget': RadioWidget,
           'ui:options': {
             className: 'custom',
           },
-          'ui:enumDisabled': ['foo'],
+          'ui:enumDisabled': enumDisabled,
         },
       };
       it('should have atleast one radio option disabled', () => {
         const { node } = createFormComponent({ schema, uiSchema });
-        const disabledOptionsLen = uiSchema.field['ui:enumDisabled'].length;
+        const disabledOptionsLen = enumDisabled.length;
         expect(node.querySelectorAll('input:disabled')).toHaveLength(disabledOptionsLen);
         expect(node.querySelectorAll('input:enabled')).toHaveLength(
           // Two options, one disabled, plus the placeholder
@@ -2772,6 +2777,51 @@ describe('uiSchema', () => {
       });
     });
   });
+  describe('a uiSchema value that is not an object', () => {
+    // Only untyped JavaScript can put these here, so they stand in for a caller the types never saw. A uiSchema is
+    // user input, so every one of them has to render rather than throw
+    const schema: RJSFSchema = { type: 'object', properties: { foo: { type: 'string' } } };
+    const nonObjects: [string, unknown][] = [
+      ['a string', 'oops'],
+      ['a number', 42],
+      ['true', true],
+      ['an array', ['oops']],
+      ['null', null],
+    ];
+
+    it.each(nonObjects)('renders when the root ui:options is %s', (_label, value) => {
+      const uiSchema: GenericObjectType = { 'ui:options': value };
+
+      const { container } = render(<Form schema={schema} validator={validator} uiSchema={uiSchema} />);
+
+      expect(container.querySelector('input')).not.toBeNull();
+    });
+
+    it.each(nonObjects)("renders when a field's own uiSchema is %s", (_label, value) => {
+      const uiSchema: GenericObjectType = { foo: value };
+
+      const { container } = render(<Form schema={schema} validator={validator} uiSchema={uiSchema} />);
+
+      expect(container.querySelector('input')).not.toBeNull();
+    });
+
+    it.each(nonObjects)("renders when a field's own ui:options is %s", (_label, value) => {
+      const uiSchema: GenericObjectType = { foo: { 'ui:options': value } };
+
+      const { container } = render(<Form schema={schema} validator={validator} uiSchema={uiSchema} />);
+
+      expect(container.querySelector('input')).not.toBeNull();
+    });
+
+    it.each(nonObjects)('renders when ui:globalOptions is %s', (_label, value) => {
+      const uiSchema: GenericObjectType = { 'ui:globalOptions': value };
+
+      const { container } = render(<Form schema={schema} validator={validator} uiSchema={uiSchema} />);
+
+      expect(container.querySelector('input')).not.toBeNull();
+    });
+  });
+
   it('string field with autocapitalize', () => {
     const schema: RJSFSchema = {
       type: 'string',

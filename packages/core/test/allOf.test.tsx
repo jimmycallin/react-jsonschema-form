@@ -54,9 +54,10 @@ describe('allOf', () => {
         registry: { formContext },
         fieldPathId,
       } = props;
+      const id = formContext[fieldPathId.$id];
       return (
         <>
-          <code id={formContext[fieldPathId.$id]}>Ha</code>
+          <code id={typeof id === 'string' ? id : undefined}>Ha</code>
           <SchemaField {...props} />
         </>
       );

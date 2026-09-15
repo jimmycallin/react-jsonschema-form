@@ -15,6 +15,7 @@ import {
   ErrorSchemaBuilder,
   getDiscriminatorFieldFromSchema,
   ID_KEY,
+  isObject,
   ONE_OF_KEY,
   optionsList,
   PROPERTIES_KEY,
@@ -181,12 +182,17 @@ function WrappedRadioWidget(props: WidgetProps) {
   );
 }
 
+/** Returns the `oneOf` entries of `schema` as schema objects, dropping the boolean form a `oneOf` entry may take */
+function oneOfOptions(schema: RJSFSchema): RJSFSchema[] {
+  return (schema[ONE_OF_KEY] ?? []).filter((option): option is RJSFSchema => typeof option !== 'boolean');
+}
+
 describe('LayoutMultiSchemaField', () => {
-  function getProps(overrideProps: Partial<FieldProps> = {}): FieldProps {
+  function getProps(overrideProps: Partial<FieldProps> = {}): FieldProps & { options: RJSFSchema[] } {
     const {
       formData,
       fieldPathId = { [ID_KEY]: DEFAULT_ID, path: [DEFAULT_ID] },
-      options = SIMPLE_ONEOF[ONE_OF_KEY],
+      options = oneOfOptions(SIMPLE_ONEOF),
       schema = SIMPLE_ONEOF,
       uiSchema = {},
       disabled = false,
@@ -242,7 +248,7 @@ describe('LayoutMultiSchemaField', () => {
         },
       ],
     };
-    const props = getProps({ schema, options: schema[ONE_OF_KEY] });
+    const props = getProps({ schema, options: oneOfOptions(schema) });
     expect(() => render(<LayoutMultiSchemaField {...props} />)).toThrow(expectedError);
   });
   test('default render with SIMPLE_ONEOF schema', async () => {
@@ -353,18 +359,17 @@ describe('LayoutMultiSchemaField', () => {
     expect(props.onBlur).toHaveBeenCalledWith(DEFAULT_ID, oneOfData.name);
 
     // OnChange was called with the correct event
-    const retrievedOptions = props.options.map((opt: object) =>
-      props.registry.schemaUtils.retrieveSchema(opt, props.formData),
-    );
+    const retrievedOptions = props.options.map((opt) => props.registry.schemaUtils.retrieveSchema(opt, props.formData));
     const sanitizedFormData = props.registry.schemaUtils.sanitizeDataForNewSchema(
       retrievedOptions[0],
       retrievedOptions[1],
       props.formData,
     );
+    const defaultFormState = props.registry.schemaUtils.getDefaultFormState(retrievedOptions[0], sanitizedFormData);
     await waitFor(() => {
       expect(props.onChange).toHaveBeenCalledWith(
         {
-          ...props.registry.schemaUtils.getDefaultFormState(retrievedOptions[0], sanitizedFormData),
+          ...(isObject(defaultFormState) ? defaultFormState : {}),
           [selectorField]: 'first_option',
         },
         props.fieldPathId.path,
@@ -493,7 +498,7 @@ describe('LayoutMultiSchemaField', () => {
     const props = getProps({
       fieldPathId: { [ID_KEY]: 'testid', path: ['testid'] },
       disabled: true,
-      options: SIMPLE_ONEOF[ONE_OF_KEY],
+      options: oneOfOptions(SIMPLE_ONEOF),
       schema: SIMPLE_ONEOF,
       hideError: true,
       errorSchema: NOT_SHOWN_ERROR_SCHEMA,
@@ -524,6 +529,31 @@ describe('LayoutMultiSchemaField', () => {
     // Does not render the FakeFieldErrorTemplate
     const fakeFieldErrorTemplate = screen.queryByTestId(FIELD_ERROR_TEST_ID);
     expect(fakeFieldErrorTemplate).not.toBeInTheDocument();
+  });
+  test('a uiSchema FieldTemplate and FieldErrorTemplate override the registry ones', () => {
+    const overrideTemplateTestId = 'override-field-template';
+    const overrideErrorTestId = 'override-field-error-template';
+    const props = getProps({
+      errorSchema: NESTED_ERROR_SCHEMA,
+      uiSchema: {
+        'ui:FieldTemplate': ({ children, errors }: FieldTemplateProps) => (
+          <div data-testid={overrideTemplateTestId}>
+            {children}
+            {errors}
+          </div>
+        ),
+        'ui:FieldErrorTemplate': ({ errors }: FieldErrorProps) => (
+          <span data-testid={overrideErrorTestId}>{errors}</span>
+        ),
+      },
+    });
+
+    render(<LayoutMultiSchemaField {...props} />);
+
+    expect(screen.getByTestId(overrideTemplateTestId)).toBeInTheDocument();
+    expect(screen.getByTestId(overrideErrorTestId)).toBeInTheDocument();
+    expect(screen.queryByTestId(FIELD_TEMPLATE_TEST_ID)).not.toBeInTheDocument();
+    expect(screen.queryByTestId(FIELD_ERROR_TEST_ID)).not.toBeInTheDocument();
   });
   describe('computeEnumOptions', () => {
     test('Reads oneOfs from refs', () => {

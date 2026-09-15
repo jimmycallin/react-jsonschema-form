@@ -1,13 +1,13 @@
 import type { ChangeEvent, FocusEvent } from 'react';
 import { useCallback } from 'react';
-import type { FormContextType, RJSFSchema, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
+import type { FormContextType, RJSFSchema, WidgetProps } from '@rjsf/utils';
 import { ariaDescribedByIds } from '@rjsf/utils';
 
 /** The `TextareaWidget` is a widget for rendering input fields as textarea.
  *
  * @param props - The `WidgetProps` for this component
  */
-function TextareaWidget<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>({
+function TextareaWidget<T = unknown, S extends RJSFSchema = RJSFSchema, F extends FormContextType = FormContextType>({
   id,
   options,
   placeholder,

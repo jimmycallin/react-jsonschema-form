@@ -1,5 +1,5 @@
 import { Flex, Grid, TextInput } from '@mantine/core';
-import type { FormContextType, RJSFSchema, StrictRJSFSchema, WrapIfAdditionalTemplateProps } from '@rjsf/utils';
+import type { FormContextType, RJSFSchema, UiSchema, WrapIfAdditionalTemplateProps } from '@rjsf/utils';
 import { ADDITIONAL_PROPERTY_FLAG, UI_OPTIONS_KEY, buttonId, TranslatableString } from '@rjsf/utils';
 
 /** The `WrapIfAdditional` component is used by the `FieldTemplate` to rename, or remove properties that are
@@ -8,9 +8,9 @@ import { ADDITIONAL_PROPERTY_FLAG, UI_OPTIONS_KEY, buttonId, TranslatableString 
  * @param props - The `WrapIfAdditionalProps` for this component
  */
 export default function WrapIfAdditionalTemplate<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(props: WrapIfAdditionalTemplateProps<T, S, F>) {
   const {
     id,
@@ -44,10 +44,10 @@ export default function WrapIfAdditionalTemplate<
   }
 
   // The `block` prop is not part of the `IconButtonProps` defined in the template, so put it into the uiSchema instead
-  const uiOptions = uiSchema ? uiSchema[UI_OPTIONS_KEY] : {};
-  const buttonUiOptions = {
-    ...uiSchema,
-    [UI_OPTIONS_KEY]: { ...uiOptions, block: true },
+  const baseUiSchema: UiSchema<T, S, F> = uiSchema ?? {};
+  const buttonUiOptions: UiSchema<T, S, F> = {
+    ...baseUiSchema,
+    [UI_OPTIONS_KEY]: { ...baseUiSchema[UI_OPTIONS_KEY], block: true },
   };
 
   return (

@@ -1,20 +1,12 @@
 import type { ChangeEvent, FocusEvent } from 'react';
-import type { FormContextType, RJSFSchema, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
+import type { FormContextType, RJSFSchema, WidgetProps } from '@rjsf/utils';
 import { ariaDescribedByIds } from '@rjsf/utils';
 import { FormControl, InputGroup } from 'react-bootstrap';
 
-type CustomWidgetProps<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any> = WidgetProps<
-  T,
-  S,
-  F
-> & {
-  options: any;
-};
-
 export default function TextareaWidget<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >({
   id,
   htmlName,
@@ -28,7 +20,7 @@ export default function TextareaWidget<
   onFocus,
   onChange,
   options,
-}: CustomWidgetProps<T, S, F>) {
+}: WidgetProps<T, S, F>) {
   const handleChange = ({ target: { value: newValue } }: ChangeEvent<HTMLTextAreaElement>) =>
     onChange(newValue === '' ? options.emptyValue : newValue);
   const handleBlur = ({ target }: FocusEvent<HTMLTextAreaElement>) => onBlur(id, target?.value);

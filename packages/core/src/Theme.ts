@@ -1,11 +1,4 @@
-import type {
-  FormContextType,
-  GlobalFormOptions,
-  Registry,
-  RJSFSchema,
-  SchemaUtilsType,
-  StrictRJSFSchema,
-} from '@rjsf/utils';
+import type { FormContextType, GlobalFormOptions, Registry, RJSFSchema, SchemaUtilsType } from '@rjsf/utils';
 import {
   DEFAULT_ID_PREFIX,
   DEFAULT_ID_SEPARATOR,
@@ -21,9 +14,9 @@ import { generateWidgets } from './components/widgets/index.ts';
 
 /** The core theme: every field, widget and template `@rjsf/core` implements */
 export function generateTheme<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(): Pick<Registry<T, S, F>, 'fields' | 'widgets' | 'templates'> {
   return {
     fields: generateFields<T, S, F>(),
@@ -37,9 +30,11 @@ export function generateTheme<
  * @param props - The form props to extract the global form options from
  * @returns - The `GlobalFormOptions` from the props
  */
-function getGlobalFormOptions<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
-  props: FormProps<T, S, F>,
-): GlobalFormOptions {
+function getGlobalFormOptions<
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>(props: FormProps<T, S, F>): GlobalFormOptions {
   const {
     experimental_componentUpdateStrategy,
     idSeparator = DEFAULT_ID_SEPARATOR,
@@ -63,12 +58,12 @@ function getGlobalFormOptions<T = any, S extends StrictRJSFSchema = RJSFSchema, 
  * @param schemaUtils - The `SchemaUtilsType` implementation to put on the registry
  * @returns - The `Registry` described by the inputs
  */
-export function buildRegistry<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
-  props: FormProps<T, S, F>,
-  schema: S,
-  schemaUtils: SchemaUtilsType<T, S, F>,
-): Registry<T, S, F> {
-  const { translateString = englishStringTranslator, uiSchema = {} } = props;
+export function buildRegistry<
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>(props: FormProps<T, S, F>, schema: S, schemaUtils: SchemaUtilsType<T, S, F>): Registry<T, S, F> {
+  const { translateString = englishStringTranslator, uiSchema } = props;
   const { fields, templates, widgets } = generateTheme<T, S, F>();
   return {
     fields: { ...fields, ...props.fields },
@@ -86,8 +81,8 @@ export function buildRegistry<T = any, S extends StrictRJSFSchema = RJSFSchema, 
     formContext: props.formContext ?? ({} as F),
     schemaUtils,
     translateString,
-    globalUiOptions: uiSchema[UI_GLOBAL_OPTIONS_KEY],
+    globalUiOptions: uiSchema?.[UI_GLOBAL_OPTIONS_KEY],
     globalFormOptions: getGlobalFormOptions(props),
-    uiSchemaDefinitions: uiSchema[UI_DEFINITIONS_KEY] ?? {},
+    uiSchemaDefinitions: uiSchema?.[UI_DEFINITIONS_KEY] ?? {},
   };
 }

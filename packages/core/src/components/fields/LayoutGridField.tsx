@@ -6,7 +6,6 @@ import type {
   GenericObjectType,
   RJSFSchema,
   Registry,
-  StrictRJSFSchema,
   UiSchema,
 } from '@rjsf/utils';
 import {
@@ -54,7 +53,7 @@ export const Operators = {
 export type Operators = (typeof Operators)[keyof typeof Operators];
 
 /** Type used to represent an object that contains anything */
-type ConfigObject = Record<string, any>;
+type ConfigObject = Record<string, unknown>;
 
 export interface GridProps extends GenericObjectType {
   /** The optional operator to use when comparing a field's value with the expected value for `GridType.CONDITION`
@@ -75,9 +74,9 @@ export type GridSchemaType = Partial<Record<GridType, object>>;
 export type LayoutGridSchemaType = GridSchemaType | ConfigObject | string;
 
 export interface LayoutGridFieldProps<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 > extends FieldProps<T, S, F> {
   /** Optional string or object used to describe the current level of the `LayoutGridField`
    */
@@ -97,12 +96,16 @@ export const LAYOUT_GRID_UI_OPTION = 'layoutGrid';
 export const LAYOUT_GRID_OPTION = `ui:${LAYOUT_GRID_UI_OPTION}`;
 
 /** Type used to return options list and whether it has a discriminator */
-interface OneOfOptionsInfoType<S extends StrictRJSFSchema = RJSFSchema> {
+interface OneOfOptionsInfoType<S extends RJSFSchema = RJSFSchema> {
   options: S[];
   hasDiscriminator: boolean;
 }
 
-/** Type used to represent a React-based rendering component */
+/** Type used to represent a React-based rendering component. The props are deliberately `any`: a user can register any
+ * component here and it is rendered with whatever `uiProps` the grid schema carries, and React component props are
+ * contravariant, so a concrete props type (or `unknown`) would reject every real component.
+ */
+// oxlint-disable-next-line typescript/no-explicit-any -- see above
 type RenderComponent = ComponentType<any>;
 
 /** Type used to determine what are the UIComponent and props from the grid schema */
@@ -151,7 +154,11 @@ const LAYOUT_GRID_FIELD_TEST_IDS = getTestIds();
  * @param [schemaReadonly] - Optional flag indicating whether the schema indicates the field is readonly
  * @param [forceReadonly] - Optional flag indicating whether the Form itself is in readonly mode
  */
-export function computeFieldUiSchema<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
+export function computeFieldUiSchema<
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>(
   field: string,
   uiProps: ConfigObject,
   uiSchema?: UiSchema<T, S, F>,
@@ -159,9 +166,13 @@ export function computeFieldUiSchema<T = any, S extends StrictRJSFSchema = RJSFS
   forceReadonly?: boolean,
 ) {
   const globalUiOptions = uiSchema?.[UI_GLOBAL_OPTIONS_KEY] ?? {};
-  const localUiSchema = getByPath<UiSchema<T, S, F> | undefined>(uiSchema, toPath(field));
-  const localUiOptions = { ...(localUiSchema?.[UI_OPTIONS_KEY] ?? {}), ...uiProps, ...globalUiOptions };
-  const fieldUiSchema = { ...localUiSchema };
+  // This reads the caller's uiSchema before `resolveUiSchema()` has normalized it, so neither value is known to be an
+  // object yet; spreading a non-object would scatter its characters or digits as keys
+  const rawLocalUiSchema = getByPath<UiSchema<T, S, F> | undefined>(uiSchema, toPath(field));
+  const localUiSchema = isObject(rawLocalUiSchema) ? rawLocalUiSchema : undefined;
+  const rawLocalUiOptions = localUiSchema?.[UI_OPTIONS_KEY];
+  const localUiOptions = { ...(isObject(rawLocalUiOptions) ? rawLocalUiOptions : {}), ...uiProps, ...globalUiOptions };
+  const fieldUiSchema: UiSchema<T, S, F> = localUiSchema ? { ...localUiSchema } : {};
   if (Object.keys(localUiOptions).length > 0) {
     fieldUiSchema[UI_OPTIONS_KEY] = localUiOptions;
   }
@@ -231,17 +242,17 @@ export function conditionMatches(
  * @returns - An object containing the list of `LayoutGridSchemaType` `children` and any extra `gridProps`
  * @throws - A `TypeError` when the `children` is not an array
  */
-export function findChildrenAndProps<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
-  layoutGridSchema: GridSchemaType,
-  schemaKey: GridType,
-  registry: Registry<T, S, F>,
-) {
+export function findChildrenAndProps<
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>(layoutGridSchema: GridSchemaType, schemaKey: GridType, registry: Registry<T, S, F>) {
   let gridProps: GridProps = {};
-  let children = layoutGridSchema[schemaKey];
+  let children: unknown = layoutGridSchema[schemaKey];
   if (isPlainObject(children)) {
     const { children: elements, className: toMapClassNames, ...otherProps } = children as ConfigObject;
     children = elements;
-    if (toMapClassNames) {
+    if (typeof toMapClassNames === 'string' && toMapClassNames) {
       const classes = toMapClassNames.split(' ');
       const className = classes.map((ele: string) => lookupFromFormContext<T, S, F>(registry, ele, ele)).join(' ');
       gridProps = { ...otherProps, className };
@@ -268,7 +279,7 @@ export function findChildrenAndProps<T = any, S extends StrictRJSFSchema = RJSFS
  * @param potentialIndex - A string containing a potential index
  * @returns - An object containing the `rawSchema` and `fieldPathId` of an array item, otherwise an undefined `rawSchema`
  */
-export function computeArraySchemasIfPresent<S extends StrictRJSFSchema = RJSFSchema>(
+export function computeArraySchemasIfPresent<S extends RJSFSchema = RJSFSchema>(
   schema: S | undefined,
   fieldPathId: FieldPathId,
   potentialIndex: string,
@@ -312,9 +323,9 @@ export function computeArraySchemasIfPresent<S extends StrictRJSFSchema = RJSFSc
  *            info if a oneOf/anyOf
  */
 export function getSchemaDetailsForField<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(
   registry: Registry<T, S, F>,
   dottedPath: string,
@@ -391,7 +402,10 @@ export function getSchemaDetailsForField<
       const xxx = ONE_OF_KEY in schema ? ONE_OF_KEY : ANY_OF_KEY;
       // Set the options if we have a schema with a oneOf/anyOf
       const discriminator = getDiscriminatorFieldFromSchema(schema);
-      optionsInfo = { options: schema[xxx] as S[], hasDiscriminator: !!discriminator };
+      optionsInfo = {
+        options: schema[xxx] as S[],
+        hasDiscriminator: !!discriminator,
+      };
     }
   }
 
@@ -407,9 +421,9 @@ export function getSchemaDetailsForField<
  * @returns - Either a render function if available, or null if not
  */
 export function getCustomRenderComponent<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(render: string | RenderComponent, registry: Registry<T, S, F>): RenderComponent | null {
   let customRenderer: string | RenderComponent | undefined = render;
   if (typeof customRenderer === 'string') {
@@ -430,9 +444,9 @@ export function getCustomRenderComponent<
  * @returns - The UIComponentPropsType computed from the gridSchema
  */
 export function computeUIComponentPropsFromGridSchema<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(registry: Registry<T, S, F>, gridSchema?: string | ConfigObject): UIComponentPropsType {
   let name: string;
   let UIComponent: RenderComponent | null = null;
@@ -442,7 +456,7 @@ export function computeUIComponentPropsFromGridSchema<
     name = gridSchema ?? '';
   } else {
     const { name: innerName = '', render, ...innerProps } = gridSchema;
-    name = innerName;
+    name = typeof innerName === 'string' ? innerName : '';
     uiProps = innerProps;
     // Transform any `$lookup=` in the uiProps props with the appropriate value
     Object.entries(uiProps).forEach(([key, prop]) => {
@@ -454,7 +468,10 @@ export function computeUIComponentPropsFromGridSchema<
         }
       }
     });
-    UIComponent = getCustomRenderComponent<T, S, F>(render, registry);
+    // `render` is either the name of a component to look up in the registry or a component itself. It comes out of the
+    // arbitrarily-keyed grid schema as `unknown`; React reports an invalid element type at render time, so nothing is
+    // gained by half-validating it here.
+    UIComponent = render ? getCustomRenderComponent<T, S, F>(render as string | RenderComponent, registry) : null;
     if (!innerName && UIComponent) {
       rendered = <UIComponent {...innerProps} data-testid={LAYOUT_GRID_FIELD_TEST_IDS.uiComponent} />;
     }
@@ -466,9 +483,9 @@ export function computeUIComponentPropsFromGridSchema<
  * The props for the LayoutGridFieldChildren component.
  */
 type LayoutGridFieldChildrenProps<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 > = LayoutGridFieldProps<T, S, F> & {
   /** The list of strings or objects that represents the configurations for the children fields */
   childrenLayoutGridSchemaId: LayoutGridSchemaType[];
@@ -481,9 +498,11 @@ type LayoutGridFieldChildrenProps<
  *
  * @returns - The nested `LayoutGridField`s
  */
-function LayoutGridFieldChildren<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
-  props: LayoutGridFieldChildrenProps<T, S, F>,
-) {
+function LayoutGridFieldChildren<
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>(props: LayoutGridFieldChildrenProps<T, S, F>) {
   const { childrenLayoutGridSchemaId, ...layoutGridFieldProps } = props;
   const { registry, schema: rawSchema, formData } = layoutGridFieldProps;
   const { schemaUtils } = registry;
@@ -504,9 +523,9 @@ function LayoutGridFieldChildren<T = any, S extends StrictRJSFSchema = RJSFSchem
  * current node.
  */
 type LayoutFieldProps<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 > = LayoutGridFieldProps<T, S, F> & {
   /**  The string or object that represents the configuration for the grid field */
   layoutGridSchema: GridSchemaType;
@@ -519,9 +538,11 @@ type LayoutFieldProps<
  *
  * @returns - The rendered the children for the `GridType.CONDITION` or null
  */
-function LayoutGridCondition<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
-  props: LayoutFieldProps<T, S, F>,
-) {
+function LayoutGridCondition<
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>(props: LayoutFieldProps<T, S, F>) {
   const { layoutGridSchema, ...layoutGridFieldProps } = props;
   const { formData, registry } = layoutGridFieldProps;
   const { children, gridProps } = findChildrenAndProps<T, S, F>(layoutGridSchema, GridType.CONDITION, registry);
@@ -539,7 +560,7 @@ function LayoutGridCondition<T = any, S extends StrictRJSFSchema = RJSFSchema, F
  *
  * @returns - The rendered `GridTemplate` containing the children for the `GridType.COLUMN`
  */
-function LayoutGridCol<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
+function LayoutGridCol<T = unknown, S extends RJSFSchema = RJSFSchema, F extends FormContextType = FormContextType>(
   props: LayoutFieldProps<T, S, F>,
 ) {
   const { layoutGridSchema, ...layoutGridFieldProps } = props;
@@ -561,7 +582,7 @@ function LayoutGridCol<T = any, S extends StrictRJSFSchema = RJSFSchema, F exten
  *
  * @returns - The rendered `GridTemplate` containing the children for the `GridType.COLUMNS`
  */
-function LayoutGridColumns<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
+function LayoutGridColumns<T = unknown, S extends RJSFSchema = RJSFSchema, F extends FormContextType = FormContextType>(
   props: LayoutFieldProps<T, S, F>,
 ) {
   const { layoutGridSchema, ...layoutGridFieldProps } = props;
@@ -589,7 +610,7 @@ function LayoutGridColumns<T = any, S extends StrictRJSFSchema = RJSFSchema, F e
  *
  * @returns - The rendered `GridTemplate` containing the children for the `GridType.ROW`
  */
-function LayoutGridRow<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
+function LayoutGridRow<T = unknown, S extends RJSFSchema = RJSFSchema, F extends FormContextType = FormContextType>(
   props: LayoutFieldProps<T, S, F>,
 ) {
   const { layoutGridSchema, ...layoutGridFieldProps } = props;
@@ -610,9 +631,9 @@ function LayoutGridRow<T = any, S extends StrictRJSFSchema = RJSFSchema, F exten
  * The props for the LayoutGridFieldComponent.
  */
 type LayoutGridFieldComponentProps<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 > = LayoutGridFieldProps<T, S, F> & {
   /** The string or object that represents the configuration for the grid field */
   gridSchema?: ConfigObject | string;
@@ -633,9 +654,11 @@ type LayoutGridFieldComponentProps<
  * @returns - One of `LayoutMultiSchemaField`, `SchemaField`, a custom render component or null, depending
  */
 // oxlint-disable-next-line typescript/promise-function-async -- ReactNode's type includes Promise for async components; this component is always synchronous
-function LayoutGridFieldComponent<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
-  props: LayoutGridFieldComponentProps<T, S, F>,
-) {
+function LayoutGridFieldComponent<
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>(props: LayoutGridFieldComponentProps<T, S, F>) {
   const {
     gridSchema,
     schema: initialSchema,
@@ -951,9 +974,9 @@ function LayoutGridFieldComponent<T = any, S extends StrictRJSFSchema = RJSFSche
  * ```
  */
 export default function LayoutGridField<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(props: LayoutGridFieldProps<T, S, F>) {
   /** Render the `LayoutGridField`. If there isn't a `layoutGridSchema` prop defined, then try pulling it out of the
    * `uiSchema` via `ui:LayoutGridField`. If `layoutGridSchema` is an object, then check to see if any of the properties

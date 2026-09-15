@@ -1,6 +1,6 @@
 import type { FocusEvent } from 'react';
 import { useCallback } from 'react';
-import type { WidgetProps, StrictRJSFSchema, RJSFSchema, FormContextType } from '@rjsf/utils';
+import type { WidgetProps, RJSFSchema, FormContextType } from '@rjsf/utils';
 
 /** The `TextareaWidget` component renders a multi-line text input with DaisyUI styling
  *
@@ -13,9 +13,9 @@ import type { WidgetProps, StrictRJSFSchema, RJSFSchema, FormContextType } from 
  * @param props - The `WidgetProps` for this component
  */
 export default function TextareaWidget<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(props: WidgetProps<T, S, F>) {
   const { id, htmlName, value, required, disabled, readonly, onChange, onFocus, onBlur, options } = props;
 

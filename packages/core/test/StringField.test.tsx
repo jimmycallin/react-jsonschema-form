@@ -4,6 +4,7 @@ import { fireEvent, act } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 
 import StringField from '../src/components/fields/StringField.tsx';
+import MarkdownTemplate from '../src/markdown.tsx';
 import {
   createFormComponent,
   getSelectedOptionValue,
@@ -2400,6 +2401,20 @@ describe('StringField', () => {
       expectToHaveBeenCalledWithFormData(onChange, `data:text/plain;name=${uriEncodedValue};base64,x=`, 'root');
     });
 
+    it('should keep the current value when a change event carries an empty file list', () => {
+      const { node, onChange } = createFormComponent({
+        schema: {
+          type: 'string',
+          format: 'data-url',
+        },
+        formData: 'data:text/plain;name=file1.txt;base64,x=',
+      });
+
+      fireEvent.change(node.querySelector('[type=file]')!, { target: { files: [] } });
+
+      expect(onChange).not.toHaveBeenCalled();
+    });
+
     it('should render the file widget with accept attribute', () => {
       const { node } = createFormComponent({
         schema: {
@@ -2475,6 +2490,22 @@ describe('StringField', () => {
       expect(download).toBeInTheDocument();
       expect(download).toHaveAttribute('href', formData);
       expect(download).toHaveTextContent(TranslatableString.PreviewLabel);
+    });
+
+    it('should render the file info through the MarkdownTemplate when the field enables markdown', () => {
+      const { node } = createFormComponent({
+        schema: {
+          type: 'string',
+          format: 'data-url',
+        },
+        uiSchema: { 'ui:enableMarkdownInDescription': true },
+        formData: 'data:text/plain;name=file1.txt;base64,YQ==',
+        templates: { MarkdownTemplate },
+        translateString: (stringToTranslate, params) =>
+          stringToTranslate === TranslatableString.FilesInfo ? `**${params?.[0]}**` : stringToTranslate,
+      });
+
+      expect(node.querySelector('li strong')).toHaveTextContent('file1.txt');
     });
 
     it('should delete the file when delete button is pressed (single)', async () => {

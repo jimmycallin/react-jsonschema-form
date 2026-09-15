@@ -1,6 +1,6 @@
 import getPropertySchema from './getPropertySchema.ts';
 import { getByPath } from './pathUtils.ts';
-import type { RJSFSchema, StrictRJSFSchema } from './types.ts';
+import type { RJSFSchema } from './types.ts';
 
 /** Compares the value of `discriminatorField` within `formData` against the value of `discriminatorField` within schema for each `option`.
  * Returns index of first `option` whose discriminator matches formData. Returns `undefined` if there is no match.
@@ -12,7 +12,7 @@ import type { RJSFSchema, StrictRJSFSchema } from './types.ts';
  *          determine which option is selected
  * @returns - The index of the matched option or undefined if there is no match
  */
-export default function getOptionMatchingSimpleDiscriminator<T = any, S extends StrictRJSFSchema = RJSFSchema>(
+export default function getOptionMatchingSimpleDiscriminator<T = unknown, S extends RJSFSchema = RJSFSchema>(
   formData: T | undefined,
   options: S[],
   discriminatorField?: string,

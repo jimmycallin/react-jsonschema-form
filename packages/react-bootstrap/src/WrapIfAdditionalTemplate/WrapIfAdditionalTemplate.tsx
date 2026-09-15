@@ -1,11 +1,11 @@
-import type { FormContextType, RJSFSchema, StrictRJSFSchema, WrapIfAdditionalTemplateProps } from '@rjsf/utils';
+import type { FormContextType, RJSFSchema, WrapIfAdditionalTemplateProps } from '@rjsf/utils';
 import { ADDITIONAL_PROPERTY_FLAG, buttonId, TranslatableString } from '@rjsf/utils';
 import { Col, Form, Row } from 'react-bootstrap';
 
 export default function WrapIfAdditionalTemplate<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >({
   classNames,
   style,

@@ -11,8 +11,8 @@ import type {
   Registry,
   RJSFMarkedSchema,
   RJSFSchema,
-  StrictRJSFSchema,
   UIOptionsType,
+  UiSchema,
 } from '@rjsf/utils';
 import {
   ADDITIONAL_PROPERTY_FLAG,
@@ -55,7 +55,7 @@ const COMPONENT_TYPES: Record<string, string> = {
  * @param registry - The registry from which fields and templates are obtained
  * @returns - The `Field` component that is used to render the actual field data
  */
-function getFieldComponent<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
+function getFieldComponent<T = unknown, S extends RJSFSchema = RJSFSchema, F extends FormContextType = FormContextType>(
   schema: S,
   uiOptions: UIOptionsType<T, S, F>,
   registry: Registry<T, S, F>,
@@ -92,13 +92,18 @@ function getFieldComponent<T = any, S extends StrictRJSFSchema = RJSFSchema, F e
   return componentName in fields ? fields[componentName] : fields.FallbackField;
 }
 
+/** Does nothing; used as the default for the optional `additionalProperties`-only callbacks */
+function doNothing() {
+  // intentionally empty
+}
+
 /** The `SchemaFieldRender` component is the work-horse of react-jsonschema-form, determining what kind of real field to
  * render based on the `schema`, `uiSchema` and all the other props. It also deals with rendering the `anyOf` and
  * `oneOf` fields.
  *
  * @param props - The `FieldProps` for this component
  */
-function SchemaFieldRender<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
+function SchemaFieldRender<T = unknown, S extends RJSFSchema = RJSFSchema, F extends FormContextType = FormContextType>(
   props: FieldProps<T, S, F>,
 ) {
   const {
@@ -109,9 +114,11 @@ function SchemaFieldRender<T = any, S extends StrictRJSFSchema = RJSFSchema, F e
     errorSchema,
     name,
     onChange,
-    onKeyRename,
-    onKeyRenameBlur,
-    onRemoveProperty,
+    // These three are only provided for `additionalProperties` fields; for every other field the key cannot be
+    // renamed nor the property removed, so a no-op is the correct behavior.
+    onKeyRename = doNothing,
+    onKeyRenameBlur = doNothing,
+    onRemoveProperty = doNothing,
     required = false,
     registry,
     wasPropertyKeyModified = false,
@@ -174,7 +181,10 @@ function SchemaFieldRender<T = any, S extends StrictRJSFSchema = RJSFSchema, F e
   let XxxOfOptions: S[] | undefined;
   // When rendering the `XxxOfField` we'll need to change the fieldPathId of the main component, remembering the
   // fieldPathId of the children for the ObjectField and ArrayField
-  let fieldPathIdProps: { fieldPathId: FieldPathId; childFieldPathId?: FieldPathId } = { fieldPathId };
+  let fieldPathIdProps: {
+    fieldPathId: FieldPathId;
+    childFieldPathId?: FieldPathId;
+  } = { fieldPathId };
   if ((ANY_OF_KEY in schema || ONE_OF_KEY in schema) && !isReplacingAnyOrOneOf && !schemaUtils.isSelect(schema)) {
     if (schema[ANY_OF_KEY]) {
       XxxOfField = _AnyOfField;
@@ -200,20 +210,25 @@ function SchemaFieldRender<T = any, S extends StrictRJSFSchema = RJSFSchema, F e
   }
 
   const { __errors, ...fieldErrorSchema } = errorSchema || {};
-  // See #439: uiSchema: Don't pass consumed class names or style to child components
-  const {
-    'ui:classNames': consumedUiClassNames,
-    classNames: consumedClassNames,
-    'ui:style': consumedUiStyle,
-    ...fieldUiSchema
-  } = uiSchema;
-  if (UI_OPTIONS_KEY in fieldUiSchema) {
-    const {
-      classNames: consumedOptionClassNames,
-      style: consumedOptionStyle,
-      ...fieldUiOptions
-    } = fieldUiSchema[UI_OPTIONS_KEY]!;
-    fieldUiSchema[UI_OPTIONS_KEY] = fieldUiOptions;
+  // See #439: uiSchema: Don't pass consumed class names or style to child components. Most uiSchemas carry none of
+  // them, so the copy is only made when there is something to strip, leaving `uiSchema` itself untouched otherwise
+  // `resolveUiSchema()` guarantees `uiSchema` and its `ui:options` are objects, so `in` is safe on both
+  const consumedUiOptions = uiSchema[UI_OPTIONS_KEY];
+  const consumesStyling =
+    'ui:classNames' in uiSchema ||
+    'classNames' in uiSchema ||
+    'ui:style' in uiSchema ||
+    (consumedUiOptions !== undefined && ('classNames' in consumedUiOptions || 'style' in consumedUiOptions));
+  let fieldUiSchema: UiSchema<T, S, F> = uiSchema;
+  if (consumesStyling) {
+    fieldUiSchema = { ...uiSchema };
+    delete fieldUiSchema['ui:classNames'];
+    delete fieldUiSchema.classNames;
+    delete fieldUiSchema['ui:style'];
+    if (consumedUiOptions) {
+      const { classNames: consumedOptionClassNames, style: consumedOptionStyle, ...fieldUiOptions } = consumedUiOptions;
+      fieldUiSchema[UI_OPTIONS_KEY] = fieldUiOptions;
+    }
   }
 
   const field = (

@@ -1,8 +1,8 @@
-import type { FormContextType, RJSFSchema, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
+import type { FormContextType, RJSFSchema, WidgetProps } from '@rjsf/utils';
 
 import DateTimeInput from './DateTimeInput.tsx';
 
-/** The `DateWidget` component uses the `DateTimeInput` changing the valueFormat to show `datetime`. For
+/** The `DateTimeWidget` component uses the `DateTimeInput` changing the valueFormat to show `datetime`. For
  * `format: "iso-date-time"`, the default `valueFormat` uses a `T` separator to match the naive local string
  * produced by the `iso-date-time` `DateTimeWidget`s in `@rjsf/core`, `@rjsf/antd`, and `@rjsf/daisyui`, so the
  * same schema behaves consistently across themes. `format: "date-time"`/`"datetime"` bypass `valueFormat` for
@@ -12,20 +12,12 @@ import DateTimeInput from './DateTimeInput.tsx';
  * @param props - The `WidgetProps` for this component
  */
 export default function DateTimeWidget<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(props: WidgetProps<T, S, F>) {
   const { schema } = props;
   const defaultValueFormat = schema.format === 'iso-date-time' ? 'YYYY-MM-DDTHH:mm:ss' : 'YYYY-MM-DD HH:mm:ss';
-  const { valueFormat = defaultValueFormat, displayFormat, ...otherOptions } = props.options;
 
-  return (
-    <DateTimeInput
-      {...props}
-      options={otherOptions}
-      valueFormat={valueFormat}
-      displayFormat={displayFormat || valueFormat}
-    />
-  );
+  return <DateTimeInput {...props} defaultValueFormat={defaultValueFormat} />;
 }

@@ -1,11 +1,11 @@
 import { Box, Grid, GridItem } from '@chakra-ui/react';
-import type { ArrayFieldTemplateProps, StrictRJSFSchema, RJSFSchema, FormContextType } from '@rjsf/utils';
+import type { ArrayFieldTemplateProps, RJSFSchema, FormContextType } from '@rjsf/utils';
 import { getTemplate, getUiOptions, buttonId } from '@rjsf/utils';
 
 export default function ArrayFieldTemplate<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(props: ArrayFieldTemplateProps<T, S, F>) {
   const {
     canAdd,

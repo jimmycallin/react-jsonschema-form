@@ -1,11 +1,12 @@
 import type { FocusEvent } from 'react';
 import { useCallback } from 'react';
-import type { FormContextType, RJSFSchema, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
+import type { FormContextType, RJSFSchema, WidgetProps } from '@rjsf/utils';
 import {
   enumOptionSelectedValue,
   enumOptionValueDecoder,
   enumOptionValueEncoder,
   getOptionValueFormat,
+  isObject,
   logUnsupportedDefaultForEnum,
   SelectedOptionDescription,
 } from '@rjsf/utils';
@@ -23,9 +24,9 @@ import {
  * @param props - The `WidgetProps` for this component
  */
 export default function SelectWidget<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >({
   schema,
   id,
@@ -46,15 +47,15 @@ export default function SelectWidget<
   const optionValueFormat = getOptionValueFormat(options);
   const isMultiple = typeof multiple === 'undefined' ? false : multiple;
 
-  const getDisplayValue = (val: any) => {
+  const getDisplayValue = (val: unknown) => {
     if (!val) {
       return '';
     }
-    if (typeof val === 'object') {
+    if (isObject(val)) {
       if (val.name) {
-        return val.name;
+        return String(val.name);
       }
-      return val.label || JSON.stringify(val);
+      return val.label ? String(val.label) : JSON.stringify(val);
     }
     return String(val);
   };
@@ -115,11 +116,13 @@ export default function SelectWidget<
     enumOptionSelectedValue<S>(value, enumOptions, isMultiple, optionValueFormat, isMultiple ? [] : ''),
   ]
     .flat()
-    .filter((v) => v !== '');
+    .filter((v): v is string => v !== undefined && v !== '');
 
   const optionsList =
     enumOptions ||
-    (Array.isArray(schema.examples) ? schema.examples.map((example) => ({ value: example, label: example })) : []);
+    (Array.isArray(schema.examples)
+      ? schema.examples.map((example) => ({ value: example, label: String(example) }))
+      : []);
   logUnsupportedDefaultForEnum<S>(id, schema, enumOptions, isMultiple);
 
   return (

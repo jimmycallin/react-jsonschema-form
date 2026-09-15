@@ -2,14 +2,7 @@ import findSchemaDefinition from '../findSchemaDefinition.ts';
 import getDiscriminatorFieldFromSchema from '../getDiscriminatorFieldFromSchema.ts';
 import getSchemaType from '../getSchemaType.ts';
 import isObject from '../isObject.ts';
-import type {
-  CustomMergeAllOf,
-  FormContextType,
-  GenericObjectType,
-  RJSFSchema,
-  StrictRJSFSchema,
-  ValidatorType,
-} from '../types.ts';
+import type { CustomMergeAllOf, FormContextType, GenericObjectType, RJSFSchema, ValidatorType } from '../types.ts';
 import getClosestMatchingOption from './getClosestMatchingOption.ts';
 import isSelect from './isSelect.ts';
 import { relaxOptionsForScoring, resolveAllReferences } from './retrieveSchema.ts';
@@ -41,7 +34,7 @@ export function isValueEmpty(value: unknown): boolean {
  * @param [customMergeAllOf] - Optional custom merge function; see `Form` documentation
  * @returns - The merged schema with `allOf` resolved into a single schema object
  */
-function doMergeAllOf<S extends StrictRJSFSchema = RJSFSchema>(schema: S, customMergeAllOf?: CustomMergeAllOf<S>): S {
+function doMergeAllOf<S extends RJSFSchema = RJSFSchema>(schema: S, customMergeAllOf?: CustomMergeAllOf<S>): S {
   return customMergeAllOf ? customMergeAllOf(schema) : (shallowAllOfMerge(schema) as S);
 }
 
@@ -59,9 +52,9 @@ function doMergeAllOf<S extends StrictRJSFSchema = RJSFSchema>(schema: S, custom
  * @returns - The `formData` after omitting extra data, or `undefined` when `formData` is undefined
  */
 export default function omitExtraData<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(
   validator: ValidatorType<T, S, F>,
   schema: S,
@@ -69,16 +62,6 @@ export default function omitExtraData<
   formData?: T,
   customMergeAllOf?: CustomMergeAllOf<S>,
 ): T | undefined {
-  /** Type predicate that narrows `value` to `GenericObjectType` — true when `value` is a plain,
-   * non-array object (i.e. a JSON object). Used to distinguish JSON objects from arrays and primitives.
-   *
-   * @param value - The value to check
-   * @returns - True if `value` is a plain non-array object
-   */
-  function isObjectValue(value: unknown): value is GenericObjectType {
-    return isObject(value);
-  }
-
   /** Type predicate that narrows a `S | boolean` schema definition to `S` — true when `schemaDef` is
    * a schema object rather than a JSON Schema boolean shorthand (`true` meaning allow-all, `false`
    * meaning deny-all).
@@ -340,7 +323,7 @@ export default function omitExtraData<
    */
   function handleDependencies(childSchema: S, source: unknown, target: unknown): unknown {
     const { dependencies } = childSchema;
-    if (dependencies === undefined || !isObjectValue(source)) {
+    if (dependencies === undefined || !isObject(source)) {
       return target;
     }
     let result = target;
@@ -400,10 +383,10 @@ export default function omitExtraData<
 
     const type = getSchemaType<S>(localSchema);
     if (type === 'object') {
-      if (!isObjectValue(source)) {
+      if (!isObject(source)) {
         return undefined;
       }
-      filtered = handleObject(localSchema, source, isObjectValue(filtered) ? filtered : {});
+      filtered = handleObject(localSchema, source, isObject(filtered) ? filtered : {});
     } else if (type === 'array') {
       if (!Array.isArray(source)) {
         return undefined;
@@ -418,7 +401,7 @@ export default function omitExtraData<
     // pruned. Keys added only by winning conditional branches are still removed here so the result
     // honours additionalProperties:false.
     const afterConditions = handleConditions(localSchema, source, filtered);
-    if (localSchema.additionalProperties === false && isObjectValue(afterConditions)) {
+    if (localSchema.additionalProperties === false && isObject(afterConditions)) {
       const knownKeys = new Set(Object.keys(localSchema.properties ?? {}));
       const patterns = localSchema.patternProperties
         ? Object.keys(localSchema.patternProperties).map((p) => new RegExp(p))

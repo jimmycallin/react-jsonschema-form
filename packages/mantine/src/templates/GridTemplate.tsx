@@ -1,3 +1,4 @@
+import type { MantineSpacing, StyleProp } from '@mantine/core';
 import { Container, Grid } from '@mantine/core';
 import type { GridTemplateProps } from '@rjsf/utils';
 
@@ -8,6 +9,9 @@ import type { GridTemplateProps } from '@rjsf/utils';
  */
 export default function GridTemplate(props: GridTemplateProps) {
   const { children, column, fluid = true, gutter, gap = gutter, ...rest } = props;
+  // `gutter`/`gap` come out of the arbitrarily-keyed `ui:row`/`ui:col` options, so they arrive as `unknown`; Mantine
+  // validates the spacing value itself, so whatever the caller set is passed straight through
+  const gridGap = gap as StyleProp<MantineSpacing> | undefined;
 
   if (column) {
     return <Grid.Col {...rest}>{children}</Grid.Col>;
@@ -17,7 +21,7 @@ export default function GridTemplate(props: GridTemplateProps) {
   if (fluid) {
     return (
       <Container fluid p='4' mx={0} w='100%'>
-        <Grid gap={gap} {...rest}>
+        <Grid gap={gridGap} {...rest}>
           {children}
         </Grid>
       </Container>
@@ -25,7 +29,7 @@ export default function GridTemplate(props: GridTemplateProps) {
   }
   // Grid without container
   return (
-    <Grid grow gap={gap} {...rest}>
+    <Grid grow gap={gridGap} {...rest}>
       {children}
     </Grid>
   );

@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { DateInput } from '@mantine/dates';
 import type { DateStringValue } from '@mantine/dates';
-import type { FormContextType, RJSFSchema, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
+import type { FormContextType, RJSFSchema, WidgetProps } from '@rjsf/utils';
 import { ariaDescribedByIds, getDateTimeLocalValue, labelValue } from '@rjsf/utils';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat.js';
@@ -17,7 +17,7 @@ const dateParser = (input: string | undefined, format: string) => {
   return d.isValid() ? d.toDate() : null;
 };
 
-const dateFormat = (date?: Date, format?: string) => {
+const dateFormat = (date?: Date | string | null, format?: string) => {
   if (!date || !dayjs(date).isValid()) {
     return '';
   }
@@ -40,6 +40,12 @@ const offsetValueFormatter = (value?: DateStringValue | Date | null) => {
   return value && d.isValid() ? d.toISOString() : '';
 };
 
+/** The extra prop the Date-Time widgets pass down to `DateTimeInput`, which is not part of `WidgetProps` */
+interface DateTimeInputFormats {
+  /** The dayjs format to use when the `ui:options` do not carry a `valueFormat` */
+  defaultValueFormat: string;
+}
+
 /** The `DateTimeInput` is a base component that used by other Date-Time widget components. When `schema.format` is
  * `date-time` (or `datetime`), the value is converted to/from a UTC ISO string instead of the naive `valueFormat`
  * string, since that format requires a timezone offset (unlike `date` and `iso-date-time`, whose timezone is
@@ -49,10 +55,10 @@ const offsetValueFormatter = (value?: DateStringValue | Date | null) => {
  * @param props - The `WidgetProps` for this component
  */
 export default function DateTimeInput<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
->(props: WidgetProps<T, S, F>) {
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>(props: WidgetProps<T, S, F> & DateTimeInputFormats) {
   const {
     id,
     name,
@@ -65,21 +71,23 @@ export default function DateTimeInput<
     label,
     hideLabel,
     rawErrors,
-    options,
     onChange,
     onBlur,
     onFocus,
-    valueFormat,
-    displayFormat,
+    defaultValueFormat,
     schema,
   } = props;
+  // The formats come out of the arbitrarily-keyed `ui:options`, so they arrive as `unknown`
+  const { valueFormat: rawValueFormat, displayFormat: rawDisplayFormat, ...options } = props.options;
+  const valueFormat = typeof rawValueFormat === 'string' ? rawValueFormat : defaultValueFormat;
+  const displayFormat = typeof rawDisplayFormat === 'string' ? rawDisplayFormat : valueFormat;
 
   const { isIsoDateTime, localValue } = getDateTimeLocalValue(schema, value);
   const requiresOffset = !isIsoDateTime && (schema.format === 'date-time' || schema.format === 'datetime');
 
   const handleChange = useCallback(
-    (nextValue: any) => {
-      onChange(requiresOffset ? offsetValueFormatter(nextValue) : dateFormat(nextValue, valueFormat as string));
+    (nextValue: DateStringValue | Date | null) => {
+      onChange(requiresOffset ? offsetValueFormatter(nextValue) : dateFormat(nextValue, valueFormat));
     },
     [onChange, valueFormat, requiresOffset],
   );
@@ -98,14 +106,14 @@ export default function DateTimeInput<
 
   const parsedValue = requiresOffset
     ? offsetValueParser(value as string | undefined)
-    : dateParser(localValue, valueFormat as string);
+    : dateParser(localValue, valueFormat);
 
   return (
     <DateInput
       id={id}
       name={name}
       value={parsedValue}
-      dateParser={(v) => dateParser(v, displayFormat as string)}
+      dateParser={(v) => dateParser(v, displayFormat)}
       placeholder={placeholder || undefined}
       required={required}
       disabled={disabled || readonly}

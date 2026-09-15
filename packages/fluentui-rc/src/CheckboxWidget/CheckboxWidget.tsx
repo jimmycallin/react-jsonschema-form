@@ -1,6 +1,6 @@
 import type { ChangeEvent, FocusEvent } from 'react';
 import { Checkbox } from '@fluentui/react-components';
-import type { FormContextType, RJSFSchema, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
+import type { FormContextType, RJSFSchema, WidgetProps } from '@rjsf/utils';
 import { ariaDescribedByIds, descriptionId, getTemplate, schemaRequiresTrueValue } from '@rjsf/utils';
 
 /** The `CheckBoxWidget` is a widget for rendering boolean properties.
@@ -9,9 +9,9 @@ import { ariaDescribedByIds, descriptionId, getTemplate, schemaRequiresTrueValue
  * @param props - The `WidgetProps` for this component
  */
 export default function CheckboxWidget<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(props: WidgetProps<T, S, F>) {
   const {
     schema,

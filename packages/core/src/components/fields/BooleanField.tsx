@@ -1,12 +1,5 @@
 import { useCallback } from 'react';
-import type {
-  FieldProps,
-  FormContextType,
-  EnumOptionsType,
-  ErrorSchema,
-  RJSFSchema,
-  StrictRJSFSchema,
-} from '@rjsf/utils';
+import type { FieldProps, FormContextType, EnumOptionsType, ErrorSchema, RJSFSchema } from '@rjsf/utils';
 import { getWidget, getUiOptions, isObject, optionsList, TranslatableString } from '@rjsf/utils';
 
 /** The `BooleanField` component is used to render a field in the schema is boolean. It constructs `enumOptions` for the
@@ -14,7 +7,7 @@ import { getWidget, getUiOptions, isObject, optionsList, TranslatableString } fr
  *
  * @param props - The `FieldProps` for this template
  */
-function BooleanField<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
+function BooleanField<T = unknown, S extends RJSFSchema = RJSFSchema, F extends FormContextType = FormContextType>(
   props: FieldProps<T, S, F>,
 ) {
   const {
@@ -43,6 +36,7 @@ function BooleanField<T = any, S extends StrictRJSFSchema = RJSFSchema, F extend
     // Unlike the other fields, don't use `getDisplayLabel()` since it always returns false for the boolean type
     label: displayLabel = true,
     enumNames,
+    placeholder,
     ...options
   } = getUiOptions<T, S, F>(uiSchema, globalUiOptions);
   const Widget = getWidget(schema, widget, widgets);
@@ -63,13 +57,13 @@ function BooleanField<T = any, S extends StrictRJSFSchema = RJSFSchema, F extend
             }
             return undefined;
           })
-          .filter((o: any) => o) as S[], // cast away the error that typescript can't grok is fixed
+          .filter((o) => o !== undefined),
       } as unknown as S,
       uiSchema,
     );
   } else {
     const enums = schema.enum ?? [true, false];
-    if (!enumNames && enums.length === 2 && enums.every((v: any) => typeof v === 'boolean')) {
+    if (!enumNames && enums.length === 2 && enums.every((v) => typeof v === 'boolean')) {
       enumOptions = [
         {
           value: enums[0],
@@ -109,6 +103,7 @@ function BooleanField<T = any, S extends StrictRJSFSchema = RJSFSchema, F extend
       hideError={hideError}
       registry={registry}
       autofocus={autofocus}
+      placeholder={placeholder}
       rawErrors={rawErrors}
       htmlName={fieldPathId.name}
     />

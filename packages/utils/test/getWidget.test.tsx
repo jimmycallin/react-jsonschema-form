@@ -35,9 +35,11 @@ const schemaStr = JSON.stringify(schema);
 
 const TestRefWidget: Widget = forwardRef<HTMLSpanElement, Partial<WidgetProps>>(
   (props: Partial<WidgetProps>, ref: ForwardedRef<HTMLSpanElement>) => {
-    const { id = 'test-id', ...options } = props.options ?? {};
+    const { id, ...options } = props.options ?? {};
+    // `options` is arbitrarily keyed, so its values arrive as `unknown`
+    const spanId = typeof id === 'string' ? id : 'test-id';
     return (
-      <span id={id} {...options} ref={ref}>
+      <span id={spanId} {...options} ref={ref}>
         test
       </span>
     );
@@ -50,9 +52,10 @@ function TestWidget(props: WidgetProps) {
 }
 
 function TestWidgetWithDefaultOptions(props: WidgetProps) {
-  const { color = 'yellow', ...options } = props.options;
+  const { color, ...options } = props.options;
+  const divColor = typeof color === 'string' ? color : 'yellow';
   return (
-    <div color={color} {...options}>
+    <div color={divColor} {...options}>
       test
     </div>
   );

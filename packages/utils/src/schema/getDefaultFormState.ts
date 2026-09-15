@@ -1,5 +1,3 @@
-import type { JSONSchema7Object } from 'json-schema';
-
 import {
   ALL_OF_KEY,
   ANY_OF_KEY,
@@ -30,7 +28,6 @@ import type {
   FormContextType,
   GenericObjectType,
   RJSFSchema,
-  StrictRJSFSchema,
   ValidatorType,
 } from '../types.ts';
 import getClosestMatchingOption from './getClosestMatchingOption.ts';
@@ -64,7 +61,7 @@ export type AdditionalItemsHandling = (typeof AdditionalItemsHandling)[keyof typ
  * @param [idx=-1] - Index, if non-negative, will be used to return the idx-th element in a `schema.items` array
  * @returns - The best fit schema object from the `schema` given the `additionalItems` and `idx` modifiers
  */
-export function getInnerSchemaForArrayItem<S extends StrictRJSFSchema = RJSFSchema>(
+export function getInnerSchemaForArrayItem<S extends RJSFSchema = RJSFSchema>(
   schema: S,
   additionalItems: AdditionalItemsHandling = AdditionalItemsHandling.Ignore,
   idx = -1,
@@ -109,7 +106,7 @@ function hasContent(value: unknown): boolean {
  * @param computedDefault - The computed default for the schema
  * @returns - Flag indicating whether a null should be returned instead of the computedDefault
  */
-export function computeDefaultBasedOnSchemaTypeAndDefaults<T = any, S extends StrictRJSFSchema = RJSFSchema>(
+export function computeDefaultBasedOnSchemaTypeAndDefaults<T = unknown, S extends RJSFSchema = RJSFSchema>(
   schema: S,
   computedDefault: T,
 ) {
@@ -140,7 +137,7 @@ export function computeDefaultBasedOnSchemaTypeAndDefaults<T = any, S extends St
  * @param isConst - Optional flag, if true, indicates that the schema has a const property defined, thus we should always return the computedDefault since it's coming from the const.
  * @param isNullType - The type of the schema is null
  */
-function maybeAddDefaultToObject<T = any>(
+function maybeAddDefaultToObject<T = unknown>(
   acc: GenericObjectType,
   key: string,
   computedDefault: T | T[] | undefined,
@@ -203,7 +200,7 @@ function maybeAddDefaultToObject<T = any>(
   }
 }
 
-interface ComputeDefaultsProps<T = any, S extends StrictRJSFSchema = RJSFSchema> {
+interface ComputeDefaultsProps<T = unknown, S extends RJSFSchema = RJSFSchema> {
   /** Any defaults provided by the parent field in the schema */
   parentDefaults?: T;
   /** The options root schema, used to primarily to look up `$ref`s */
@@ -241,7 +238,11 @@ interface ComputeDefaultsProps<T = any, S extends StrictRJSFSchema = RJSFSchema>
  * @param computeDefaultsProps - Optional props for this function
  * @returns - The resulting `formData` with all the defaults provided
  */
-export function computeDefaults<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
+export function computeDefaults<
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>(
   validator: ValidatorType<T, S, F>,
   rawSchema: S,
   computeDefaultsProps: ComputeDefaultsProps<T, S> = {},
@@ -344,7 +345,7 @@ export function computeDefaults<T = any, S extends StrictRJSFSchema = RJSFSchema
     // If the schema contains fixed items and parentDefaults does not have precedence
     // Then construct defaults from defaults of array items.
     defaults = (schema.items! as S[]).map((itemSchema: S, idx: number) =>
-      computeDefaults<T, S>(validator, itemSchema, {
+      computeDefaults<T, S, F>(validator, itemSchema, {
         rootSchema,
         includeUndefinedValues,
         _recurseList,
@@ -363,7 +364,11 @@ export function computeDefaults<T = any, S extends StrictRJSFSchema = RJSFSchema
     }
     const discriminator = getDiscriminatorFieldFromSchema<S>(schema);
     const { type = 'null' } = remaining;
-    if (!Array.isArray(type) && PRIMITIVE_TYPES.includes(type) && dfsb_to_compute?.constAsDefaults === 'skipOneOf') {
+    if (
+      typeof type === 'string' &&
+      PRIMITIVE_TYPES.includes(type) &&
+      dfsb_to_compute?.constAsDefaults === 'skipOneOf'
+    ) {
       // If we are in a oneOf of a primitive type, then we want to pass constAsDefaults as 'never' for the recursion
       dfsb_to_compute = {
         ...dfsb_to_compute,
@@ -465,9 +470,9 @@ export function computeDefaults<T = any, S extends StrictRJSFSchema = RJSFSchema
  * @returns - valid formData that matches schema
  */
 export function ensureFormDataMatchingSchema<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(
   validator: ValidatorType<T, S, F>,
   schema: S,
@@ -481,7 +486,7 @@ export function ensureFormDataMatchingSchema<
     ? retrieveSchema<T, S, F>(validator, schema, rootSchema, formData, customMergeAllOf)
     : schema;
   const isSelectField =
-    !isConstant<S>(schemaToMatch) && isSelect<T, S, F>(validator, schemaToMatch, rootSchema, customMergeAllOf);
+    !isConstant(schemaToMatch) && isSelect<T, S, F>(validator, schemaToMatch, rootSchema, customMergeAllOf);
   let validFormData: T | T[] | undefined = formData;
   if (isSelectField) {
     const getOptionsList = optionsList<T, S, F>(schemaToMatch);
@@ -502,7 +507,7 @@ export function ensureFormDataMatchingSchema<
             validator,
             propertySchema,
             rootSchema,
-            acc[key],
+            acc[key] as T | undefined,
             defaultFormStateBehavior,
             customMergeAllOf,
           );
@@ -524,7 +529,11 @@ export function ensureFormDataMatchingSchema<
  * @param defaults - Optional props for this function
  * @returns - The default value based on the schema type if they are defined for object or array schemas.
  */
-export function getObjectDefaults<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
+export function getObjectDefaults<
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>(
   validator: ValidatorType<T, S, F>,
   rawSchema: S,
   {
@@ -559,7 +568,7 @@ export function getObjectDefaults<T = any, S extends StrictRJSFSchema = RJSFSche
         const propertySchema = getPropertySchema<S>(retrievedSchema, key);
         // Check if the parent schema has a const property defined AND we are supporting const as defaults, then we
         // should always return the computedDefault since it's coming from the const.
-        const hasParentConst = isObject(parentConst) && (parentConst as JSONSchema7Object)[key] !== undefined;
+        const hasParentConst = isObject(parentConst) && parentConst[key] !== undefined;
         const hasConst =
           ((isObject(propertySchema) && CONST_KEY in propertySchema) || hasParentConst) &&
           defaultFormStateBehavior?.constAsDefaults !== 'never' &&
@@ -653,7 +662,11 @@ export function getObjectDefaults<T = any, S extends StrictRJSFSchema = RJSFSche
  * @param initialDefaults - Optional props for this function
  * @returns - The default value based on the schema type if they are defined for object or array schemas.
  */
-export function getArrayDefaults<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
+export function getArrayDefaults<
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>(
   validator: ValidatorType<T, S, F>,
   rawSchema: S,
   {
@@ -758,11 +771,12 @@ export function getArrayDefaults<T = any, S extends StrictRJSFSchema = RJSFSchem
   } else {
     const defaultEntries: T[] = defaults || [];
     const fillerSchema: S = getInnerSchemaForArrayItem<S>(schema, AdditionalItemsHandling.Invert);
-    const fillerDefault = fillerSchema.default;
+    // The schema `default` for an array item is that item's default value, i.e. a `T`
+    const fillerDefault = fillerSchema.default as T | undefined;
 
     // Calculate filler entries for remaining items (minItems - existing raw data/defaults)
     const fillerEntries: T[] = Array.from({ length: schema.minItems - defaultsLength }, () =>
-      computeDefaults<any, S, F>(validator, fillerSchema, {
+      computeDefaults<T, S, F>(validator, fillerSchema, {
         parentDefaults: fillerDefault,
         rootSchema,
         _recurseList,
@@ -788,9 +802,9 @@ export function getArrayDefaults<T = any, S extends StrictRJSFSchema = RJSFSchem
  * @returns - The default value based on the schema type if they are defined for object or array schemas.
  */
 export function getDefaultBasedOnSchemaType<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(
   validator: ValidatorType<T, S, F>,
   rawSchema: S,
@@ -834,9 +848,9 @@ export function getDefaultBasedOnSchemaType<
  * @returns - The resulting `formData` with all the defaults provided
  */
 export default function getDefaultFormState<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(
   validator: ValidatorType<T, S, F>,
   theSchema: S,

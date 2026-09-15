@@ -1,6 +1,6 @@
 import type { ChangeEvent, FocusEvent } from 'react';
 import { useCallback } from 'react';
-import type { FormContextType, WidgetProps, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
+import type { FormContextType, WidgetProps, RJSFSchema } from '@rjsf/utils';
 import {
   ariaDescribedByIds,
   enumOptionValueDecoder,
@@ -17,7 +17,7 @@ import {
  *
  * @param props - The `WidgetProps` for this component
  */
-function CheckboxesWidget<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>({
+function CheckboxesWidget<T = unknown, S extends RJSFSchema = RJSFSchema, F extends FormContextType = FormContextType>({
   id,
   disabled,
   options,

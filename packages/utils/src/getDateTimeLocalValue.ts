@@ -1,5 +1,5 @@
 import offsetTimeToLocalTime from './offsetTimeToLocalTime.ts';
-import type { RJSFSchema, StrictRJSFSchema } from './types.ts';
+import type { RJSFSchema } from './types.ts';
 
 export interface DateTimeLocalValueResult {
   /** True when `schema.format` is `iso-date-time`, meaning a timezone offset is optional rather than required */
@@ -19,7 +19,7 @@ export interface DateTimeLocalValueResult {
  * @param value - The current value of the field
  * @returns - The `DateTimeLocalValueResult` to be used within a `DateTimeWidget` implementation
  */
-export default function getDateTimeLocalValue<S extends StrictRJSFSchema = RJSFSchema>(
+export default function getDateTimeLocalValue<S extends RJSFSchema = RJSFSchema>(
   schema: S,
   value: unknown,
 ): DateTimeLocalValueResult {

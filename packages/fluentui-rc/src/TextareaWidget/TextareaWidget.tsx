@@ -1,7 +1,21 @@
 import type { ChangeEvent, FocusEvent } from 'react';
+import type { TextareaProps } from '@fluentui/react-components';
 import { Label, Textarea, makeStyles } from '@fluentui/react-components';
-import type { FormContextType, RJSFSchema, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
+import type { FormContextType, RJSFSchema, WidgetProps } from '@rjsf/utils';
 import { ariaDescribedByIds, labelValue } from '@rjsf/utils';
+
+/** The props of the `TextareaWidget`: the standard `WidgetProps` plus the `onChangeOverride` that
+ * `BaseInputTemplateProps` documents. It arrives through the `WidgetProps` index signature, which types it `unknown`,
+ * and it is typed here for the change event of the fluentui `Textarea` that this widget renders.
+ */
+type TextareaWidgetProps<
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+> = WidgetProps<T, S, F> & {
+  /** An optional handler that replaces the change handler this widget provides to the `Textarea` */
+  onChangeOverride?: TextareaProps['onChange'];
+};
 
 const useStyles = makeStyles({
   label: {
@@ -16,10 +30,10 @@ const useStyles = makeStyles({
  * @param props - The `WidgetProps` for this component
  */
 export default function TextareaWidget<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
->(props: WidgetProps<T, S, F>) {
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>(props: TextareaWidgetProps<T, S, F>) {
   const {
     id,
     htmlName,
@@ -44,10 +58,7 @@ export default function TextareaWidget<
   const handleBlur = ({ target }: FocusEvent<HTMLTextAreaElement>) => onBlur(id, target?.value);
   const handleFocus = ({ target }: FocusEvent<HTMLTextAreaElement>) => onFocus(id, target?.value);
 
-  let rows: string | number = 5;
-  if (typeof options.rows === 'string' || typeof options.rows === 'number') {
-    rows = options.rows;
-  }
+  const rows = options.rows ?? 5;
 
   return (
     <>

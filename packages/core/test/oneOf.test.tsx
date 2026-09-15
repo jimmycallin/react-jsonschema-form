@@ -592,9 +592,10 @@ describe('oneOf', () => {
         registry: { formContext },
         fieldPathId,
       } = props;
+      const id = formContext[fieldPathId.$id];
       return (
         <>
-          <code id={formContext[fieldPathId.$id]}>Ha</code>
+          <code id={typeof id === 'string' ? id : undefined}>Ha</code>
           <SchemaField {...props} />
         </>
       );
@@ -1399,6 +1400,7 @@ describe('oneOf', () => {
         schema,
         uiSchema: {
           'ui:title': 'My Title',
+          // @ts-expect-error: TS2353, deliberately not an array, to exercise the runtime warning below
           oneOf: { 'ui:title': 'UiSchema title' },
         },
       });

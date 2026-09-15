@@ -565,7 +565,7 @@ describe('Form omitExtraData and liveOmit', () => {
       foo: {
         __errors: ['foo'],
       },
-    } as unknown as ErrorSchema;
+    };
 
     const onSubmit = vi.fn();
 
@@ -791,7 +791,7 @@ describe('Async errors', () => {
           __errors: ['some other error that got added as a prop'],
         },
       },
-    } as unknown as ErrorSchema;
+    };
 
     const { node } = createFormComponent({ schema, extraErrors });
 
@@ -810,7 +810,7 @@ describe('Async errors', () => {
       foo: {
         __errors: ['some error that got added as a prop'],
       },
-    } as unknown as ErrorSchema;
+    };
 
     const { node, onSubmit } = createFormComponent({ schema, extraErrors, extraErrorsAreWarnings: true });
     await submitForm(node, user);
@@ -829,7 +829,7 @@ describe('Async errors', () => {
       foo: {
         __errors: ['some error that got added as a prop'],
       },
-    } as unknown as ErrorSchema;
+    };
 
     const onError = vi.fn();
     const { node, onSubmit } = createFormComponent({ schema, extraErrors, onError });
@@ -850,7 +850,7 @@ describe('Async errors', () => {
       foo: {
         __errors: ['foo'],
       },
-    } as unknown as ErrorSchema;
+    };
 
     const formRef = createRef<Form>();
     const props: NoValFormProps = {
@@ -885,7 +885,7 @@ describe('Async errors', () => {
       foo: {
         __errors: ['foo'],
       },
-    } as unknown as ErrorSchema;
+    };
 
     const formRef = createRef<Form>();
     const props: NoValFormProps = {
@@ -986,7 +986,7 @@ describe('Async errors', () => {
             0: { __errors: ['ERROR MESSAGE'] },
           },
           __errors: ['Root error'],
-        } as unknown as ErrorSchema);
+        });
       }, []);
 
       return (
@@ -1049,7 +1049,8 @@ describe('Calling onChange right after updating a Form with props formData', () 
         return;
       }
       changed = true;
-      latestProps.current.onChange('test', [latestProps.current.formData.length]);
+      const currentFormData = latestProps.current.formData;
+      latestProps.current.onChange('test', [Array.isArray(currentFormData) ? currentFormData.length : 0]);
     });
     return <ArrayField {...fieldProps} />;
   };
@@ -1319,7 +1320,7 @@ describe('validateForm()', () => {
       foo: {
         __errors: ['async error for foo'],
       },
-    } as unknown as ErrorSchema;
+    };
     const props: NoValFormProps = {
       ref: formRef,
       schema,
@@ -1354,7 +1355,7 @@ describe('validateForm()', () => {
       foo: {
         __errors: ['blocking async error'],
       },
-    } as unknown as ErrorSchema;
+    };
     const props: NoValFormProps = {
       ref: formRef,
       schema,
@@ -1390,7 +1391,7 @@ describe('validateForm()', () => {
       foo: {
         __errors: ['async error for foo'],
       },
-    } as unknown as ErrorSchema;
+    };
     const props: NoValFormProps = {
       ref: formRef,
       schema,
@@ -1429,8 +1430,7 @@ describe('validateForm()', () => {
           value={(value as string) || ''}
           onChange={(event) => {
             const newValue = event.target.value;
-            const errorSchema =
-              newValue === 'bad' ? ({ __errors: ['custom widget error'] } as unknown as ErrorSchema) : undefined;
+            const errorSchema = newValue === 'bad' ? { __errors: ['custom widget error'] } : undefined;
             onChange(newValue, errorSchema, id);
           }}
         />
@@ -1469,7 +1469,7 @@ describe('validateForm()', () => {
       foo: {
         __errors: ['async error for foo'],
       },
-    } as unknown as ErrorSchema;
+    };
     const props: NoValFormProps = {
       ref: formRef,
       schema,
@@ -2271,13 +2271,13 @@ describe('extraErrors set after submit (#4965)', () => {
       foo: {
         __errors: ['Sample error on field foo'],
       },
-    } as unknown as ErrorSchema;
+    };
 
     function Wrapper() {
-      const [extraErrors, setExtraErrors] = useState<ErrorSchema>({} as ErrorSchema);
+      const [extraErrors, setExtraErrors] = useState<ErrorSchema>({});
 
       const onSubmit = useCallback(async () => {
-        setExtraErrors({} as ErrorSchema);
+        setExtraErrors({});
         await delayPromise(50);
         setExtraErrors(sampleErrors);
       }, []);
@@ -2309,13 +2309,13 @@ describe('extraErrors set after submit (#4965)', () => {
       __errors: ['Simulated submit failure.'],
       a: { __errors: ['Sample error on field a'] },
       b: { __errors: ['Sample error on field b'] },
-    } as unknown as ErrorSchema;
+    };
 
     function Wrapper() {
-      const [extraErrors, setExtraErrors] = useState<ErrorSchema>({} as ErrorSchema);
+      const [extraErrors, setExtraErrors] = useState<ErrorSchema>({});
 
       const onSubmit = useCallback(async () => {
-        setExtraErrors({} as ErrorSchema);
+        setExtraErrors({});
         await delayPromise();
         setExtraErrors(sampleErrors);
       }, []);
@@ -2348,15 +2348,15 @@ describe('extraErrors set after submit (#4965)', () => {
 
     const sampleErrors: ErrorSchema = {
       foo: { __errors: ['Server-side error'] },
-    } as unknown as ErrorSchema;
+    };
 
     const formRef = createRef<Form>();
 
     function Wrapper() {
-      const [extraErrors, setExtraErrors] = useState<ErrorSchema>({} as ErrorSchema);
+      const [extraErrors, setExtraErrors] = useState<ErrorSchema>({});
 
       const onSubmit = useCallback(async () => {
-        setExtraErrors({} as ErrorSchema);
+        setExtraErrors({});
         await delayPromise();
         setExtraErrors(sampleErrors);
       }, []);
@@ -2401,7 +2401,7 @@ describe('extraErrors not duplicated when sibling array field mutated (#5041)', 
 
     const extraErrors: ErrorSchema = {
       name: { __errors: ['Name is required'] },
-    } as unknown as ErrorSchema;
+    };
 
     const formRef = createRef<Form>();
 

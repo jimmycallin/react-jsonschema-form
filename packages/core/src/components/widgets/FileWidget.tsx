@@ -4,14 +4,15 @@ import type {
   FormContextType,
   Registry,
   RJSFSchema,
-  StrictRJSFSchema,
   UIOptionsType,
+  UiSchema,
   WidgetProps,
 } from '@rjsf/utils';
 import { getTemplate, TranslatableString, useFileWidgetProps } from '@rjsf/utils';
-import { Markdown } from 'markdown-to-jsx/react';
 
-function FileInfoPreview<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>({
+import RichDescription from '../RichDescription.tsx';
+
+function FileInfoPreview<T = unknown, S extends RJSFSchema = RJSFSchema, F extends FormContextType = FormContextType>({
   fileInfo,
   registry,
 }: {
@@ -44,18 +45,20 @@ function FileInfoPreview<T = any, S extends StrictRJSFSchema = RJSFSchema, F ext
   );
 }
 
-function FilesInfo<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>({
+function FilesInfo<T = unknown, S extends RJSFSchema = RJSFSchema, F extends FormContextType = FormContextType>({
   filesInfo,
   registry,
   preview,
   onRemove,
   options,
+  uiSchema,
 }: {
   filesInfo: FileInfoType[];
   registry: Registry<T, S, F>;
   preview?: boolean;
   onRemove: (index: number) => void;
   options: UIOptionsType<T, S, F>;
+  uiSchema?: UiSchema<T, S, F>;
 }) {
   if (filesInfo.length === 0) {
     return null;
@@ -72,7 +75,11 @@ function FilesInfo<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends F
         return (
           // oxlint-disable-next-line react/no-array-index-key
           <li key={key}>
-            <Markdown>{translateString(TranslatableString.FilesInfo, [name, type, String(size)])}</Markdown>
+            <RichDescription
+              description={translateString(TranslatableString.FilesInfo, [name, type, String(size)])}
+              registry={registry}
+              uiSchema={uiSchema}
+            />
             {preview && <FileInfoPreview<T, S, F> fileInfo={fileInfo} registry={registry} />}
             <RemoveButton onClick={handleRemove} registry={registry} />
           </li>
@@ -86,15 +93,16 @@ function FilesInfo<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends F
  *  The `FileWidget` is a widget for rendering file upload fields.
  *  It is typically used with a string property with data-url format.
  */
-function FileWidget<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
+function FileWidget<T = unknown, S extends RJSFSchema = RJSFSchema, F extends FormContextType = FormContextType>(
   props: WidgetProps<T, S, F>,
 ) {
-  const { disabled, readonly, required, multiple, onChange, value, options, registry } = props;
+  const { disabled, readonly, required, multiple, onChange, value, options, registry, uiSchema } = props;
   const { filesInfo, handleChange, handleRemove } = useFileWidgetProps(value, onChange, multiple);
   const BaseInputTemplate = getTemplate<'BaseInputTemplate', T, S, F>('BaseInputTemplate', registry, options);
 
   const handleOnChangeEvent = (event: ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files) {
+    // Some pickers re-fire `change` with an empty FileList on cancel; an empty list would clear the value
+    if (event.target.files?.length) {
       // handleChange is async; DOM event handlers are void-returning, so we intentionally don't await
       // oxlint-disable-next-line no-floating-promises, no-void
       void handleChange(event.target.files);
@@ -118,6 +126,7 @@ function FileWidget<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends 
         registry={registry}
         preview={options.filePreview}
         options={options}
+        uiSchema={uiSchema}
       />
     </div>
   );

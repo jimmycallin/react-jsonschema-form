@@ -2,19 +2,19 @@ import enumOptionsIsSelected from './enumOptionsIsSelected.ts';
 import getTemplate from './getTemplate.ts';
 import getUiOptions from './getUiOptions.ts';
 import { descriptionId } from './idGenerators.ts';
-import type { FormContextType, RJSFSchema, StrictRJSFSchema, WidgetProps } from './types.ts';
+import type { FormContextType, RJSFSchema, WidgetProps } from './types.ts';
 
 export type SelectedOptionDescriptionProps<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 > = Pick<WidgetProps<T, S, F>, 'id' | 'multiple' | 'options' | 'registry' | 'uiSchema' | 'value' | 'hideLabel'>;
 
 /** Renders the description associated with the selected oneOf or anyOf option in a single-select widget. */
 export default function SelectedOptionDescription<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >({ hideLabel, id, multiple, options, registry, uiSchema, value }: SelectedOptionDescriptionProps<T, S, F>) {
   if (multiple || hideLabel) {
     return null;

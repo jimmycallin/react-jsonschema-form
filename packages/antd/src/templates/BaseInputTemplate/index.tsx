@@ -1,15 +1,11 @@
 import type { ChangeEvent, FocusEvent, MouseEvent } from 'react';
 import { useCallback } from 'react';
 import { SchemaExamples } from '@rjsf/core';
-import type {
-  BaseInputTemplateProps,
-  FormContextType,
-  GenericObjectType,
-  RJSFSchema,
-  StrictRJSFSchema,
-} from '@rjsf/utils';
+import type { BaseInputTemplateProps, FormContextType, RJSFSchema } from '@rjsf/utils';
 import { ariaDescribedByIds, examplesId, getInputProps } from '@rjsf/utils';
 import { Input, InputNumber } from 'antd';
+
+import { getAntdFormContext } from '../../utils.ts';
 
 const INPUT_STYLE = {
   width: '100%',
@@ -22,9 +18,9 @@ const INPUT_STYLE = {
  * @param props - The `WidgetProps` for this template
  */
 export default function BaseInputTemplate<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(props: BaseInputTemplateProps<T, S, F>) {
   const {
     disabled,
@@ -47,7 +43,7 @@ export default function BaseInputTemplate<
   // InputNumber doesn't use a native <input type="number"> directly - it wraps it and controls the stepping behavior
   // through its own props. The step prop in Ant Design expects a number, not the string "any"
   const inputProps = getInputProps<T, S, F>(schema, type, options, false);
-  const { readonlyAsDisabled = true } = formContext as GenericObjectType;
+  const { readonlyAsDisabled = true } = getAntdFormContext(formContext);
   const { ClearButton } = registry.templates.ButtonTemplates;
 
   const handleNumberChange = (nextValue: number | null) =>
@@ -72,44 +68,47 @@ export default function BaseInputTemplate<
 
   const { min, max, ...restInputProps } = inputProps;
 
-  const input =
-    inputProps.type === 'number' || inputProps.type === 'integer' ? (
-      <InputNumber
-        disabled={disabled || (readonlyAsDisabled && readonly)}
-        id={id}
-        name={htmlName || id}
-        onBlur={!readonly ? handleBlur : undefined}
-        onChange={!readonly ? handleNumberChange : undefined}
-        onFocus={!readonly ? handleFocus : undefined}
-        placeholder={placeholder}
-        required={required}
-        style={INPUT_STYLE}
-        changeOnWheel={false}
-        list={schema.examples ? examplesId(id) : undefined}
-        {...restInputProps}
-        min={typeof min === 'number' ? min : undefined}
-        max={typeof max === 'number' ? max : undefined}
-        type={undefined}
-        value={value}
-        aria-describedby={ariaDescribedByIds(id, !!schema.examples)}
-      />
-    ) : (
-      <Input
-        disabled={disabled || (readonlyAsDisabled && readonly)}
-        id={id}
-        name={htmlName || id}
-        onBlur={!readonly ? handleBlur : undefined}
-        onChange={!readonly ? handleTextChange : undefined}
-        onFocus={!readonly ? handleFocus : undefined}
-        placeholder={placeholder}
-        required={required}
-        style={INPUT_STYLE}
-        list={schema.examples ? examplesId(id) : undefined}
-        {...inputProps}
-        value={value}
-        aria-describedby={ariaDescribedByIds(id, !!schema.examples)}
-      />
-    );
+  // `InputNumber` reports only the parsed value, never the `ChangeEvent` an `onChangeOverride` is declared to
+  // receive, so a widget that supplies one gets the plain input every other theme renders for a numeric field.
+  const isNumeric = !onChangeOverride && (inputProps.type === 'number' || inputProps.type === 'integer');
+
+  const input = isNumeric ? (
+    <InputNumber
+      disabled={disabled || (readonlyAsDisabled && readonly)}
+      id={id}
+      name={htmlName || id}
+      onBlur={!readonly ? handleBlur : undefined}
+      onChange={!readonly ? handleNumberChange : undefined}
+      onFocus={!readonly ? handleFocus : undefined}
+      placeholder={placeholder}
+      required={required}
+      style={INPUT_STYLE}
+      changeOnWheel={false}
+      list={schema.examples ? examplesId(id) : undefined}
+      {...restInputProps}
+      min={typeof min === 'number' ? min : undefined}
+      max={typeof max === 'number' ? max : undefined}
+      type={undefined}
+      value={value}
+      aria-describedby={ariaDescribedByIds(id, !!schema.examples)}
+    />
+  ) : (
+    <Input
+      disabled={disabled || (readonlyAsDisabled && readonly)}
+      id={id}
+      name={htmlName || id}
+      onBlur={!readonly ? handleBlur : undefined}
+      onChange={!readonly ? handleTextChange : undefined}
+      onFocus={!readonly ? handleFocus : undefined}
+      placeholder={placeholder}
+      required={required}
+      style={INPUT_STYLE}
+      list={schema.examples ? examplesId(id) : undefined}
+      {...inputProps}
+      value={value}
+      aria-describedby={ariaDescribedByIds(id, !!schema.examples)}
+    />
+  );
 
   return (
     <>

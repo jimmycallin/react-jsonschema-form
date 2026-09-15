@@ -1,6 +1,6 @@
 import type { ComponentType } from 'react';
 import type { FormProps } from '@rjsf/core';
-import type { RJSFSchema, ErrorSchema, UiSchema } from '@rjsf/utils';
+import type { RJSFSchema, UiSchema } from '@rjsf/utils';
 import { bracketNameGenerator, dotNotationNameGenerator } from '@rjsf/utils';
 import validator from '@rjsf/validator-ajv8';
 import { render } from '@testing-library/react';
@@ -101,10 +101,10 @@ export function arrayTests(Form: ComponentType<FormProps>) {
           },
         },
       };
-      const errors: any[] = ['Bad input'];
+      const errors: string[] = ['Bad input'];
       const extraErrors = {
         name: { __errors: errors },
-      } as unknown as ErrorSchema;
+      };
       const { asFragment } = render(<Form schema={schema} validator={validator} extraErrors={extraErrors} />);
       expect(asFragment()).toMatchSnapshot();
     });
@@ -129,10 +129,10 @@ export function arrayTests(Form: ComponentType<FormProps>) {
           },
         },
       };
-      const errors: any[] = [];
+      const errors: string[] = [];
       const extraErrors = {
         name: { __errors: errors },
-      } as unknown as ErrorSchema;
+      };
       const { asFragment } = render(<Form schema={schema} validator={validator} extraErrors={extraErrors} />);
       expect(asFragment()).toMatchSnapshot();
     });

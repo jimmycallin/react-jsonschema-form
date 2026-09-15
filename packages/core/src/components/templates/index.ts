@@ -1,4 +1,4 @@
-import type { FormContextType, RJSFSchema, StrictRJSFSchema, TemplatesType } from '@rjsf/utils';
+import type { FormContextType, RJSFSchema, TemplatesType } from '@rjsf/utils';
 
 import ArrayFieldDescriptionTemplate from './ArrayFieldDescriptionTemplate.tsx';
 import ArrayFieldItemButtonsTemplate from './ArrayFieldItemButtonsTemplate.tsx';
@@ -15,6 +15,7 @@ import FieldErrorTemplate from './FieldErrorTemplate.tsx';
 import FieldHelpTemplate from './FieldHelpTemplate.tsx';
 import FieldTemplate from './FieldTemplate/index.ts';
 import GridTemplate from './GridTemplate.tsx';
+import MarkdownTemplate from './MarkdownTemplate.tsx';
 import MultiSchemaFieldTemplate from './MultiSchemaFieldTemplate.tsx';
 import ObjectFieldTemplate from './ObjectFieldTemplate.tsx';
 import OptionalDataControlsTemplate from './OptionalDataControlsTemplate.tsx';
@@ -38,6 +39,7 @@ export {
   FieldHelpTemplate,
   FieldTemplate,
   GridTemplate,
+  MarkdownTemplate,
   MultiSchemaFieldTemplate,
   ObjectFieldTemplate,
   OptionalDataControlsTemplate,
@@ -47,9 +49,9 @@ export {
 };
 
 export function generateTemplates<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(): TemplatesType<T, S, F> {
   return {
     ArrayFieldDescriptionTemplate,
@@ -67,6 +69,7 @@ export function generateTemplates<
     FieldErrorTemplate,
     FieldHelpTemplate,
     GridTemplate,
+    MarkdownTemplate,
     MultiSchemaFieldTemplate,
     ObjectFieldTemplate,
     OptionalDataControlsTemplate,

@@ -1,4 +1,4 @@
-import type { FocusEvent } from 'react';
+import type { ChangeEvent, FocusEvent } from 'react';
 import type { FormControlLabelProps } from '@mui/material/FormControlLabel';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import FormLabel from '@mui/material/FormLabel';
@@ -6,7 +6,7 @@ import type { RadioProps } from '@mui/material/Radio';
 import Radio from '@mui/material/Radio';
 import type { RadioGroupProps } from '@mui/material/RadioGroup';
 import RadioGroup from '@mui/material/RadioGroup';
-import type { FormContextType, GenericObjectType, RJSFSchema, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
+import type { FormContextType, GenericObjectType, RJSFSchema, WidgetProps } from '@rjsf/utils';
 import {
   ariaDescribedByIds,
   enumOptionSelectedValue,
@@ -37,15 +37,17 @@ export interface RadioWidgetMuiProps extends GenericObjectType {
  *
  * @param props - The `WidgetProps` for this component
  */
-export default function RadioWidget<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
-  props: WidgetProps<T, S, F>,
-) {
+export default function RadioWidget<
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>(props: WidgetProps<T, S, F>) {
   const { id, htmlName, options, value, required, disabled, readonly, label, hideLabel, onChange, onBlur, onFocus } =
     props;
   const { enumOptions, enumDisabled, emptyValue } = options;
   const optionValueFormat = getOptionValueFormat(options);
 
-  const handleChange = (_: any, enumValue: any) =>
+  const handleChange = (_: ChangeEvent<HTMLInputElement>, enumValue: string) =>
     onChange(enumOptionValueDecoder<S>(enumValue, enumOptions, optionValueFormat, emptyValue));
   const handleBlur = ({ target }: FocusEvent<HTMLInputElement>) =>
     onBlur(id, enumOptionValueDecoder<S>(target?.value, enumOptions, optionValueFormat, emptyValue));

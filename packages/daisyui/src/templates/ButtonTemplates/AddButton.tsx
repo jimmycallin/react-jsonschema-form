@@ -1,5 +1,5 @@
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
-import type { FormContextType, IconButtonProps, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
+import type { FormContextType, IconButtonProps, RJSFSchema } from '@rjsf/utils';
 import { TranslatableString } from '@rjsf/utils';
 
 import DaisyUIButton from './DaisyUIButton.tsx';
@@ -8,13 +8,11 @@ import DaisyUIButton from './DaisyUIButton.tsx';
  *
  * @param props - The props for the component
  */
-export default function AddButton<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>({
-  className,
-  onClick,
-  disabled,
-  registry,
-  ...otherProps
-}: IconButtonProps<T, S, F>) {
+export default function AddButton<
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>({ className, onClick, disabled, registry, ...otherProps }: IconButtonProps<T, S, F>) {
   const { translateString } = registry;
   return (
     <div className='row'>

@@ -1,6 +1,6 @@
 import type { FocusEvent } from 'react';
 import { useCallback } from 'react';
-import type { WidgetProps, StrictRJSFSchema, RJSFSchema, FormContextType } from '@rjsf/utils';
+import type { WidgetProps, RJSFSchema, FormContextType } from '@rjsf/utils';
 
 /** The `RangeWidget` component renders a range slider input with DaisyUI styling
  *
@@ -13,17 +13,11 @@ import type { WidgetProps, StrictRJSFSchema, RJSFSchema, FormContextType } from 
  *
  * @param props - The `WidgetProps` for this component
  */
-export default function RangeWidget<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>({
-  id,
-  value,
-  required,
-  disabled,
-  readonly,
-  onChange,
-  onFocus,
-  onBlur,
-  schema,
-}: WidgetProps<T, S, F>) {
+export default function RangeWidget<
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>({ id, value, required, disabled, readonly, onChange, onFocus, onBlur, schema }: WidgetProps<T, S, F>) {
   /** Handle focus events
    *
    * @param event - The focus event

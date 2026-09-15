@@ -1,4 +1,4 @@
-import type { FormContextType, RegistryWidgetsType, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
+import type { FormContextType, RegistryWidgetsType, RJSFSchema } from '@rjsf/utils';
 
 import CheckboxesWidget from '../CheckboxesWidget/CheckboxesWidget.tsx';
 import CheckboxWidget from '../CheckboxWidget/CheckboxWidget.tsx';
@@ -8,9 +8,9 @@ import SelectWidget from '../SelectWidget/SelectWidget.tsx';
 import TextareaWidget from '../TextareaWidget/TextareaWidget.tsx';
 
 export function generateWidgets<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(): RegistryWidgetsType<T, S, F> {
   return {
     CheckboxWidget,

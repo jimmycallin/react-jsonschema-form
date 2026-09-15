@@ -1,15 +1,8 @@
-import { ANY_OF_KEY, ONE_OF_KEY, REF_KEY, RJSF_REF_KEY } from './constants.ts';
+import { ANY_OF_KEY, ONE_OF_KEY, REF_KEY, RJSF_REF_KEY, UI_OPTIONS_KEY } from './constants.ts';
 import findSchemaDefinition from './findSchemaDefinition.ts';
+import isObject from './isObject.ts';
 import mergeObjects from './mergeObjects.ts';
-import type {
-  FormContextType,
-  GenericObjectType,
-  Registry,
-  RJSFMarkedSchema,
-  RJSFSchema,
-  StrictRJSFSchema,
-  UiSchema,
-} from './types.ts';
+import type { FormContextType, GenericObjectType, Registry, RJSFMarkedSchema, RJSFSchema, UiSchema } from './types.ts';
 
 /** Resolves the uiSchema for a given schema, considering `ui:definitions` stored in the registry.
  *
@@ -23,18 +16,22 @@ import type {
  * 2. `localUiSchema` - local overrides at current path
  *
  * @param schema - The JSON schema (may contain `$ref` or `RJSF_REF_KEY`)
- * @param localUiSchema - The uiSchema at the current path (local overrides)
+ * @param rawLocalUiSchema - The uiSchema at the current path (local overrides), as the caller supplied it
  * @param registry - The registry containing `uiSchemaDefinitions`
  * @returns - The resolved uiSchema with definitions merged in
  */
 export default function resolveUiSchema<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
->(schema: S, localUiSchema: UiSchema<T, S, F> | undefined, registry: Registry<T, S, F>): UiSchema<T, S, F> {
+  T = unknown,
+  S extends RJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>(schema: S, rawLocalUiSchema: UiSchema<T, S, F> | undefined, registry: Registry<T, S, F>): UiSchema<T, S, F> {
   const ref = ((schema as RJSFMarkedSchema)[RJSF_REF_KEY] ?? schema[REF_KEY]) as string | undefined;
   const definitions = registry.uiSchemaDefinitions;
   const definitionUiSchema = ref && definitions ? definitions[ref] : undefined;
+
+  // A uiSchema arrives from outside the type system, so a field's entry can be any value a caller put under its name.
+  // Normalizing it here is what lets every field, widget and template treat its own uiSchema as an object
+  const localUiSchema = isObject(rawLocalUiSchema) ? rawLocalUiSchema : undefined;
 
   let result: UiSchema<T, S, F>;
   if (!definitionUiSchema) {
@@ -47,6 +44,12 @@ export default function resolveUiSchema<
       S,
       F
     >;
+  }
+
+  // The same goes for `ui:options`: consumers spread it and use `in` on it, both of which assume an object
+  if (UI_OPTIONS_KEY in result && !isObject(result[UI_OPTIONS_KEY])) {
+    result = { ...result };
+    delete result[UI_OPTIONS_KEY];
   }
 
   // Walk oneOf/anyOf branches to populate uiSchema[keyword][i] so MultiSchemaField
