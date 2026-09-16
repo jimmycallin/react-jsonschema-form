@@ -59,7 +59,11 @@ import type { FormHandle } from './FormHandle.ts';
 import type { IChangeEvent } from './IChangeEvent.ts';
 
 /** The properties that are passed to the `Form` */
-export interface FormProps<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any> {
+export interface FormProps<
+  T = unknown,
+  S extends StrictRJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+> {
   /** The JSON schema object for the form */
   schema: S;
   /** An implementation of the `ValidatorType` interface that is needed for form validation to work */
@@ -249,7 +253,11 @@ export interface FormProps<T = any, S extends StrictRJSFSchema = RJSFSchema, F e
 }
 
 /** The data that is contained within the state for the `Form` */
-export interface FormState<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any> {
+export interface FormState<
+  T = unknown,
+  S extends StrictRJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+> {
   /** The JSON schema object for the form */
   schema: S;
   /** The uiSchema for the form */
@@ -294,10 +302,11 @@ export interface FormState<T = any, S extends StrictRJSFSchema = RJSFSchema, F e
  * @param status - The status provided by the onSubmit
  * @returns - The `IChangeEvent` for the state
  */
-function toIChangeEvent<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
-  state: FormState<T, S, F>,
-  status?: IChangeEvent['status'],
-): IChangeEvent<T, S, F> {
+function toIChangeEvent<
+  T = unknown,
+  S extends StrictRJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>(state: FormState<T, S, F>, status?: IChangeEvent['status']): IChangeEvent<T, S, F> {
   const { schema, uiSchema, schemaUtils, formData, edit, errors, errorSchema } = state;
   return {
     schema,
@@ -325,7 +334,11 @@ interface PendingChange<T> {
 }
 
 /** The `Form` component renders the outer form and all the fields defined in the `schema` */
-export default class Form<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>
+export default class Form<
+  T = unknown,
+  S extends StrictRJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>
   extends Component<FormProps<T, S, F>, FormState<T, S, F>>
   implements FormHandle<T, S, F>
 {
@@ -350,10 +363,11 @@ export default class Form<T = any, S extends StrictRJSFSchema = RJSFSchema, F ex
    * @param state - The current state
    * @returns Partial state with re-merged errors if `extraErrors` changed, or `null` if no update is needed
    */
-  static getDerivedStateFromProps<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
-    props: FormProps<T, S, F>,
-    state: FormState<T, S, F>,
-  ): Partial<FormState<T, S, F>> | null {
+  static getDerivedStateFromProps<
+    T = unknown,
+    S extends StrictRJSFSchema = RJSFSchema,
+    F extends FormContextType = FormContextType,
+  >(props: FormProps<T, S, F>, state: FormState<T, S, F>): Partial<FormState<T, S, F>> | null {
     if (props.extraErrors !== state.prevExtraErrors) {
       const baseErrors: ValidationData<T> = {
         errors: state.schemaValidationErrors || [],
@@ -789,7 +803,7 @@ export default class Form<T = any, S extends StrictRJSFSchema = RJSFSchema, F ex
    * @return - The `extraErrors` and `customErrors` merged into the `schemaValidation`
    * @private
    */
-  private static mergeErrors<T = any>(
+  private static mergeErrors<T = unknown>(
     schemaValidation: ValidationData<T>,
     extraErrors?: FormProps['extraErrors'],
     customErrors?: ErrorSchemaBuilder,

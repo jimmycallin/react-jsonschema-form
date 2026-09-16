@@ -11,9 +11,9 @@ import type { FormContextType, InputPropsType, RJSFSchema, StrictRJSFSchema, UIO
  * @returns - The extracted `InputPropsType` object
  */
 export default function getInputProps<
-  T = any,
+  T = unknown,
   S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  F extends FormContextType = FormContextType,
 >(
   schema: RJSFSchema,
   defaultType?: string,

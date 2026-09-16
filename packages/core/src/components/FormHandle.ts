@@ -15,7 +15,11 @@ import type {
  *
  * Only the members listed here are supported. Everything else on the class instance may change without notice.
  */
-export interface FormHandle<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any> {
+export interface FormHandle<
+  T = unknown,
+  S extends StrictRJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+> {
   /** Returns the form data the `Form` currently renders. It is the read path for a self-owned form, whose data is not
    * otherwise reachable between `onChange` calls (autosave, route guards, a submit button outside the form).
    *

@@ -133,7 +133,7 @@ describeRepeated('Form common: error contextualization', (createFormComponent) =
             },
             required: ['foo.bar', 'baz'],
           };
-          const formRef = createRef<Form>();
+          const formRef = createRef<Form<Record<string, unknown>>>();
 
           const { container } = render(
             <AcceptingParent<Record<string, unknown>>
@@ -175,7 +175,7 @@ describeRepeated('Form common: error contextualization', (createFormComponent) =
               },
             },
           };
-          const formRef = createRef<Form>();
+          const formRef = createRef<Form<Record<string, unknown>>>();
 
           const { container } = render(
             <AcceptingParent<Record<string, unknown>>
@@ -1219,8 +1219,8 @@ describeRepeated('Form common: error contextualization', (createFormComponent) =
           Start?: number;
           End?: number;
         }
-        const customValidate = (formData: StartEnd | undefined, errors: FormValidation) => {
-          const { Start, End } = formData ?? {};
+        const customValidate = (formData: unknown, errors: FormValidation) => {
+          const { Start, End } = (formData ?? {}) as StartEnd;
           if (Start !== undefined && End !== undefined && Start > End) {
             errors.Start?.addError('Validate error: Test should be LE than End');
           }

@@ -10,11 +10,11 @@ import type { FormContextType, RJSFSchema, StrictRJSFSchema, UiSchema } from './
  * @param [formData] - The formData for the field
  * @returns - True if the schema element has additionalProperties, is expandable, and not at the maxProperties limit
  */
-export default function canExpand<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
-  schema: RJSFSchema,
-  uiSchema: UiSchema<T, S, F> = {},
-  formData?: T,
-) {
+export default function canExpand<
+  T = unknown,
+  S extends StrictRJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>(schema: RJSFSchema, uiSchema: UiSchema<T, S, F> = {}, formData?: T) {
   if (!(schema.additionalProperties || schema.patternProperties)) {
     return false;
   }

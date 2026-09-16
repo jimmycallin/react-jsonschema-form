@@ -55,11 +55,11 @@ const COMPONENT_TYPES: Record<string, string> = {
  * @param registry - The registry from which fields and templates are obtained
  * @returns - The `Field` component that is used to render the actual field data
  */
-function getFieldComponent<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
-  schema: S,
-  uiOptions: UIOptionsType<T, S, F>,
-  registry: Registry<T, S, F>,
-): ComponentType<FieldProps<T, S, F>> {
+function getFieldComponent<
+  T = unknown,
+  S extends StrictRJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>(schema: S, uiOptions: UIOptionsType<T, S, F>, registry: Registry<T, S, F>): ComponentType<FieldProps<T, S, F>> {
   const { field } = uiOptions;
   const { fields, schemaUtils } = registry;
   if (typeof field === 'function') {
@@ -98,9 +98,11 @@ function getFieldComponent<T = any, S extends StrictRJSFSchema = RJSFSchema, F e
  *
  * @param props - The `FieldProps` for this component
  */
-function SchemaFieldRender<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
-  props: FieldProps<T, S, F>,
-) {
+function SchemaFieldRender<
+  T = unknown,
+  S extends StrictRJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>(props: FieldProps<T, S, F>) {
   const {
     schema: _schema,
     fieldPath,

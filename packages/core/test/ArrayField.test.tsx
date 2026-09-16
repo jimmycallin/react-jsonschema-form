@@ -4,6 +4,7 @@ import type {
   ArrayFieldItemTemplateProps,
   DescriptionFieldProps,
   ErrorSchema,
+  Field,
   FieldPath,
   FieldProps,
   GenericObjectType,
@@ -165,15 +166,17 @@ const ArrayFieldTestItemTemplate = (props: ArrayFieldItemTemplateProps) => {
   );
 };
 
-const ArrayFieldTest = (props: FieldProps<any[]>) => {
-  const onChangeTest = (newFormData: any, path: FieldPath, errorSchema?: ErrorSchema<any[]>, id?: string) => {
+// `RegistryFieldsType` types every entry with the form's single `T`, but `ArrayField` renders `T[]`, so registering
+// this wrapper needs the same cast `generateFields()` uses for the core `ArrayField`
+const ArrayFieldTest = (props: FieldProps<unknown[]>) => {
+  const onChangeTest = (newFormData: unknown, path: FieldPath, errorSchema?: ErrorSchema<unknown[]>, id?: string) => {
     let newErrorSchema = errorSchema;
     if (newFormData !== 'Appie') {
       newErrorSchema = {
         __errors: ['Value must be "Appie"'],
-      } as ErrorSchema<any[]>;
+      } as ErrorSchema<unknown[]>;
     }
-    props.onChange(newFormData, path, newErrorSchema, id);
+    props.onChange(newFormData as unknown[], path, newErrorSchema, id);
   };
   return <ArrayField {...props} onChange={onChangeTest} />;
 };
@@ -3181,7 +3184,7 @@ describe('ArrayField', () => {
         ],
         templates,
         fields: {
-          ArrayField: ArrayFieldTest,
+          ArrayField: ArrayFieldTest as unknown as Field,
         },
       });
 
@@ -3205,7 +3208,7 @@ describe('ArrayField', () => {
         ],
         templates,
         fields: {
-          ArrayField: ArrayFieldTest,
+          ArrayField: ArrayFieldTest as unknown as Field,
         },
       });
 
@@ -3227,7 +3230,7 @@ describe('ArrayField', () => {
         ],
         templates,
         fields: {
-          ArrayField: ArrayFieldTest,
+          ArrayField: ArrayFieldTest as unknown as Field,
         },
       });
 
@@ -3444,8 +3447,8 @@ describe('ArrayField', () => {
       };
 
       const uiSchema: UiSchema = {
-        items: (itemData) => {
-          if (itemData.priority === 'high') {
+        items: (itemData: unknown) => {
+          if ((itemData as GenericObjectType).priority === 'high') {
             return {
               name: {
                 'ui:widget': 'textarea',

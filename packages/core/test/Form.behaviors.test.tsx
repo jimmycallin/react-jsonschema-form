@@ -1051,7 +1051,7 @@ describe('Calling onChange right after updating a Form with props formData', () 
       changed = true;
       latestProps.current.onChange(
         'test',
-        toFieldPath(latestProps.current.formData.length, latestProps.current.fieldPath),
+        toFieldPath((latestProps.current.formData as unknown[]).length, latestProps.current.fieldPath),
       );
     });
     return <ArrayField {...fieldProps} />;

@@ -3,6 +3,7 @@ import type {
   FieldErrorProps,
   FieldProps,
   FieldTemplateProps,
+  GenericObjectType,
   RJSFSchema,
   WidgetProps,
 } from '@rjsf/utils';
@@ -361,7 +362,10 @@ describe('LayoutMultiSchemaField', () => {
     await waitFor(() => {
       expect(props.onChange).toHaveBeenCalledWith(
         {
-          ...props.registry.schemaUtils.getDefaultFormState(retrievedOptions[0], sanitizedFormData),
+          ...(props.registry.schemaUtils.getDefaultFormState(
+            retrievedOptions[0],
+            sanitizedFormData,
+          ) as GenericObjectType),
           [selectorField]: 'first_option',
         },
         props.fieldPath,
@@ -400,13 +404,13 @@ describe('LayoutMultiSchemaField', () => {
     await waitFor(() => {
       expect(props.onChange).toHaveBeenCalledWith(
         {
-          ...props.registry.schemaUtils.getDefaultFormState(
+          ...(props.registry.schemaUtils.getDefaultFormState(
             retrievedOptions[1],
             sanitizedFormData,
             undefined,
             undefined,
             uiSchema,
-          ),
+          ) as GenericObjectType),
           [selectorField]: 'second_option',
         },
         props.fieldPath,
