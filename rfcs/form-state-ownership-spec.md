@@ -194,13 +194,15 @@ if (controlled) {
 
 `applyChange` includes existing path updates, default/sanitization behavior, configured omission, and validation/error processing, extracted into explicit steps as needed. It must not read `this.props`/`this.state` implicitly or perform callbacks. Pass needed current context, including existing default-generation flags and errors, explicitly. Preserve utility behavior rather than writing a new schema-transition engine.
 
+The result must share references with `current` wherever a subtree is unchanged: `applyChange` ends with `replaceEqualDeep(current, next)` from `@rjsf/utils`, the pass `processPendingChange` runs today against the value and errors it was given. In controlled mode the proposal is what an accepting parent hands back as the next prop, so this is what keeps the props of sibling fields reference-equal across a keystroke. `renderStability.test.tsx` pins it with an accepting parent.
+
 Uncontrolled operations must read the latest prior internal transition, using pure functional updates or the existing serial queue. Capture each operation's result for its callback; do not construct an old operation's event from later state. A queue for composing writes does not imply read-your-pending-writes semantics.
 
 ### Controlled queue: retain composition without a value mirror
 
 Keep an ordered queue of operations, not precomputed whole-form snapshots or an optimistic current model. When idle, process the first operation against current props and emit its proposal. Before processing the next, allow React to commit the parent's synchronous response. Then read current props again and process the next operation.
 
-A small internal state checkpoint and its `setState` callback can supply this scheduling boundary using the existing serial-queue structure. Its state contains only scheduling metadata, not form data. Set the busy guard before calling consumer code so reentrant changes enqueue rather than execute against stale props. Schedule the checkpoint after the proposal callback. Do not wait for data equality or acceptance: a rejected proposal still advances the queue after the checkpoint. Ensure the checkpoint callback runs with every supported component-update strategy.
+A small internal state checkpoint and its `setState` callback can supply this scheduling boundary using the existing serial-queue structure. Its state contains only scheduling metadata, not form data. Set the busy guard before calling consumer code so reentrant changes enqueue rather than execute against stale props. Schedule the checkpoint after the proposal callback. Do not wait for data equality or acceptance: a rejected proposal still advances the queue after the checkpoint. `Form` and `SchemaField` compare props shallowly (rjsf-team#5217, part 2), so the checkpoint state must be a new object each time it advances, or the update that runs the callback is skipped.
 
 Example: starting from `{ a: '', b: '' }`, queue `a='first'` and `b='second'` within one `act`. An accepting parent commits the first before the second is processed, so the final model contains both. If the parent transforms `a` to `'FIRST'`, the second proposal preserves that. If it rejects the first, the second proposal must preserve the old `a`; never resurrect a rejected value.
 
@@ -210,9 +212,9 @@ Only user operations, `setFieldValue`, and reset enter the queue; no lifecycle m
 
 For deliberate atomic full replacement, retain `setFieldValue([], nextObject)` or a parent update. A replacement is still a replacement; do not infer patches from two caller-supplied stale root objects. Built-in compound gestures should emit a combined operation where possible, but sibling path updates must compose even if they originate from different widgets.
 
-A temporary isolated React class probe verified this checkpoint approach for accepting, transforming, and rejecting parents (3 passing cases). It did not validate the full Form implementation, StrictMode, child effects, or update strategies; the acceptance tests below are required before shipping.
+A temporary isolated React class probe verified this checkpoint approach for accepting, transforming, and rejecting parents (3 passing cases). It did not validate the full Form implementation, StrictMode, or child effects; the acceptance tests below are required before shipping.
 
-Extract pure render-context derivation separately from data transitions. Schema utilities, registry, field paths, and resolved schema must correspond to current props/data at render time. Keep useful memoization and validator schema-reference caching. Do not globally rewrite memoization or `shouldRender`; ensure changed callbacks/validators cannot be ignored by a deep comparator that treats functions as equal.
+Extract pure render-context derivation separately from data transitions. Schema utilities, registry, field paths, and resolved schema must correspond to current props/data at render time. Keep useful memoization and validator schema-reference caching, and key it by input reference: with the reconciler gone, render-context derivation runs for every accepted prop update, so an unchanged input must be a lookup rather than a recomputation. `SchemaUtils.retrieveSchema()` already caches its last call per input schema this way; the default-state, validation, and registry steps need the same last-call cache on the `Form` instance, with a `replaceEqualDeep` fallback against the cached input when only the reference changed. Do not globally rewrite memoization or `shouldRender`. Changed callbacks and validators must not be ignored: `deepEquals` treats all functions as equal, so it must not gate an update; shallow comparison and `replaceEqualDeep`, which compares functions by identity, are the comparators to use.
 
 Remove `getSnapshotBeforeUpdate` and `componentDidUpdate` logic that reconciles controlled data. Remove `isProcessingUserChange` once its ownership purpose disappears. Lifecycle methods may remain for uncontrolled compatibility notifications, validation metadata, or an explicitly guarded uncontrolled schema transition. They must not arbitrate ownership or call a generic props-to-form-data synchronizer.
 
@@ -257,7 +259,7 @@ These are coverage requirements, not 18 more mandatory new test cases. Map them 
 - Both asynchronous-data patterns from section 8: a keyed remount after load, and a `record ?? {}` fallback. The broken version must produce the mode-change warning and keep uncontrolled ownership.
 - Uncontrolled initialization, post-mount default notifications, latest-seed reset, guarded schema transitions, and ordered write composition after commit.
 - Existing blur validation/omission and error-only notifications; controlled rejection; submit omission in both modes; getter/submit reading the owner; error provenance and field/ancestor error clearing.
-- Queue progress with no handler, rejection, reentrant handlers, unmount, and supported component-update strategies. Scheduling state must never appear as form data.
+- Queue progress with no handler, rejection, reentrant handlers, and unmount. Scheduling state must never appear as form data.
 - Array add/remove/reorder with acceptance/rejection and existing key/focus behavior. MultiSchemaField option switch, ObjectField rename, and AltDateWidget clear alongside a sibling change, including follow-on effects and rejected updates.
 - Defaulted-field clearing, dependencies, null/object branches, ambiguous selections, additional properties, and explicit root replacement.
 - StrictMode notification uniqueness, immutable caller inputs, replacement callbacks/validators, and plain/themed legacy refs plus the new handle/getter.
@@ -281,7 +283,7 @@ Decouple `IChangeEvent` from `Pick<FormState, ...>` while preserving every curre
 
 ### PR 2: Internal preparation and fixture classification
 
-1. Extract shared edit processing, initialization, and render-context derivation without changing domain algorithms, callback timing, reset behavior, or ownership. Preserve useful queue behavior.
+1. Extract shared edit processing, initialization, and render-context derivation without changing domain algorithms, callback timing, reset behavior, or ownership. Preserve useful queue behavior. Move the two `replaceEqualDeep` passes in `Form` (`processPendingChange` and `getSnapshotBeforeUpdate`) into the extracted `applyChange` and render-context steps, and add the reference-keyed caches section 4 describes.
 2. Add accepting/rejecting/transforming parent harnesses. Classify existing editable seeded fixtures and migrate ones whose behavior can be preserved with `initialFormData` or a genuine accepting parent.
 3. Keep tests specifically asserting legacy hybrid behavior unchanged until PR 3. Do not mechanically rename test inputs or assert future ownership semantics in a behavior-preserving PR.
 4. Prepare targeted child changes in separate reviewable commits where they can preserve current behavior. Defer fixes inherently dependent on rejection semantics to PR 3.
