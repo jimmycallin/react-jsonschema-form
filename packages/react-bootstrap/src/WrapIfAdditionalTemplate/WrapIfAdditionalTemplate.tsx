@@ -3,9 +3,9 @@ import { ADDITIONAL_PROPERTY_FLAG, buttonId, TranslatableString } from '@rjsf/ut
 import { Col, Form, Row } from 'react-bootstrap';
 
 export default function WrapIfAdditionalTemplate<
-  T = any,
+  T = unknown,
   S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  F extends FormContextType = FormContextType,
 >({
   classNames,
   style,

@@ -101,7 +101,7 @@ function isItemRequired<S extends StrictRJSFSchema = RJSFSchema>(itemSchema: S) 
  * @param [uiSchema] - The UiSchema for the field
  * @returns - True if the item is addable otherwise false
  */
-function canAddItem<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
+function canAddItem<T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = FormContextType>(
   registry: Registry<T[], S, F>,
   schema: S,
   formItems: T[],
@@ -126,12 +126,11 @@ function canAddItem<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends 
  * @param index - The position the new row is being inserted at, so a tuple-position (array) form of
  *          `uiSchema.items` resolves the same entry that the row will actually render with once added
  */
-function getNewFormDataRow<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
-  registry: Registry<T[], S, F>,
-  schema: S,
-  index: number,
-  uiSchema?: UiSchema<T[], S, F>,
-): T {
+function getNewFormDataRow<
+  T = unknown,
+  S extends StrictRJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>(registry: Registry<T[], S, F>, schema: S, index: number, uiSchema?: UiSchema<T[], S, F>): T {
   const { schemaUtils, globalFormOptions, uiSchemaDefinitions } = registry;
   let itemSchema = schema.items as S;
   // Cast this (and the uiSchema below) as T/T[] to work around schema utils being for T/T[] caused by the
@@ -160,9 +159,9 @@ function getNewFormDataRow<T = any, S extends StrictRJSFSchema = RJSFSchema, F e
 
 /** Props used for ArrayAsXxxx type components*/
 interface ArrayAsFieldProps<
-  T = any,
+  T = unknown,
   S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  F extends FormContextType = FormContextType,
 > extends FieldProps<T, S, F> {
   /** The callback used to update the array when the selector changes */
   onSelectChange: (value: T) => void;
@@ -172,9 +171,11 @@ interface ArrayAsFieldProps<
 
 /** Renders an array as a set of checkboxes using the 'select' widget
  */
-function ArrayAsMultiSelect<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
-  props: ArrayAsFieldProps<T[], S, F>,
-) {
+function ArrayAsMultiSelect<
+  T = unknown,
+  S extends StrictRJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>(props: ArrayAsFieldProps<T[], S, F>) {
   const {
     schema,
     id,
@@ -235,9 +236,11 @@ function ArrayAsMultiSelect<T = any, S extends StrictRJSFSchema = RJSFSchema, F 
 
 /** Renders an array using the custom widget provided by the user in the `uiSchema`
  */
-function ArrayAsCustomWidget<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
-  props: ArrayAsFieldProps<T[], S, F>,
-) {
+function ArrayAsCustomWidget<
+  T = unknown,
+  S extends StrictRJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>(props: ArrayAsFieldProps<T[], S, F>) {
   const {
     schema,
     id,
@@ -290,9 +293,11 @@ function ArrayAsCustomWidget<T = any, S extends StrictRJSFSchema = RJSFSchema, F
 
 /** Renders an array of files using the `FileWidget`
  */
-function ArrayAsFiles<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
-  props: ArrayAsFieldProps<T[], S, F>,
-) {
+function ArrayAsFiles<
+  T = unknown,
+  S extends StrictRJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>(props: ArrayAsFieldProps<T[], S, F>) {
   const {
     schema,
     uiSchema,
@@ -349,7 +354,11 @@ function ArrayAsFiles<T = any, S extends StrictRJSFSchema = RJSFSchema, F extend
 /** Renders the individual array item using a `SchemaField` along with the additional properties that are needed to
  * render the whole of the `ArrayFieldItemTemplate`.
  */
-function ArrayFieldItemInner<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(props: {
+function ArrayFieldItemInner<
+  T = unknown,
+  S extends StrictRJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>(props: {
   itemKey: string;
   index: number;
   name: string;
@@ -539,9 +548,9 @@ const ArrayFieldItem = memo(ArrayFieldItemInner) as typeof ArrayFieldItemInner;
 
 /** The properties required by the stateless components that render the items using the `ArrayFieldItem` */
 interface InternalArrayFieldProps<
-  T = any,
+  T = unknown,
   S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  F extends FormContextType = FormContextType,
 > extends FieldProps<T[], S, F> {
   /** The keyedFormData from the `ArrayField` state */
   keyedFormData: KeyedFormDataType<T>[];
@@ -557,7 +566,7 @@ interface InternalArrayFieldProps<
 
 /** Renders a normal array without any limitations of length
  */
-function NormalArray<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
+function NormalArray<T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = FormContextType>(
   props: InternalArrayFieldProps<T, S, F>,
 ) {
   const {
@@ -667,7 +676,7 @@ function NormalArray<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends
 
 /** Renders an array that has a maximum limit of items
  */
-function FixedArray<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
+function FixedArray<T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = FormContextType>(
   props: InternalArrayFieldProps<T, S, F>,
 ) {
   const {
@@ -796,7 +805,7 @@ function FixedArray<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends 
   return <Template {...arrayProps} />;
 }
 
-interface KeyedFormDataState<T = any> {
+interface KeyedFormDataState<T = unknown> {
   /** The keyed form data elements */
   keyedFormData: KeyedFormDataType<T>[];
   /** Updates the keyed form data elements to the given value */
@@ -819,7 +828,7 @@ interface ArrayFieldState<T> {
  * with it. The `updateKeyedFormData()` will update that hash whenever the `keyedFormData` is modified and as well as
  * returning the plain `formData` from the `keyedFormData`.
  */
-function useKeyedFormData<T = any>(formData: T[] = []): KeyedFormDataState<T> {
+function useKeyedFormData<T = unknown>(formData: T[] = []): KeyedFormDataState<T> {
   const newHash = useMemo(() => hashObject(formData), [formData]);
   const [state, setState] = useState<ArrayFieldState<T>>(() => ({
     formDataHash: newHash,
@@ -854,9 +863,11 @@ function useKeyedFormData<T = any>(formData: T[] = []): KeyedFormDataState<T> {
 /** The `ArrayField` component is used to render a field in the schema that is of type `array`. It supports both normal
  * and fixed array, allowing user to add and remove elements from the array data.
  */
-export default function ArrayField<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
-  props: FieldProps<T[], S, F>,
-) {
+export default function ArrayField<
+  T = unknown,
+  S extends StrictRJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>(props: FieldProps<T[], S, F>) {
   const { schema, uiSchema, errorSchema, fieldPath, id: fieldId, registry, formData, onChange } = props;
   const { globalFormOptions, schemaUtils, translateString } = registry;
   const { keyedFormData, updateKeyedFormData } = useKeyedFormData<T>(formData);

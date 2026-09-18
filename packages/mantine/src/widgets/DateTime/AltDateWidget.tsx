@@ -6,9 +6,9 @@ import { ariaDescribedByIds, dateRangeOptions, titleId, TranslatableString, useA
  * @param props - The `WidgetProps` for this component
  */
 export default function AltDateWidget<
-  T = any,
+  T = unknown,
   S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  F extends FormContextType = FormContextType,
 >(props: WidgetProps<T, S, F>) {
   const { id, required, disabled, readonly, label, hideLabel, rawErrors, options, registry } = props;
   const { translateString } = registry;

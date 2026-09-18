@@ -15,9 +15,9 @@ import { Checkbox } from '../components/ui/checkbox.tsx';
 import { getChakra } from '../utils.ts';
 
 export default function CheckboxesWidget<
-  T = any,
+  T = unknown,
   S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  F extends FormContextType = FormContextType,
 >(props: WidgetProps<T, S, F>) {
   const {
     id,

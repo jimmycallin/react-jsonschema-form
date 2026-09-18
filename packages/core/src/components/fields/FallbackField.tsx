@@ -37,7 +37,7 @@ function getTypeOfFormData(formData: any): JSONSchema7TypeName {
  * @param formData - The form data to be casted.
  * @param newType - The target type to which the form data should be casted.
  */
-function castToNewType<T = any>(formData: T, newType: JSONSchema7TypeName): T {
+function castToNewType<T = unknown>(formData: T, newType: JSONSchema7TypeName): T {
   switch (newType) {
     case 'string':
       return String(formData) as T;
@@ -57,9 +57,9 @@ function castToNewType<T = any>(formData: T, newType: JSONSchema7TypeName): T {
  * `useFallbackUiForUnsupportedType` is enabled in the `globalUiOptions`, it provides a type selector
  */
 export default function FallbackField<
-  T = any,
+  T = unknown,
   S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  F extends FormContextType = FormContextType,
 >(props: FallbackFieldProps<T, S, F>) {
   const {
     id,

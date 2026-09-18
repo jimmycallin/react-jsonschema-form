@@ -5,9 +5,9 @@ import { ADDITIONAL_PROPERTY_FLAG, buttonId, TranslatableString } from '@rjsf/ut
 import { Field } from '../components/ui/field.tsx';
 
 export default function WrapIfAdditionalTemplate<
-  T = any,
+  T = unknown,
   S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
+  F extends FormContextType = FormContextType,
 >(props: WrapIfAdditionalTemplateProps<T, S, F>) {
   const {
     children,
