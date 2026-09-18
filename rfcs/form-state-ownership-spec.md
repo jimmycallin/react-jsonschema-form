@@ -294,32 +294,33 @@ The work is laid out in lanes so that every PR not on the `Form.tsx` critical pa
 
 Elsewhere in this document, "PR 2" means the lane A extraction (steps A2 and A3 below) and "PR 3" means the switch (A4). Earlier revisions bundled the lane B and lane C work into PR 2; it is split out here because none of it depends on the extraction.
 
+The letter is the lane, the number is the order within it. Only lane A's order is binding, because its steps rewrite the same function. Across lanes there is no ordering at all: a lane B PR and a lane C PR never wait for each other. Within a lane, a PR is split from its neighbour only when the split buys an earlier merge that someone needs; where it does not, the work is one PR with one coherent commit per subsystem, because a reviewer holding one mental model for one PR beats two reviewers holding half of it each.
+
 ### Lanes and gates
 
-| Lane                               | PRs, in order within the lane                                                                                                                     | Opens when                                           |
-| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
-| **A: `Form.tsx`**, strictly serial | A1 rjsf-team#5297 (open) → A2 render-context extraction → A3 `applyChange` extraction and caches → A4 ownership switch with child rejection fixes | A2 after A1 merges; A3 after A2; A4 after gate 2     |
-| **B: tests only**                  | B1 parent harnesses; B2 fixture classification                                                                                                    | Now, both at once                                    |
-| **C: types and fields**            | rjsf-team#5296 (open); C1 event type decoupling (PR 1b); C2 behavior-preserving child prep, one PR per field file                                 | Now, all at once                                     |
-| **D: docs**                        | D1 remaining documentation and examples (PR 4)                                                                                                    | Drafted against the A4 branch; merges right after A4 |
+| Lane                               | PRs, in order within the lane                                                                                                                     | Opens when                                                       |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| **A: `Form.tsx`**, strictly serial | A1 rjsf-team#5297 (open) → A2 render-context extraction → A3 `applyChange` extraction and caches → A4 ownership switch with child rejection fixes | A2 after A1 merges; A3 after A2; A4 after gate 2                 |
+| **B: tests only**                  | B, one PR: parent harnesses and fixture classification                                                                                            | Now                                                              |
+| **C: types and fields**            | rjsf-team#5296 (open); C1 event type decoupling (PR 1b); C2 behavior-preserving child prep, one PR with one commit per field file                 | C1 now; C2 now, but merges only after its render-stability check |
+| **D: docs**                        | D1 remaining documentation and examples (PR 4)                                                                                                    | Drafted against the A4 branch; merges right after A4             |
 
 Two gates, not four:
 
 1. **Gate 1:** rjsf-team#5297 merged, before A2 opens. A2 moves code that #5297 introduces.
-2. **Gate 2:** A3, B1, B2, C1 and every C2 PR merged, before A4 opens. A4's exit condition needs the harnesses and the classified fixtures to exist, and it must not carry a rebase over an open field PR.
+2. **Gate 2:** A3, B, C1 and C2 merged, before A4 opens. A4's exit condition needs the harnesses and the classified fixtures to exist, and it must not carry a rebase over an open field PR.
 
-The critical path is lane A and its length does not change; what changes is that five or six PRs are under review at once instead of one.
+The critical path is lane A and its length does not change; what changes is that lanes B and C are under review while lane A waits on rjsf-team#5297, instead of queuing behind it.
 
 ### File ownership, to keep the lanes conflict-free
 
-| File or area                                                | Owner while in flight                                                                                                                                                                                                         |
-| ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `packages/core/src/components/Form.tsx`                     | Lane A only, one PR at a time. The single exception is C1, which moves the `IChangeEvent` declaration out of the file: two hunks at the top, a deleted declaration and an added `import type`, in lines no lane A PR touches. |
-| `packages/core/test/testUtils.tsx`                          | B1 only. B2 uses what B1 adds but does not edit the file; if B2 needs a helper before B1 merges, it adds it in its own test file.                                                                                             |
-| `packages/core/test/Form.*.test.tsx` fixtures               | B2 only. B1 adds a new harness test file rather than editing these.                                                                                                                                                           |
-| `ArrayField.tsx`, `MultiSchemaField.tsx`, `ObjectField.tsx` | C2, one PR per file, so they do not conflict with each other. A4 touches them only after every C2 PR has merged.                                                                                                              |
-| `packages/docs/docs/migration-guides/v7.x upgrade guide.md` | Every lane appends. Each PR adds its own sub-heading and never edits a shared paragraph, so a conflict is an append-order fix.                                                                                                |
-| `packages/core/test/renderStability.test.tsx`               | Nobody edits it except to add a scenario. Every lane keeps all of its counts at zero; that is a test gate, not a file conflict.                                                                                               |
+| File or area                                                      | Owner while in flight                                                                                                                                                                                                         |
+| ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `packages/core/src/components/Form.tsx`                           | Lane A only, one PR at a time. The single exception is C1, which moves the `IChangeEvent` declaration out of the file: two hunks at the top, a deleted declaration and an added `import type`, in lines no lane A PR touches. |
+| `packages/core/test/testUtils.tsx` and `Form.*.test.tsx` fixtures | Lane B only.                                                                                                                                                                                                                  |
+| `ArrayField.tsx`, `MultiSchemaField.tsx`, `ObjectField.tsx`       | C2, one commit per file. A4 touches them only after C2 has merged.                                                                                                                                                            |
+| `packages/docs/docs/migration-guides/v7.x upgrade guide.md`       | Every lane appends. Each PR adds its own sub-heading and never edits a shared paragraph, so a conflict is an append-order fix.                                                                                                |
+| `packages/core/test/renderStability.test.tsx`                     | Nobody edits it except to add a scenario. Every lane keeps all of its counts at zero; that is a test gate, not a file conflict.                                                                                               |
 
 ### PR 1a: Additive public access and types (merged, rjsf-team#5289)
 
@@ -341,17 +342,20 @@ The inventory found no `.state.formData` reads outside `Form.tsx`; tests read `s
 
 Nothing else. No `edit` redefinition, no new members, no runtime change. Exit: `IChangeEvent` compiles independently of `FormState`, and the type tests pin the equivalence.
 
-### B1: Parent harnesses (open now)
+### B: Parent harnesses and fixture classification (open now, one PR)
 
-Accepting, rejecting and transforming controlled parents as reusable test components in `packages/core/test/testUtils.tsx`, plus a new test file exercising each against the current `Form` so the harnesses are proven before anything depends on them. A spy handler is not an accepting parent; the accepting harness stores `event.formData` with an ordinary state update. Exit: the three harnesses exist, are typed, and pass against today's behavior.
+Two commits, because the second is written with the first in hand and is reviewed with the same question in mind: does this fixture describe an accepting parent, a seeded form, or a deliberately fixed value?
 
-### B2: Fixture classification (open now)
+1. Accepting, rejecting and transforming controlled parents as reusable test components in `packages/core/test/testUtils.tsx`, plus a new test file exercising each against the current `Form` so the harnesses are proven before anything depends on them. A spy handler is not an accepting parent; the accepting harness stores `event.formData` with an ordinary state update.
+2. Classify every editable seeded fixture in the form behavior, error, handler, defaults, state and props tests as editable-seeded, accepting-controlled, or intentionally-fixed, and migrate the ones whose behavior is preserved by `initialFormData` or by the accepting harness. Keep tests specifically asserting legacy hybrid behavior unchanged until A4. Do not mechanically rename `formData` occurrences or assert future ownership semantics in a behavior-preserving PR.
 
-Classify every editable seeded fixture in the form behavior, error, handler, defaults, state and props tests as editable-seeded, accepting-controlled, or intentionally-fixed, and migrate the ones whose behavior is preserved by `initialFormData` or by a genuine accepting parent. Keep tests specifically asserting legacy hybrid behavior unchanged until A4. Do not mechanically rename `formData` occurrences or assert future ownership semantics in a behavior-preserving PR. Where a fixture needs the accepting harness before B1 merges, inline a minimal one in that test file rather than editing `testUtils.tsx`. Exit: every fixture is classified in a short table in the PR description, the migrated ones pass unchanged, and the ones left for A4 are listed.
+Exit: the three harnesses exist, are typed, and pass against today's behavior; every fixture is classified in a short table in the PR description; the migrated ones pass unchanged; the ones left for A4 are listed.
 
-### C2: Behavior-preserving child prep (open now, one PR per file)
+### C2: Behavior-preserving child prep (open now, one PR, one commit per file)
 
-The targeted changes in `ArrayField.tsx`, `MultiSchemaField.tsx` and `ObjectField.tsx` that can preserve current behavior: removing optimistic local values that the current-props read makes redundant, and making path propagation explicit. Each file is its own PR so they merge independently. Defer any fix that depends on rejection semantics to A4; a PR here must not display or hide a rejected value differently from today. Exit: snapshot suites and `renderStability` unchanged.
+The targeted changes in `ArrayField.tsx`, `MultiSchemaField.tsx` and `ObjectField.tsx` that can preserve current behavior: removing optimistic local values that the current-props read makes redundant, and making path propagation explicit. One commit per file so each subsystem is reviewed on its own, one PR because all three are judged by the same criterion. Defer any fix that depends on rejection semantics to A4; a PR here must not display or hide a rejected value differently from today.
+
+`renderStability.test.tsx` arrives with rjsf-team#5297, so on `v7` this PR cannot run the gate it must keep. Before merging, rebase the branch onto the #5297 head locally and run that file; merge only after it passes, which in practice means after #5297 has merged. Exit: snapshot suites unchanged; render-stability counts at zero against #5297.
 
 ### A2: Render-context extraction (after gate 1)
 
@@ -491,7 +495,7 @@ Inspect default and wrapped themes with controlled text, uncontrolled reset, dep
 - [ ] All changed expectations map to section 8; deferred API tests/features are absent.
 - [x] Additive handle/getter/types landed first (PR 1a, rjsf-team#5289); legacy refs work and the deprecation is documented.
 - [ ] Gate 1: rjsf-team#5297 merged before the render-context extraction (A2) opened.
-- [ ] Gate 2: A3, the harnesses (B1), the fixture classification (B2), the event type (C1) and every child prep PR (C2) merged before the ownership switch (A4) opened.
+- [ ] Gate 2: A3, the tests PR (B), the event type (C1) and the child prep (C2) merged before the ownership switch (A4) opened.
 - [ ] Exactly one `Form.tsx` PR was in flight at any time; the section 7 file ownership table was respected.
 - [ ] Class remains; retained lifecycle/state/queue uses have explicit purposes.
 
