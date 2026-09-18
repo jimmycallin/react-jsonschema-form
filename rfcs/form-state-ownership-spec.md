@@ -194,7 +194,7 @@ if (controlled) {
 
 `applyChange` includes existing path updates, default/sanitization behavior, configured omission, and validation/error processing, extracted into explicit steps as needed. It must not read `this.props`/`this.state` implicitly or perform callbacks. Pass needed current context, including existing default-generation flags and errors, explicitly. Preserve utility behavior rather than writing a new schema-transition engine.
 
-The result must share references with `current` wherever a subtree is unchanged: `applyChange` ends with `replaceEqualDeep(current, next)` from `@rjsf/utils`, the pass `processPendingChange` runs today against the value and errors it was given. In controlled mode the proposal is what an accepting parent hands back as the next prop, so this is what keeps the props of sibling fields reference-equal across a keystroke. `renderStability.test.tsx` pins it with an accepting parent.
+The result must share references with `current` wherever a subtree is unchanged: `applyChange` ends with `replaceEqualDeep(current, next)` from `@rjsf/utils`, the pass `processPendingChange` runs today against the current state at its `setState`. In controlled mode the proposal is what an accepting parent hands back as the next prop, so this is what keeps the props of sibling fields reference-equal across a keystroke. `renderStability.test.tsx` pins it with an accepting parent.
 
 Uncontrolled operations must read the latest prior internal transition, using pure functional updates or the existing serial queue. Capture each operation's result for its callback; do not construct an old operation's event from later state. A queue for composing writes does not imply read-your-pending-writes semantics.
 
