@@ -264,6 +264,22 @@ These are coverage requirements, not 18 more mandatory new test cases. Map them 
 - Defaulted-field clearing, dependencies, null/object branches, ambiguous selections, additional properties, and explicit root replacement.
 - StrictMode notification uniqueness, immutable caller inputs, replacement callbacks/validators, and plain/themed legacy refs plus the new handle/getter.
 
+### Render stability
+
+`packages/core/test/renderStability.test.tsx` (rjsf-team#5217 part 2) counts renders per field through a counting `FieldTemplate` and asserts that an update re-renders no field outside the branch it touched. Its nine scenarios stay green through PR 2 and PR 3 with no loosened count: typing at the top level, in a nested object, in an array item and in a layout grid cell; a controlled parent accepting each proposal, which also asserts every proposal shares its unchanged subtrees with the value it was applied to; live validation on change with a sibling's unchanged error; live validation on blur; a submit that changes no errors; and a parent re-render with rebuilt but equal props, including inline JSX in the `uiSchema`, an inline `formContext` and an inline callback. A change that re-renders every field to make a contract test pass is not an acceptable fix.
+
+PR 3 extends the file with the cases single ownership makes well defined. Each asserts its baseline count exists first, so a renamed id cannot pass vacuously:
+
+| Scenario                                     | Expected renders                                                                                                                                           |
+| -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Rejected controlled proposal                 | Only the proposing field's branch; the rejected value is not visible anywhere, and siblings are untouched.                                                 |
+| Transforming parent                          | Only the field whose value the parent transformed.                                                                                                         |
+| `extraErrors` replaced                       | Only the fields whose errors changed; a deep-equal replacement re-renders none.                                                                            |
+| oneOf/anyOf option switch                    | Nothing outside the switched branch.                                                                                                                       |
+| Array add, remove and reorder                | Items whose data and position are unchanged keep their count; with row keys retained, adding at the end re-renders no existing item.                       |
+| Controlled reset                             | Only the fields whose errors cleared; data fields with no error keep their count, since the reset leaves data to the parent.                               |
+| Uncontrolled schema or default option change | Fields whose resolved schema is unchanged keep their count, which holds because `retrieveSchema()` and the render-context caches share unchanged subtrees. |
+
 The old numbered acceptance matrices are superseded by these six contract tests and the regression coverage map. Do not duplicate established tests solely to satisfy an ID, add skipped deferred-API tests, or drop regression coverage because it is no longer separately numbered.
 
 ## 7. Implementation and review sequence
