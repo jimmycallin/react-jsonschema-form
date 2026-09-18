@@ -1,6 +1,6 @@
 # Form data ownership: specification and implementation plan
 
-Status: proposed implementation contract for a breaking release. PR 1a is merged as [rjsf-team#5289](https://github.com/rjsf-team/react-jsonschema-form/pull/5289) (`getFormData()`, `FormHandle`, docs). Two prerequisites are open on `v7` and this document assumes both land as proposed: [rjsf-team#5297](https://github.com/rjsf-team/react-jsonschema-form/pull/5297), rjsf-team#5217 part 2, which makes shallow comparison the only update gate and introduces `replaceEqualDeep` and the reference-stability contract this design builds on; and [rjsf-team#5296](https://github.com/rjsf-team/react-jsonschema-form/pull/5296), which makes `Registry` and the `schema`/`uiSchema`/`registry` props read-only at compile time. Section 7 lays the remaining work out in parallel lanes; only PR 1a has landed.
+Status: proposed implementation contract for a breaking release. Merged on `v7`: PR 1a as [rjsf-team#5289](https://github.com/rjsf-team/react-jsonschema-form/pull/5289) (`getFormData()`, `FormHandle`, docs); [rjsf-team#5296](https://github.com/rjsf-team/react-jsonschema-form/pull/5296), which makes `Registry` and the `schema`/`uiSchema`/`registry` props read-only at compile time; lane C1 as [rjsf-team#5298](https://github.com/rjsf-team/react-jsonschema-form/pull/5298); and lane B as [rjsf-team#5300](https://github.com/rjsf-team/react-jsonschema-form/pull/5300). One prerequisite is still open and this document assumes it lands as proposed: [rjsf-team#5297](https://github.com/rjsf-team/react-jsonschema-form/pull/5297), rjsf-team#5217 part 2, which makes shallow comparison the only update gate and introduces `replaceEqualDeep` and the reference-stability contract this design builds on. Lane C2 is open as [rjsf-team#5299](https://github.com/rjsf-team/react-jsonschema-form/pull/5299) and merges after #5297. Section 7 lays the remaining work out in parallel lanes; lane A beyond A1 has not started.
 
 Review revision: 2026-09-18. This document supersedes earlier drafts. [The research review](form-state-api-research.md) supplies evidence and rationale. Ownership is inferred from `formData`, with no explicit mode prop. Controlled forms never generate or propose defaults; the parent seeds them with the exported schema utility. Lossless queued changes are part of this milestone. Controlled reset leaves data to the parent, with no data proposal. A controlled value mirror is not part of the design.
 
@@ -298,19 +298,19 @@ The letter is the lane, the number is the order within it. Only lane A's order i
 
 ### Lanes and gates
 
-| Lane                               | PRs, in order within the lane                                                                                                                     | Opens when                                                       |
-| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| **A: `Form.tsx`**, strictly serial | A1 rjsf-team#5297 (open) → A2 render-context extraction → A3 `applyChange` extraction and caches → A4 ownership switch with child rejection fixes | A2 after A1 merges; A3 after A2; A4 after gate 2                 |
-| **B: tests only**                  | B, one PR: parent harnesses and fixture classification                                                                                            | Now                                                              |
-| **C: types and fields**            | rjsf-team#5296 (open); C1 event type decoupling (PR 1b); C2 behavior-preserving child prep, one PR with one commit per field file                 | C1 now; C2 now, but merges only after its render-stability check |
-| **D: docs**                        | D1 remaining documentation and examples (PR 4)                                                                                                    | Drafted against the A4 branch; merges right after A4             |
+| Lane                               | PRs, in order within the lane                                                                                                                                      | Opens when                                            |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------- |
+| **A: `Form.tsx`**, strictly serial | A1 rjsf-team#5297 (open, awaiting review) → A2 render-context extraction → A3 `applyChange` extraction and caches → A4 ownership switch with child rejection fixes | A2 after A1 merges; A3 after A2; A4 after gate 2      |
+| **B: tests only**                  | B, one PR: parent harnesses and fixture classification (merged, rjsf-team#5300)                                                                                    | Done                                                  |
+| **C: types and fields**            | rjsf-team#5296 (merged); C1 event type decoupling (PR 1b, merged as rjsf-team#5298); C2 behavior-preserving child prep (open, rjsf-team#5299)                      | C2 merges after #5297, for its render-stability check |
+| **D: docs**                        | D1 remaining documentation and examples (PR 4)                                                                                                                     | Drafted against the A4 branch; merges right after A4  |
 
 Two gates, not four:
 
-1. **Gate 1:** rjsf-team#5297 merged, before A2 opens. A2 moves code that #5297 introduces.
-2. **Gate 2:** A3, B, C1 and C2 merged, before A4 opens. A4's exit condition needs the harnesses and the classified fixtures to exist, and it must not carry a rebase over an open field PR.
+1. **Gate 1:** rjsf-team#5297 merged, before A2 opens. A2 moves code that #5297 introduces. **Open.** It is the only thing standing between the current state and A2, so it is the whole critical path today.
+2. **Gate 2:** A3, B, C1 and C2 merged, before A4 opens. A4's exit condition needs the harnesses and the classified fixtures to exist, and it must not carry a rebase over an open field PR. B and C1 are merged; C2 is open behind gate 1 and A3 has not started.
 
-The critical path is lane A and its length does not change; what changes is that lanes B and C are under review while lane A waits on rjsf-team#5297, instead of queuing behind it.
+The critical path is lane A and its length does not change; lanes B and C ran alongside A1 and are all but finished, which is what that layout bought.
 
 ### File ownership, to keep the lanes conflict-free
 
@@ -331,18 +331,18 @@ The critical path is lane A and its length does not change; what changes is that
 
 The inventory found no `.state.formData` reads outside `Form.tsx`; tests read `state.errorSchema`, `state.errors`, and `state.schemaUtils`, which section 3.6 allows to remain. Nothing was migrated because nothing needed it. No mode inference, diagnostics, reset change, or reconciliation removal is included.
 
-### C1, PR 1b: Event type decoupling (open now)
+### C1, PR 1b: Event type decoupling (merged, rjsf-team#5298)
 
 `IChangeEvent` is today `Pick<FormState, 'schema' | 'uiSchema' | 'schemaUtils' | 'formData' | 'edit' | 'errors' | 'errorSchema'>` plus `status`. A4 removes controlled `state.formData` and A2/A3 reshape the rest of `FormState`, so the event has to stop being a view of the state before either can move. #5280 rewrote that line and has merged. rjsf-team#5297 changes the `toIChangeEvent` call sites but not the declaration, so this PR does not wait for it; its only overlap with anything in flight is the migration guide, where both append.
 
 1. Move the `IChangeEvent` declaration out of `Form.tsx` into `packages/core/src/components/IChangeEvent.ts`, with `Form.tsx` importing the type and `index.ts` exporting it from the new file, so that this PR's footprint in `Form.tsx` is a deleted declaration and one import line, away from everything lane A rewrites. Declare it as its own interface with the same seven members and the same types they have through the `Pick` today: `schema: S`, `uiSchema: UiSchema<T, S, F>`, `schemaUtils: SchemaUtilsType<T, S, F>`, `formData?: T`, `edit: boolean`, `errors: RJSFValidationError[]`, `errorSchema: ErrorSchema<T>`, and `status?: 'submitted'`. Mark every member `readonly`, following rjsf-team#5296: readonly modifiers do not affect assignability, so no consumer that reads the event changes, only one that reassigns `event.formData =`, and it gives the immutability contract from rjsf-team#5297 its compile-time half. The modifier is shallow, so the development freeze in section 3.1 still covers mutation inside `formData`.
 2. `toIChangeEvent(state, status?)` stays the only place an event is built, so `FormState` can change shape freely as long as that one function still compiles. It stays in `Form.tsx`; only the type moves.
-3. `expectTypeOf` coverage next to the existing handle tests: each member of the new interface is mutually assignable with the corresponding `FormState` member today, so the decoupling is provably type-identical at the moment it lands, and `IChangeEvent` no longer extends `FormState` or any `Pick` of it.
+3. `expectTypeOf` coverage next to the existing handle tests: each member of the new interface is mutually assignable with the corresponding `FormState` member today, so the decoupling is provably type-identical at the moment it lands. A direct "`IChangeEvent` no longer extends `FormState`" assertion was tried and dropped in review: it is vacuous, because the `Pick`-derived type never extended `FormState` either. A revert to a mutable `Pick` is caught by the readonly assertions instead.
 4. One migration-guide line under its own sub-heading: event members are read-only; assign the event's `formData` to your own state, do not assign into the event.
 
 Nothing else. No `edit` redefinition, no new members, no runtime change. Exit: `IChangeEvent` compiles independently of `FormState`, and the type tests pin the equivalence.
 
-### B: Parent harnesses and fixture classification (open now, one PR)
+### B: Parent harnesses and fixture classification (merged, rjsf-team#5300)
 
 Two commits, because the second is written with the first in hand and is reviewed with the same question in mind: does this fixture describe an accepting parent, a seeded form, or a deliberately fixed value?
 
@@ -351,13 +351,13 @@ Two commits, because the second is written with the first in hand and is reviewe
 
 Exit: the three harnesses exist, are typed, and pass against today's behavior; every fixture is classified in a short table in the PR description; the migrated ones pass unchanged; the ones left for A4 are listed.
 
-### C2: Behavior-preserving child prep (open now, one PR, one commit per file)
+### C2: Behavior-preserving child prep (open, rjsf-team#5299, one commit per file)
 
 The targeted changes in `ArrayField.tsx`, `MultiSchemaField.tsx` and `ObjectField.tsx` that can preserve current behavior: removing optimistic local values that the current-props read makes redundant, and making path propagation explicit. One commit per file so each subsystem is reviewed on its own, one PR because all three are judged by the same criterion. Defer any fix that depends on rejection semantics to A4; a PR here must not display or hide a rejected value differently from today.
 
 `renderStability.test.tsx` arrives with rjsf-team#5297, so on `v7` this PR cannot run the gate it must keep. Before merging, rebase the branch onto the #5297 head locally and run that file; merge only after it passes, which in practice means after #5297 has merged. Exit: snapshot suites unchanged; render-stability counts at zero against #5297.
 
-### A2: Render-context extraction (after gate 1)
+### A2: Render-context extraction (blocked on gate 1)
 
 Extract pure render-context derivation out of `getStateFromProps`: schema utilities, registry, field paths and resolved schema as a function of current props and data, with no `this.props`/`this.state` reads. Move the `IDENTITY_PROP_KEYS` gate and the derived-state `replaceEqualDeep` pass from `getSnapshotBeforeUpdate` into it, and add the reference-keyed last-call caches section 4 describes for the registry and the retrieved schema. rjsf-team#5296 means the step returns a fresh `Registry` rather than patching one. No change to domain algorithms, callback timing, reset behavior or ownership. Exit: existing behavior passes; `getStateFromProps` no longer derives render context itself.
 
@@ -495,7 +495,7 @@ Inspect default and wrapped themes with controlled text, uncontrolled reset, dep
 - [ ] All changed expectations map to section 8; deferred API tests/features are absent.
 - [x] Additive handle/getter/types landed first (PR 1a, rjsf-team#5289); legacy refs work and the deprecation is documented.
 - [ ] Gate 1: rjsf-team#5297 merged before the render-context extraction (A2) opened.
-- [ ] Gate 2: A3, the tests PR (B), the event type (C1) and the child prep (C2) merged before the ownership switch (A4) opened.
+- [ ] Gate 2: A3, the tests PR (B, merged as rjsf-team#5300), the event type (C1, merged as rjsf-team#5298) and the child prep (C2, open as rjsf-team#5299) merged before the ownership switch (A4) opened.
 - [ ] Exactly one `Form.tsx` PR was in flight at any time; the section 7 file ownership table was respected.
 - [ ] Class remains; retained lifecycle/state/queue uses have explicit purposes.
 
