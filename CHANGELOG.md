@@ -18,6 +18,12 @@ should change the heading of the (upcoming) version to include a major version b
 
 # 6.10.2
 
+## @rjsf/core
+
+- Fixed `liveValidate: 'onBlur'` validating whenever the form derived state from new props, rather than only when a field was left, so replacing the form data from outside showed the errors before any blur
+- Fixed live validation dropping every `extraErrors` entry when the form derived state from new props, so a server-supplied error disappeared as soon as a controlled parent replaced the form data
+- Fixed `extraErrors` and `customErrors` being merged into the errors a second time whenever the form derived state from new props under live validation without re-validating, so a re-render changing only `className` duplicated every server-supplied error, the duplication half of [#4408](https://github.com/rjsf-team/react-jsonschema-form/issues/4408) (the clearing half was fixed by `getDerivedStateFromProps` in v6)
+
 ## @rjsf/validator-ata
 
 - Updated `ata-validator` from `^1.7.1` to `^1.23.0`, picking up the corrected error shape for `unevaluatedProperties` (the error now carries `params.unevaluatedProperty`), the removal of a quadratic in `additionalProperties: false` schemas with many properties, a fix for a hang on truncated JSON input, and enforced strict-mode schema checks ([#5293](https://github.com/rjsf-team/react-jsonschema-form/pull/5293))
