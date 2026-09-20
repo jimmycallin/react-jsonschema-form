@@ -188,7 +188,7 @@ const mockFileReader = {
 } as unknown as FileReader;
 
 describe('ArrayField', () => {
-  const CustomComponent = (props: WidgetProps) => <div id='custom'>{props.rawErrors}</div>;
+  const CustomComponent = (props: Pick<WidgetProps, 'rawErrors'>) => <div id='custom'>{props.rawErrors}</div>;
 
   const CustomSelectComponent = (props: WidgetProps) => (
     <select>
@@ -1694,7 +1694,7 @@ describe('ArrayField', () => {
     });
 
     it('should pass rawErrors down to every level of custom widgets', async () => {
-      const CustomItem = (props: FieldProps) => <div id='custom-item'>{props.children}</div>;
+      const CustomItem = (props: ArrayFieldItemTemplateProps) => <div id='custom-item'>{props.children}</div>;
       const CustomTemplate = (props: ArrayFieldTemplateProps) => (
         <div id='custom'>
           {props.items}

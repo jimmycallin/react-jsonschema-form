@@ -1,6 +1,7 @@
 import { CONST_KEY, DEFAULT_KEY, GUESSED_TYPE_FLAG, PROPERTIES_KEY } from '../constants.ts';
 import deepEquals from '../deepEquals.ts';
 import getPropertySchema from '../getPropertySchema.ts';
+import isObject from '../isObject.ts';
 import { getByPath, hasByPath } from '../pathUtils.ts';
 import type {
   CustomMergeAllOf,
@@ -93,7 +94,7 @@ function replacementForInvalidEnumValue<S extends StrictRJSFSchema = RJSFSchema>
  * @param rootSchema - The root JSON schema of the entire form
  * @param [newSchema] - The new schema for which the data is being sanitized
  * @param [oldSchema] - The old schema from which the data originated
- * @param [data={}] - The form data associated with the schema, defaulting to an empty object when undefined
+ * @param [data] - The form data associated with the schema
  * @param [customMergeAllOf] - Optional function that allows for custom merging of `allOf` schemas
  * @returns - The new form data, with all the fields uniquely associated with the old schema set
  *      to `undefined`. Will return `undefined` if the new schema is not an object containing properties.
@@ -107,7 +108,7 @@ export default function sanitizeDataForNewSchema<
   rootSchema: S,
   newSchema?: S,
   oldSchema?: S,
-  data: any = {},
+  data?: T,
   customMergeAllOf?: CustomMergeAllOf<S>,
 ): T {
   // By default, we will clear the form data
@@ -129,7 +130,7 @@ export default function sanitizeDataForNewSchema<
     // Create a place to store nested data that will be a side-effect of the filter
     const nestedData: GenericObjectType = {};
     keys.forEach((key) => {
-      const formValue = data?.[key];
+      const formValue = getByPath<T | undefined>(data, key);
       const isNewProperty = !hasByPath(oldSchema, [PROPERTIES_KEY, key]);
       const oldRawKeyedSchema = getPropertySchema<S>(oldSchema, key);
       const newRawKeyedSchema = getPropertySchema<S>(newSchema, key);
@@ -210,7 +211,7 @@ export default function sanitizeDataForNewSchema<
     });
 
     newFormData = {
-      ...(typeof data === 'string' || Array.isArray(data) ? undefined : data),
+      ...(isObject(data) ? data : undefined),
       ...removeOldSchemaData,
       ...nestedData,
     };
@@ -232,11 +233,11 @@ export default function sanitizeDataForNewSchema<
       const newSchemaItemsRaw = newSchemaItems as S;
       // Resolve refs, dependencies, if/then/else and allOf, not just a direct `$ref`, so the type check below
       // reflects an items schema whose object type is only reachable through one of those keywords (#5250)
-      oldSchemaItems = retrieveSchema<T, S, F>(validator, oldSchemaItemsRaw, rootSchema, data as T, customMergeAllOf);
+      oldSchemaItems = retrieveSchema<T, S, F>(validator, oldSchemaItemsRaw, rootSchema, data, customMergeAllOf);
       // The old and new raw items schema are usually identical, so skip resolving a second time in that common case
       newSchemaItems = deepEquals(oldSchemaItemsRaw, newSchemaItemsRaw)
         ? oldSchemaItems
-        : retrieveSchema<T, S, F>(validator, newSchemaItemsRaw, rootSchema, data as T, customMergeAllOf);
+        : retrieveSchema<T, S, F>(validator, newSchemaItemsRaw, rootSchema, data, customMergeAllOf);
       // Now get types and see if they are the same
       const oldSchemaType = getByPath(oldSchemaItems, 'type');
       const newSchemaType = getByPath(newSchemaItems, 'type');
