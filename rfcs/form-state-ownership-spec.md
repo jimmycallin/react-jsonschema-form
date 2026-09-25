@@ -1,8 +1,8 @@
 # Form data ownership: specification and implementation plan
 
-Status: proposed implementation contract for a breaking release. Merged on `v7`: PR 1a as [rjsf-team#5289](https://github.com/rjsf-team/react-jsonschema-form/pull/5289) (`getFormData()`, `FormHandle`, docs); [rjsf-team#5296](https://github.com/rjsf-team/react-jsonschema-form/pull/5296), which makes `Registry` and the `schema`/`uiSchema`/`registry` props read-only at compile time; lane C1 as [rjsf-team#5298](https://github.com/rjsf-team/react-jsonschema-form/pull/5298); and lane B as [rjsf-team#5300](https://github.com/rjsf-team/react-jsonschema-form/pull/5300). [rjsf-team#5297](https://github.com/rjsf-team/react-jsonschema-form/pull/5297), rjsf-team#5217 part 2, which makes shallow comparison the only update gate and introduces `replaceEqualDeep` and the reference-stability contract this design builds on, has also merged as lane A1; and lane C2 as [rjsf-team#5299](https://github.com/rjsf-team/react-jsonschema-form/pull/5299). Every lane outside `Form.tsx` is therefore finished and both prerequisites of the critical path are in. What remains is lane A alone: the render-context extraction (A2) and the `applyChange` extraction (A3), together as PR 2 and open for review as [jimmycallin#67](https://github.com/jimmycallin/react-jsonschema-form/pull/67), then the ownership switch (A4) together with the documentation (D1) as PR 3, open as [jimmycallin#69](https://github.com/jimmycallin/react-jsonschema-form/pull/69) stacked on #67, one PR in flight at a time. Section 9.1 now holds the design of the function-component conversion that follows, settled while building A4. Ahead of the function-component conversion (section 9), [rjsf-team#5310](https://github.com/rjsf-team/react-jsonschema-form/pull/5310) moves the `Form` tests off `formRef.current.state` and onto the DOM and callbacks; it is test-only and independent of lane A.
+Status: implemented on `v7`; the first milestone (sections 1–8) is complete. Merged in lane order: PR 1a as [rjsf-team#5289](https://github.com/rjsf-team/react-jsonschema-form/pull/5289) (`getFormData()`, `FormHandle`, docs); [rjsf-team#5296](https://github.com/rjsf-team/react-jsonschema-form/pull/5296), which makes `Registry` and the `schema`/`uiSchema`/`registry` props read-only at compile time; lane C1 as [rjsf-team#5298](https://github.com/rjsf-team/react-jsonschema-form/pull/5298); lane B as [rjsf-team#5300](https://github.com/rjsf-team/react-jsonschema-form/pull/5300); lane A1 as [rjsf-team#5297](https://github.com/rjsf-team/react-jsonschema-form/pull/5297), rjsf-team#5217 part 2, which makes shallow comparison the only update gate and introduces `replaceEqualDeep` and the reference-stability contract this design builds on; lane C2 as [rjsf-team#5299](https://github.com/rjsf-team/react-jsonschema-form/pull/5299); A2 and A3 together as PR 2, [rjsf-team#5312](https://github.com/rjsf-team/react-jsonschema-form/pull/5312) (2026-09-24); and A4 with D1 as PR 3, [rjsf-team#5339](https://github.com/rjsf-team/react-jsonschema-form/pull/5339) (2026-09-25). [rjsf-team#5310](https://github.com/rjsf-team/react-jsonschema-form/pull/5310) moved the `Form` tests off `formRef.current.state` and onto the DOM and callbacks ahead of the function-component conversion. What remains is section 9: the two-PR function-component conversion designed in section 9.1, tracked as its own milestone, and the independent follow-ups in the section 9 table.
 
-Review revision: 2026-09-21. This document supersedes earlier drafts. [The research review](form-state-api-research.md) supplies evidence and rationale. Ownership is inferred from `formData`, with no explicit mode prop. Controlled forms never generate or propose defaults; the parent seeds them with the exported schema utility. Lossless queued changes are part of this milestone. Controlled reset leaves data to the parent, with no data proposal. A controlled value mirror is not part of the design.
+Review revision: 2026-09-25. This document supersedes earlier drafts. [The research review](form-state-api-research.md) supplies evidence and rationale. Ownership is inferred from `formData`, with no explicit mode prop. Controlled forms never generate or propose defaults; the parent seeds them with the exported schema utility. Lossless queued changes are part of this milestone. Controlled reset leaves data to the parent, with no data proposal. A controlled value mirror is not part of the design.
 
 **Migration headline: rename `formData` to `initialFormData` for an editable seeded form unless an `onChange` handler accepts updates into the supplied value.** A logging-only handler is not acceptance. Intentionally fixed/read-only controlled forms keep `formData`. Put this guidance first in release notes and the migration guide.
 
@@ -127,16 +127,16 @@ An unrelated prop update must not rerun value initialization. For schema/default
 
 Retain `onChange(event, id?)`, `onSubmit`, `onError`, `onBlur`, and `onFocus` signatures and existing event fields. Do not add `onValidationChange` yet.
 
-| Cause                                                 | Milestone notification rule                                                                                                                                   |
-| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| User edit or `setFieldValue`                          | One proposal per operation in controlled mode; one committed result per operation in uncontrolled mode.                                                       |
-| Parent accepts/transforms/replaces controlled data    | No data-echo `onChange`.                                                                                                                                      |
-| Controlled mount                                      | No notification. Defaults are seeded by the parent; see section 8.                                                                                            |
-| Controlled schema/default-context change              | No notification. Render context re-derives; data is untouched.                                                                                                |
-| Uncontrolled mount adds defaults to the supplied seed | No notification (decided 2026-09-21; earlier revisions preserved it post-mount). The form owns the data; a parent that wants the defaulted value reads `getFormData()`.  |
-| Blur validation/omission                              | Preserve existing change-notification conditions, including error-only changes. Controlled omission is a proposal; validation-only events carry current data. |
-| Explicit reset                                        | Uncontrolled reset keeps its existing notification. Controlled reset emits no `onChange`.                                                                     |
-| Uncontrolled schema/default transition changes data   | No notification (decided 2026-09-21). The data is transformed and rendered; `getFormData()` reads it, and the next edit's `onChange` carries it.                       |
+| Cause                                                 | Milestone notification rule                                                                                                                                             |
+| ----------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| User edit or `setFieldValue`                          | One proposal per operation in controlled mode; one committed result per operation in uncontrolled mode.                                                                 |
+| Parent accepts/transforms/replaces controlled data    | No data-echo `onChange`.                                                                                                                                                |
+| Controlled mount                                      | No notification. Defaults are seeded by the parent; see section 8.                                                                                                      |
+| Controlled schema/default-context change              | No notification. Render context re-derives; data is untouched.                                                                                                          |
+| Uncontrolled mount adds defaults to the supplied seed | No notification (decided 2026-09-21; earlier revisions preserved it post-mount). The form owns the data; a parent that wants the defaulted value reads `getFormData()`. |
+| Blur validation/omission                              | Preserve existing change-notification conditions, including error-only changes. Controlled omission is a proposal; validation-only events carry current data.           |
+| Explicit reset                                        | Uncontrolled reset keeps its existing notification. Controlled reset emits no `onChange`.                                                                               |
+| Uncontrolled schema/default transition changes data   | No notification (decided 2026-09-21). The data is transformed and rendered; `getFormData()` reads it, and the next edit's `onChange` carries it.                        |
 
 The retained `onChange` is not yet a data-only event. Document that it can report validation-only changes. When a parent echoes the same value from such an event, do not create a second notification. Uncontrolled default generation that leaves the seed unchanged emits no mount notification.
 
@@ -276,14 +276,14 @@ These are coverage requirements, not 18 more mandatory new test cases. Map them 
 
 PR 3 extends the file with the cases single ownership makes well defined. Each asserts its baseline count exists first, so a renamed id cannot pass vacuously:
 
-| Scenario                                     | Expected renders                                                                                                                                           |
-| -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Rejected controlled proposal                 | Only the proposing field's branch; the rejected value is not visible anywhere, and siblings are untouched.                                                 |
-| Transforming parent                          | Only the field whose value the parent transformed.                                                                                                         |
-| `extraErrors` replaced                       | Only the fields whose errors changed; a deep-equal replacement re-renders none.                                                                            |
-| oneOf/anyOf option switch                    | Nothing outside the switched branch.                                                                                                                       |
-| Array add, remove and reorder                | Items whose data and position are unchanged keep their count; with row keys retained, adding at the end re-renders no existing item.                       |
-| Controlled reset                             | Only the fields whose errors cleared; data fields with no error keep their count, since the reset leaves data to the parent.                               |
+| Scenario                                     | Expected renders                                                                                                                                                                                                                                                                           |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Rejected controlled proposal                 | Only the proposing field's branch; the rejected value is not visible anywhere, and siblings are untouched.                                                                                                                                                                                 |
+| Transforming parent                          | Only the field whose value the parent transformed.                                                                                                                                                                                                                                         |
+| `extraErrors` replaced                       | Only the fields whose errors changed; a deep-equal replacement re-renders none.                                                                                                                                                                                                            |
+| oneOf/anyOf option switch                    | Nothing outside the switched branch.                                                                                                                                                                                                                                                       |
+| Array add, remove and reorder                | Items whose data and position are unchanged keep their count; with row keys retained, adding at the end re-renders no existing item.                                                                                                                                                       |
+| Controlled reset                             | Only the fields whose errors cleared; data fields with no error keep their count, since the reset leaves data to the parent.                                                                                                                                                               |
 | Uncontrolled schema or default option change | Not asserted, because it does not hold: any such change rebuilds the schema utilities, so the `registry` every field receives is a new object and every field re-renders. Keeping the count would need the registry shared at the utilities level, which is not this milestone's business. |
 
 The old numbered acceptance matrices are superseded by these six contract tests and the regression coverage map. Do not duplicate established tests solely to satisfy an ID, add skipped deferred-API tests, or drop regression coverage because it is no longer separately numbered.
@@ -298,19 +298,19 @@ The letter is the lane, the number is the order within it. Only lane A's order i
 
 ### Lanes and gates
 
-| Lane                               | PRs, in order within the lane                                                                                                                       | Opens when                                           |
-| ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
-| **A: `Form.tsx`**, strictly serial | A1 rjsf-team#5297 (merged) → A2 render-context extraction → A3 `applyChange` extraction → A4 ownership switch with child rejection fixes | A2 + A3 in review as PR 2 (jimmycallin#67); A4 with D1 as PR 3 (jimmycallin#69, stacked on #67) |
-| **B: tests only**                  | B, one PR: parent harnesses and fixture classification (merged, rjsf-team#5300)                                                                     | Done                                                 |
-| **C: types and fields**            | rjsf-team#5296 (merged); C1 event type decoupling (PR 1b, merged as rjsf-team#5298); C2 behavior-preserving child prep (merged, rjsf-team#5299)     | Done                                                 |
-| **D: docs**                        | D1 remaining documentation and examples                                                                                                             | A commit of PR 3: nobody waits on the switch without its docs, and `v7` must not carry an undocumented break between two merges |
+| Lane                               | PRs, in order within the lane                                                                                                                   | Opens when                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| **A: `Form.tsx`**, strictly serial | A1 rjsf-team#5297 (merged) → A2 render-context extraction → A3 `applyChange` extraction → A4 ownership switch with child rejection fixes        | Done: A2 + A3 as PR 2 (rjsf-team#5312); A4 with D1 as PR 3 (rjsf-team#5339)                                                     |
+| **B: tests only**                  | B, one PR: parent harnesses and fixture classification (merged, rjsf-team#5300)                                                                 | Done                                                                                                                            |
+| **C: types and fields**            | rjsf-team#5296 (merged); C1 event type decoupling (PR 1b, merged as rjsf-team#5298); C2 behavior-preserving child prep (merged, rjsf-team#5299) | Done                                                                                                                            |
+| **D: docs**                        | D1 remaining documentation and examples                                                                                                         | A commit of PR 3: nobody waits on the switch without its docs, and `v7` must not carry an undocumented break between two merges |
 
 Two gates, not four:
 
-1. **Gate 1:** rjsf-team#5297 merged, before A2 opens. A2 moves code that #5297 introduces. **Cleared** (merged 2026-09-20). A2 is open work today.
-2. **Gate 2:** A3, B, C1 and C2 merged, before A4 opens. A4's exit condition needs the harnesses and the classified fixtures to exist, and it must not carry a rebase over an open field PR. B, C1 and C2 are merged, so A3 — and therefore A2 before it — is all that is left of this gate.
+1. **Gate 1:** rjsf-team#5297 merged, before A2 opens. A2 moves code that #5297 introduces. **Cleared** (merged 2026-09-20).
+2. **Gate 2:** A3, B, C1 and C2 merged, before A4 opens. A4's exit condition needs the harnesses and the classified fixtures to exist, and it must not carry a rebase over an open field PR. **Cleared**: PR 2 (A2 + A3) merged as rjsf-team#5312 on 2026-09-24, and A4 opened after it.
 
-The critical path is lane A and its length does not change; lanes B and C ran alongside A1 and are finished, which is what that layout bought. Nothing outside `Form.tsx` is now available to parallelise against it: A2 and A3 are the whole remaining plan up to the switch, and since nobody is waiting on A2 by itself, the rule above allows them to be one PR — PR 2, one commit for the render-context extraction and one for `applyChange` — rather than two serial reviews of the same function. It is open as jimmycallin#67. By the same rule A4 and D1 are one PR, jimmycallin#69: the docs are drafted against the switch anyway, nobody needs the switch merged without them, and `v7` would otherwise carry the `initialFormData` rename undocumented between two merges. The section 7 headings below keep their lane names; "PR 3" and "PR 4" elsewhere in this document both mean #69.
+The critical path is lane A and its length does not change; lanes B and C ran alongside A1 and are finished, which is what that layout bought. Nothing outside `Form.tsx` is now available to parallelise against it: A2 and A3 are the whole remaining plan up to the switch, and since nobody is waiting on A2 by itself, the rule above allows them to be one PR — PR 2, one commit for the render-context extraction and one for `applyChange` — rather than two serial reviews of the same function. It merged as rjsf-team#5312. By the same rule A4 and D1 are one PR, rjsf-team#5339: the docs are drafted against the switch anyway, nobody needs the switch merged without them, and `v7` would otherwise carry the `initialFormData` rename undocumented between two merges. The section 7 headings below keep their lane names; "PR 3" and "PR 4" elsewhere in this document both mean rjsf-team#5339.
 
 ### File ownership, to keep the lanes conflict-free
 
@@ -362,15 +362,15 @@ The other two were deliberately left alone, which is the behavior-preserving ans
 
 Path propagation needed nothing: every handler in all three files already passes its `fieldPath` to `onChange` explicitly.
 
-### A2: Render-context extraction (in review, PR 2)
+### A2: Render-context extraction (merged in PR 2, rjsf-team#5312)
 
 Extract pure render-context derivation out of `getStateFromProps`: schema utilities, registry, field paths and resolved schema as a function of current props and data, with no `this.props`/`this.state` reads. Move the derived-state `replaceEqualDeep` pass from `getSnapshotBeforeUpdate` into it; the `IDENTITY_PROP_KEYS` gate stays in the reconciler, which is the only thing that still needs a "did anything change" answer, and goes with it. rjsf-team#5296 means the step returns a fresh `Registry` rather than patching one. No change to domain algorithms, callback timing, reset behavior or ownership. Exit: existing behavior passes; `getStateFromProps` no longer derives render context itself.
 
-### A3: `applyChange` extraction (in review, PR 2)
+### A3: `applyChange` extraction (merged in PR 2, rjsf-team#5312)
 
 Extract shared edit processing and initialization into `applyChange(current, change, context)` as section 4 describes, ending in `replaceEqualDeep(current, next)`, with `setSharedState` becoming its commit. The function may not mutate its inputs, so the custom-error builder is copied before it is edited; the one visible consequence is that clearing a custom error also clears it from the error list, which the in-place edit had left stale. `reset`, blur, submit and submit-time validation get the same shape (`applyReset`, `applyBlur`, `applySubmit`, `applyValidation`), so every handler is commit-plus-callback around a pure function, which is what a hook body is; the function-component conversion (section 9) then reroutes handlers rather than re-deriving them. Preserve useful queue behavior. The mode resolver planned here in an earlier revision was dropped: it is `props.formData !== undefined`, one line with no consumer until A4, so it lands there with its unit tests. Exit: existing behavior passes and the A4 diff is a removal of the reconciler plus the switch, not a refactor.
 
-### A4, PR 3: Atomic ownership switch and necessary child fixes (open with D1 as jimmycallin#69)
+### A4, PR 3: Atomic ownership switch and necessary child fixes (merged with D1 as rjsf-team#5339)
 
 1. Add the mode resolver (`props.formData !== undefined`, selected once at construction) with unit tests for the section 3.1 table, activate frozen ownership, and add the four development diagnostics. These belong with the behavior they describe.
 2. Route render, getter, edits, reset, blur, submit, and validation through authoritative data. Preserve the operation queue and controlled commit checkpoints.
@@ -381,9 +381,9 @@ Extract shared edit processing and initialization into `applyChange(current, cha
 
 Exit: strict ownership works end to end while the class remains. Getter/handle/type additions and most mechanical fixture edits have already been reviewed. The ownership switch and inseparable rejection fixes remain atomic; splitting them into independently broken releases is not a review improvement.
 
-**As built (jimmycallin#69).** The reconciler in `getSnapshotBeforeUpdate`/`componentDidUpdate` is gone. `getDerivedStateFromProps` derives before every render, one derivation per owner (`deriveControlledState`, `deriveOwnedState`) around a shared `reconcileErrors()`, and shares the result against the committed state with `replaceEqualDeep`; that sharing is also the change detection, since a member is a new reference exactly when an input it is built from changed. The state therefore remembers nothing about the past: no previous props, no record of the last proposal, no pending notification. The two validation callbacks joined the render context as `validationProps` so their identity can be compared like everything else. The ownership decision is the one thing stored once (`state.isControlled`), per section 3.1. An accepted keystroke under `liveValidate: 'onChange'` is validated twice, once for the event and once for the display, and the display uses the schema resolved for the data whenever the utilities are unchanged, exactly as the edit did, so the two agree; a cache keyed by the data's identity can remove the second validation if it is ever measured (section 9.1 makes it a single-entry memo). Deriving after every commit surfaced one latent inconsistency, fixed there: a field replacing a validation error at its path through `onChange`'s `errorSchema` argument updated the displayed errors but not the validator's result they are re-merged from. The queue is a queue of operations (changes, `setFieldValue()`, resets) advanced from the commit callback in a `finally`, discarded on unmount. No lifecycle method calls `onChange`: the seed-defaults and schema-transition notifications of a self-owned form are gone (section 3.4), so `componentDidMount` is gone and `componentDidUpdate` carries only a development warning. `MultiSchemaField` puts the selector back on the option the data fits when a switch is declined, keeping a choice the data still fits; `ObjectField` renders additional properties that are in the data but not in its order, which covers a declined rename and a parent-supplied property alike. `ArrayField` needed nothing.
+**As built (rjsf-team#5339).** The reconciler in `getSnapshotBeforeUpdate`/`componentDidUpdate` is gone. `getDerivedStateFromProps` derives before every render, one derivation per owner (`deriveControlledState`, `deriveOwnedState`) around a shared `reconcileErrors()`, and shares the result against the committed state with `replaceEqualDeep`; that sharing is also the change detection, since a member is a new reference exactly when an input it is built from changed. The state therefore remembers nothing about the past: no previous props, no record of the last proposal, no pending notification. The two validation callbacks joined the render context as `validationProps` so their identity can be compared like everything else. The ownership decision is the one thing stored once (`state.isControlled`), per section 3.1. An accepted keystroke under `liveValidate: 'onChange'` is validated twice, once for the event and once for the display, and the display uses the schema resolved for the data whenever the utilities are unchanged, exactly as the edit did, so the two agree; a cache keyed by the data's identity can remove the second validation if it is ever measured (section 9.1 makes it a single-entry memo). Deriving after every commit surfaced one latent inconsistency, fixed there: a field replacing a validation error at its path through `onChange`'s `errorSchema` argument updated the displayed errors but not the validator's result they are re-merged from. The queue is a queue of operations (changes, `setFieldValue()`, resets) advanced from the commit callback in a `finally`, discarded on unmount. No lifecycle method calls `onChange`: the seed-defaults and schema-transition notifications of a self-owned form are gone (section 3.4), so `componentDidMount` is gone and `componentDidUpdate` carries only a development warning. `MultiSchemaField` puts the selector back on the option the data fits when a switch is declined, keeping a choice the data still fits; `ObjectField` renders additional properties that are in the data but not in its order, which covers a declined rename and a parent-supplied property alike. `ArrayField` needed nothing. Three further decisions were made in review and are documented in the upgrade guide and `CHANGELOG-v7.md`. `edit` is removed from `IChangeEvent`, departing from section 3.6's "retain where possible": with ownership frozen at mount it only restated the props passed to the form. A defined `null` at mount is controlled, per section 3.1, which differs from `<input value={null}>`, and the upgrade guide says so. A throwing `onChange`, `onSubmit`, `onError` or `customValidate` no longer unmounts the form or stalls the queue: the queue advances per operation, and an exception raised inside a commit callback is rethrown from a timer, outside React's commit phase.
 
-### D1, PR 4: Remaining documentation and examples (a commit of jimmycallin#69)
+### D1, PR 4: Remaining documentation and examples (a commit of rjsf-team#5339)
 
 Can be commits in A4 if needed for a self-contained release. Must land before release.
 
@@ -415,20 +415,9 @@ Do not remove blur error notifications, change uncontrolled reset baselines, cha
 <Form schema={schema} validator={validator} initialFormData={record} />;
 
 // Controlled form: parent owns the value, including its defaults, and accepts proposals.
-const schemaUtils = createSchemaUtils(
-  validator,
-  schema,
-  experimental_defaultFormStateBehavior,
-);
-const [data, setData] = useState(() =>
-  schemaUtils.getDefaultFormState(schema, record),
-);
-<Form
-  schema={schema}
-  validator={validator}
-  formData={data}
-  onChange={(event) => setData(event.formData)}
-/>;
+const schemaUtils = createSchemaUtils(validator, schema, experimental_defaultFormStateBehavior);
+const [data, setData] = useState(() => schemaUtils.getDefaultFormState(schema, record));
+<Form schema={schema} validator={validator} formData={data} onChange={(event) => setData(event.formData)} />;
 ```
 
 A controlled parent that wants schema defaults computes them once with `createSchemaUtils(...).getDefaultFormState(schema, seed)`, passing the same default-configuration options it passes to `<Form>`. That is two lines and the only added migration step for controlled forms. It also fixes first-render and server output, which a post-mount proposal never could. A parent that changes the schema recomputes if it wants new defaults; the form does not do it on the parent's behalf. Uncontrolled forms are unchanged: `initialFormData` is seeded internally exactly as today.
@@ -440,12 +429,7 @@ A record that arrives after mount is the one case an explicit mode prop would ha
 ```tsx
 // Broken: mounts uncontrolled while `record` is undefined, then the arriving
 // record is ignored and the mode-change warning fires.
-<Form
-  schema={schema}
-  validator={validator}
-  formData={record}
-  onChange={onChange}
-/>
+<Form schema={schema} validator={validator} formData={record} onChange={onChange} />
 ```
 
 **Pattern 1, mount after the data arrives. Recommend this one.** Keying by record identity makes switching records an explicit remount rather than a silent re-seed.
@@ -454,26 +438,13 @@ A record that arrives after mount is the one case an explicit mode prop would ha
 if (!record) {
   return <Spinner />;
 }
-return (
-  <Form
-    key={recordId}
-    schema={schema}
-    validator={validator}
-    formData={record}
-    onChange={onChange}
-  />
-);
+return <Form key={recordId} schema={schema} validator={validator} formData={record} onChange={onChange} />;
 ```
 
 **Pattern 2, mount immediately with a complete fallback value.** This is React's documented `value={someValue ?? ''}` rule applied to a JSON root: supply the empty model for the root type, `{}` for an object, `[]` for an array, `''` for a string.
 
 ```tsx
-<Form
-  schema={schema}
-  validator={validator}
-  formData={record ?? {}}
-  onChange={onChange}
-/>
+<Form schema={schema} validator={validator} formData={record ?? {}} onChange={onChange} />
 ```
 
 Pattern 2 renders an editable empty form while loading, so an edit made in that window races the arriving record. Prefer pattern 1 whenever the form is editable before data lands.
@@ -484,15 +455,15 @@ For controlled multi-field edits, prefer one parent functional update or an exis
 
 ## 9. Deferred work, with separate decision gates
 
-| Follow-up                        | Required decision before implementation                                                                                                                                                                                |
-| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Default-policy simplification    | Define exactly when new branch/path defaults are inserted, which cleared values survive, and how cycles are handled. Then replace edit-time workarounds with domain tests.                                             |
-| Reset ergonomics                 | Controlled reset is errors-only now. Any later baseline, saved-record, or schema-default reset API needs a concrete use case and a separately reviewed contract.                                                       |
-| Data/validation event separation | Specify replacement observation before removing errors-only `onChange`; cover mount, blur, external errors, deduplication, and ordering.                                                                               |
-| Additional imperative methods    | Demonstrate a concrete use case that existing root replacement/getter cannot serve. Do not add methods solely for symmetry.                                                                                            |
-| Trimming `FormHandle`            | `validate` and `validateFormWithFormData` are stateless. Move them to utilities only in a later break, with a deprecation on the handle first.                                                                         |
-| Function-component conversion    | Designed in section 9.1, gated on #69 merging. Reuse the unchanged behavioral tests and `FormHandle`. Change the ref prop to `Ref<FormHandle>` here; consumers already narrowed to the handle need no change. No prop-copy effects. |
-| Hook-created form instance       | A `useForm()`-style instance implies a form-owned store, the third architecture in the research review. Decide store-or-not first; the handle shape follows from that.                                                 |
+| Follow-up                        | Required decision before implementation                                                                                                                                                                                                             |
+| -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Default-policy simplification    | Define exactly when new branch/path defaults are inserted, which cleared values survive, and how cycles are handled. Then replace edit-time workarounds with domain tests.                                                                          |
+| Reset ergonomics                 | Controlled reset is errors-only now. Any later baseline, saved-record, or schema-default reset API needs a concrete use case and a separately reviewed contract.                                                                                    |
+| Data/validation event separation | Specify replacement observation before removing errors-only `onChange`; cover mount, blur, external errors, deduplication, and ordering.                                                                                                            |
+| Additional imperative methods    | Demonstrate a concrete use case that existing root replacement/getter cannot serve. Do not add methods solely for symmetry.                                                                                                                         |
+| Trimming `FormHandle`            | `validate` and `validateFormWithFormData` are stateless. Move them to utilities only in a later break, with a deprecation on the handle first.                                                                                                      |
+| Function-component conversion    | Designed in section 9.1; its gate, rjsf-team#5339, has merged. Reuse the unchanged behavioral tests and `FormHandle`. Change the ref prop to `Ref<FormHandle>` here; consumers already narrowed to the handle need no change. No prop-copy effects. |
+| Hook-created form instance       | A `useForm()`-style instance implies a form-owned store, the third architecture in the research review. Decide store-or-not first; the handle shape follows from that.                                                                              |
 
 These follow-ups are independent opportunities, not required milestones or permission to expand PR 3. No synchronous shadow store, subscription engine, or new performance claim is part of this plan.
 
@@ -509,16 +480,16 @@ Decided 2026-09-21 while building A4, so the conversion is mechanical rather tha
 **What is derived**, a `useMemo` over props and that state, with the previous value available to it the way `replaceEqualDeep` already needs it:
 
 - the render context as today: schema utilities, root and resolved schema, uiSchema, registry, `validationProps`;
-- the rendered data: for a parent-owned form the `formData` prop shared against the previous rendered value; for a self-owned form `getDefaultFormState(schema, held)`, memoized on the utilities, the uiSchema and the held data and shared so it *is* the held object whenever the pass adds nothing, which after `applyChange` has applied edit-time defaults is the common case. A schema change changes an input, and the rendered data follows without a write. `getFormData()` returns the rendered value, as now;
+- the rendered data: for a parent-owned form the `formData` prop shared against the previous rendered value; for a self-owned form `getDefaultFormState(schema, held)`, memoized on the utilities, the uiSchema and the held data and shared so it _is_ the held object whenever the pass adds nothing, which after `applyChange` has applied edit-time defaults is the common case. A schema change changes an input, and the rendered data follows without a write. `getFormData()` returns the rendered value, as now;
 - under `liveValidate: 'onChange'`, the validation of the rendered data, memoized as a single-entry cache keyed by the identity of its inputs, the way `retrieveSchema()` caches per schema object. `applyChange` validates the proposal for the event it hands the parent; the proposal's data comes back as the next prop and hits the cache, so a keystroke validates once. A changed callback changes an input and the memo recomputes;
-- otherwise, the explicit results filtered by their provenance: ignored when their schema utilities are not the current ones, pruned at every path `getChangedFields(rendered, validatedData)` reports, which structural sharing keeps cheap. This replaces both the "drop errors on a schema change" and the "clear the errors of changed fields" writes, and it is remembering what the errors are *about*, which is part of the errors, not a record of previous props;
+- otherwise, the explicit results filtered by their provenance: ignored when their schema utilities are not the current ones, pruned at every path `getChangedFields(rendered, validatedData)` reports, which structural sharing keeps cheap. This replaces both the "drop errors on a schema change" and the "clear the errors of changed fields" writes, and it is remembering what the errors are _about_, which is part of the errors, not a record of previous props;
 - the displayed errors: that base merged with `extraErrors` and `customErrors`.
 
 Handlers build `current` from the rendered data plus the render context and the state, hand it to the unchanged pure `apply*` functions, and commit only the owned half of the result. The queue moves into a `useRef` as is, advanced from an effect keyed on the committed operation rather than from a `setState` callback. `FormHandle` is `useImperativeHandle`, and the ref prop becomes `Ref<FormHandle>` (section 3.6).
 
 **What stays an effect, and writes nothing.** Advancing the queue once React has committed an operation's result, and the development warning about a late `formData`. Nothing notifies the parent from an effect: section 3.4 no longer has `onChange` fire for a prop change, so the two notifications an earlier draft of this section kept as effects are gone, along with the StrictMode mount guard they needed.
 
-**Sequence.** Two PRs after #69 merges, both against `v7`:
+**Sequence.** Two PRs, both against `v7`, now that rjsf-team#5339 has merged:
 
 1. Render-time derivation in the class. `FormState` splits into the owned state and the derived `RenderContext` plus the displayed errors; the derivation moves from `getDerivedStateFromProps` into `render()`, stored on the instance for the handlers, the two prop-driven writes become the derivations above, and explicit validation results gain their provenance. No test expectation changes; `renderStability.test.tsx` stays at zero. This is the PR that proves the design, in the class, where the tests already are.
 2. The conversion itself: `useState` for the owned state, `useMemo` for the derived, `useRef` for the queue, one effect to advance it, `useImperativeHandle` for the handle, `Ref<FormHandle>` for the prop. rjsf-team#5310 has already moved the `Form` tests off the instance state, so the behavioral tests carry over unchanged.
@@ -548,18 +519,18 @@ pnpm run cs-check
 
 Inspect default and wrapped themes with controlled text, uncontrolled reset, dependency defaults, null/object branches, nested arrays, additional-property rename, and external errors. Check snapshot diffs individually.
 
-- [ ] The six ownership contract tests and the existing domain/theme regression coverage map pass.
-- [ ] Ownership is inferred from `formData` alone, frozen at mount, with no public mode prop.
-- [ ] Controlled data has no persistent mirror or lifecycle arbitration.
-- [ ] Both modes use the shared transition pipeline.
-- [ ] Both modes retain path-change composition, with accepted/transformed/rejected controlled cases and no stronger getter timing guarantee.
-- [ ] No controlled lifecycle defaults, errors-only controlled reset, and existing uncontrolled/default-edit/validation behavior pass their tests.
-- [ ] `getFormData()` TSDoc states the committed-read timing.
-- [ ] All changed expectations map to section 8; deferred API tests/features are absent.
+- [x] The six ownership contract tests and the existing domain/theme regression coverage map pass.
+- [x] Ownership is inferred from `formData` alone, frozen at mount, with no public mode prop.
+- [x] Controlled data has no persistent mirror or lifecycle arbitration.
+- [x] Both modes use the shared transition pipeline.
+- [x] Both modes retain path-change composition, with accepted/transformed/rejected controlled cases and no stronger getter timing guarantee.
+- [x] No controlled lifecycle defaults, errors-only controlled reset, and existing uncontrolled/default-edit/validation behavior pass their tests.
+- [x] `getFormData()` TSDoc states the committed-read timing.
+- [x] All changed expectations map to section 8; deferred API tests/features are absent.
 - [x] Additive handle/getter/types landed first (PR 1a, rjsf-team#5289); legacy refs work and the deprecation is documented.
 - [x] Gate 1: rjsf-team#5297 merged before the render-context extraction (A2) opened.
-- [ ] Gate 2: A3, the tests PR (B, merged as rjsf-team#5300), the event type (C1, merged as rjsf-team#5298) and the child prep (C2, merged as rjsf-team#5299) merged before the ownership switch (A4) opened. PR 2 (A2 + A3, jimmycallin#67) is in review; A4 with D1 (jimmycallin#69) is stacked on it and merges after it.
-- [ ] Exactly one `Form.tsx` PR was in flight at any time; the section 7 file ownership table was respected.
-- [ ] Class remains; retained lifecycle/state/queue uses have explicit purposes.
+- [x] Gate 2: A3, the tests PR (B, merged as rjsf-team#5300), the event type (C1, merged as rjsf-team#5298) and the child prep (C2, merged as rjsf-team#5299) merged before the ownership switch (A4) opened. PR 2 (A2 + A3) merged as rjsf-team#5312 before A4 with D1 opened as rjsf-team#5339.
+- [x] Lane A held one `Form.tsx` PR in flight at a time. Two non-lane PRs also edited `Form.tsx` while rjsf-team#5339 was open, [rjsf-team#5341](https://github.com/rjsf-team/react-jsonschema-form/pull/5341) (the error-state consistency fixes) and [rjsf-team#5311](https://github.com/rjsf-team/react-jsonschema-form/pull/5311) (`unknown` generic defaults); they merged serially around it, #5341 → #5339 → #5311, each rebased on the previous one, so no two were merged against a stale `Form.tsx`.
+- [x] Class remains; retained lifecycle/state/queue uses have explicit purposes.
 
 If an existing behavior conflicts with ownership, reduce it to a concrete reproduction and check section 8. Preserve unrelated behavior. Report an unresolved conflict rather than introducing another parent-echo flag, silently weakening a test, or implementing a deferred API to evade it.
