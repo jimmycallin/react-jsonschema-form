@@ -2531,7 +2531,7 @@ describe('AJV8Validator', () => {
         expect(errors.errorSchema).toEqual({
           a: { __errors: [errMessage] },
         });
-        expect(errors.errors[0].params.missingProperty).toEqual('a');
+        expect(errors.errors[0].params?.missingProperty).toEqual('a');
       });
       it('should handle the case when errors are not present', () => {
         const errors = validator.validateFormData({ a: 'some kind of text' }, schema);
@@ -2723,7 +2723,7 @@ describe('AJV8Validator', () => {
             __errors: [errMessage],
           },
         });
-        expect(errors.errors[0].params.deps).toEqual('billingAddress');
+        expect(errors.errors[0].params?.deps).toEqual('billingAddress');
       });
       it('should return an error when multiple dependents are missing', () => {
         schema = {
@@ -2755,7 +2755,7 @@ describe('AJV8Validator', () => {
             __errors: [errMessage],
           },
         });
-        expect(errors.errors[0].params.deps).toEqual('holderName, billingAddress');
+        expect(errors.errors[0].params?.deps).toEqual('holderName, billingAddress');
       });
       it('should return an error with title when a dependent is missing', () => {
         schema = {
@@ -2783,7 +2783,7 @@ describe('AJV8Validator', () => {
             __errors: [errMessage],
           },
         });
-        expect(errors.errors[0].params.deps).toEqual('billingAddress');
+        expect(errors.errors[0].params?.deps).toEqual('billingAddress');
       });
       it('should return an error with titles when multiple dependents are missing', () => {
         schema = {
@@ -2819,7 +2819,7 @@ describe('AJV8Validator', () => {
             __errors: [errMessage],
           },
         });
-        expect(errors.errors[0].params.deps).toEqual('holderName, billingAddress');
+        expect(errors.errors[0].params?.deps).toEqual('holderName, billingAddress');
       });
       it('should return an error with uiSchema title when a dependent is missing', () => {
         schema = {
@@ -2854,7 +2854,7 @@ describe('AJV8Validator', () => {
             __errors: [errMessage],
           },
         });
-        expect(errors.errors[0].params.deps).toEqual('billingAddress');
+        expect(errors.errors[0].params?.deps).toEqual('billingAddress');
       });
       it('should return an error with uiSchema titles when multiple dependents are missing', () => {
         schema = {
@@ -2898,7 +2898,7 @@ describe('AJV8Validator', () => {
             __errors: [errMessage],
           },
         });
-        expect(errors.errors[0].params.deps).toEqual('holderName, billingAddress');
+        expect(errors.errors[0].params?.deps).toEqual('holderName, billingAddress');
       });
       it('should handle the case when errors are not present', () => {
         schema = {

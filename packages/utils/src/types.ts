@@ -2,9 +2,9 @@ import type {
   ButtonHTMLAttributes,
   ChangeEvent,
   Component,
-  ComponentType,
   FocusEvent,
   HTMLAttributes,
+  MouseEvent,
   ReactElement,
   ReactNode,
   StyleHTMLAttributes,
@@ -252,7 +252,7 @@ export interface RJSFValidationError {
    * ([see doc](https://github.com/ajv-validator/ajv/tree/6a671057ea6aae690b5967ee26a0ddf8452c6297#error-parameters)
    * for more info)
    */
-  params?: any;
+  params?: Record<string, unknown>;
   /** A string in Javascript property accessor notation to the data path of the field with the error. For example,
    * `.name` or `['first-name']`
    */
@@ -459,11 +459,11 @@ export type MarkdownTemplateProps<
 };
 
 /** The set of RJSF templates that can be overridden by themes or users */
-export type TemplatesType<
+export interface TemplatesTypeKeys<
   T = unknown,
   S extends StrictRJSFSchema = RJSFSchema,
   F extends FormContextType = FormContextType,
-> = {
+> {
   /** The template to use while rendering normal or fixed array fields */
   ArrayFieldTemplate: SlotComponent<ArrayFieldTemplateProps<T, S, F>>;
   /** The template to use while rendering the description for an array field */
@@ -526,7 +526,17 @@ export type TemplatesType<
     /** The template to use for the Clear button used for input fields */
     ClearButton: SlotComponent<IconButtonProps<T, S, F>>;
   };
-} & Record<string, ComponentType<any> | Record<string, ComponentType<any>> | undefined>;
+}
+
+/** The set of templates the `Form` uses, the named ones plus any extra a theme or user registers under a name RJSF
+ * does not know. The named keys live in `TemplatesTypeKeys` because `keyof` this type is `string`, so a `Pick`, `Omit`
+ * or `Partial` taken from it collapses to the index signature and silently drops every named template.
+ */
+export type TemplatesType<
+  T = unknown,
+  S extends StrictRJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+> = TemplatesTypeKeys<T, S, F> & Record<string, unknown>;
 
 /** The declared keys of `GlobalUISchemaOptions`, kept separate from its `GenericObjectType &` index signature so
  * a closed vocabulary (like `UiSchema`'s `Checks`-narrowed form) can pick up these keys without also reopening
@@ -677,9 +687,9 @@ export interface FieldProps<
    */
   onChange: Bivariant<[newValue: T | undefined, fieldPath: FieldPath, es?: ErrorSchema<T>, id?: string]>;
   /** The input blur event handler; call it with the field id and value */
-  onBlur: (id: string, value: any) => void;
+  onBlur: (id: string, value: unknown) => void;
   /** The input focus event handler; call it with the field id and value */
-  onFocus: (id: string, value: any) => void;
+  onFocus: (id: string, value: unknown) => void;
   /** A boolean value stating if the field should autofocus */
   autofocus?: boolean;
   /** A boolean value stating if the field is disabled */
@@ -719,7 +729,7 @@ export type FieldTemplateProps<
   /** A string containing the base CSS classes, merged with any custom ones defined in your uiSchema */
   classNames?: string;
   /** An object containing the style as defined in the `uiSchema` */
-  style?: StyleHTMLAttributes<any>;
+  style?: StyleHTMLAttributes<HTMLElement>;
   /** The computed label for this field, as a string */
   label: string;
   /** The name of this field's property in its parent object, carrying none of the decoration `label` may have picked
@@ -904,15 +914,15 @@ export type ArrayFieldItemButtonsTemplateProps<
   /** A number stating the total number `items` in the array */
   totalItems: number;
   /** Callback function that adds a new item below this item */
-  onAddItem: (event?: any) => void;
+  onAddItem: (event?: MouseEvent<HTMLElement>) => void;
   /** Callback function that copies this item below itself */
-  onCopyItem: (event?: any) => void;
+  onCopyItem: (event?: MouseEvent<HTMLElement>) => void;
   /** Callback function that moves the item up one spot in the list */
-  onMoveUpItem: (event?: any) => void;
+  onMoveUpItem: (event?: MouseEvent<HTMLElement>) => void;
   /** Callback function that moves the item down one spot in the list */
-  onMoveDownItem: (event?: any) => void;
+  onMoveDownItem: (event?: MouseEvent<HTMLElement>) => void;
   /** Callback function that removes the item from the list */
-  onRemoveItem: (event?: any) => void;
+  onRemoveItem: (event?: MouseEvent<HTMLElement>) => void;
   /** A boolean value stating if the array item is read-only */
   readonly?: boolean;
 };
@@ -990,7 +1000,7 @@ export type ArrayFieldTemplateProps<
   /** An array of React elements representing the items in the array */
   items: ReactElement[];
   /** A function that adds a new item to the end of the array */
-  onAddClick: (event?: any) => void;
+  onAddClick: (event?: MouseEvent<HTMLElement>) => void;
   /** An array of strings listing all generated error messages from encountered errors for this widget. Unlike
    * `FieldTemplateProps.rawErrors`, it carries them whatever `hideError` says, as a widget's does, so a template
    * rendering an error state from it must pair the two through `hasVisibleErrors({ rawErrors, hideError })`
@@ -1143,11 +1153,11 @@ export interface WidgetProps<
     enumOptions?: EnumOptionsType<S>[];
   };
   /** The input blur event handler; call it with the widget id and value */
-  onBlur: (id: string, value: any) => void;
+  onBlur: (id: string, value: unknown) => void;
   /** The value change event handler; call it with the new value every time it changes */
-  onChange: Bivariant<[value: any, es?: ErrorSchema<T>, id?: string]>;
+  onChange: Bivariant<[value: unknown, es?: ErrorSchema<T>, id?: string]>;
   /** The input focus event handler; call it with the widget id and value */
-  onFocus: (id: string, value: any) => void;
+  onFocus: (id: string, value: unknown) => void;
   /** The computed label for this widget, as a string */
   label: string;
   /** A boolean value, if true, will cause the label to be hidden. This is useful for nested fields where you don't want
@@ -1270,7 +1280,7 @@ type MakeUIType<Type> = {
  * closed vocabulary's always-available common options), so the two lists can't drift apart.
  */
 type UIOptionsTemplateOverrides<T, S extends StrictRJSFSchema, F extends FormContextType> = Pick<
-  TemplatesType<T, S, F>,
+  TemplatesTypeKeys<T, S, F>,
   | 'ArrayFieldDescriptionTemplate'
   | 'ArrayFieldItemTemplate'
   | 'ArrayFieldTemplate'
@@ -1303,7 +1313,7 @@ type UIOptionsBaseType<
     /** Any classnames that the user wants to be applied to a field in the ui */
     classNames?: string;
     /** Any custom style that the user wants to apply to a field in the ui, applied on the same element as classNames */
-    style?: StyleHTMLAttributes<any>;
+    style?: StyleHTMLAttributes<HTMLElement>;
     /** We know that for title, it will be a string, if it is provided */
     title?: string;
     /** We know that for description, it will be a string, if it is provided */
@@ -1378,7 +1388,7 @@ export type UIOptionsType<
   T = unknown,
   S extends StrictRJSFSchema = RJSFSchema,
   F extends FormContextType = FormContextType,
-> = UIOptionsBaseType<T, S, F> & Record<string, boolean | number | string | object | any[] | null | undefined>;
+> = UIOptionsBaseType<T, S, F> & Record<string, boolean | number | string | object | null | undefined>;
 
 /**
  * A utility type that extracts the element type from an array type.
@@ -1490,7 +1500,7 @@ type CommonUiOptions<T, S extends StrictRJSFSchema, F extends FormContextType> =
     title?: string;
     description?: string;
     classNames?: string;
-    style?: StyleHTMLAttributes<any>;
+    style?: StyleHTMLAttributes<HTMLElement>;
     autofocus?: boolean;
     disabled?: boolean;
     readonly?: boolean;
@@ -1683,7 +1693,7 @@ export interface ValidatorType<S extends StrictRJSFSchema = RJSFSchema, F extend
    * @param schema - The schema against which to validate the form data
    * @param formData - The form data to validate
    */
-  rawValidation<Result = any>(schema: S, formData?: unknown): { errors?: Result[]; validationError?: Error };
+  rawValidation<Result = unknown>(schema: S, formData?: unknown): { errors?: Result[]; validationError?: Error };
   /** An optional function that can be used to reset validator implementation. Useful for clear schemas in the AJV
    * instance for tests.
    */
@@ -1897,5 +1907,5 @@ export interface SchemaUtilsType<
    * @returns - The new form data, with all of the fields uniquely associated with the old schema set
    *      to `undefined`. Will return `undefined` if the new schema is not an object containing properties.
    */
-  sanitizeDataForNewSchema(newSchema?: S, oldSchema?: S, data?: any): T;
+  sanitizeDataForNewSchema(newSchema?: S, oldSchema?: S, data?: T): T;
 }

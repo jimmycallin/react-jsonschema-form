@@ -15,7 +15,7 @@ import type {
   RJSFSchema,
   RJSFValidationError,
   SchemaUtilsType,
-  TemplatesType,
+  TemplatesTypeKeys,
   UiSchema,
   ValidationData,
   ValidatorType,
@@ -120,9 +120,9 @@ export interface FormProps<
   /** The dictionary of registered fields in the form */
   fields?: RegistryFieldsType<Uninferred<T>, S, F>;
   /** The dictionary of registered templates in the form; Partial allows a subset to be provided beyond the defaults */
-  templates?: Partial<Omit<TemplatesType<Uninferred<T>, S, F>, 'ButtonTemplates'>> & {
-    ButtonTemplates?: Partial<TemplatesType<Uninferred<T>, S, F>['ButtonTemplates']>;
-  };
+  templates?: Partial<Omit<TemplatesTypeKeys<Uninferred<T>, S, F>, 'ButtonTemplates'>> & {
+    ButtonTemplates?: Partial<TemplatesTypeKeys<Uninferred<T>, S, F>['ButtonTemplates']>;
+  } & Record<string, unknown>;
   /** The dictionary of registered widgets in the form */
   widgets?: RegistryWidgetsType<Uninferred<T>, S, F>;
   // Callbacks

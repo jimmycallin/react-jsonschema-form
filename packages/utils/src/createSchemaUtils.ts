@@ -394,7 +394,7 @@ class SchemaUtils<
    * @returns - The new form data, with all the fields uniquely associated with the old schema set
    *      to `undefined`. Will return `undefined` if the new schema is not an object containing properties.
    */
-  sanitizeDataForNewSchema(newSchema?: S, oldSchema?: S, data?: any): T {
+  sanitizeDataForNewSchema(newSchema?: S, oldSchema?: S, data?: T): T {
     return sanitizeDataForNewSchema(this.validator, this.rootSchema, newSchema, oldSchema, data, this.customMergeAllOf);
   }
 }
