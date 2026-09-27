@@ -209,10 +209,6 @@ export default function DateTimeWidget<
     if (isOpen) {
       setIsOpen(false);
       onChange(commitValue(localDate));
-      // Manually invoke the blur handler to ensure blur event is triggered
-      if (onBlur) {
-        onBlur(id, value);
-      }
     }
   });
 
@@ -315,11 +311,8 @@ export default function DateTimeWidget<
   const handleDoneClick = useCallback(() => {
     setIsOpen(false);
     onChange(commitValue(localDate));
-    if (onBlur) {
-      onBlur(id, value);
-    }
     inputRef.current?.focus();
-  }, [localDate, onChange, onBlur, id, value, setIsOpen, commitValue]);
+  }, [localDate, onChange, setIsOpen, commitValue]);
 
   return (
     <div className='form-control my-4 w-full relative'>

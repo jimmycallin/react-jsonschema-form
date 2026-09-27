@@ -160,10 +160,6 @@ export default function DateWidget<
     if (isOpen) {
       setIsOpen(false);
       onChange(localDate ? localDate.toISOString() : '');
-      // Manually invoke the blur handler to ensure blur event is triggered
-      if (onBlur) {
-        onBlur(id, value);
-      }
     }
   });
 
@@ -334,11 +330,8 @@ export default function DateWidget<
   const handleDoneClick = useCallback(() => {
     setIsOpen(false);
     onChange(localDate ? localDate.toISOString() : '');
-    if (onBlur) {
-      onBlur(id, value);
-    }
     inputRef.current?.focus();
-  }, [localDate, onChange, onBlur, id, value, setIsOpen]);
+  }, [localDate, onChange, setIsOpen]);
 
   return (
     <div className='form-control my-4 w-full relative'>
