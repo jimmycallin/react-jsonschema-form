@@ -813,10 +813,8 @@ describe('Error state consistency when deriving from new props', () => {
     };
     const minLengthError = 'must NOT have fewer than 3 characters';
     const streetPath = toFieldPath('street', toFieldPath('addr'));
-    const formRef = createRef<Form>();
     const { container } = render(
       <Form
-        ref={formRef}
         schema={addrSchema}
         uiSchema={capturingUiSchema}
         validator={validator}
@@ -831,11 +829,8 @@ describe('Error state consistency when deriving from new props', () => {
       rootField.onChange('a', streetPath, addr!.street);
     });
 
-    // Not a phantom `{ addr: { street: {} } }`, which the next raise on `addr` would read as a validator error
-    expect(formRef.current!.state.schemaValidationErrorSchema).toEqual({
-      addr: { street: { __errors: [minLengthError] } },
-    });
-    expect(formRef.current!.state.schemaValidationErrors.map(({ message }) => message)).toEqual([minLengthError]);
+    // The field still shows the validator's error: a phantom `{ addr: { street: {} } }` would render nothing there
+    expect(fieldErrorsById(container)).toEqual({ root_addr_street: [minLengthError] });
   });
 
   it('clears the errors of a changed field in both the field and the error list while typing under onBlur', async () => {
@@ -3351,10 +3346,8 @@ describe('extraErrors not duplicated when sibling array field mutated (#5041)', 
       name: { __errors: ['Name is required'] },
     };
 
-    const formRef = createFormRef();
-
     function Wrapper() {
-      return <Form ref={formRef} schema={schema} validator={validator} extraErrors={extraErrors} />;
+      return <Form schema={schema} validator={validator} extraErrors={extraErrors} />;
     }
 
     const { container } = render(<Wrapper />);
@@ -3365,10 +3358,7 @@ describe('extraErrors not duplicated when sibling array field mutated (#5041)', 
     await user.click(addBtn!);
 
     // The name field's extraErrors should still contain exactly one error
-    const { state } = formRef.current!;
-    const nameErrors = (state.errorSchema as ErrorSchema<{ name?: string }>).name?.__errors ?? [];
-    expect(nameErrors).toHaveLength(1);
-    expect(nameErrors[0]).toBe('Name is required');
+    expect(fieldErrorsById(form).root_name).toEqual(['Name is required']);
   });
 
   it('should not accumulate duplicate extraErrors in the error list when a field raises a custom error', async () => {
@@ -3386,9 +3376,7 @@ describe('extraErrors not duplicated when sibling array field mutated (#5041)', 
         />
       );
     }
-    const formRef = createRef<Form>();
     const { node } = createFormComponent({
-      ref: formRef,
       schema,
       fields: { StringField: RaisingField },
       extraErrors: { foo: { __errors: ['extra!'] } } as ErrorSchema,
@@ -3399,8 +3387,7 @@ describe('extraErrors not duplicated when sibling array field mutated (#5041)', 
 
     await user.type(node.querySelectorAll<HTMLInputElement>('input[type=text]')[0], 'abc');
 
-    const { errors } = formRef.current!.state;
-    expect(errors.filter(({ message }) => message === 'extra!')).toHaveLength(1);
+    expect(errorListMessages(node).filter((message) => message.endsWith('extra!'))).toHaveLength(1);
   });
 });
 
