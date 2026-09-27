@@ -1,10 +1,11 @@
+import type { Ref, RefObject } from 'react';
 import type { RJSFSchema, RJSFValidationError, WidgetProps } from '@rjsf/utils';
 import validator from '@rjsf/validator-ajv8';
 import { act, render } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { expectTypeOf } from 'vitest';
 
-import type { FormHandle } from '../src/index.ts';
+import type { FormHandle, FormProps } from '../src/index.ts';
 import Form, { withTheme } from '../src/index.ts';
 import { createFormComponent, createFormRef } from './testUtils.tsx';
 
@@ -13,10 +14,18 @@ const schema: RJSFSchema = { type: 'object', properties: { name: { type: 'string
 /** The supported pattern: the ref is typed as the class because TSX types a class element's `ref` by its instance,
  * and consuming code narrows to the handle so nothing outside it is relied upon.
  */
+/** The handle a mounted `Form` put on `ref` */
+function currentHandle(ref: RefObject<FormHandle | null>): FormHandle {
+  if (!ref.current) {
+    throw new Error('the Form has not mounted');
+  }
+  return ref.current;
+}
+
 function mountWithHandle(props: Parameters<typeof createFormComponent>[0]) {
   const ref = createFormRef();
   const result = createFormComponent({ ...props, ref });
-  const handle: FormHandle = ref.current!;
+  const handle = currentHandle(ref);
   return { ...result, handle };
 }
 
@@ -86,7 +95,7 @@ describe('FormHandle', () => {
     it('submits without an onSubmit handler', () => {
       const ref = createFormRef();
       render(<Form ref={ref} schema={requiredSchema} validator={validator} initialFormData={{ name: 'a' }} />);
-      const handle: FormHandle = ref.current!;
+      const handle = currentHandle(ref);
 
       expect(() => act(() => handle.submit())).not.toThrow();
     });
@@ -198,13 +207,13 @@ describe('FormHandle', () => {
     const ref = createFormRef();
     const ThemedForm = withTheme({});
     render(<ThemedForm ref={ref} schema={schema} validator={validator} initialFormData={{ name: 'themed' }} />);
-    const handle: FormHandle = ref.current!;
+    const handle = currentHandle(ref);
 
     expect(handle.getFormData()).toEqual({ name: 'themed' });
   });
 
-  it('is implemented by the Form class and exposes only the supported imperative surface', () => {
-    expectTypeOf<Form>().toExtend<FormHandle>();
+  it('is what the ref hands back, and exposes only the supported imperative surface', () => {
+    expectTypeOf<NonNullable<FormProps['ref']>>().toExtend<Ref<FormHandle>>();
 
     expectTypeOf<FormHandle>().toHaveProperty('getFormData');
     expectTypeOf<FormHandle>().toHaveProperty('submit');

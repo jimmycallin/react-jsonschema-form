@@ -1,5 +1,5 @@
 import type { ElementType, ReactNode, Ref, RefObject, SubmitEvent } from 'react';
-import { PureComponent, createRef } from 'react';
+import { memo, useImperativeHandle, useLayoutEffect, useRef, useState } from 'react';
 import type {
   CustomValidator,
   ErrorSchema,
@@ -36,6 +36,7 @@ import {
   hashObject,
   isObject,
   isPlainObject,
+  logOnce,
   mergeObjects,
   replaceEqualDeep,
   schemaHasNestedConditional,
@@ -245,11 +246,10 @@ export interface FormProps<
   /** Optional function that allows for custom merging of `allOf` schemas
    */
   customMergeAllOf?: CustomMergeAllOf<S>;
-  /** Support receiving a React ref to the Form. Type it as the `Form` class, but write against `FormHandle`: only the
-   * handle's members are supported API. TSX types a class element's `ref` by the instance, so this cannot be
-   * `Ref<FormHandle>` until `Form` is a function component; `ref.current` assigns to a `FormHandle` today.
+  /** Support receiving a React ref to the `Form`, which hands back its `FormHandle`: one object for the life of the
+   * form, whose members act on the render that was committed last.
    */
-  ref?: Ref<Form<T, S, F>>;
+  ref?: Ref<FormHandle<T>>;
 }
 
 /** The data that is contained within the state for the `Form` */
@@ -1006,11 +1006,6 @@ const PARENT_OWNED_COMMIT_KEYS = [
   'schemaValidationErrorSchema',
 ] as const satisfies readonly (keyof FormState)[];
 
-/** Whether a parent-owned form commits `key`: its errors are its own, the data and everything derived from it are the parent's */
-function isParentOwnedCommitKey(key: keyof FormState): boolean {
-  return (PARENT_OWNED_COMMIT_KEYS as readonly (keyof FormState)[]).includes(key);
-}
-
 declare const process: { env: Record<string, string | undefined> };
 /** Whether the development diagnostics run. Vite and esbuild replace `process.env.NODE_ENV` but not `typeof process`,
  * and a browser has no `process`, so only the replaced expression is read; the `catch` covers an environment that
@@ -1396,182 +1391,183 @@ function applySubmit<T, S extends StrictRJSFSchema, F extends FormContextType>(
   };
 }
 
-/** The `Form` component renders the outer form and all the fields defined in the `schema` */
-export default class Form<
-  T = unknown,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = FormContextType,
->
-  extends PureComponent<FormProps<T, S, F>, FormState<T, S, F>>
-  implements FormHandle<T>
-{
-  /** The ref used to hold the rendered form element. `tagName` can swap `<form>` for another element, so the
-   * form-only members are reached behind an `instanceof` narrowing rather than assumed present.
-   */
-  formElement: RefObject<HTMLElement | null>;
-
-  /** Commits the owned half of `next`, which `reapply` computed from `current`, the state as of the render the
-   * operation was dispatched from. Under batching an earlier operation in the same tick may already have moved the
-   * state on, in which case the operation is re-applied to what that one produced, so both land. The event the
-   * caller emits stays the one computed from `current`: it describes this operation applied to what the render
-   * showed, which is what a controlled `<input>` reports too. Every unchanged subtree keeps its reference, so fields'
-   * memo boundaries hold across the update; a parent-owned form commits its errors and nothing else, see
-   * `PARENT_OWNED_COMMIT_KEYS`.
-   *
-   * @param current - The state the operation was computed from
-   * @param next - The operation's result for `current`
-   * @param reapply - Computes the operation's result for another base
-   */
-  private commit(
-    current: FormState<T, S, F>,
-    next: FormState<T, S, F>,
-    reapply: (base: FormState<T, S, F>) => FormState<T, S, F>,
-  ) {
-    this.setState((prevState) => {
-      const result = prevState === current ? next : reapply(prevState);
-      // React merges the partial itself; its `Pick` typing has no name for a key set decided at run time
-      const changed = {} as FormState<T, S, F>;
-      for (const key of Object.keys(result) as (keyof FormState<T, S, F>)[]) {
-        if (result[key] !== prevState[key] && (!prevState.isControlled || isParentOwnedCommitKey(key))) {
-          Object.assign(changed, { [key]: result[key] });
-        }
-      }
-      return replaceEqualDeep(prevState, changed);
-    });
+/** The state a `Form` mounts with, deciding once who owns the data: the parent when `formData` is defined, as for an
+ * `<input value>`, the form otherwise. A parent-owned form renders the prop as passed. A self-owned form is seeded
+ * from `initialFormData` and the schema's defaults; `getFormData()` reads the result.
+ *
+ * @param props - The initial props for the `Form`
+ * @returns - The initial state
+ */
+function initialState<T, S extends StrictRJSFSchema, F extends FormContextType>(
+  props: FormProps<T, S, F>,
+): FormState<T, S, F> {
+  if (!props.validator) {
+    throw new Error('A validator is required for Form functionality to work');
   }
-
-  /** Derives the state before every render, so a parent's value is rendered the moment it arrives, with no stale
-   * commit in between. Nothing is remembered about the previous props: every derived member is shared against the
-   * committed state, so an unchanged input hands back the reference the fields already hold and a changed one is
-   * recognized by the new reference. A parent-owned form derives its render context and errors for the `formData`
-   * prop; a self-owned form derives its render context, transforming the data it holds only for a schema or uiSchema
-   * change, since an unrelated re-render must not rerun value initialization.
-   *
-   * @param props - The current props
-   * @param state - The current state
-   * @returns The state to merge
-   */
-  static getDerivedStateFromProps<
-    T = unknown,
-    S extends StrictRJSFSchema = RJSFSchema,
-    F extends FormContextType = FormContextType,
-  >(props: FormProps<T, S, F>, state: FormState<T, S, F>): Partial<FormState<T, S, F>> {
-    if (state.isControlled) {
-      return replaceEqualDeep(state, deriveControlledState(state, props));
-    }
-    const context = deriveRenderContext(props, state.retrievedSchema, state, resolveSchemaUtils(props, state));
-    if (context.schemaUtils !== state.schemaUtils || context.uiSchema !== state.uiSchema) {
-      return replaceEqualDeep(state, deriveOwnedState(state, state.formData, props));
-    }
-    const errors = reconcileErrors(state, props, context, state.formData, {
-      mustValidate: mustLiveValidate(props, state.edit, context.validationProps !== state.validationProps),
-      validationSchema: state.retrievedSchema,
-    });
-    return replaceEqualDeep(state, { ...context, ...errors });
-  }
-
-  /** Constructs the `Form` from the `props`, deciding once who owns the data: the parent when `formData` is defined,
-   * as for an `<input value>`, the form otherwise. A parent-owned form renders the prop as passed. A self-owned form
-   * is seeded from `initialFormData` and the schema's defaults; `getFormData()` reads the result.
-   *
-   * @param props - The initial props for the `Form`
-   */
-  constructor(props: FormProps<T, S, F>) {
-    super(props);
-
-    if (!props.validator) {
-      throw new Error('A validator is required for Form functionality to work');
-    }
-
-    const { formData, initialFormData, onChange, readonly, disabled } = props;
-    const isControlled = formData !== undefined;
-    if (isDevelopment && isControlled) {
-      if (initialFormData !== undefined) {
-        // oxlint-disable-next-line no-console
-        console.warn(
-          'Form: both `formData` and `initialFormData` are set; `initialFormData` is ignored. Pass `formData` for a form whose value you own and update from `onChange`, or `initialFormData` for one the form owns.',
-        );
-      }
-      if (!onChange && !readonly && !disabled) {
-        // oxlint-disable-next-line no-console
-        console.warn(
-          'Form: `formData` is set without an `onChange` handler, so the form will render this value and ignore every edit. Pass `initialFormData` to let the form own an editable value, `onChange` to accept its proposals into `formData`, or `readonly` for a fixed presentation.',
-        );
-      }
-    }
-    this.state = isControlled
-      ? deriveControlledState(undefined, props)
-      : deriveOwnedState(undefined, initialFormData, props);
-    this.formElement = createRef();
-  }
-
-  /** In development, warns a self-owned form that is being handed `formData` it will ignore. `onChange` is never
-   * called from here: it reports edits, and a prop change is not one. A parent that wants the defaults a self-owned
-   * form added to its seed, or the data a schema change re-defaulted, reads `getFormData()`.
-   *
-   * @param prevProps - The previous props
-   */
-  componentDidUpdate(prevProps: FormProps<T, S, F>) {
-    const { isControlled } = this.state;
-    if (isDevelopment && !isControlled && prevProps.formData === undefined && this.props.formData !== undefined) {
+  const { formData, initialFormData, onChange, readonly, disabled } = props;
+  const isControlled = formData !== undefined;
+  if (isDevelopment && isControlled) {
+    if (initialFormData !== undefined) {
       // oxlint-disable-next-line no-console
       console.warn(
-        'Form: `formData` was set on a form that mounted without it. Ownership is decided at mount, so the form keeps its own data and ignores this value. To show data that arrives later, either mount the form only once the data is there (`key` it by the record to switch records), or mount it with a complete fallback such as `formData={record ?? {}}` and an `onChange` that stores each proposal.',
+        'Form: both `formData` and `initialFormData` are set; `initialFormData` is ignored. Pass `formData` for a form whose value you own and update from `onChange`, or `initialFormData` for one the form owns.',
+      );
+    }
+    if (!onChange && !readonly && !disabled) {
+      // oxlint-disable-next-line no-console
+      console.warn(
+        'Form: `formData` is set without an `onChange` handler, so the form will render this value and ignore every edit. Pass `initialFormData` to let the form own an editable value, `onChange` to accept its proposals into `formData`, or `readonly` for a fixed presentation.',
       );
     }
   }
+  return isControlled ? deriveControlledState(undefined, props) : deriveOwnedState(undefined, initialFormData, props);
+}
 
-  /** Validates the `formData` against the form's schema, returning the results.
-   *
-   * @param formData - The new form data to validate
-   */
-  validate = (formData: T | undefined): ValidationData<T> => validateFormData(this.props, this.state, formData);
-
-  /** Renders any errors contained in the `state` in using the `ErrorList`, if not disabled by `showErrorList`. */
-  renderErrors(registry: Registry<T, S, F>) {
-    const { errors, errorSchema, schema, uiSchema } = this.state;
-    const options = getUiOptions<T, S, F>(uiSchema);
-    const ErrorListTemplate = getTemplate<'ErrorListTemplate', T, S, F>('ErrorListTemplate', registry, options);
-
-    if (errors?.length) {
-      return (
-        <ErrorListTemplate
-          errors={errors}
-          errorSchema={errorSchema || {}}
-          schema={schema}
-          uiSchema={uiSchema}
-          registry={registry}
-        />
-      );
-    }
-    return null;
+/** Derives the state to render from the props and the committed `state`, so a parent's value is rendered the moment it
+ * arrives, with no stale commit in between. Nothing is remembered about the previous props: every derived member is
+ * shared against the committed state, so an unchanged input hands back the reference the fields already hold and a
+ * changed one is recognized by the new reference; when nothing changed, `state` itself is handed back. A parent-owned
+ * form derives its render context and errors for the `formData` prop; a self-owned form derives its render context,
+ * transforming the data it holds only for a schema or uiSchema change, since an unrelated re-render must not rerun
+ * value initialization.
+ *
+ * @param props - The current props
+ * @param state - The committed state
+ * @returns - The state to render, `state` itself when nothing changed
+ */
+function deriveState<T, S extends StrictRJSFSchema, F extends FormContextType>(
+  props: FormProps<T, S, F>,
+  state: FormState<T, S, F>,
+): FormState<T, S, F> {
+  if (state.isControlled) {
+    return replaceEqualDeep(state, deriveControlledState(state, props));
   }
+  const context = deriveRenderContext(props, state.retrievedSchema, state, resolveSchemaUtils(props, state));
+  if (context.schemaUtils !== state.schemaUtils || context.uiSchema !== state.uiSchema) {
+    return replaceEqualDeep(state, deriveOwnedState(state, state.formData, props));
+  }
+  const errors = reconcileErrors(state, props, context, state.formData, {
+    mustValidate: mustLiveValidate(props, state.edit, context.validationProps !== state.validationProps),
+    validationSchema: state.retrievedSchema,
+  });
+  return replaceEqualDeep(state, { ...state, ...context, ...errors });
+}
 
-  /** Allows a user to set a value for the provided `fieldPath`, which must be either a dotted path to the field OR a
-   * `FieldPathList`. To set the root element, used either `''` or `[]` for the path. Passing undefined will clear the
-   * value in the field.
-   *
-   * The dotted form splits on `.` only, so it cannot express an array index as a number or a property name
-   * containing a dot. Pass a `FieldPathList` for either — an item of an array wants the numeric index, since
-   * that is what makes a cleared item resolve to `null` rather than `undefined`.
-   *
-   * @param fieldPath - Either a dotted path to the field or the `FieldPathList` to the field
-   * @param [newValue] - The new value for the field
-   */
-  setFieldValue = (fieldPath: string | FieldPathList, newValue?: unknown) => {
-    const { registry } = this.state;
-    let path = fieldPath;
-    if (typeof path === 'string') {
-      // `''` is the documented spelling of the root; splitting it would name a property called `''` instead
-      path = path === '' ? [] : path.split('.');
-    }
-    const targetFieldPath = fieldPathFromList(path);
-    this.onChange(
-      newValue as T | undefined,
-      targetFieldPath,
-      undefined,
-      fieldPathToId(targetFieldPath, registry.globalFormOptions),
+/** The handlers and the handle one render of `Form` creates, each closed over that render */
+interface RenderedHandlers<T> {
+  onChange: (newValue: T | undefined, fieldPath: FieldPath, newErrorSchema?: ErrorSchema<T>, id?: string) => void;
+  onBlur: (id: string, data: unknown) => void;
+  onFocus: (id: string, data: unknown) => void;
+  onSubmit: (event: SubmitEvent<HTMLFormElement>) => void;
+  handle: FormHandle<T>;
+}
+
+/** Functions with a fixed identity that forward to the handlers of the last committed render, see `Form` */
+function stableHandlers<T>(latest: RefObject<RenderedHandlers<T>>): RenderedHandlers<T> {
+  return {
+    onChange: (newValue, fieldPath, newErrorSchema, id) =>
+      latest.current.onChange(newValue, fieldPath, newErrorSchema, id),
+    onBlur: (id, data) => latest.current.onBlur(id, data),
+    onFocus: (id, data) => latest.current.onFocus(id, data),
+    onSubmit: (event) => latest.current.onSubmit(event),
+    handle: {
+      getFormData: () => latest.current.handle.getFormData(),
+      submit: (formData) => latest.current.handle.submit(formData),
+      reset: () => latest.current.handle.reset(),
+      setFieldValue: (fieldPath, newValue) => latest.current.handle.setFieldValue(fieldPath, newValue),
+      validateForm: (formData) => latest.current.handle.validateForm(formData),
+      // oxlint-disable-next-line typescript/no-deprecated -- forwarded until it is removed
+      validateFormWithFormData: (formData) => latest.current.handle.validateFormWithFormData(formData),
+      // oxlint-disable-next-line typescript/no-deprecated -- forwarded until it is removed
+      validate: (formData) => latest.current.handle.validate(formData),
+      focusOnError: (error) => latest.current.handle.focusOnError(error),
+    },
+  };
+}
+
+/** The `Form` component renders the outer form and all the fields defined in the `schema`. Its state is React state
+ * and nothing else: every operation is computed from the state of the render it was dispatched from and committed
+ * through an updater, and every callback is called from the handler that caused it, the way a controlled `<input>`
+ * reports a change. See `FormHandle` for what that means for two operations in one tick.
+ */
+function Form<T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = FormContextType>(
+  props: FormProps<T, S, F>,
+) {
+  const [committed, setCommitted] = useState<FormState<T, S, F>>(() => initialState(props));
+  // The derived members are adjusted while rendering, the documented way to store information from previous renders:
+  // React re-runs this render with the adjusted state before rendering the fields, and `deriveState()` hands the
+  // state itself back when nothing changed, so the second pass ends here
+  const state = deriveState(props, committed);
+  if (state !== committed) {
+    setCommitted(state);
+  }
+  if (isDevelopment && !state.isControlled && props.formData !== undefined) {
+    logOnce(
+      'Form: `formData` was set on a form that mounted without it. Ownership is decided at mount, so the form keeps its own data and ignores this value. To show data that arrives later, either mount the form only once the data is there (`key` it by the record to switch records), or mount it with a complete fallback such as `formData={record ?? {}}` and an `onChange` that stores each proposal.',
     );
+  }
+  /** The rendered form element. `tagName` can swap `<form>` for another element, so the form-only members are reached
+   * behind an `instanceof` narrowing rather than assumed present.
+   */
+  const formElement = useRef<HTMLElement>(null);
+
+  /** Commits the owned half of `next`, which `reapply` computed from `state`, the state of this render. Under batching
+   * an earlier operation in the same tick may already have moved the state on, in which case the operation is
+   * re-applied to what that one produced, so both land. The event the caller emits stays the one computed from this
+   * render: it describes this operation applied to what the render showed, which is what a controlled `<input>`
+   * reports too. Every unchanged subtree keeps its reference, so fields' memo boundaries hold across the update; a
+   * parent-owned form commits its errors and nothing else, see `PARENT_OWNED_COMMIT_KEYS`.
+   *
+   * @param next - The operation's result for `state`
+   * @param reapply - Computes the operation's result for another base
+   */
+  const commit = (next: FormState<T, S, F>, reapply: (base: FormState<T, S, F>) => FormState<T, S, F>) => {
+    setCommitted((prevState) => {
+      const shared = replaceEqualDeep(prevState, prevState === state ? next : reapply(prevState));
+      if (shared === prevState || !prevState.isControlled) {
+        return shared;
+      }
+      let owned = prevState;
+      for (const key of PARENT_OWNED_COMMIT_KEYS) {
+        if (shared[key] !== prevState[key]) {
+          owned = { ...owned, [key]: shared[key] };
+        }
+      }
+      return owned;
+    });
+  };
+
+  /** Validates `formData` for a submission or a programmatic validation, committing the errors it reports and calling
+   * `onError` with them, or focusing the first one when `focusOnFirstError` asks for it. The data itself is never
+   * installed: an action never writes. The errors carry the data they describe and show once the form renders it.
+   *
+   * @param formData - The form data to validate
+   * @returns - True if the form is valid, false otherwise.
+   */
+  const runValidation = (formData: T | undefined): boolean => {
+    const { focusOnFirstError, onError } = props;
+    const { hasError, next } = applyValidation(state, props, formData);
+    const { errors } = next;
+    if (next !== state) {
+      commit(next, (base) => applyValidation(base, props, formData).next);
+    }
+    if (!hasError) {
+      return true;
+    }
+    if (focusOnFirstError) {
+      if (typeof focusOnFirstError === 'function') {
+        focusOnFirstError(errors[0]);
+      } else {
+        focusOnError(errors[0]);
+      }
+    }
+    if (onError) {
+      onError(errors);
+    } else {
+      // oxlint-disable-next-line no-console
+      console.error('Form validation failed', errors);
+    }
+    return false;
   };
 
   /** Applies a change to the field at `fieldPath` with `applyChange()`, computed from the state of the render, and
@@ -1585,59 +1581,27 @@ export default class Form<
    * @param [newErrorSchema] - The new `ErrorSchema` based on the field change
    * @param [id] - The id of the field that caused the change
    */
-  onChange = (newValue: T | undefined, fieldPath: FieldPath, newErrorSchema?: ErrorSchema<T>, id?: string) => {
-    const { onChange } = this.props;
-    const current = this.state;
+  const onChange = (newValue: T | undefined, fieldPath: FieldPath, newErrorSchema?: ErrorSchema<T>, id?: string) => {
     const change: PendingChange<T> = { newValue, fieldPath, newErrorSchema, id };
-    const next = applyChange(current, change, this.props);
+    const next = applyChange(state, change, props);
     if (isDevelopment) {
       freezeFormData(next.formData);
     }
-    if (!current.isControlled) {
-      this.commit(current, next, (base) => applyChange(base, change, this.props));
-      onChange?.(toIChangeEvent(next), id);
+    if (!state.isControlled) {
+      commit(next, (base) => applyChange(base, change, props));
+      props.onChange?.(toIChangeEvent(next), id);
       return;
     }
     // Validated errors describe the proposal, which the parent may yet refuse, so they wait for the parent's answer
-    // in `getDerivedStateFromProps`; without live validation they describe the committed data plus the custom
-    // errors, which are the form's own
+    // in `deriveState()`; without live validation they describe the committed data plus the custom errors, which
+    // are the form's own
     const owned = (result: FormState<T, S, F>, base: FormState<T, S, F>) =>
-      isLiveValidated(this.props) ? { ...base, customErrors: result.customErrors } : result;
+      isLiveValidated(props) ? { ...base, customErrors: result.customErrors } : result;
     try {
-      onChange?.(toIChangeEvent(next), id);
+      props.onChange?.(toIChangeEvent(next), id);
     } finally {
-      this.commit(current, owned(next, current), (base) => owned(applyChange(base, change, this.props), base));
+      commit(owned(next, state), (base) => owned(applyChange(base, change, props), base));
     }
-  };
-
-  /** Returns the form data currently rendered, see `FormHandle.getFormData()`: the `formData` prop of a parent-owned
-   * form, the committed data of a self-owned one.
-   */
-  getFormData = (): EventFormData<T> => this.state.formData as EventFormData<T>;
-
-  /** Resets the form. A self-owned form re-derives its data from `initialFormData` and the schema the way an initial
-   * render does, clears every error and tells `onChange`. A parent-owned form clears its own errors only: the data is
-   * the parent's to reset, by passing a new `formData`, so nothing is proposed and `onChange` is not called.
-   * `extraErrors` are the parent's too and stay.
-   */
-  reset = () => {
-    const current = this.state;
-    if (current.isControlled) {
-      // `getDerivedStateFromProps` merges `extraErrors` back onto the cleared errors before the render
-      const clear = (base: FormState<T, S, F>): FormState<T, S, F> => ({
-        ...base,
-        errors: [],
-        errorSchema: {},
-        schemaValidationErrors: [],
-        schemaValidationErrorSchema: {},
-        customErrors: undefined,
-      });
-      this.commit(current, clear(current), clear);
-      return;
-    }
-    const next = applyReset(current, this.props);
-    this.commit(current, next, (base) => applyReset(base, this.props));
-    this.props.onChange?.(toIChangeEvent(next));
   };
 
   /** Callback function to handle when a field on the form is blurred. Calls the `onBlur` callback for the `Form` if it
@@ -1649,36 +1613,33 @@ export default class Form<
    * @param id - The unique `id` of the field that was blurred
    * @param data - The data associated with the field that was blurred
    */
-  onBlur = (id: string, data: unknown) => {
-    const { onBlur, onChange, omitExtraData, liveOmit, liveValidate } = this.props;
-    if (onBlur) {
-      onBlur(id, data);
-    }
+  const onBlur = (id: string, data: unknown) => {
+    const { omitExtraData, liveOmit, liveValidate } = props;
+    props.onBlur?.(id, data);
     if (!((omitExtraData === true && liveOmit === 'onBlur') || liveValidate === 'onBlur')) {
       return;
     }
-    const current = this.state;
     // Shared so an unchanged error list keeps its reference and does not count as a change below
-    const blur = (base: FormState<T, S, F>) => replaceEqualDeep(base, applyBlur(base, this.props));
-    const next = blur(current);
+    const blur = (base: FormState<T, S, F>) => replaceEqualDeep(base, applyBlur(base, props));
+    const next = blur(state);
     // Only the `IChangeEvent` members count; the validator's own results are not among them
-    const hasChanges = (['formData', 'errors', 'errorSchema'] as const).some((key) => current[key] !== next[key]);
+    const hasChanges = (['formData', 'errors', 'errorSchema'] as const).some((key) => state[key] !== next[key]);
     if (isDevelopment) {
       freezeFormData(next.formData);
     }
-    if (!current.isControlled) {
-      this.commit(current, next, blur);
-      if (onChange && hasChanges) {
-        onChange(toIChangeEvent(next), id);
+    if (!state.isControlled) {
+      commit(next, blur);
+      if (hasChanges) {
+        props.onChange?.(toIChangeEvent(next), id);
       }
       return;
     }
     try {
-      if (onChange && hasChanges) {
-        onChange(toIChangeEvent(next), id);
+      if (hasChanges) {
+        props.onChange?.(toIChangeEvent(next), id);
       }
     } finally {
-      this.commit(current, next, blur);
+      commit(next, blur);
     }
   };
 
@@ -1688,11 +1649,8 @@ export default class Form<
    * @param id - The unique `id` of the field that was focused
    * @param data - The data associated with the field that was focused
    */
-  onFocus = (id: string, data: unknown) => {
-    const { onFocus } = this.props;
-    if (onFocus) {
-      onFocus(id, data);
-    }
+  const onFocus = (id: string, data: unknown) => {
+    props.onFocus?.(id, data);
   };
 
   /** Callback function to handle when the form is submitted. First, it prevents the default event behavior. Nothing
@@ -1704,44 +1662,25 @@ export default class Form<
    *
    * @param event - The submit HTML form event
    */
-  onSubmit = (event: SubmitEvent<HTMLFormElement>) => {
+  const onSubmit = (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (event.target !== event.currentTarget) {
       return;
     }
     // oxlint-disable-next-line typescript/no-deprecated
-    const { omitExtraData, noValidate, onSubmit } = this.props;
-    const current = this.state;
+    const { omitExtraData, noValidate } = props;
     const payload = readSubmitPayload<T>(event.nativeEvent);
-    let formData = payload ? payload.formData : current.formData;
+    let formData = payload ? payload.formData : state.formData;
     if (omitExtraData === true) {
-      formData = current.schemaUtils.omitExtraData(current.schema, formData);
+      formData = state.schemaUtils.omitExtraData(state.schema, formData);
     }
-    if (!noValidate && !this.runValidation(formData)) {
+    if (!noValidate && !runValidation(formData)) {
       return;
     }
     // There are no errors generated through schema validation, so only the user-provided ones are shown
-    const next = applySubmit(current, this.props);
-    this.commit(current, next, (base) => applySubmit(base, this.props));
-    onSubmit?.(toIChangeEvent({ ...next, formData }, 'submitted'), event);
-  };
-
-  /** Programmatically submits the `Form`, see `FormHandle.submit()`. The submit goes through the DOM so that HTML5
-   * validation runs, a DOM listener on the form sees the event, and `onSubmit` receives one: the browser's own
-   * constraint validation first, unless `noHtml5Validate`, then one bubbling, cancelable submit event that React
-   * dispatches to `onSubmit`, carrying `formData` when the caller handed some over. A `requestSubmit()` would fire
-   * the same event, but cannot carry the data.
-   *
-   * @param [formData] - The data to submit in place of the rendered data
-   */
-  submit = (formData?: T) => {
-    const form = this.formElement.current;
-    // Only a `<form>` submits; the documented cost of another `tagName` is that submission, native and programmatic,
-    // is gone with it
-    if (!(form instanceof HTMLFormElement) || (!this.props.noHtml5Validate && !form.reportValidity())) {
-      return;
-    }
-    form.dispatchEvent(createSubmitEvent<T>(formData === undefined ? undefined : { formData }));
+    const next = applySubmit(state, props);
+    commit(next, (base) => applySubmit(base, props));
+    props.onSubmit?.(toIChangeEvent({ ...next, formData }, 'submitted'), event);
   };
 
   /** Attempts to focus on the field associated with the `error`. Uses the `property` field to compute path of the error
@@ -1750,15 +1689,15 @@ export default class Form<
    *
    * @param error - The error on which to focus
    */
-  focusOnError = (error: RJSFValidationError) => {
-    const { idPrefix = 'root', idSeparator = '_' } = this.props;
+  const focusOnError = (error: RJSFValidationError) => {
+    const { idPrefix = 'root', idSeparator = '_' } = props;
     const { property } = error;
     const path = toPath(property ?? '');
     // The id of the root element is the idPrefix, so prepend it to the path
     path.unshift(idPrefix);
 
     const elementId = path.join(idSeparator);
-    const form = this.formElement.current;
+    const form = formElement.current;
     if (!form) {
       return;
     }
@@ -1772,134 +1711,193 @@ export default class Form<
     }
   };
 
-  /** Validates `formData` for a submission or a programmatic validation, committing the errors it reports and calling
-   * `onError` with them, or focusing the first one when `focusOnFirstError` asks for it. The data itself is never
-   * installed: an action never writes. The errors carry the data they describe and show once the form renders it.
-   *
-   * @param formData - The form data to validate
-   * @returns - True if the form is valid, false otherwise.
-   */
-  private runValidation(formData: T | undefined): boolean {
-    const { focusOnFirstError, onError } = this.props;
-    const current = this.state;
-    const { hasError, next } = applyValidation(current, this.props, formData);
-    const { errors } = next;
-    if (next !== current) {
-      this.commit(current, next, (base) => applyValidation(base, this.props, formData).next);
-    }
-    if (!hasError) {
-      return true;
-    }
-    if (focusOnFirstError) {
-      if (typeof focusOnFirstError === 'function') {
-        focusOnFirstError(errors[0]);
-      } else {
-        this.focusOnError(errors[0]);
+  const handle: FormHandle<T> = {
+    /** Returns the form data currently rendered, see `FormHandle.getFormData()`: the `formData` prop of a parent-owned
+     * form, the committed data of a self-owned one.
+     */
+    getFormData: () => state.formData as EventFormData<T>,
+
+    /** Programmatically submits the `Form`, see `FormHandle.submit()`. The submit goes through the DOM so that HTML5
+     * validation runs, a DOM listener on the form sees the event, and `onSubmit` receives one: the browser's own
+     * constraint validation first, unless `noHtml5Validate`, then one bubbling, cancelable submit event that React
+     * dispatches to `onSubmit`, carrying `formData` when the caller handed some over. A `requestSubmit()` would fire
+     * the same event, but cannot carry the data.
+     */
+    submit: (formData?: T) => {
+      const form = formElement.current;
+      // Only a `<form>` submits; the documented cost of another `tagName` is that submission, native and programmatic,
+      // is gone with it
+      if (!(form instanceof HTMLFormElement) || (!props.noHtml5Validate && !form.reportValidity())) {
+        return;
       }
-    }
-    if (onError) {
-      onError(errors);
-    } else {
-      // oxlint-disable-next-line no-console
-      console.error('Form validation failed', errors);
-    }
-    return false;
-  }
+      form.dispatchEvent(createSubmitEvent<T>(formData === undefined ? undefined : { formData }));
+    },
 
-  /** Validates the given `formData` as it is, see `FormHandle.validateFormWithFormData()`
-   *
-   * @deprecated Use `validateForm(formData)`, which also omits extra data when `omitExtraData` is set
-   * @param formData - The form data to validate
-   * @returns - True if the form is valid, false otherwise.
-   */
-  validateFormWithFormData = (formData?: T): boolean => this.runValidation(formData);
+    /** Resets the form, see `FormHandle.reset()`. A self-owned form re-derives its data from `initialFormData` and the
+     * schema the way an initial render does, clears every error and tells `onChange`. A parent-owned form clears its
+     * own errors only: the data is the parent's to reset, by passing a new `formData`, so nothing is proposed and
+     * `onChange` is not called. `extraErrors` are the parent's too and stay.
+     */
+    reset: () => {
+      if (state.isControlled) {
+        // `deriveState()` merges `extraErrors` back onto the cleared errors before the render
+        const clear = (base: FormState<T, S, F>): FormState<T, S, F> => ({
+          ...base,
+          errors: [],
+          errorSchema: {},
+          schemaValidationErrors: [],
+          schemaValidationErrorSchema: {},
+          customErrors: undefined,
+        });
+        commit(clear(state), clear);
+        return;
+      }
+      const next = applyReset(state, props);
+      commit(next, (base) => applyReset(base, props));
+      props.onChange?.(toIChangeEvent(next));
+    },
 
-  /** Programmatically validates the form, see `FormHandle.validateForm()`: the given `formData`, or the rendered data
-   * when none is given. If `omitExtraData` is true, the data is first filtered to remove any extra data not in a form
-   * field. If `onError` is provided, then it will be called with the list of errors the same way as would happen on
-   * form submission.
-   *
-   * @param [formData] - The data to validate in place of the rendered data
-   * @returns - True if the form is valid, false otherwise.
-   */
-  validateForm = (formData?: T): boolean => {
-    const { omitExtraData } = this.props;
-    const current = this.state;
-    let data = formData === undefined ? current.formData : formData;
-    if (omitExtraData === true) {
-      data = current.schemaUtils.omitExtraData(current.schema, data);
-    }
-    return this.runValidation(data);
+    /** Sets the value of the field at `fieldPath`, see `FormHandle.setFieldValue()`. The dotted form splits on `.`
+     * only, so it cannot express an array index as a number or a property name containing a dot. Pass a
+     * `FieldPathList` for either: an item of an array wants the numeric index, since that is what makes a cleared item
+     * resolve to `null` rather than `undefined`.
+     */
+    setFieldValue: (fieldPath: string | FieldPathList, newValue?: unknown) => {
+      let path = fieldPath;
+      if (typeof path === 'string') {
+        // `''` is the documented spelling of the root; splitting it would name a property called `''` instead
+        path = path === '' ? [] : path.split('.');
+      }
+      const targetFieldPath = fieldPathFromList(path);
+      onChange(
+        newValue as T | undefined,
+        targetFieldPath,
+        undefined,
+        fieldPathToId(targetFieldPath, state.registry.globalFormOptions),
+      );
+    },
+
+    /** Programmatically validates the form, see `FormHandle.validateForm()`: the given `formData`, or the rendered
+     * data when none is given, with extra data omitted first when `omitExtraData` is set.
+     */
+    validateForm: (formData?: T) => {
+      let data = formData === undefined ? state.formData : formData;
+      if (props.omitExtraData === true) {
+        data = state.schemaUtils.omitExtraData(state.schema, data);
+      }
+      return runValidation(data);
+    },
+
+    /** Validates the given `formData` as it is, see `FormHandle.validateFormWithFormData()` */
+    validateFormWithFormData: (formData?: T) => runValidation(formData),
+
+    /** Validates the `formData` against the form's schema, returning the results, see `FormHandle.validate()` */
+    validate: (formData: T | undefined) => validateFormData(props, state, formData),
+
+    focusOnError,
   };
 
-  /** Renders the `Form` fields inside the <form> | `tagName`, rendering any errors if needed along with the submit
-   * button or any children of the form.
+  /** This render's handlers, reached through the stable functions below. The fields memoize on their props, so the
+   * handlers they receive must keep their identity across renders while acting on the render that was committed
+   * last; the same holds for the handle a parent keeps. The committed render is the one React just laid out, so the
+   * layout effect is where it is recorded: nothing reads it while rendering, and it holds no state of its own, only
+   * the closures of the last commit, exactly what `this` gives a class component. It is the `useEffectEvent`
+   * polyfill the React docs give, unrolled.
    */
-  render() {
-    const {
-      children,
-      id,
-      className = '',
-      tagName,
-      name,
-      method,
-      target,
-      action,
-      autoComplete,
-      enctype,
-      acceptCharset,
-      noHtml5Validate = false,
-      disabled,
-      readonly,
-      showErrorList = 'top',
-    } = this.props;
+  const rendered: RenderedHandlers<T> = { onChange, onBlur, onFocus, onSubmit, handle };
+  const latest = useRef(rendered);
+  useLayoutEffect(() => {
+    latest.current = rendered;
+  });
+  // oxlint-disable-next-line react/hook-use-state -- created once for the life of the form, never set again
+  const [stable] = useState(() => stableHandlers(latest));
+  useImperativeHandle(props.ref, () => stable.handle, [stable]);
 
-    const { schema, uiSchema, formData, errorSchema, registry } = this.state;
-    const { SchemaField: SchemaFieldComponent } = registry.fields;
-    const { SubmitButton } = registry.templates.ButtonTemplates;
-    const FormTag = tagName || 'form';
+  const {
+    children,
+    id,
+    className = '',
+    tagName,
+    name,
+    method,
+    target,
+    action,
+    autoComplete,
+    enctype,
+    acceptCharset,
+    noHtml5Validate = false,
+    disabled,
+    readonly,
+    showErrorList = 'top',
+  } = props;
 
-    let { [SUBMIT_BTN_OPTIONS_KEY]: submitOptions = {} } = getUiOptions<T, S, F>(uiSchema);
-    if (disabled) {
-      submitOptions = { ...submitOptions, props: { ...submitOptions.props, disabled: true } };
-    }
-    const submitUiSchema = { [UI_OPTIONS_KEY]: { [SUBMIT_BTN_OPTIONS_KEY]: submitOptions } };
+  const { schema, uiSchema, formData, errors, errorSchema, registry } = state;
+  const { SchemaField: SchemaFieldComponent } = registry.fields;
+  const { SubmitButton } = registry.templates.ButtonTemplates;
+  const FormTag = tagName || 'form';
 
-    return (
-      <FormTag
-        className={className || 'rjsf'}
-        id={id}
-        name={name}
-        method={method}
-        target={target}
-        action={action}
-        autoComplete={autoComplete}
-        encType={enctype}
-        acceptCharset={acceptCharset}
-        noValidate={noHtml5Validate}
-        onSubmit={this.onSubmit}
-        ref={this.formElement}
-      >
-        {showErrorList === 'top' && this.renderErrors(registry)}
-        <SchemaFieldComponent
-          name=''
-          schema={schema}
-          uiSchema={uiSchema}
-          errorSchema={errorSchema}
-          fieldPath={ROOT_FIELD_PATH}
-          id={registry.globalFormOptions.idPrefix}
-          formData={formData}
-          onChange={this.onChange}
-          onBlur={this.onBlur}
-          onFocus={this.onFocus}
-          registry={registry}
-          disabled={disabled}
-          readonly={readonly}
-        />
-
-        {children || <SubmitButton uiSchema={submitUiSchema} registry={registry} />}
-        {showErrorList === 'bottom' && this.renderErrors(registry)}
-      </FormTag>
-    );
+  let { [SUBMIT_BTN_OPTIONS_KEY]: submitOptions = {} } = getUiOptions<T, S, F>(uiSchema);
+  if (disabled) {
+    submitOptions = { ...submitOptions, props: { ...submitOptions.props, disabled: true } };
   }
+  const submitUiSchema = { [UI_OPTIONS_KEY]: { [SUBMIT_BTN_OPTIONS_KEY]: submitOptions } };
+
+  /** The errors in the `ErrorList`, unless disabled by `showErrorList` */
+  const renderErrors = () => {
+    const options = getUiOptions<T, S, F>(uiSchema);
+    const ErrorListTemplate = getTemplate<'ErrorListTemplate', T, S, F>('ErrorListTemplate', registry, options);
+    if (!errors?.length) {
+      return null;
+    }
+    return (
+      <ErrorListTemplate
+        errors={errors}
+        errorSchema={errorSchema || {}}
+        schema={schema}
+        uiSchema={uiSchema}
+        registry={registry}
+      />
+    );
+  };
+
+  return (
+    <FormTag
+      className={className || 'rjsf'}
+      id={id}
+      name={name}
+      method={method}
+      target={target}
+      action={action}
+      autoComplete={autoComplete}
+      encType={enctype}
+      acceptCharset={acceptCharset}
+      noValidate={noHtml5Validate}
+      onSubmit={stable.onSubmit}
+      ref={formElement}
+    >
+      {showErrorList === 'top' && renderErrors()}
+      <SchemaFieldComponent
+        name=''
+        schema={schema}
+        uiSchema={uiSchema}
+        errorSchema={errorSchema}
+        fieldPath={ROOT_FIELD_PATH}
+        id={registry.globalFormOptions.idPrefix}
+        formData={formData}
+        onChange={stable.onChange}
+        onBlur={stable.onBlur}
+        onFocus={stable.onFocus}
+        registry={registry}
+        disabled={disabled}
+        readonly={readonly}
+      />
+
+      {children || <SubmitButton uiSchema={submitUiSchema} registry={registry} />}
+      {showErrorList === 'bottom' && renderErrors()}
+    </FormTag>
+  );
 }
+
+/** `Form` compares its props shallowly, as `SchemaField` does, so a parent's re-render with the same props stops here */
+const MemoizedForm = memo(Form) as typeof Form;
+export default MemoizedForm;
