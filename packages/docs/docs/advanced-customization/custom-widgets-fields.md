@@ -200,9 +200,9 @@ The following props are passed to custom widget components:
 - `label`: The computed label for this widget, as a string
 - `hideLabel`: A boolean value, if true, will cause the label to be hidden. This is useful for nested fields where you don't want to clutter the UI. Customized via `label` in the `UiSchema`;
 - `multiple`: A boolean value stating if the widget can accept multiple values;
-- `onChange`: The value change event handler; call it with the new value every time it changes;
+- `onChange`: The value change event handler; call it with the new value every time it changes, once per gesture;
 - `onKeyChange`: The key change event handler (only called for fields with `additionalProperties`); pass the new value every time it changes;
-- `onBlur`: The input blur event handler; call it with the widget id and value;
+- `onBlur`: The input blur event handler; call it with the widget id and value, from the input's own blur handler. Never call it from the handler that calls `onChange`: the form validates the value it renders, which is still the one before the change, and a form whose parent owns the data would propose that value back, undoing the change;
 - `onFocus`: The input focus event handler; call it with the widget id and value;
 - `options`: A map of options passed as a prop to the component (see [Custom widget options](#custom-widget-options)).
 - `options.enumOptions`: For enum fields, this property contains the list of options for the enum as an array of \{ label, value } objects. If the enum is defined using the oneOf/anyOf syntax, the entire schema object for each option is appended onto the \{ schema, label, value } object.
@@ -396,8 +396,8 @@ A field component will always be passed the following props:
 - `name`: The unique name of the field, usually derived from the name of the property in the JSONSchema
 - `rawErrors`: An array of strings listing all generated error messages from encountered errors for this field. It carries them whatever `hideError` says, so derive an error state from [`getVisibleErrors()`](../api-reference/utility-functions.md#getvisibleerrors) (or its boolean form `hasVisibleErrors()`) rather than from `rawErrors` alone
 - `hideError`: A boolean value stating if the field is hiding its errors, set by the [`ui:hideError`](../api-reference/uiSchema.md#hideerror) uiSchema directive
-- `onChange`: The field change event handler; called with the updated field value, the optional change path for the value (defaults to an empty array), an optional ErrorSchema and the optional id of the field being changed
-- `onBlur`: The input blur event handler; call it with the field id and value;
+- `onChange`: The field change event handler; called with the updated field value, the optional change path for the value (defaults to an empty array), an optional ErrorSchema and the optional id of the field being changed. Call it once per gesture: each call is applied to the data the form renders, so two calls in one handler do not see each other
+- `onBlur`: The input blur event handler; call it with the field id and value, from the input's own blur handler and never from the handler that calls `onChange` (see the widget's `onBlur` above);
 - `onFocus`: The input focus event handler; call it with the field id and value;
 
 ## The `registry` object

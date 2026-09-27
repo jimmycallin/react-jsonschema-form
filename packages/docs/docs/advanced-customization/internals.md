@@ -75,7 +75,7 @@ i.glyphicon {
 
 ## The imperative handle
 
-A `ref` on `Form` exposes its `FormHandle`: `getFormData()`, `submit()`, `reset()`, `setFieldValue()`, `validateForm()`, `validateFormWithFormData()`, `validate()` and `focusOnError()`. Nothing else on the instance is supported. Type the ref as `Form` (TSX types a class element's `ref` by its instance) and narrow to `FormHandle` where you use it.
+A `ref` on `Form` exposes its `FormHandle`: `getFormData()`, `submit()`, `reset()`, `setFieldValue()`, `validateForm()` and `focusOnError()`, plus the deprecated `validateFormWithFormData()` and `validate()`. Type the ref as `FormHandle`, or `FormHandle<MyData>` for a typed form. Every member acts on the data the form renders, or on the data it is given: nothing waits for a commit, so two operations in one tick each see the render they were made from, as two changes to a controlled `<input>` would. The members are writes (`setFieldValue()`, `reset()`), reads (`getFormData()`) and actions (`validateForm()`, `submit()`), and an action never writes.
 
 ## Read form data programmatically
 
@@ -89,27 +89,27 @@ import type { RJSFSchema } from '@rjsf/utils';
 import validator from '@rjsf/validator-ajv8';
 
 const schema: RJSFSchema = { type: 'object', properties: { title: { type: 'string' } } };
-const formRef = createRef<Form>();
+const formRef = createRef<FormHandle>();
 
 function saveDraft() {
-  const form: FormHandle | null = formRef.current;
-  localStorage.setItem('draft', JSON.stringify(form?.getFormData()));
+  localStorage.setItem('draft', JSON.stringify(formRef.current?.getFormData()));
 }
 
 <Form ref={formRef} schema={schema} validator={validator} initialFormData={{ title: 'Untitled' }} />;
 ```
 
-It reads committed data, so an edit or `setFieldValue()` in the same tick is visible only after React commits. With a `formData` prop it returns that prop: the form renders nothing else, so a proposal your `onChange` handler declined is never returned.
+It reads the render, so an edit or `setFieldValue()` in the same tick is visible only after React commits, and inside `onChange` it returns the previous value: there, `event.formData` is the edit. With a `formData` prop it returns that prop: the form renders nothing else, so a proposal your `onChange` handler declined is never returned.
 
 ## Submit form programmatically
 
 You can use the reference to get your `Form` component and call the `submit` method to submit the form programmatically without a submit button.
 This method will dispatch the `submit` event of the form, and the function, that is passed to `onSubmit` props, will be called.
-It is queued behind any change, `setFieldValue()` or reset still in flight, so `setFieldValue('title', 'Draft'); submit();` submits the new title. `validateForm()` returns its result immediately instead, so it validates the data React has already committed.
+It submits the data the form renders, or the data it is given: `submit(data)` validates and submits `data` without making it the form's data, so a set-and-submit is a root replacement followed by a submit of the same value, `setFieldValue([], next); submit(next);`. A `submit()` in the same tick as an edit submits the data before the edit, since the edit is not rendered yet. `validateForm()` and `validateForm(data)` work the same way and return their result at once.
 
 ```tsx
 import { createRef } from 'react';
 import { RJSFSchema, UiSchema } from '@rjsf/utils';
+import type { FormHandle } from '@rjsf/core';
 import { Form } from '@rjsf/core';
 import validator from '@rjsf/validator-ajv8';
 
@@ -120,7 +120,7 @@ const schema: RJSFSchema = {
   type: 'string',
 };
 
-const formRef = createRef<Form>();
+const formRef = createRef<FormHandle>();
 
 render(
   <Form schema={schema} validator={validator} onSubmit={onSubmit} ref={formRef} />,
@@ -128,16 +128,18 @@ render(
 );
 
 formRef.current.submit();
+formRef.current.submit('typed in from elsewhere');
 ```
 
 ## Update field value in form programmatically
 
 You can use the reference to get your `Form` component and call the `setFieldValue(fieldPath: string | FieldPathList, newValue?: unknown): void` method to change the value of a field.
-This method will dispatch the `onChange` event of the form.
+This method will dispatch the `onChange` event of the form, with the change applied to the data the form renders. Two calls in one tick each report their own change applied to the rendered data; write several fields at once by replacing the root instead.
 
 ```tsx
 import { createRef } from 'react';
 import { RJSFSchema, UiSchema } from '@rjsf/utils';
+import type { FormHandle } from '@rjsf/core';
 import { Form } from '@rjsf/core';
 import validator from '@rjsf/validator-ajv8';
 
@@ -160,7 +162,7 @@ const schema: RJSFSchema = {
   required: ['foo'],
 };
 
-const formRef = createRef<Form>();
+const formRef = createRef<FormHandle>();
 
 render(
   <Form schema={schema} validator={validator} onSubmit={onSubmit} ref={formRef} />,
