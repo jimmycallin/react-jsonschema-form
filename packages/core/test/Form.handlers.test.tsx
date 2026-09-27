@@ -162,16 +162,15 @@ describeRepeated('Form common: event handlers', (createFormComponent) => {
         },
       };
 
-      let formData = {};
+      const reported: unknown[] = [];
       const ids: (string | undefined)[] = [];
       const onChange: FormProps['onChange'] = (data, id) => {
-        const { formData: fd } = data;
-        formData = { ...formData, ...(fd as GenericObjectType) };
+        reported.push(data.formData);
         ids.push(id);
       };
       createFormComponent({
         schema,
-        initialFormData: formData,
+        initialFormData: {},
         onChange,
         uiSchema,
       });
@@ -180,7 +179,13 @@ describeRepeated('Form common: event handlers', (createFormComponent) => {
         expect(ids).toHaveLength(2);
       });
 
-      expect(formData).toEqual({ foo: 'bar2', baz: 'blah2' });
+      // Both changes were made in one commit, so each was computed from the rendered value and reports its own
+      // field's change alone. What the form holds afterwards is the owner's business: a self-owned form composes the
+      // two commits, an accepting parent keeps the last proposal unless it merges them by `id`
+      expect(reported).toEqual([
+        { foo: 'bar2', baz: 'blah' },
+        { foo: 'bar', baz: 'blah2' },
+      ]);
       // One id per updated component; the defaults the seed was given are not reported
       expect(ids).toEqual(['root_foo', 'root_baz']);
     });

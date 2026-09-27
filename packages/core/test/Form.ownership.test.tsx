@@ -2,7 +2,7 @@ import { createRef, StrictMode, useLayoutEffect, useState } from 'react';
 import type { ErrorSchema, FieldProps, RJSFSchema, WidgetProps } from '@rjsf/utils';
 import { createSchemaUtils, getTemplate, getUiOptions, noop } from '@rjsf/utils';
 import validator from '@rjsf/validator-ajv8';
-import { act, fireEvent, render } from '@testing-library/react';
+import { act, render } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 
 import type { IChangeEvent } from '../src/index.ts';
@@ -16,6 +16,7 @@ import {
   input,
   RejectingParent,
   setupConsoleWarnSuppression,
+  submitForm,
   TransformingParent,
 } from './testUtils.tsx';
 
@@ -341,7 +342,7 @@ describe('form data ownership', () => {
       );
     }
 
-    it('two path changes within one act both reach an accepting parent', async () => {
+    it('two path changes in one tick each propose from the rendered value, and the parent keeps the last', async () => {
       const ref = createRef<Form<Data>>();
       const log = { proposals: [] as Data[] } as { value?: Data; proposals: Data[] };
       const { container } = render(<ComposingParent ref={ref} log={log} />);
@@ -351,19 +352,20 @@ describe('form data ownership', () => {
         ref.current!.setFieldValue('b', 'second');
       });
 
-      expect(log.value).toEqual({ a: 'first', b: 'second' });
+      // Like two changes to a controlled `<input>` in one tick: neither sees the other, the parent stores the last
       expect(log.proposals).toEqual([
         { a: 'first', b: '' },
-        { a: 'first', b: 'second' },
+        { a: '', b: 'second' },
       ]);
-      expect(input(container, 'root_a')).toHaveValue('first');
+      expect(log.value).toEqual({ a: '', b: 'second' });
+      expect(input(container, 'root_a')).toHaveValue('');
       expect(input(container, 'root_b')).toHaveValue('second');
     });
 
-    it('a transformed first value survives the second change', async () => {
+    it('a root replacement writes several fields in one proposal', async () => {
       const ref = createRef<Form<Data>>();
       const log = { proposals: [] as Data[] } as { value?: Data; proposals: Data[] };
-      render(
+      const { container } = render(
         <ComposingParent
           ref={ref}
           log={log}
@@ -372,12 +374,13 @@ describe('form data ownership', () => {
       );
 
       await act(async () => {
-        ref.current!.setFieldValue('a', 'first');
-        ref.current!.setFieldValue('b', 'second');
+        ref.current!.setFieldValue([], { ...ref.current!.getFormData(), a: 'first', b: 'second' });
       });
 
+      expect(log.proposals).toEqual([{ a: 'first', b: 'second' }]);
       expect(log.value).toEqual({ a: 'FIRST', b: 'second' });
-      expect(log.proposals[1]).toEqual({ a: 'FIRST', b: 'second' });
+      expect(input(container, 'root_a')).toHaveValue('FIRST');
+      expect(input(container, 'root_b')).toHaveValue('second');
     });
 
     it('a rejected first value is not resurrected by the second change', async () => {
@@ -397,7 +400,7 @@ describe('form data ownership', () => {
       ]);
     });
 
-    it('a change made from inside onChange is queued behind the one being handled', async () => {
+    it('a setFieldValue from inside onChange proposes from the rendered value, not the proposal being handled', async () => {
       const ref = createRef<Form<Data>>();
       const proposals: Data[] = [];
       function ReentrantParent() {
@@ -427,8 +430,39 @@ describe('form data ownership', () => {
 
       expect(proposals).toEqual([
         { a: 'first', b: '' },
-        { a: 'first', b: 'derived' },
+        { a: '', b: 'derived' },
       ]);
+      expect(input(container, 'root_a')).toHaveValue('');
+      expect(input(container, 'root_b')).toHaveValue('derived');
+    });
+
+    it('a parent adds a derived field to the proposal it stores instead of calling setFieldValue', async () => {
+      const ref = createRef<Form<Data>>();
+      const proposals: Data[] = [];
+      function ComposingOnChangeParent() {
+        const [data, setData] = useState<Data>({ a: '', b: '' });
+        return (
+          <Form<Data>
+            ref={ref}
+            schema={schema}
+            validator={validator}
+            formData={data}
+            onChange={(event) => {
+              const proposal = event.formData;
+              proposals.push(proposal);
+              setData(proposal.a === 'first' ? { ...proposal, b: 'derived' } : proposal);
+            }}
+          />
+        );
+      }
+      const { container } = render(<ComposingOnChangeParent />);
+
+      await act(async () => {
+        ref.current!.setFieldValue('a', 'first');
+      });
+
+      expect(proposals).toEqual([{ a: 'first', b: '' }]);
+      expect(input(container, 'root_a')).toHaveValue('first');
       expect(input(container, 'root_b')).toHaveValue('derived');
     });
 
@@ -450,24 +484,66 @@ describe('form data ownership', () => {
       expect(onChange.mock.calls[0][0].formData).toEqual({ a: 'z' });
     });
 
-    it('unmounting discards the operations still queued', async () => {
+    it('every operation in one tick calls onChange with its own proposal', async () => {
       const ref = createRef<Form>();
       const onChange = vi.fn();
-      const { unmount } = render(
-        <Form ref={ref} schema={schema} validator={validator} formData={{ a: '' }} onChange={onChange} />,
-      );
+      render(<Form ref={ref} schema={schema} validator={validator} formData={{ a: '' }} onChange={onChange} />);
 
       await act(async () => {
         ref.current!.setFieldValue('a', 'x');
         ref.current!.setFieldValue('b', 'y');
-        unmount();
       });
 
-      expect(onChange).toHaveBeenCalledTimes(1);
+      expect(onChange).toHaveBeenCalledTimes(2);
+      expect(onChange.mock.calls[0][0].formData).toEqual({ a: 'x' });
+      expect(onChange.mock.calls[1][0].formData).toEqual({ a: '', b: 'y' });
     });
   });
 
   describe('self-owned forms', () => {
+    it('two setFieldValue calls in one tick both land, each reported from the rendered value', () => {
+      const ref = createRef<Form>();
+      const { onChange, getFormData } = createFormComponent({ ref, schema, initialFormData: { a: '', b: '' } });
+
+      act(() => {
+        ref.current!.setFieldValue('a', 'first');
+        ref.current!.setFieldValue('b', 'second');
+      });
+
+      // The second commit is applied on top of the first, so the form holds both; each event describes its own
+      // edit applied to what the render showed, so the events do not end at the committed value
+      expect(getFormData()).toEqual({ a: 'first', b: 'second' });
+      expect(onChange.mock.calls.map(([event]) => event.formData)).toEqual([
+        { a: 'first', b: '' },
+        { a: '', b: 'second' },
+      ]);
+    });
+
+    it('a root replacement from inside onChange composes a derived field', () => {
+      const ref = createRef<Form>();
+      const reported: unknown[] = [];
+      const { getFormData } = createFormComponent({
+        ref,
+        schema,
+        initialFormData: { a: '', b: '' },
+        onChange: (event: IChangeEvent) => {
+          const data = event.formData as Data;
+          reported.push(data);
+          if (data.a === 'first' && data.b === '') {
+            ref.current!.setFieldValue([], { ...data, b: 'derived' });
+          }
+        },
+      });
+
+      act(() => ref.current!.setFieldValue('a', 'first'));
+
+      expect(getFormData()).toEqual({ a: 'first', b: 'derived' });
+      expect(reported).toEqual([
+        { a: 'first', b: '' },
+        { a: 'first', b: 'derived' },
+      ]);
+    });
+
     const withDefault: RJSFSchema = {
       type: 'object',
       properties: { a: { type: 'string', default: 'A' }, b: { type: 'string' } },
@@ -924,30 +1000,36 @@ describe('form data ownership', () => {
       expect(onError).toHaveBeenCalledTimes(1);
     });
 
-    it('a blur in the same tick as an edit validates the edit instead of proposing the old value', async () => {
-      const log = createParentLog<{ foo?: string }>();
-      const { container } = render(
-        <AcceptingParent
-          schema={minLengthSchema}
-          uiSchema={{ foo: { 'ui:widget': ChangeThenBlurWidget } }}
-          initialValue={{ foo: 'a' }}
-          liveValidate='onBlur'
-          log={log}
-        />,
+    it('a blur in the same handler as a change reports the value before the change and commits after it', async () => {
+      const { node, onChange, getFormData } = createFormComponent({
+        schema: minLengthSchema,
+        uiSchema: { foo: { 'ui:widget': ChangeThenBlurWidget } },
+        initialFormData: { foo: 'a' },
+        liveValidate: 'onBlur',
+      });
+
+      await user.click(node.querySelector('#root_foo-commit')!);
+
+      // The blur read the render, which still showed `a`, so its event carries that value and its error; the commit
+      // re-applied the blur on top of the change, so the form holds the edit with no error. A parent-owned form
+      // would store that event as its value, undoing the change: a widget lets the native blur fire instead
+      expect(onChange).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          formData: { foo: 'a' },
+          errors: [expect.objectContaining({ message: 'must NOT have fewer than 5 characters' })],
+        }),
+        'root_foo',
       );
-
-      await user.click(container.querySelector('#root_foo-commit')!);
-
-      expect(log.value).toEqual({ foo: 'abcdef' });
-      expect(fieldErrorsById(container)).toEqual({});
+      expect(getFormData()).toEqual({ foo: 'abcdef' });
+      expect(fieldErrorsById(node)).toEqual({});
     });
   });
 });
 
 describeOwnerships('operations in one tick', (createFormComponent) => {
-  it('a submit in the same tick as an edit submits the edited data', () => {
+  it('a submit in the same tick as an edit submits the rendered data, not the edit', () => {
     const ref = createRef<Form>();
-    const { onSubmit } = createFormComponent({ ref, schema, initialFormData: { a: 'old' } });
+    const { onSubmit, getFormData } = createFormComponent({ ref, schema, initialFormData: { a: 'old' } });
 
     act(() => {
       ref.current!.setFieldValue('a', 'new');
@@ -955,13 +1037,60 @@ describeOwnerships('operations in one tick', (createFormComponent) => {
     });
 
     expect(onSubmit).toHaveBeenCalledTimes(1);
+    expect(onSubmit.mock.calls[0][0].formData).toEqual({ a: 'old' });
+    expect(getFormData()).toEqual({ a: 'new' });
+  });
+
+  it('a root replacement and a submit of the same value in one tick submit the edit', () => {
+    const ref = createRef<Form>();
+    const { onSubmit, getFormData } = createFormComponent({ ref, schema, initialFormData: { a: 'old' } });
+
+    act(() => {
+      const next = { a: 'new' };
+      ref.current!.setFieldValue([], next);
+      ref.current!.submit(next);
+    });
+
+    expect(onSubmit).toHaveBeenCalledTimes(1);
     expect(onSubmit.mock.calls[0][0].formData).toEqual({ a: 'new' });
+    expect(getFormData()).toEqual({ a: 'new' });
+  });
+
+  it('submit(formData) and validateForm(formData) act on their argument without installing it', () => {
+    const ref = createRef<Form>();
+    const required: RJSFSchema = { ...schema, required: ['a', 'b'] };
+    const { node, onSubmit, onError, onChange, getFormData } = createFormComponent({
+      ref,
+      schema: required,
+      initialFormData: { a: 'old' },
+      noHtml5Validate: true,
+    });
+
+    act(() => {
+      expect(ref.current!.validateForm({ a: 'draft' })).toBe(false);
+    });
+    expect(onError).toHaveBeenCalledTimes(1);
+    expect(onError.mock.calls[0][0].map(({ message }: { message?: string }) => message)).toEqual([
+      "must have required property 'b'",
+    ]);
+    expect(getFormData()).toEqual({ a: 'old' });
+    expect(onChange).not.toHaveBeenCalled();
+
+    act(() => {
+      ref.current!.submit({ a: 'draft', b: 'ok' });
+    });
+    expect(onSubmit).toHaveBeenCalledTimes(1);
+    expect(onSubmit.mock.calls[0][0].formData).toEqual({ a: 'draft', b: 'ok' });
+    expect(getFormData()).toEqual({ a: 'old' });
+    expect(onChange).not.toHaveBeenCalled();
+    // The draft's error described data the form does not render, so a later edit shows the errors of its own data
+    expect(fieldErrorsById(node)).toEqual({});
   });
 
   it('an invalid submit in the same tick as an edit reports the edited data and lets later operations run', () => {
     const ref = createRef<Form>();
     const required: RJSFSchema = { ...schema, required: ['a', 'b'] };
-    const { onSubmit, onError, getFormData } = createFormComponent({
+    const { onSubmit, onError, onChange, getFormData } = createFormComponent({
       ref,
       schema: required,
       initialFormData: {},
@@ -969,14 +1098,18 @@ describeOwnerships('operations in one tick', (createFormComponent) => {
     });
 
     act(() => {
-      ref.current!.setFieldValue('a', 'new');
-      ref.current!.submit();
+      const next = { a: 'new' };
+      ref.current!.setFieldValue([], next);
+      ref.current!.submit(next);
       ref.current!.setFieldValue('b', 'later');
     });
 
     expect(onSubmit).not.toHaveBeenCalled();
     expect(onError.mock.calls[0][0]).toHaveLength(1);
-    expect(getFormData()).toEqual({ a: 'new', b: 'later' });
+    expect(onChange).toHaveBeenCalledTimes(2);
+    // Each edit was proposed from the rendered value; what the form holds afterwards is the owner's business,
+    // see the self-owned suite for the composition its updaters give it
+    expect(getFormData()).toEqual(expect.objectContaining({ b: 'later' }));
   });
 
   it('a submit whose validation throws lets later operations run', async () => {
@@ -1010,7 +1143,7 @@ describeOwnerships('operations in one tick', (createFormComponent) => {
     expect(getFormData()).toEqual({ a: 'new' });
   });
 
-  it('a submit queued behind an edit whose validation throws keeps the form mounted', () => {
+  it('a submit in the same tick as an edit whose validation throws keeps the form mounted', async () => {
     const ref = createRef<Form>();
     function EditThenSubmit(props: WidgetProps) {
       return (
@@ -1037,15 +1170,20 @@ describeOwnerships('operations in one tick', (createFormComponent) => {
       },
     });
 
-    vi.useFakeTimers();
+    // The submit runs from the DOM event `submit()` dispatches, whose handler's error React reports to `window`
+    const reported: unknown[] = [];
+    const report = (event: ErrorEvent) => {
+      event.preventDefault();
+      reported.push(event.error);
+    };
+    window.addEventListener('error', report);
     try {
-      // fireEvent.click is used because catching the rethrow needs fake timers, and user-event hangs under them
-      fireEvent.click(node.querySelector('#root_a-go')!);
-      // The submit ran from the edit's commit, so its error is rethrown from a timer instead
-      expect(() => vi.runAllTimers()).toThrow('boom');
+      await user.click(node.querySelector('#root_a-go')!);
     } finally {
-      vi.useRealTimers();
+      window.removeEventListener('error', report);
     }
+
+    expect(reported).toEqual([new Error('boom')]);
     expect(ref.current).not.toBeNull();
     act(() => ref.current!.setFieldValue('a', 'later'));
     expect(getFormData()).toEqual({ a: 'later' });
@@ -1066,16 +1204,13 @@ describeOwnerships('operations in one tick', (createFormComponent) => {
       },
     });
 
-    vi.useFakeTimers();
-    try {
+    // The handle method validates in the caller's own call, so the throw reaches the caller
+    expect(() =>
       act(() => {
         ref.current!.setFieldValue('a', 'first');
         ref.current!.setFieldValue('a', 'second');
-      });
-      expect(() => vi.runAllTimers()).toThrow('boom');
-    } finally {
-      vi.useRealTimers();
-    }
+      }),
+    ).toThrow('boom');
     expect(ref.current).not.toBeNull();
     act(() => ref.current!.setFieldValue('a', 'later'));
     expect(getFormData()).toEqual({ a: 'later' });
@@ -1112,10 +1247,26 @@ describeOwnerships('operations in one tick', (createFormComponent) => {
   });
 });
 
-/** A self-owned form calls `onChange` and `onSubmit`, and any form calls `onError`, from a `setState()` callback,
- * inside React's commit phase
+/** Every callback is called from the handler that caused it, so a throw propagates out of that handler: to the
+ * caller of a handle method, and to `window`, where React reports it, for a DOM event. Neither unmounts the form.
  */
 describe('a throwing callback on a self-owned form', () => {
+  /** Collects what React reports to `window` while `run` runs */
+  async function reportedBy(run: () => Promise<void>) {
+    const reported: unknown[] = [];
+    const report = (event: ErrorEvent) => {
+      event.preventDefault();
+      reported.push(event.error);
+    };
+    window.addEventListener('error', report);
+    try {
+      await run();
+    } finally {
+      window.removeEventListener('error', report);
+    }
+    return reported;
+  }
+
   it('an onChange that throws keeps the form mounted', () => {
     const ref = createRef<Form>();
     const { getFormData } = createFormComponent({
@@ -1129,19 +1280,13 @@ describe('a throwing callback on a self-owned form', () => {
       },
     });
 
-    vi.useFakeTimers();
-    try {
-      act(() => ref.current!.setFieldValue('a', 'first'));
-      expect(() => vi.runAllTimers()).toThrow('boom');
-    } finally {
-      vi.useRealTimers();
-    }
+    expect(() => act(() => ref.current!.setFieldValue('a', 'first'))).toThrow('boom');
     expect(ref.current).not.toBeNull();
     act(() => ref.current!.setFieldValue('a', 'later'));
     expect(getFormData()).toEqual({ a: 'later' });
   });
 
-  it('an onSubmit that throws keeps the form mounted', () => {
+  it('an onSubmit that throws keeps the form mounted', async () => {
     const ref = createRef<Form>();
     const { node, getFormData } = createFormComponent({
       ref,
@@ -1152,14 +1297,7 @@ describe('a throwing callback on a self-owned form', () => {
       },
     });
 
-    vi.useFakeTimers();
-    try {
-      // fireEvent.submit is used because catching the rethrow needs fake timers, and user-event hangs under them
-      fireEvent.submit(node);
-      expect(() => vi.runAllTimers()).toThrow('boom');
-    } finally {
-      vi.useRealTimers();
-    }
+    expect(await reportedBy(() => submitForm(node, user))).toEqual([new Error('boom')]);
     expect(ref.current).not.toBeNull();
     act(() => ref.current!.setFieldValue('a', 'later'));
     expect(getFormData()).toEqual({ a: 'later' });
@@ -1180,17 +1318,10 @@ describe('a throwing callback on a self-owned form', () => {
       return { ref, ...rendered };
     };
 
-    it('on an invalid submit', () => {
+    it('on an invalid submit', async () => {
       const { ref, node, getFormData } = renderInvalid();
 
-      vi.useFakeTimers();
-      try {
-        // fireEvent.submit is used because catching the rethrow needs fake timers, and user-event hangs under them
-        fireEvent.submit(node);
-        expect(() => vi.runAllTimers()).toThrow('boom');
-      } finally {
-        vi.useRealTimers();
-      }
+      expect(await reportedBy(() => submitForm(node, user))).toEqual([new Error('boom')]);
       expect(ref.current).not.toBeNull();
       act(() => ref.current!.setFieldValue('a', 'later'));
       expect(getFormData()).toEqual({ a: 'later' });
@@ -1199,15 +1330,7 @@ describe('a throwing callback on a self-owned form', () => {
     it('on a programmatic validateForm()', () => {
       const { ref, getFormData } = renderInvalid();
 
-      vi.useFakeTimers();
-      try {
-        act(() => {
-          ref.current!.validateForm();
-        });
-        expect(() => vi.runAllTimers()).toThrow('boom');
-      } finally {
-        vi.useRealTimers();
-      }
+      expect(() => act(() => ref.current!.validateForm())).toThrow('boom');
       expect(ref.current).not.toBeNull();
       act(() => ref.current!.setFieldValue('a', 'later'));
       expect(getFormData()).toEqual({ a: 'later' });

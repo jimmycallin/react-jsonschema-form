@@ -185,10 +185,12 @@ describe('FormHandle', () => {
 
   it('hands back bound members, so destructuring the handle works', () => {
     const { handle } = mountWithHandle({ schema, initialFormData: { name: 'seed' } });
+    // oxlint-disable-next-line typescript/no-deprecated -- the deprecated member stays bound until it is removed
     const { getFormData, validateForm, validate } = handle;
 
     expect(getFormData()).toEqual({ name: 'seed' });
     expect(validateForm()).toBe(true);
+    // oxlint-disable-next-line typescript/no-deprecated
     expect(validate({ name: 'seed' }).errors).toEqual([]);
   });
 
