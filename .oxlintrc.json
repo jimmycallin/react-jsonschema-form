@@ -782,12 +782,14 @@
       }
     },
     {
-      // Node tooling scripts: CommonJS `require` and module-scope functions are correct there, and printing is their output
+      // Node tooling scripts: CommonJS `require` and module-scope functions are correct there, and printing is their output.
+      // They're untyped JavaScript, so the type-aware `no-unsafe-*` rules only see `any` there
       "files": [".github/**", "scripts/**", "**/tailwind.config.js"],
       "rules": {
         "no-console": "off",
         "no-implicit-globals": "off",
         "typescript/no-var-requires": "off",
+        "typescript/no-unsafe-return": "off",
         "typescript/unbound-method": "off"
       }
     },
