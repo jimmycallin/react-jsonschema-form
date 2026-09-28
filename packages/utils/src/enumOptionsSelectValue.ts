@@ -13,11 +13,11 @@ export default function enumOptionsSelectValue<S extends StrictRJSFSchema = RJSF
   valueIndex: string | number,
   selected: EnumOptionsType<S>['value'][],
   allEnumOptions: EnumOptionsType<S>[] = [],
-) {
+): unknown[] {
   const value = enumOptionsValueForIndex<S>(valueIndex, allEnumOptions);
   if (value != null) {
     const index = allEnumOptions.findIndex((opt) => value === opt.value);
-    const all = allEnumOptions.map(({ value: val }) => val);
+    const all = allEnumOptions.map(({ value: val }): unknown => val);
     const updated = selected.slice(0, index).concat(value, selected.slice(index));
     // As inserting values at predefined index positions doesn't work with empty
     // arrays, we need to reorder the updated selection to match the initial order

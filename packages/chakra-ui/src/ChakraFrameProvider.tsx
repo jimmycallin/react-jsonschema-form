@@ -25,7 +25,7 @@ const memoizedCreateCacheWithContainer = weakMemoize((container: HTMLElement) =>
 
 export const __createChakraFrameProvider =
   (props: any) =>
-  ({ document }: any) => (
+  ({ document = globalThis.document }: { document?: Document }) => (
     <div style={{ margin: 2 }}>
       <CacheProvider value={memoizedCreateCacheWithContainer(document.head)}>
         <EnvironmentProvider value={() => document}>

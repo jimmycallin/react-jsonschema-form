@@ -55,15 +55,16 @@ export default function SelectWidget<
   const optionValueFormat = getOptionValueFormat(options);
   const isMultiple = typeof multiple === 'undefined' ? false : multiple;
 
-  const getDisplayValue = (val: any) => {
+  const getDisplayValue = (val: unknown) => {
     if (val === undefined || val === null) {
       return '';
     }
     if (typeof val === 'object') {
-      if (val.name) {
-        return val.name;
+      const named = val as { name?: string; label?: string };
+      if (named.name) {
+        return named.name;
       }
-      return val.label || JSON.stringify(val);
+      return named.label || JSON.stringify(val);
     }
     return String(val);
   };

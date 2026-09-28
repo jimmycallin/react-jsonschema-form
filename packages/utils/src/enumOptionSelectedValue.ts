@@ -16,11 +16,11 @@ import type { EnumOptionsType, OptionValueFormat, StrictRJSFSchema, RJSFSchema }
  * @returns The value to use for the select element's `value` attribute
  */
 export default function enumOptionSelectedValue<S extends StrictRJSFSchema = RJSFSchema>(
-  value: any,
+  value: unknown,
   enumOptions: EnumOptionsType<S>[] | undefined,
   multiple: boolean,
   format: OptionValueFormat = 'indexed',
-  emptyValue?: any,
+  emptyValue?: unknown,
 ): any {
   // A single value that equals `emptyValue` still counts as a selection when an option carries it, since widgets pick
   // sentinels like `null` or `''` that a `oneOf`/`anyOf` of constants can legitimately offer as an option of its own
@@ -35,7 +35,7 @@ export default function enumOptionSelectedValue<S extends StrictRJSFSchema = RJS
 
   if (format === 'realValue') {
     // Encoded the same way as the options' values so they match, e.g. `null` is `''` rather than `'null'` on both sides
-    const encode = (item: any, noMatch: any) => {
+    const encode = (item: unknown, noMatch: unknown) => {
       // Only a non-null object is encoded as its index, so every other value skips the scan that searches for one
       if (typeof item !== 'object' || item === null) {
         return enumOptionValueEncoder(item, 0, format);
@@ -46,7 +46,7 @@ export default function enumOptionSelectedValue<S extends StrictRJSFSchema = RJS
     };
     // `emptyValue` describes the whole selection, so an unmatched entry of a multiple selection uses the empty string
     // that `enumOptionValueEncoder()` gives a single empty option instead
-    return multiple ? value.map((item: any) => encode(item, '')) : encode(value, emptyValue);
+    return multiple ? (value as unknown[]).map((item) => encode(item, '')) : encode(value, emptyValue);
   }
 
   const indexes = enumOptionsIndexForValue<S>(value, enumOptions, multiple);

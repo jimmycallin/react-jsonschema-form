@@ -1,6 +1,6 @@
 import type { FocusEvent } from 'react';
 import { useCallback } from 'react';
-import type { WidgetProps, StrictRJSFSchema, FormContextType, RJSFSchema } from '@rjsf/utils';
+import type { EnumOptionsType, WidgetProps, StrictRJSFSchema, FormContextType, RJSFSchema } from '@rjsf/utils';
 import { enumOptionValueDecoder, enumOptionValueEncoder, getOptionValueFormat } from '@rjsf/utils';
 
 /** The `RadioWidget` component renders a group of radio buttons with DaisyUI styling
@@ -29,9 +29,9 @@ export default function RadioWidget<
    * @param option - The option to check
    * @returns Whether the option should be checked
    */
-  const isChecked = (option: any) => {
+  const isChecked = (option: EnumOptionsType<S>) => {
     if (isEnumeratedObject) {
-      return value && value.name === option.value.name;
+      return Boolean(value) && value.name === option.value.name;
     }
     return value === option.value;
   };

@@ -1,5 +1,6 @@
-import type { RJSFSchema, UiSchema } from '@rjsf/utils';
+import type { CustomValidator, ErrorTransformer, RJSFSchema, UiSchema } from '@rjsf/utils';
 import { ErrorSchemaBuilder, ID_KEY, ROOT_SCHEMA_PREFIX, noop } from '@rjsf/utils';
+import type { Validator } from 'ata-validator';
 
 import customizeValidator from '../src/customizeValidator.ts';
 // Static import of the package surface so its top-level evaluation
@@ -133,7 +134,7 @@ describe('ATAValidator', () => {
     it('runs the user-supplied transformErrors hook', () => {
       const v = customizeValidator();
       const schema: RJSFSchema = { type: 'string', minLength: 5 };
-      const transform = vi.fn((errs) => errs.map((e: any) => ({ ...e, message: 'transformed' })));
+      const transform = vi.fn<ErrorTransformer>((errs) => errs.map((e) => ({ ...e, message: 'transformed' })));
       const { errors } = v.validateFormData('abc', schema, undefined, transform);
       expect(transform).toHaveBeenCalled();
       expect(errors[0].message).toBe('transformed');
@@ -145,7 +146,7 @@ describe('ATAValidator', () => {
         type: 'object',
         properties: { x: { type: 'string' } },
       };
-      const customValidate = vi.fn((_data, errorHandler) => {
+      const customValidate = vi.fn<CustomValidator>((_data, errorHandler) => {
         errorHandler.x.addError('custom error');
         return errorHandler;
       });
@@ -158,7 +159,7 @@ describe('ATAValidator', () => {
       const v = customizeValidator();
       const schema: RJSFSchema = { type: 'object', properties: { country: { type: 'string' } } };
       const uiSchema: UiSchema<{ country?: string }> = { country: { 'ui:initialValue': 'US' } };
-      const customValidate = vi.fn((_data, errorHandler) => errorHandler);
+      const customValidate = vi.fn<CustomValidator>((_data, errorHandler) => errorHandler);
       v.validateFormData<{ country?: string }>({}, schema, customValidate, undefined, uiSchema);
       expect(customValidate).toHaveBeenCalledWith({ country: 'US' }, expect.any(Object), uiSchema, expect.any(Object));
     });
@@ -254,7 +255,7 @@ describe('ATAValidator', () => {
 
   describe('extenderFn option', () => {
     it('is invoked with the constructed validator', () => {
-      const extenderFn = vi.fn((validator) => validator);
+      const extenderFn = vi.fn((validator: Validator) => validator);
       const v = customizeValidator({ extenderFn });
       v.isValid({ type: 'string' }, 'a', {
         type: 'string',
@@ -320,7 +321,7 @@ describe('ATAValidator', () => {
     });
 
     it('passes the constructed Validator through extenderFn', () => {
-      const extenderFn = vi.fn((validator) => validator);
+      const extenderFn = vi.fn((validator: Validator) => validator);
       const v = customizeValidator({ extenderFn });
       v.isValid({ type: 'string' }, 'a', {
         type: 'string',
@@ -416,7 +417,7 @@ describe('cloneForValidation', () => {
     // jsdom strips structuredClone, so we provide it for this test to cover
     // the modern-runtime branch alongside the JSON-roundtrip fallback.
     const original = globalThis.structuredClone;
-    const spy = vi.fn((v: unknown) => JSON.parse(JSON.stringify(v)));
+    const spy = vi.fn((v: unknown): unknown => JSON.parse(JSON.stringify(v)));
     Object.defineProperty(globalThis, 'structuredClone', {
       value: spy,
       configurable: true,

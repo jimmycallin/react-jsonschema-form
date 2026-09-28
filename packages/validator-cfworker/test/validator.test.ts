@@ -1,5 +1,5 @@
 import type { Validator as EngineValidator } from '@cfworker/json-schema';
-import type { RJSFSchema, RJSFValidationError, UiSchema } from '@rjsf/utils';
+import type { CustomValidator, RJSFSchema, RJSFValidationError, UiSchema } from '@rjsf/utils';
 import { ROOT_SCHEMA_PREFIX } from '@rjsf/utils';
 
 import createCfworkerInstance, { installFormats } from '../src/createCfworkerInstance.ts';
@@ -87,7 +87,7 @@ describe('CFWorkerValidator', () => {
     const transform = vi.fn((errors: RJSFValidationError[]) =>
       errors.map((error) => ({ ...error, message: 'transformed' })),
     );
-    const custom = vi.fn((_data, errors) => {
+    const custom = vi.fn<CustomValidator>((_data, errors) => {
       errors.value.addError('custom');
       return errors;
     });
@@ -102,7 +102,7 @@ describe('CFWorkerValidator', () => {
     const validator = customizeValidator();
     const schema: RJSFSchema = { type: 'object', properties: { country: { type: 'string' } } };
     const uiSchema: UiSchema = { country: { 'ui:initialValue': 'US' } };
-    const custom = vi.fn((_data, errors) => errors);
+    const custom = vi.fn<CustomValidator>((_data, errors) => errors);
     validator.validateFormData({}, schema, custom, undefined, uiSchema);
     expect(custom).toHaveBeenCalledWith({ country: 'US' }, expect.any(Object), uiSchema, expect.any(Object));
   });

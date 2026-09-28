@@ -884,7 +884,7 @@ export function getArrayDefaults<
     // uiSchema for its own final position (`defaultsLength + i`) the same way `ArrayField` resolves it once rendered,
     // rather than sharing a single uiSchema across every filler row regardless of position.
     const fillerEntries: T[] = Array.from({ length: schema.minItems - defaultsLength }, (_unused, i) =>
-      computeDefaults<any, S, F>(validator, fillerSchema, {
+      computeDefaults<unknown, S, F>(validator, fillerSchema, {
         parentDefaults: fillerDefault,
         rootSchema,
         _recurseList,

@@ -14,7 +14,7 @@ import retrieveSchema from './retrieveSchema.ts';
 
 const NO_VALUE = Symbol('no Value');
 
-function enumValuesForSchema<S extends StrictRJSFSchema = RJSFSchema>(schema: S): any[] | undefined {
+function enumValuesForSchema<S extends StrictRJSFSchema = RJSFSchema>(schema: S): unknown[] | undefined {
   if (Array.isArray(schema.enum)) {
     return schema.enum;
   }
@@ -244,7 +244,7 @@ export default function sanitizeDataForNewSchema<
       if (!oldSchemaType || oldSchemaType === newSchemaType) {
         const maxItems = newSchema.maxItems ?? -1;
         if (newSchemaType === 'object') {
-          newFormData = data.reduce((newValue, aValue) => {
+          newFormData = data.reduce((newValue: T[], aValue: T) => {
             // Resolve refs, dependencies, if/then/else and allOf against this item's own value, so a conditional
             // nested inside `items` picks the branch that matches this element rather than the whole array (#5250)
             const oldItemSchema = retrieveSchema<T, S, F>(

@@ -22,9 +22,7 @@ const { SelectWidget, DateWidget } = Widgets;
 // function because, when it is active, the `SelectPatcher` code below along with the `ConfigProvider` for the antd
 // theme conditional branch won't take effect as the antd component `getPopupContainer()` supercedes it, so we make it
 // return undefined to disable it.
-// @ts-expect-error TS2339 because the Widget interface doesn't have the static function on it
 SelectWidget.getPopupContainerCallback = () => undefined;
-// @ts-expect-error TS2339 because the Widget interface doesn't have the static function on it
 // DateWidget also covers DateTimeWidget since it delegates to DateWidget internally
 DateWidget.getPopupContainerCallback = () => undefined;
 
@@ -67,7 +65,7 @@ SOFTWARE.
  *
  * @param frameDoc - The iFrame document of the playground
  */
-function AntdPopupPatcher({ frameDoc }: { frameDoc: Document }) {
+function AntdPopupPatcher({ frameDoc }: { frameDoc?: Document }) {
   useEffect(() => {
     if (!frameDoc) {
       return () => {};
@@ -182,22 +180,23 @@ export default function DemoFrame(props: DemoFrameProps) {
 
   const [ready, setReady] = useState(false);
   const [emotionCache, setEmotionCache] = useState<EmotionCache>(createCache({ key: 'css' }));
-  const [container, setContainer] = useState();
-  const [window, setWindow] = useState();
+  const [container, setContainer] = useState<HTMLElement>();
+  const [window, setWindow] = useState<Window>();
 
-  const instanceRef = useRef<any>(undefined);
+  const instanceRef = useRef<HTMLIFrameElement>(null);
 
   const onContentDidMount = useCallback(() => {
+    const frameDocument = instanceRef.current?.contentDocument;
     setReady(true);
     setEmotionCache(
       createCache({
         key: 'css',
         prepend: true,
-        container: instanceRef.current.contentWindow[DEMO_FRAME_JSS],
+        container: frameDocument?.getElementById(DEMO_FRAME_JSS) ?? undefined,
       }),
     );
-    setContainer(instanceRef.current.contentDocument.body);
-    setWindow(() => instanceRef.current.contentWindow);
+    setContainer(frameDocument?.body);
+    setWindow(() => instanceRef.current?.contentWindow ?? undefined);
   }, [instanceRef]);
 
   let body: ReactNode = children;
@@ -219,13 +218,15 @@ export default function DemoFrame(props: DemoFrameProps) {
     body = ready ? (
       <FrameContextConsumer>
         {({ document: frameDoc }) => {
-          const jssContainer =
-            frameDoc?.getElementById(DEMO_FRAME_JSS) || instanceRef.current.contentWindow[DEMO_FRAME_JSS];
+          const doc = frameDoc ?? instanceRef.current?.contentDocument ?? undefined;
+          const jssContainer = doc?.getElementById(DEMO_FRAME_JSS) ?? undefined;
           return (
             <>
-              <AntdPopupPatcher frameDoc={frameDoc || instanceRef.current.contentDocument} />
+              <AntdPopupPatcher frameDoc={doc} />
               <AntdStyleProvider container={jssContainer}>
-                <ConfigProvider getPopupContainer={() => jssContainer.parentElement}>{children}</ConfigProvider>
+                <ConfigProvider getPopupContainer={() => jssContainer?.parentElement ?? document.body}>
+                  {children}
+                </ConfigProvider>
               </AntdStyleProvider>
             </>
           );

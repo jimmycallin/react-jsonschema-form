@@ -59,7 +59,7 @@ export function computeSxProps<
     return sxProps;
   }
   if (Array.isArray(muiProps?.sx)) {
-    return [sxProps, ...muiProps.sx];
+    return [sxProps, ...muiProps.sx] as MuiProps['sx'][];
   }
   return { ...sxProps, ...muiProps?.sx } as MuiProps['sx'];
 }

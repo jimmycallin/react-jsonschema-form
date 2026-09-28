@@ -55,7 +55,7 @@ function AnyOfField<T = unknown, S extends StrictRJSFSchema = RJSFSchema, F exte
   // retrievedOptions is purely derived from options — useMemo handles re-derivation automatically
   // when options, schemaUtils, or formData's value changes, with no render-phase dispatch needed.
   const retrievedOptions = useMemo(
-    () => options.map((opt: S) => schemaUtils.retrieveSchema(opt, formData)),
+    () => (options as S[]).map((opt) => schemaUtils.retrieveSchema(opt, formData)),
     // oxlint-disable-next-line react-hooks/exhaustive-deps -- formDataHash is the value-stable proxy for formData
     [options, schemaUtils, formDataHash],
   );
