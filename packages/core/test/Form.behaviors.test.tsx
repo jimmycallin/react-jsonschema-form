@@ -3293,8 +3293,6 @@ describe('extraErrors set after submit (#4965)', () => {
       foo: { __errors: ['Server-side error'] },
     };
 
-    const formRef = createFormRef();
-
     function Wrapper() {
       const [extraErrors, setExtraErrors] = useState<ErrorSchema>({});
 
@@ -3304,7 +3302,7 @@ describe('extraErrors set after submit (#4965)', () => {
         setExtraErrors(sampleErrors);
       }, []);
 
-      return <Form ref={formRef} schema={schema} validator={validator} onSubmit={onSubmit} extraErrors={extraErrors} />;
+      return <Form schema={schema} validator={validator} onSubmit={onSubmit} extraErrors={extraErrors} />;
     }
 
     const { container } = render(<Wrapper />);
@@ -3314,14 +3312,8 @@ describe('extraErrors set after submit (#4965)', () => {
 
     await actWrappedDelayPromise(200);
 
-    // Check the form state directly
-    const { state } = formRef.current!;
-    expect(state.errors.length).toBeGreaterThan(0);
-    expect(state.errorSchema).toEqual(sampleErrors);
-
-    // Also check DOM
-    const errorItems = container.querySelectorAll('.error-detail li');
-    expect(errorItems.length).toBeGreaterThan(0);
+    expect(errorListMessages(container)).toEqual(['.foo Server-side error']);
+    expect(fieldErrorsById(container)).toEqual({ root_foo: ['Server-side error'] });
   });
 });
 

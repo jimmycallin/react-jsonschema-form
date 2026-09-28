@@ -5,7 +5,7 @@ import validator from '@rjsf/validator-ajv8';
 import { act, fireEvent, render } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 
-import type { IChangeEvent } from '../src/index.ts';
+import type { FormHandle, IChangeEvent } from '../src/index.ts';
 import Form from '../src/index.ts';
 import {
   AcceptingParent,
@@ -149,7 +149,7 @@ describe('form data ownership', () => {
     };
 
     it('clears local errors, keeps the loaded data, computes no defaults and calls no onChange', async () => {
-      const ref = createRef<Form>();
+      const ref = createRef<FormHandle>();
       const onChange = vi.fn();
       const { container } = render(
         <Form ref={ref} schema={withDefault} validator={validator} formData={{ a: 'x' }} onChange={onChange} />,
@@ -170,7 +170,7 @@ describe('form data ownership', () => {
     });
 
     it('keeps the parent-supplied extraErrors', () => {
-      const ref = createRef<Form>();
+      const ref = createRef<FormHandle>();
       const extraErrors: ErrorSchema = { a: { __errors: ['from the server'] } };
       const { container } = render(
         <Form
@@ -191,7 +191,7 @@ describe('form data ownership', () => {
     });
 
     it('lets the parent replace the data and clear local errors in one step without an old-value echo', async () => {
-      const ref = createRef<Form<Data>>();
+      const ref = createRef<FormHandle<Data>>();
       const proposals: unknown[] = [];
       function Parent() {
         const [data, setData] = useState<Data>({ a: 'x' });
@@ -317,7 +317,7 @@ describe('form data ownership', () => {
       transform = keepProposal,
       log,
     }: {
-      ref: React.RefObject<Form<Data> | null>;
+      ref: React.RefObject<FormHandle<Data> | null>;
       accept?: (proposal: Data) => boolean;
       transform?: (proposal: Data) => Data;
       log: { value?: Data; proposals: Data[] };
@@ -342,7 +342,7 @@ describe('form data ownership', () => {
     }
 
     it('two path changes within one act both reach an accepting parent', async () => {
-      const ref = createRef<Form<Data>>();
+      const ref = createRef<FormHandle<Data>>();
       const log = { proposals: [] as Data[] } as { value?: Data; proposals: Data[] };
       const { container } = render(<ComposingParent ref={ref} log={log} />);
 
@@ -361,7 +361,7 @@ describe('form data ownership', () => {
     });
 
     it('a transformed first value survives the second change', async () => {
-      const ref = createRef<Form<Data>>();
+      const ref = createRef<FormHandle<Data>>();
       const log = { proposals: [] as Data[] } as { value?: Data; proposals: Data[] };
       render(
         <ComposingParent
@@ -381,7 +381,7 @@ describe('form data ownership', () => {
     });
 
     it('a rejected first value is not resurrected by the second change', async () => {
-      const ref = createRef<Form<Data>>();
+      const ref = createRef<FormHandle<Data>>();
       const log = { proposals: [] as Data[] } as { value?: Data; proposals: Data[] };
       render(<ComposingParent ref={ref} log={log} accept={(proposal) => proposal.a !== 'first'} />);
 
@@ -398,7 +398,7 @@ describe('form data ownership', () => {
     });
 
     it('a change made from inside onChange is queued behind the one being handled', async () => {
-      const ref = createRef<Form<Data>>();
+      const ref = createRef<FormHandle<Data>>();
       const proposals: Data[] = [];
       function ReentrantParent() {
         const [data, setData] = useState<Data>({ a: '', b: '' });
@@ -433,7 +433,7 @@ describe('form data ownership', () => {
     });
 
     it('the queue advances past a rejected proposal and a missing handler', async () => {
-      const ref = createRef<Form>();
+      const ref = createRef<FormHandle>();
       const { rerender } = render(<Form ref={ref} schema={schema} validator={validator} formData={{ a: '' }} />);
       await act(async () => {
         ref.current!.setFieldValue('a', 'x');
@@ -451,7 +451,7 @@ describe('form data ownership', () => {
     });
 
     it('unmounting discards the operations still queued', async () => {
-      const ref = createRef<Form>();
+      const ref = createRef<FormHandle>();
       const onChange = vi.fn();
       const { unmount } = render(
         <Form ref={ref} schema={schema} validator={validator} formData={{ a: '' }} onChange={onChange} />,
@@ -474,7 +474,7 @@ describe('form data ownership', () => {
     };
 
     it('adds the defaults to the seed without calling onChange; getFormData() reads the result', () => {
-      const ref = createRef<Form>();
+      const ref = createRef<FormHandle>();
       const onChange = vi.fn();
       render(
         <StrictMode>
@@ -507,7 +507,7 @@ describe('form data ownership', () => {
     });
 
     it('resets to the latest seed and the current schema, and reports it', async () => {
-      const ref = createRef<Form>();
+      const ref = createRef<FormHandle>();
       const { node, onChange, rerender } = createFormComponent({
         ref,
         schema: withDefault,
@@ -529,7 +529,7 @@ describe('form data ownership', () => {
     });
 
     it('a schema change that adds a default transforms the held data without calling onChange', () => {
-      const ref = createRef<Form>();
+      const ref = createRef<FormHandle>();
       const { node, onChange, rerender } = createFormComponent({ ref, schema, initialFormData: { b: 'kept' } });
 
       rerender({ ref, schema: withDefault, initialFormData: { b: 'kept' } });
@@ -589,7 +589,7 @@ describe('form data ownership', () => {
     });
 
     it('freezes the data a self-owned form commits', async () => {
-      const ref = createRef<Form>();
+      const ref = createRef<FormHandle>();
       const { node } = createFormComponent({ ref, schema, initialFormData: { a: '' } });
 
       await user.click(node.querySelector('#root_a')!);
@@ -784,12 +784,12 @@ describe('form data ownership', () => {
 
   describe('reading and submitting the owner', () => {
     it('getFormData() returns the formData prop of a controlled form and the committed data of a self-owned one', async () => {
-      const controlled = createRef<Form>();
+      const controlled = createRef<FormHandle>();
       const value = { a: 'parent' };
       render(<Form ref={controlled} schema={schema} validator={validator} formData={value} onChange={noop} />);
       expect(controlled.current!.getFormData()).toBe(value);
 
-      const owned = createRef<Form>();
+      const owned = createRef<FormHandle>();
       const { node } = createFormComponent({ ref: owned, schema, initialFormData: { a: 'seed' } });
       await user.clear(node.querySelector('#root_a')!);
       await user.paste('edited');
@@ -799,7 +799,7 @@ describe('form data ownership', () => {
     it('a controlled submit with omitExtraData submits the omitted copy without installing it', async () => {
       const onSubmit = vi.fn();
       const onChange = vi.fn();
-      const ref = createRef<Form>();
+      const ref = createRef<FormHandle>();
       render(
         <Form
           ref={ref}
@@ -946,7 +946,7 @@ describe('form data ownership', () => {
 
 describeOwnerships('operations in one tick', (createFormComponent) => {
   it('a submit in the same tick as an edit submits the edited data', () => {
-    const ref = createRef<Form>();
+    const ref = createRef<FormHandle>();
     const { onSubmit } = createFormComponent({ ref, schema, initialFormData: { a: 'old' } });
 
     act(() => {
@@ -959,7 +959,7 @@ describeOwnerships('operations in one tick', (createFormComponent) => {
   });
 
   it('an invalid submit in the same tick as an edit reports the edited data and lets later operations run', () => {
-    const ref = createRef<Form>();
+    const ref = createRef<FormHandle>();
     const required: RJSFSchema = { ...schema, required: ['a', 'b'] };
     const { onSubmit, onError, getFormData } = createFormComponent({
       ref,
@@ -980,7 +980,7 @@ describeOwnerships('operations in one tick', (createFormComponent) => {
   });
 
   it('a submit whose validation throws lets later operations run', async () => {
-    const ref = createRef<Form>();
+    const ref = createRef<FormHandle>();
     const { node, getFormData } = createFormComponent({
       ref,
       schema,
@@ -1011,7 +1011,7 @@ describeOwnerships('operations in one tick', (createFormComponent) => {
   });
 
   it('a submit queued behind an edit whose validation throws keeps the form mounted', () => {
-    const ref = createRef<Form>();
+    const ref = createRef<FormHandle>();
     function EditThenSubmit(props: WidgetProps) {
       return (
         <button
@@ -1052,7 +1052,7 @@ describeOwnerships('operations in one tick', (createFormComponent) => {
   });
 
   it('a second edit in one tick whose validation throws keeps the form mounted', () => {
-    const ref = createRef<Form>();
+    const ref = createRef<FormHandle>();
     const { getFormData } = createFormComponent({
       ref,
       schema,
@@ -1117,7 +1117,7 @@ describeOwnerships('operations in one tick', (createFormComponent) => {
  */
 describe('a throwing callback on a self-owned form', () => {
   it('an onChange that throws keeps the form mounted', () => {
-    const ref = createRef<Form>();
+    const ref = createRef<FormHandle>();
     const { getFormData } = createFormComponent({
       ref,
       schema,
@@ -1142,7 +1142,7 @@ describe('a throwing callback on a self-owned form', () => {
   });
 
   it('an onSubmit that throws keeps the form mounted', () => {
-    const ref = createRef<Form>();
+    const ref = createRef<FormHandle>();
     const { node, getFormData } = createFormComponent({
       ref,
       schema,
@@ -1167,7 +1167,7 @@ describe('a throwing callback on a self-owned form', () => {
 
   describe('an onError that throws keeps the form mounted', () => {
     const renderInvalid = () => {
-      const ref = createRef<Form>();
+      const ref = createRef<FormHandle>();
       const rendered = createFormComponent({
         ref,
         schema: { type: 'object', properties: { a: { type: 'string', minLength: 5 } } },

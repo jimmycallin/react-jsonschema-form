@@ -153,7 +153,7 @@ describeRepeated('Form common: error contextualization', (createFormComponent) =
           await user.type(node.querySelector('[id="root_foo.bar"]')!, 'ab');
           // `toErrorSchema` runs the property name through `toPath`, so the error of a name holding a dot lands at
           // the path that name spells out, not under the name itself
-          expect(log.events[0]!.errorSchema).toEqual({
+          expect(log.events[0].errorSchema).toEqual({
             foo: { bar: { __errors: ["must have required property 'foo.bar'"] } },
             baz: { __errors: ["must have required property 'baz'"] },
           });
@@ -195,7 +195,7 @@ describeRepeated('Form common: error contextualization', (createFormComponent) =
           await user.type(node.querySelector('[id="root_has.dot_inner"]')!, 'ab');
           // The name is spelled out as a path here too, so the errors of the two fields it holds sit side by side
           // under it and clearing one has to leave the other where it is
-          expect(log.events[0]!.errorSchema).toEqual({
+          expect(log.events[0].errorSchema).toEqual({
             has: {
               dot: {
                 inner: { __errors: ["must have required property 'inner'"] },

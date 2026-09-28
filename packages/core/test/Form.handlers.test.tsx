@@ -4,8 +4,7 @@ import { getTemplate, getUiOptions } from '@rjsf/utils';
 import { act, waitFor } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 
-import type { FormProps, IChangeEvent } from '../src/index.ts';
-import type Form from '../src/index.ts';
+import type { FormHandle, FormProps, IChangeEvent } from '../src/index.ts';
 import { expectToHaveBeenCalledWithFormData, submitForm, describeRepeated } from './testUtils.tsx';
 
 const user = userEvent.setup();
@@ -98,7 +97,7 @@ describeRepeated('Form common: event handlers', (createFormComponent) => {
       };
 
       const secondOnChange = vi.fn();
-      const ref = createRef<Form>();
+      const ref = createRef<FormHandle>();
 
       const { onChange, rerender } = createFormComponent({ ref, schema, initialFormData: { foo: 'bar1' } });
 
