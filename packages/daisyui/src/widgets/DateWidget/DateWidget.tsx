@@ -145,11 +145,11 @@ export default function DateWidget<
   // Initialize the local date from the parent's value.
   const initialDate = useMemo(() => (value ? new Date(value) : undefined), [value]);
   const [localDate, setLocalDate] = useState<Date | undefined>(initialDate);
-
-  // When the parent's value changes externally, update local state.
-  useEffect(() => {
+  const [syncedValue, setSyncedValue] = useState(value);
+  if (syncedValue !== value) {
+    setSyncedValue(value);
     setLocalDate(initialDate);
-  }, [initialDate]);
+  }
 
   const { isOpen, setIsOpen, month, setMonth } = useDatePickerState(initialDate);
   const containerRef = useRef<HTMLDivElement>(null);

@@ -50,6 +50,19 @@ describe('DateTimeWidget', () => {
       expect(onChange).toHaveBeenCalledWith('2016-04-05T14:01:30.000Z');
     });
 
+    test('commits the new value after the parent changes it', async () => {
+      const onChange = vi.fn();
+      const { container, rerender } = render(
+        <DateTimeWidget {...makeWidgetMockProps({ value: '2016-04-05T14:01:30.000Z', onChange, schema })} />,
+      );
+      rerender(<DateTimeWidget {...makeWidgetMockProps({ value: '2020-01-02T03:04:05.000Z', onChange, schema })} />);
+
+      await user.click(container.querySelector('[role=button]')!);
+      await user.click(screen.getByText('Done'));
+
+      expect(onChange).toHaveBeenCalledWith('2020-01-02T03:04:05.000Z');
+    });
+
     test('commits an empty string instead of throwing when the stored value is unparsable', async () => {
       const onChange = vi.fn();
       const { container } = render(

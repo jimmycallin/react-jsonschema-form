@@ -194,11 +194,11 @@ export default function DateTimeWidget<
     return isValid(date) ? date : undefined;
   }, [localValue]);
   const [localDate, setLocalDate] = useState<Date | undefined>(initialDate);
-
-  // When the parent's value changes externally, update local state.
-  useEffect(() => {
+  const [syncedValue, setSyncedValue] = useState(localValue);
+  if (syncedValue !== localValue) {
+    setSyncedValue(localValue);
     setLocalDate(initialDate);
-  }, [initialDate]);
+  }
 
   const { isOpen, setIsOpen, month, setMonth } = useDatePickerState(initialDate);
   const containerRef = useRef<HTMLDivElement>(null);
