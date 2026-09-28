@@ -1,5 +1,5 @@
-import type { ElementType, ReactNode, Ref, RefObject, SubmitEvent } from 'react';
-import { memo, useImperativeHandle, useLayoutEffect, useRef, useState } from 'react';
+import type { ElementType, ReactNode, Ref, SubmitEvent } from 'react';
+import { memo, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type {
   CustomValidator,
   ErrorSchema,
@@ -1105,9 +1105,7 @@ function applyChange<T, S extends StrictRJSFSchema, F extends FormContextType>(
   // In this case, pass undefined to deriveFormData to trigger fresh default computation.
   // Only do this when the previous formData was null/undefined (switching FROM null).
   const hasOnlyUndefinedValues =
-    isObject(formData) &&
-    Object.keys(formData as object).length > 0 &&
-    Object.values(formData as object).every((v) => v === undefined);
+    isObject(formData) && Object.keys(formData).length > 0 && Object.values(formData).every((v) => v === undefined);
   const wasPreviouslyNull = oldFormData === null || oldFormData === undefined;
   const inputForDefaults = hasOnlyUndefinedValues && wasPreviouslyNull ? undefined : formData;
 
@@ -1466,34 +1464,11 @@ interface Rendered<T, S extends StrictRJSFSchema, F extends FormContextType> {
   processBlur: (id: string, advance: () => void) => void;
   processSubmit: (event: SubmitEvent<HTMLFormElement>, advance: () => void) => void;
   processReset: (advance: () => void) => void;
-  onChange: (newValue: T | undefined, fieldPath: FieldPath, newErrorSchema?: ErrorSchema<T>, id?: string) => void;
-  onBlur: (id: string, data: unknown) => void;
-  onFocus: (id: string, data: unknown) => void;
-  onSubmit: (event: SubmitEvent<HTMLFormElement>) => void;
+  handleChange: (newValue: T | undefined, fieldPath: FieldPath, newErrorSchema?: ErrorSchema<T>, id?: string) => void;
+  handleBlur: (id: string, data: unknown) => void;
+  handleFocus: (id: string, data: unknown) => void;
+  handleSubmit: (event: SubmitEvent<HTMLFormElement>) => void;
   handle: FormHandle<T>;
-}
-
-/** Functions with a fixed identity that forward to the last committed render, see `Form` */
-function stableHandlers<T, S extends StrictRJSFSchema, F extends FormContextType>(
-  latest: RefObject<Rendered<T, S, F>>,
-): Pick<Rendered<T, S, F>, 'onChange' | 'onBlur' | 'onFocus' | 'onSubmit' | 'handle'> {
-  return {
-    onChange: (newValue, fieldPath, newErrorSchema, id) =>
-      latest.current.onChange(newValue, fieldPath, newErrorSchema, id),
-    onBlur: (id, data) => latest.current.onBlur(id, data),
-    onFocus: (id, data) => latest.current.onFocus(id, data),
-    onSubmit: (event) => latest.current.onSubmit(event),
-    handle: {
-      getFormData: () => latest.current.handle.getFormData(),
-      submit: () => latest.current.handle.submit(),
-      reset: () => latest.current.handle.reset(),
-      setFieldValue: (fieldPath, newValue) => latest.current.handle.setFieldValue(fieldPath, newValue),
-      validateForm: () => latest.current.handle.validateForm(),
-      validateFormWithFormData: (formData) => latest.current.handle.validateFormWithFormData(formData),
-      validate: (formData) => latest.current.handle.validate(formData),
-      focusOnError: (error) => latest.current.handle.focusOnError(error),
-    },
-  };
 }
 
 /** The `Form` component renders the outer form and all the fields defined in the `schema`. Its state is React state:
@@ -1501,9 +1476,10 @@ function stableHandlers<T, S extends StrictRJSFSchema, F extends FormContextType
  * the queue once React has committed its result, so the next one reads props that already hold a parent's response
  * to it.
  */
-function Form<T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = FormContextType>(
-  props: FormProps<T, S, F>,
-) {
+function Form<T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = FormContextType>({
+  ref,
+  ...props
+}: FormProps<T, S, F>) {
   const [committed, setCommitted] = useState<FormState<T, S, F>>(() => initialState(props));
   // The derived members are adjusted while rendering, the documented way to store information from previous renders:
   // React re-runs this render with the adjusted state before rendering the fields, and `deriveState()` hands the
@@ -1649,14 +1625,12 @@ function Form<T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends Fo
     if (isDevelopment) {
       freezeFormData(next.formData);
     }
-    try {
-      onChange?.(toIChangeEvent(next), change.id);
-    } finally {
-      // Validated errors describe the proposal, which the parent may yet refuse, so they wait for the parent's
-      // answer in `deriveState()`; without live validation they describe the committed data plus the custom errors,
-      // which are the form's own. Committing is also what gives the queue a commit to wait for
-      setSharedState(current, isValidated ? { ...current, customErrors: next.customErrors } : next, advance);
-    }
+    // Validated errors describe the proposal, which the parent may yet refuse, so they wait for the parent's answer
+    // in `deriveState()`; without live validation they describe the committed data plus the custom errors, which
+    // are the form's own. Committing is also what gives the queue a commit to wait for, and it is queued before the
+    // parent is told, so a throwing handler cannot stall the queue
+    setSharedState(current, isValidated ? { ...current, customErrors: next.customErrors } : next, advance);
+    onChange?.(toIChangeEvent(next), change.id);
   };
 
   /** Applies a blur's validation and omission with `applyBlur()`. A self-owned form commits the result and reports it;
@@ -1678,12 +1652,9 @@ function Form<T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends Fo
       if (isDevelopment) {
         freezeFormData(next.formData);
       }
-      try {
-        if (onChange && hasChanges) {
-          onChange(toIChangeEvent(next), id);
-        }
-      } finally {
-        setSharedState(committedState, next, advance);
+      setSharedState(committedState, next, advance);
+      if (onChange && hasChanges) {
+        onChange(toIChangeEvent(next), id);
       }
       return;
     }
@@ -1792,7 +1763,12 @@ function Form<T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends Fo
    * @param [newErrorSchema] - The new `ErrorSchema` based on the field change
    * @param [id] - The id of the field that caused the change
    */
-  const onChange = (newValue: T | undefined, fieldPath: FieldPath, newErrorSchema?: ErrorSchema<T>, id?: string) => {
+  const handleChange = (
+    newValue: T | undefined,
+    fieldPath: FieldPath,
+    newErrorSchema?: ErrorSchema<T>,
+    id?: string,
+  ) => {
     const change: PendingChange<T> = { newValue, fieldPath, newErrorSchema, id };
     enqueue((advance) => latest.current.processChange(change, advance), true);
   };
@@ -1805,10 +1781,10 @@ function Form<T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends Fo
    * @param id - The unique `id` of the field that was blurred
    * @param data - The data associated with the field that was blurred
    */
-  const onBlur = (id: string, data: unknown) => {
-    const { onBlur: onBlurProp, omitExtraData, liveOmit, liveValidate } = props;
-    if (onBlurProp) {
-      onBlurProp(id, data);
+  const handleBlur = (id: string, data: unknown) => {
+    const { onBlur, omitExtraData, liveOmit, liveValidate } = props;
+    if (onBlur) {
+      onBlur(id, data);
     }
     if ((omitExtraData === true && liveOmit === 'onBlur') || liveValidate === 'onBlur') {
       // Queued like a change: a blur in the same tick as an edit must validate or omit the data that edit produced,
@@ -1823,7 +1799,7 @@ function Form<T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends Fo
    * @param id - The unique `id` of the field that was focused
    * @param data - The data associated with the field that was focused
    */
-  const onFocus = (id: string, data: unknown) => {
+  const handleFocus = (id: string, data: unknown) => {
     props.onFocus?.(id, data);
   };
 
@@ -1836,7 +1812,7 @@ function Form<T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends Fo
    *
    * @param event - The submit HTML form event
    */
-  const onSubmit = (event: SubmitEvent<HTMLFormElement>) => {
+  const handleSubmit = (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (event.target !== event.currentTarget) {
       return;
@@ -1914,7 +1890,7 @@ function Form<T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends Fo
         path = path === '' ? [] : path.split('.');
       }
       const targetFieldPath = fieldPathFromList(path);
-      onChange(
+      handleChange(
         newValue as T | undefined,
         targetFieldPath,
         undefined,
@@ -1956,10 +1932,10 @@ function Form<T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends Fo
     processBlur,
     processSubmit,
     processReset,
-    onChange,
-    onBlur,
-    onFocus,
-    onSubmit,
+    handleChange,
+    handleBlur,
+    handleFocus,
+    handleSubmit,
     handle,
   };
   const latest = useRef(rendered);
@@ -1981,8 +1957,26 @@ function Form<T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends Fo
     [],
   );
   // oxlint-disable-next-line react/hook-use-state -- created once for the life of the form, never set again
-  const [stable] = useState(() => stableHandlers(latest));
-  useImperativeHandle(props.ref, () => stable.handle, [stable]);
+  const [stable] = useState<
+    Pick<Rendered<T, S, F>, 'handleChange' | 'handleBlur' | 'handleFocus' | 'handleSubmit' | 'handle'>
+  >(() => ({
+    handleChange: (newValue, fieldPath, newErrorSchema, id) =>
+      latest.current.handleChange(newValue, fieldPath, newErrorSchema, id),
+    handleBlur: (id, data) => latest.current.handleBlur(id, data),
+    handleFocus: (id, data) => latest.current.handleFocus(id, data),
+    handleSubmit: (event) => latest.current.handleSubmit(event),
+    handle: {
+      getFormData: () => latest.current.handle.getFormData(),
+      submit: () => latest.current.handle.submit(),
+      reset: () => latest.current.handle.reset(),
+      setFieldValue: (fieldPath, newValue) => latest.current.handle.setFieldValue(fieldPath, newValue),
+      validateForm: () => latest.current.handle.validateForm(),
+      validateFormWithFormData: (formData) => latest.current.handle.validateFormWithFormData(formData),
+      validate: (formData) => latest.current.handle.validate(formData),
+      focusOnError: (error) => latest.current.handle.focusOnError(error),
+    },
+  }));
+  useImperativeHandle(ref, () => stable.handle, [stable]);
 
   const {
     children,
@@ -2007,11 +2001,17 @@ function Form<T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends Fo
   const { SubmitButton } = registry.templates.ButtonTemplates;
   const FormTag = tagName || 'form';
 
-  let { [SUBMIT_BTN_OPTIONS_KEY]: submitOptions = {} } = getUiOptions<T, S, F>(uiSchema);
-  if (disabled) {
-    submitOptions = { ...submitOptions, props: { ...submitOptions.props, disabled: true } };
-  }
-  const submitUiSchema = { [UI_OPTIONS_KEY]: { [SUBMIT_BTN_OPTIONS_KEY]: submitOptions } };
+  // Memoized so the submit button, which is not a field, keeps its props across renders that changed nothing of its own
+  const submitUiSchema = useMemo(() => {
+    const submitOptions = getUiOptions<T, S, F>(uiSchema)[SUBMIT_BTN_OPTIONS_KEY] ?? {};
+    return {
+      [UI_OPTIONS_KEY]: {
+        [SUBMIT_BTN_OPTIONS_KEY]: disabled
+          ? { ...submitOptions, props: { ...submitOptions.props, disabled: true } }
+          : submitOptions,
+      },
+    };
+  }, [uiSchema, disabled]);
 
   /** The errors in the `ErrorList`, unless disabled by `showErrorList` */
   const renderErrors = () => {
@@ -2023,7 +2023,7 @@ function Form<T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends Fo
     return (
       <ErrorListTemplate
         errors={errors}
-        errorSchema={errorSchema || {}}
+        errorSchema={errorSchema}
         schema={schema}
         uiSchema={uiSchema}
         registry={registry}
@@ -2043,7 +2043,7 @@ function Form<T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends Fo
       encType={enctype}
       acceptCharset={acceptCharset}
       noValidate={noHtml5Validate}
-      onSubmit={stable.onSubmit}
+      onSubmit={stable.handleSubmit}
       ref={formElement}
     >
       {showErrorList === 'top' && renderErrors()}
@@ -2055,9 +2055,9 @@ function Form<T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends Fo
         fieldPath={ROOT_FIELD_PATH}
         id={registry.globalFormOptions.idPrefix}
         formData={formData}
-        onChange={stable.onChange}
-        onBlur={stable.onBlur}
-        onFocus={stable.onFocus}
+        onChange={stable.handleChange}
+        onBlur={stable.handleBlur}
+        onFocus={stable.handleFocus}
         registry={registry}
         disabled={disabled}
         readonly={readonly}
