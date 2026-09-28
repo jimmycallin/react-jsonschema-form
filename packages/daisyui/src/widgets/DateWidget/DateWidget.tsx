@@ -125,6 +125,34 @@ function DatePickerPopup({ selectedDate, month, onMonthChange, onSelect }: DateP
 // Use React.memo to optimize re-renders
 const MemoizedDatePickerPopup = memo(DatePickerPopup);
 
+// Get the document and window objects (will work in iframes too)
+function getDocumentAndWindow() {
+  // Try to get the iframe's document and window if we're in one
+  let doc = document;
+  let win = window;
+
+  try {
+    // If we're in an iframe, try to access the parent
+    if (window.frameElement) {
+      // We're in an iframe
+      const iframe = window.frameElement as HTMLIFrameElement;
+      // Get the iframe's contentDocument and contentWindow
+      if (iframe.contentDocument) {
+        doc = iframe.contentDocument;
+      }
+      if (iframe.contentWindow) {
+        win = iframe.contentWindow as typeof window;
+      }
+    }
+  } catch (e) {
+    // Security error, we're in a cross-origin iframe
+    // oxlint-disable-next-line no-console
+    console.log('Unable to access parent frame:', e);
+  }
+
+  return { doc, win };
+}
+
 /** The `DateWidget` component provides a date picker with DaisyUI styling.
  *
  * Features:
@@ -205,34 +233,6 @@ export default function DateWidget<
       }
     };
   }, []);
-
-  // Get the document and window objects (will work in iframes too)
-  const getDocumentAndWindow = () => {
-    // Try to get the iframe's document and window if we're in one
-    let doc = document;
-    let win = window;
-
-    try {
-      // If we're in an iframe, try to access the parent
-      if (window.frameElement) {
-        // We're in an iframe
-        const iframe = window.frameElement as HTMLIFrameElement;
-        // Get the iframe's contentDocument and contentWindow
-        if (iframe.contentDocument) {
-          doc = iframe.contentDocument;
-        }
-        if (iframe.contentWindow) {
-          win = iframe.contentWindow as typeof window;
-        }
-      }
-    } catch (e) {
-      // Security error, we're in a cross-origin iframe
-      // oxlint-disable-next-line no-console
-      console.log('Unable to access parent frame:', e);
-    }
-
-    return { doc, win };
-  };
 
   // Render the calendar at a specific position
   const renderCalendar = useCallback(() => {
