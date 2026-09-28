@@ -26,7 +26,7 @@ export default function RichText<
   T = unknown,
   S extends StrictRJSFSchema = RJSFSchema,
   F extends FormContextType = FormContextType,
->({ text, enabledBy, registry, uiSchema = {} }: RichTextProps<T, S, F>) {
+>({ text, enabledBy, registry, uiSchema }: RichTextProps<T, S, F>) {
   if (typeof text !== 'string') {
     return text;
   }
@@ -36,7 +36,7 @@ export default function RichText<
   }
   const MarkdownTemplate = getTemplate<'MarkdownTemplate', T, S, F>('MarkdownTemplate', registry, uiOptions);
   return (
-    <MarkdownTemplate registry={registry} uiSchema={uiSchema}>
+    <MarkdownTemplate registry={registry} uiSchema={uiSchema ?? {}}>
       {text}
     </MarkdownTemplate>
   );
