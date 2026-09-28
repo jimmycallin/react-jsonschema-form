@@ -42,7 +42,7 @@ export default function AltDateWidget<
                 name={elemId}
                 placeholder={elemProps.type}
                 disabled={disabled || readonly}
-                data={dateRangeOptions<S>(elemProps.range[0], elemProps.range[1]).map((item) => item.value.toString())}
+                data={dateRangeOptions<S>(elemProps.range[0], elemProps.range[1]).map((item) => String(item.value))}
                 value={!elemProps.value || elemProps.value < 0 ? null : elemProps.value.toString()}
                 onChange={(v) => handleChange(elemProps.type as keyof DateObject, v || undefined)}
                 searchable={false}

@@ -46,7 +46,7 @@ export default function enumOptionSelectedValue<S extends StrictRJSFSchema = RJS
     };
     // `emptyValue` describes the whole selection, so an unmatched entry of a multiple selection uses the empty string
     // that `enumOptionValueEncoder()` gives a single empty option instead
-    return multiple ? value.map((item: any) => encode(item, '')) : encode(value, emptyValue);
+    return multiple ? (value as unknown[]).map((item) => encode(item, '')) : encode(value, emptyValue);
   }
 
   const indexes = enumOptionsIndexForValue<S>(value, enumOptions, multiple);

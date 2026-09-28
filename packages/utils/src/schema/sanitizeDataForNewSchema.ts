@@ -244,7 +244,7 @@ export default function sanitizeDataForNewSchema<
       if (!oldSchemaType || oldSchemaType === newSchemaType) {
         const maxItems = newSchema.maxItems ?? -1;
         if (newSchemaType === 'object') {
-          newFormData = data.reduce((newValue, aValue) => {
+          newFormData = data.reduce<unknown[]>((newValue, aValue) => {
             // Resolve refs, dependencies, if/then/else and allOf against this item's own value, so a conditional
             // nested inside `items` picks the branch that matches this element rather than the whole array (#5250)
             const oldItemSchema = retrieveSchema<T, S, F>(
