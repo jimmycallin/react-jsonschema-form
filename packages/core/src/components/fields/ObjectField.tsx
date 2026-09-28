@@ -1,5 +1,5 @@
 import type { FocusEvent } from 'react';
-import { memo, useCallback, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type {
   ErrorSchema,
   FieldPath,
@@ -270,14 +270,19 @@ export default function ObjectField<
   const { fields, schemaUtils, translateString, globalUiOptions, uiSchemaDefinitions } = registry;
   const { OptionalDataControlsField } = fields;
   const formDataRef = useRef(formData);
-  formDataRef.current = formData;
+  useLayoutEffect(() => {
+    formDataRef.current = formData;
+  });
   const schema: S = useMemo(
     () => schemaUtils.retrieveSchema(rawSchema, formData, true),
     [schemaUtils, rawSchema, formData],
   );
   const uiOptions = useMemo(() => getUiOptions<T, S, F>(uiSchema, globalUiOptions), [uiSchema, globalUiOptions]);
   const schemaProperties = useMemo(() => schema.properties ?? {}, [schema.properties]);
-  const lastRenamedProperty = useRef({ previousKey: '', currentKey: undefined as string | undefined });
+  const [lastRenamedProperty, setLastRenamedProperty] = useState({
+    previousKey: '',
+    currentKey: undefined as string | undefined,
+  });
   const schemaAdditionalProperties = useMemo(() => getAdditionalPropertyOrder<S>(schemaProperties), [schemaProperties]);
   const [additionalPropertyOrder, setAdditionalPropertyOrder] = useState(schemaAdditionalProperties);
   const definedPropertyOrder = useMemo(() => {
@@ -414,10 +419,10 @@ export default function ObjectField<
       setByPath(newFormData, newKey, newValue);
     }
 
-    if (lastRenamedProperty.current.previousKey === newKey) {
-      lastRenamedProperty.current.currentKey = newKey;
-      lastRenamedProperty.current.previousKey = getAvailableKey(newKey, newFormData);
-    }
+    const nextAvailableKey = getAvailableKey(newKey, newFormData);
+    setLastRenamedProperty((last) =>
+      last.previousKey === newKey ? { previousKey: nextAvailableKey, currentKey: newKey } : last,
+    );
     setAdditionalPropertyOrder((order) => [...order, newKey]);
     onChange(newFormData, fieldPath);
   }, [
@@ -457,10 +462,10 @@ export default function ObjectField<
         const renamedObj = Object.assign({}, ...keyValues);
 
         formDataRef.current = renamedObj as T;
-        if (oldKey !== lastRenamedProperty.current.currentKey) {
-          lastRenamedProperty.current.previousKey = oldKey;
-        }
-        lastRenamedProperty.current.currentKey = actualNewKey;
+        setLastRenamedProperty((last) => ({
+          previousKey: oldKey === last.currentKey ? last.previousKey : oldKey,
+          currentKey: actualNewKey,
+        }));
         setAdditionalPropertyOrder((order) => order.map((property) => (property === oldKey ? actualNewKey : property)));
         onChange(renamedObj, fieldPath);
       }
@@ -484,12 +489,8 @@ export default function ObjectField<
    * existing component instance instead of unmounting/remounting it. This
    * preserves DOM focus naturally without manual focus management.
    */
-  const getStableKey = useCallback((property: string) => {
-    if (lastRenamedProperty.current.currentKey === property) {
-      return lastRenamedProperty.current.previousKey;
-    }
-    return property;
-  }, []);
+  const getStableKey = (property: string) =>
+    lastRenamedProperty.currentKey === property ? lastRenamedProperty.previousKey : property;
 
   if (!renderOptionalField || hasFormData) {
     try {

@@ -1,5 +1,5 @@
 import type { MouseEvent } from 'react';
-import { memo, useCallback, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type {
   ArrayFieldTemplateProps,
   ErrorSchema,
@@ -876,10 +876,12 @@ export default function ArrayField<
   // Refs keep the latest values accessible inside stable useCallback closures without being in the dep array,
   // so the four mutation handlers don't get new references on every keyedFormData / errorSchema change.
   const keyedFormDataRef = useRef(keyedFormData);
-  keyedFormDataRef.current = keyedFormData;
   const errorSchemaRef = useRef(errorSchema);
-  // `SchemaField` hands the array's own errors over as `rawErrors`, so they go back in for the handlers to carry over
-  errorSchemaRef.current = rawErrors ? { ...errorSchema, [ERRORS_KEY]: rawErrors } : errorSchema;
+  useLayoutEffect(() => {
+    keyedFormDataRef.current = keyedFormData;
+    // `SchemaField` hands the array's own errors over as `rawErrors`, so they go back in for the handlers to carry over
+    errorSchemaRef.current = rawErrors ? { ...errorSchema, [ERRORS_KEY]: rawErrors } : errorSchema;
+  });
 
   /** Callback handler for when the user clicks on the add or add at index buttons. Creates a new row of keyed form data
    * either at the end of the list (when index is not specified) or inserted at the `index` when it is, adding it into
