@@ -125,6 +125,7 @@ should change the heading of the (upcoming) version to include a major version b
 - `SchemaField` passes the `ui:help` it resolved to `FieldTemplate` as `rawHelp`, rather than only passing it when it is a string, so a `FieldTemplate` that gates on `rawHelp` to decide whether to render `help` no longer drops a `ui:help` given as a React element ([#5326](https://github.com/rjsf-team/react-jsonschema-form/issues/5326))
 - `LayoutMultiSchemaField` renders a field's `ui:help`, which it dropped entirely: it passed `errors` and `rawErrors` to its `FieldTemplate` but never `help` or `rawHelp`, so a `ui:help` on a discriminated `oneOf`/`anyOf` rendered through a `ui:layoutGrid` produced no help text in any theme. It also resolves its `ui:options` with `globalUiOptions` the way `SchemaField` does, so `ui:globalOptions` now reaches this field's `help` and `hideError` as well as its `widget`, `title` and `placeholder` ([#5326](https://github.com/rjsf-team/react-jsonschema-form/issues/5326))
 - `ObjectField` and `ArrayField` fall back to one shared empty `uiSchema` when none is passed, so their memoized options and callbacks no longer recompute on every render ([#5366](https://github.com/rjsf-team/react-jsonschema-form/pull/5366))
+- Fixed a new `additionalProperties` entry with an `integer` schema defaulting to the string `New Value`, which fails its own schema; it now defaults to `0` like a `number` schema
 
 ## @rjsf/daisyui
 

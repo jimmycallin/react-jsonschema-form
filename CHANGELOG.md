@@ -27,7 +27,6 @@ should change the heading of the (upcoming) version to include a major version b
 - Fixed live validation dropping every `extraErrors` entry when the form derived state from new props, so a server-supplied error disappeared as soon as a controlled parent replaced the form data
 - Fixed `extraErrors` and `customErrors` being merged into the errors a second time whenever the form derived state from new props under `liveValidate: 'onChange'` without re-validating, so a re-render changing only `className` duplicated every server-supplied error, the duplication half of [#4408](https://github.com/rjsf-team/react-jsonschema-form/issues/4408) (the clearing half was fixed by `getDerivedStateFromProps` in v6)
 - Fixed a changed `validator`, `customMergeAllOf` or `defaultFormStateBehavior` leaving the previously retrieved schema in state, so live validation and sanitization kept running against a schema the old settings had resolved
-- Fixed a new `additionalProperties` entry with an `integer` schema defaulting to the string `New Value`, which fails its own schema; it now defaults to `0` like a `number` schema
 
 ## @rjsf/mantine
 
