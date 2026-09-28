@@ -73,7 +73,7 @@ export default function BaseInputTemplate<
         id={id}
         name={htmlName || id}
         value={value || value === 0 ? value : ''}
-        onChange={onChangeOverride || handleChange}
+        onChange={onChangeOverride ?? handleChange}
         onBlur={handleBlur}
         onFocus={handleFocus}
         autoFocus={autofocus}

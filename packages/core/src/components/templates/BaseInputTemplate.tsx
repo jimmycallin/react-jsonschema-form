@@ -64,7 +64,7 @@ export default function BaseInputTemplate<
   if (schemaType === 'number' || schemaType === 'integer') {
     inputValue = value || value === 0 ? value : '';
   } else {
-    inputValue = value == null ? '' : value;
+    inputValue = value ?? '';
   }
 
   const handleChange = useCallback(
@@ -99,7 +99,7 @@ export default function BaseInputTemplate<
         title={callerPattern ? undefined : getNumericInputTitle(derivedInputProps, registry.translateString)}
         {...inputProps}
         list={schema.examples ? examplesId(id) : undefined}
-        onChange={onChangeOverride || handleChange}
+        onChange={onChangeOverride ?? handleChange}
         onBlur={handleBlur}
         onFocus={handleFocus}
         aria-describedby={ariaDescribedByIds(id, !!schema.examples)}

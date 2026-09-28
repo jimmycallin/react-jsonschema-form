@@ -19,7 +19,7 @@ function enumValuesForSchema<S extends StrictRJSFSchema = RJSFSchema>(schema: S)
     return schema.enum;
   }
 
-  const options = (schema.oneOf || schema.anyOf) as S[] | undefined;
+  const options = (schema.oneOf ?? schema.anyOf) as S[] | undefined;
   if (!Array.isArray(options)) {
     return undefined;
   }

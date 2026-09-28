@@ -16,7 +16,7 @@ export default function isSelect<
   F extends FormContextType = FormContextType,
 >(validator: ValidatorType<S, F>, theSchema: S, rootSchema: S = {} as S, customMergeAllOf?: CustomMergeAllOf<S>) {
   const schema = retrieveSchema<T, S, F>(validator, theSchema, rootSchema, undefined, customMergeAllOf);
-  const altSchemas = schema.oneOf || schema.anyOf;
+  const altSchemas = schema.oneOf ?? schema.anyOf;
   if (Array.isArray(schema.enum)) {
     return true;
   }

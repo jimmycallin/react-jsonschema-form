@@ -127,7 +127,7 @@ export default function SelectWidget<
     .filter((v) => v !== '');
 
   const optionsList: EnumOptionsType<S>[] =
-    enumOptions ||
+    enumOptions ??
     (Array.isArray(schema.examples)
       ? schema.examples.map((example) => ({ value: example, label: getDisplayValue(example) }))
       : []);

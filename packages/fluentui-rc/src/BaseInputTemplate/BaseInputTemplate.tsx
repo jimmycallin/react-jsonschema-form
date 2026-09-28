@@ -87,7 +87,7 @@ export default function BaseInputTemplate<
           list: schema.examples ? examplesId(id) : undefined,
         }}
         value={value || value === 0 ? value : ''}
-        onChange={onChangeOverride || handleChange}
+        onChange={onChangeOverride ?? handleChange}
         onFocus={handleFocus}
         onBlur={handleBlur}
         aria-describedby={ariaDescribedByIds(id, !!schema.examples)}
