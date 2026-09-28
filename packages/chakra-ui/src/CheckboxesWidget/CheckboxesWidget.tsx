@@ -25,26 +25,16 @@ export default function CheckboxesWidget<
   const { enumOptions, enumDisabled, emptyValue } = options;
   const optionValueFormat = getOptionValueFormat(options);
 
-  const handleBlur = ({ target }: FocusEvent<HTMLElement>) =>
-    onBlur(
-      id,
-      enumOptionValueDecoder<S>(
-        target instanceof HTMLInputElement ? target.value : '',
-        enumOptions,
-        optionValueFormat,
-        emptyValue,
-      ),
+  // Duck-typed rather than `instanceof HTMLInputElement`, which is false for inputs rendered inside an iframe.
+  const decodeTarget = ({ target }: FocusEvent<HTMLElement>) =>
+    enumOptionValueDecoder<S>(
+      'value' in target && typeof target.value === 'string' ? target.value : '',
+      enumOptions,
+      optionValueFormat,
+      emptyValue,
     );
-  const handleFocus = ({ target }: FocusEvent<HTMLElement>) =>
-    onFocus(
-      id,
-      enumOptionValueDecoder<S>(
-        target instanceof HTMLInputElement ? target.value : '',
-        enumOptions,
-        optionValueFormat,
-        emptyValue,
-      ),
-    );
+  const handleBlur = (event: FocusEvent<HTMLElement>) => onBlur(id, decodeTarget(event));
+  const handleFocus = (event: FocusEvent<HTMLElement>) => onFocus(id, decodeTarget(event));
 
   const row = options ? options.inline : false;
   const selectValue = enumOptionSelectedValue<S>(value, enumOptions, true, optionValueFormat, []) as string[];
