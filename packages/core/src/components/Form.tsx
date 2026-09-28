@@ -31,7 +31,7 @@ import {
   createSchemaUtils,
   ErrorSchemaBuilder,
   getChangedFields,
-  getTemplate,
+  getTemplates,
   getUiOptions,
   hashObject,
   isObject,
@@ -1537,7 +1537,7 @@ export default class Form<
   renderErrors(registry: Registry<T, S, F>) {
     const { errors, errorSchema, schema, uiSchema } = this.state;
     const options = getUiOptions<T, S, F>(uiSchema);
-    const ErrorListTemplate = getTemplate<'ErrorListTemplate', T, S, F>('ErrorListTemplate', registry, options);
+    const { ErrorListTemplate } = getTemplates<T, S, F>(registry, options);
 
     if (errors?.length) {
       return (

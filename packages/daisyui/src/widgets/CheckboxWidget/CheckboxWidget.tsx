@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import type { WidgetProps, StrictRJSFSchema, RJSFSchema, FormContextType } from '@rjsf/utils';
-import { getTemplate, descriptionId, schemaRequiresTrueValue } from '@rjsf/utils';
+import { getTemplates, descriptionId, schemaRequiresTrueValue } from '@rjsf/utils';
 
 /** The `CheckboxWidget` component renders a single checkbox input with DaisyUI styling.
  *
@@ -35,11 +35,7 @@ export default function CheckboxWidget<
     onFocus,
     onBlur,
   } = props;
-  const DescriptionFieldTemplate = getTemplate<'DescriptionFieldTemplate', T, S, F>(
-    'DescriptionFieldTemplate',
-    registry,
-    options,
-  );
+  const { DescriptionFieldTemplate } = getTemplates<T, S, F>(registry, options);
   const description = options.description || schema.description;
   const trueValueRequired = schemaRequiresTrueValue(schema) && required;
 

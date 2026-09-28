@@ -6,7 +6,7 @@ import type {
   VisibleErrorsProps,
   WidgetProps,
 } from '@rjsf/utils';
-import { descriptionId, getTemplate, getVisibleErrors } from '@rjsf/utils';
+import { descriptionId, getTemplates, getVisibleErrors } from '@rjsf/utils';
 
 const uiOptionsKeys: (keyof UIOptionsType)[] = [
   'emptyValue',
@@ -98,11 +98,7 @@ export function getDescriptionProps<
 >(widgetProps: WidgetProps<T, S, F>) {
   const { id, schema, uiSchema, registry, options, hideLabel } = widgetProps;
   const description = options.description || schema.description;
-  const DescriptionFieldTemplate = getTemplate<'DescriptionFieldTemplate', T, S, F>(
-    'DescriptionFieldTemplate',
-    registry,
-    options,
-  );
+  const { DescriptionFieldTemplate } = getTemplates<T, S, F>(registry, options);
 
   return {
     description:

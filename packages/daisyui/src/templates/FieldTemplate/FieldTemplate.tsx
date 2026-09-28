@@ -1,5 +1,5 @@
 import type { FieldTemplateProps, StrictRJSFSchema, RJSFSchema, FormContextType } from '@rjsf/utils';
-import { getTemplate, getUiOptions } from '@rjsf/utils';
+import { getTemplates, getUiOptions } from '@rjsf/utils';
 
 import { getDaisy } from '../../utils.ts';
 
@@ -60,11 +60,7 @@ export default function FieldTemplate<
   // (a `oneOf`/`anyOf` of boolean constants) has no label of its own, so it still needs this one
   const isCheckbox = schema.type === 'boolean' && uiOptions.widget !== 'select';
   const daisy = getDaisy<T, S, F>({ uiSchema });
-  const WrapIfAdditionalTemplate = getTemplate<'WrapIfAdditionalTemplate', T, S, F>(
-    'WrapIfAdditionalTemplate',
-    registry,
-    uiOptions,
-  );
+  const { WrapIfAdditionalTemplate } = getTemplates<T, S, F>(registry, uiOptions);
 
   return (
     <WrapIfAdditionalTemplate

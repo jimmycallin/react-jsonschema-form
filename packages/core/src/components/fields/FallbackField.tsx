@@ -14,7 +14,7 @@ import {
   ADDITIONAL_PROPERTY_FLAG,
   ANY_OF_KEY,
   getKnownTypes,
-  getTemplate,
+  getTemplates,
   getUiOptions,
   GUESSED_TYPE_FLAG,
   guessType,
@@ -393,11 +393,7 @@ function FallbackUiField<
     }
   };
 
-  const FallbackFieldTemplate = getTemplate<'FallbackFieldTemplate', T, S, F>(
-    'FallbackFieldTemplate',
-    registry,
-    uiOptions,
-  );
+  const { FallbackFieldTemplate } = getTemplates<T, S, F>(registry, uiOptions);
 
   const { SchemaField } = fields;
 
@@ -442,11 +438,7 @@ export default function FallbackField<
   }
 
   const { reason = translateString(TranslatableString.UnknownFieldType, [String(schema.type)]) } = props;
-  const UnsupportedFieldTemplate = getTemplate<'UnsupportedFieldTemplate', T, S, F>(
-    'UnsupportedFieldTemplate',
-    registry,
-    getUiOptions<T, S, F>(uiSchema),
-  );
+  const { UnsupportedFieldTemplate } = getTemplates<T, S, F>(registry, getUiOptions<T, S, F>(uiSchema));
 
   return <UnsupportedFieldTemplate schema={schema} uiSchema={uiSchema} id={id} reason={reason} registry={registry} />;
 }

@@ -1,5 +1,5 @@
 import type { Registry, UIOptionsType } from '../src/index.ts';
-import { createSchemaUtils, englishStringTranslator, getTemplate } from '../src/index.ts';
+import { createSchemaUtils, englishStringTranslator, getTemplate, getTemplates } from '../src/index.ts';
 import getTestValidator from './testUtils/getTestValidator.ts';
 import { GLOBAL_FORM_OPTIONS } from './testUtils/testData.ts';
 
@@ -124,5 +124,20 @@ describe('getTemplate', () => {
     const customTemplateKey = 'CustomTemplate';
 
     expect(getTemplate(customTemplateKey, registry)).toBeUndefined();
+  });
+});
+
+describe('getTemplates', () => {
+  it('returns the registry templates when there are no uiOptions', () => {
+    expect(getTemplates(registry)).toEqual(registry.templates);
+  });
+  it('resolves each template uiOptions overrides the same way getTemplate does', () => {
+    const registryKeyOverride: UIOptionsType = Object.fromEntries([['DescriptionFieldTemplate', 'FieldTemplate']]);
+    const templates = getTemplates(registry, { ...uiOptions, ...registryKeyOverride, label: false });
+    KEYS.forEach((name) => {
+      expect(templates[name]).toBe(name === 'DescriptionFieldTemplate' ? FakeTemplate : CustomTemplate);
+    });
+    expect(templates.ButtonTemplates).toBe(registry.templates.ButtonTemplates);
+    expect(templates).not.toHaveProperty('label');
   });
 });

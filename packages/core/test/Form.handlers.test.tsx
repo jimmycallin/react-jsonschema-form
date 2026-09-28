@@ -1,6 +1,6 @@
 import { createRef, useEffect } from 'react';
 import type { GenericObjectType, RJSFSchema, UiSchema, WidgetProps } from '@rjsf/utils';
-import { getTemplate, getUiOptions } from '@rjsf/utils';
+import { getTemplates, getUiOptions } from '@rjsf/utils';
 import { act, waitFor } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 
@@ -134,7 +134,7 @@ describeRepeated('Form common: event handlers', (createFormComponent) => {
       function FooWidget(props: WidgetProps) {
         const { value, id, onChange, uiSchema, registry } = props;
         const uiOptions = getUiOptions(uiSchema);
-        const BaseInputTemplate = getTemplate('BaseInputTemplate', registry, uiOptions);
+        const { BaseInputTemplate } = getTemplates(registry, uiOptions);
         useEffect(() => {
           if (value === 'bar') {
             onChange('bar2', undefined, id);
@@ -145,7 +145,7 @@ describeRepeated('Form common: event handlers', (createFormComponent) => {
       function BazWidget(props: WidgetProps) {
         const { value, id, onChange, uiSchema, registry } = props;
         const uiOptions = getUiOptions(uiSchema);
-        const BaseInputTemplate = getTemplate('BaseInputTemplate', registry, uiOptions);
+        const { BaseInputTemplate } = getTemplates(registry, uiOptions);
         useEffect(() => {
           if (value === 'blah') {
             onChange('blah2', undefined, id);

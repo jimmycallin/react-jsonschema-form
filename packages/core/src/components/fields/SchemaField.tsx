@@ -19,7 +19,7 @@ import {
   descriptionId,
   fieldPathToId,
   getSchemaType,
-  getTemplate,
+  getTemplates,
   getUiOptions,
   getUnionTypes,
   GUESSED_TYPE_FLAG,
@@ -110,6 +110,8 @@ function inferSelectType<S extends StrictRJSFSchema = RJSFSchema>(schema: S): { 
   return { schema: { ...schema, type }, widget };
 }
 
+const RenderNothing = () => null;
+
 /** Computes and returns which `Field` implementation to return in order to render the field represented by the
  * `schema`. The `uiOptions` are used to alter what potential `Field` implementation is actually returned. If no
  * appropriate `Field` implementation can be found then a wrapper around `UnsupportedFieldTemplate` is used.
@@ -188,7 +190,7 @@ function getFieldComponent<
   // FallbackField is excluded alongside ObjectField: it renders the option selector within its own value field, for
   // the type currently chosen, so returning nothing here would drop the type selector and the options with it.
   if ((schema.anyOf || schema.oneOf) && !isSelectSchema && componentName !== 'ObjectField' && !rendersFallbackUi) {
-    return { FieldComponent: () => null, rendersFallbackUi: false };
+    return { FieldComponent: RenderNothing, rendersFallbackUi: false };
   }
 
   return {
@@ -292,14 +294,10 @@ function SchemaFieldRender<
   }
 
   const uiOptions = getUiOptions<T, S, F>(uiSchema, globalUiOptions);
-  const FieldTemplate = getTemplate<'FieldTemplate', T, S, F>('FieldTemplate', registry, uiOptions);
-  const DescriptionFieldTemplate = getTemplate<'DescriptionFieldTemplate', T, S, F>(
-    'DescriptionFieldTemplate',
+  const { FieldTemplate, DescriptionFieldTemplate, FieldHelpTemplate, FieldErrorTemplate } = getTemplates<T, S, F>(
     registry,
     uiOptions,
   );
-  const FieldHelpTemplate = getTemplate<'FieldHelpTemplate', T, S, F>('FieldHelpTemplate', registry, uiOptions);
-  const FieldErrorTemplate = getTemplate<'FieldErrorTemplate', T, S, F>('FieldErrorTemplate', registry, uiOptions);
   // `isSelect()` resolves the schema on every call, so compute it once, and only for the `oneOf`/`anyOf` it applies to
   const isSelectSchema = (ANY_OF_KEY in schema || ONE_OF_KEY in schema) && schemaUtils.isSelect(schema);
 

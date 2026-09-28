@@ -11,7 +11,7 @@ import {
   ANY_OF_KEY,
   fieldPathToName,
   getUiOptions,
-  getWidget,
+  getWidgetName,
   isConstant,
   isObject,
   ONE_OF_KEY,
@@ -78,7 +78,7 @@ function BooleanField<
     placeholder,
     ...options
   } = getUiOptions<T, S, F>(uiSchema, globalUiOptions);
-  const Widget = getWidget(schema, widget, widgets);
+  const Widget = typeof widget === 'string' ? widgets[getWidgetName(schema, widget, widgets)] : widget;
   const yes = translateString(TranslatableString.YesLabel);
   const no = translateString(TranslatableString.NoLabel);
   let enumOptions: EnumOptionsType<S>[] | undefined;

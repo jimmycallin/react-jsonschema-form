@@ -66,6 +66,41 @@ const widgetMap = {
  */
 export type WidgetAliasFor<Type extends keyof typeof widgetMap> = keyof (typeof widgetMap)[Type];
 
+/** Returns the key in `registeredWidgets` of the widget named `widget`: `widget` itself when it is registered under
+ * that name, otherwise the registered name its alias maps to for the schema type (e.g. `select` → `SelectWidget`).
+ * Reading the widget out of the registry by this key keeps a field's widget a lookup React can see is not a component
+ * created during render.
+ *
+ * @param schema - The schema for the field
+ * @param widget - The name or alias of the widget
+ * @param [registeredWidgets={}] - A registry of widget name to `Widget` implementation
+ * @returns - The name the widget is registered under
+ * @throws - An error if no registered name matches `widget` for the schema type
+ */
+export function getWidgetName<
+  T = unknown,
+  S extends StrictRJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+>(schema: RJSFSchema, widget: string, registeredWidgets: RegistryWidgetsType<T, S, F> = {}): string {
+  if (widget in registeredWidgets) {
+    return widget;
+  }
+
+  const type = getSchemaType(schema);
+  if (typeof type === 'string') {
+    if (!(type in widgetMap)) {
+      throw new Error(`No widget for type '${type}' in schema: ${JSON.stringify(schema)}`);
+    }
+
+    const widgetsForType = widgetMap[type as keyof typeof widgetMap];
+    if (widget in widgetsForType) {
+      return widgetsForType[widget as keyof typeof widgetsForType];
+    }
+  }
+
+  throw new Error(`No widget '${widget}' for type '${type}' in schema: ${JSON.stringify(schema)}`);
+}
+
 /** Given a schema representing a field to render and either the name or actual `Widget` implementation, returns the
  * React component that is used to render the widget. If the `widget` is already a React component, it is returned
  * as-is. Otherwise an attempt is made to look up the widget inside of the `registeredWidgets` map based on the
@@ -86,8 +121,6 @@ export default function getWidget<
   widget?: Widget<T, S, F> | string,
   registeredWidgets: RegistryWidgetsType<T, S, F> = {},
 ): Widget<T, S, F> {
-  const type = getSchemaType(schema);
-
   if (widget && typeof widget !== 'string') {
     return widget;
   }
@@ -96,22 +129,9 @@ export default function getWidget<
     throw new Error(`Unsupported widget definition: ${typeof widget} in schema: ${JSON.stringify(schema)}`);
   }
 
-  if (widget in registeredWidgets) {
-    const registeredWidget = registeredWidgets[widget];
-    return getWidget<T, S, F>(schema, registeredWidget, registeredWidgets);
-  }
-
-  if (typeof type === 'string') {
-    if (!(type in widgetMap)) {
-      throw new Error(`No widget for type '${type}' in schema: ${JSON.stringify(schema)}`);
-    }
-
-    const widgetsForType = widgetMap[type as keyof typeof widgetMap];
-    if (widget in widgetsForType) {
-      const registeredWidget = registeredWidgets[widgetsForType[widget as keyof typeof widgetsForType]];
-      return getWidget<T, S, F>(schema, registeredWidget, registeredWidgets);
-    }
-  }
-
-  throw new Error(`No widget '${widget}' for type '${type}' in schema: ${JSON.stringify(schema)}`);
+  return getWidget<T, S, F>(
+    schema,
+    registeredWidgets[getWidgetName<T, S, F>(schema, widget, registeredWidgets)],
+    registeredWidgets,
+  );
 }
