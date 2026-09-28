@@ -36,7 +36,7 @@ interface DateTimePickerProps {
  */
 function useDatePickerState(initialDate?: Date) {
   const [isOpen, setIsOpen] = useState(false);
-  const [month, setMonth] = useState<Date>(initialDate ?? new Date());
+  const [month, setMonth] = useState<Date>(() => initialDate ?? new Date());
   return { isOpen, setIsOpen, month, setMonth };
 }
 
@@ -57,6 +57,8 @@ function useClickOutside(ref: RefObject<HTMLDivElement | null>, callback: () => 
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [ref, callback]);
 }
+
+const END_MONTH = new Date(new Date().getFullYear() + 10, 11);
 
 /**
  * Predefined DayPicker styles using DaisyUI classes
@@ -122,7 +124,7 @@ function DateTimePickerPopup({ id, selectedDate, month, onMonthChange, onSelect,
         onSelect={onSelect}
         captionLayout='dropdown'
         startMonth={new Date(1900, 0)}
-        endMonth={new Date(new Date().getFullYear() + 10, 11)}
+        endMonth={END_MONTH}
         showOutsideDays
         classNames={dayPickerStyles.classNames}
         modifiers={customDayModifiers}
