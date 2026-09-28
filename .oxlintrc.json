@@ -602,6 +602,7 @@
     "typescript/restrict-plus-operands": "error",
     "typescript/restrict-template-expressions": "off", // TODO: off until its violations are fixed in a follow-up PR
     "typescript/return-await": ["error", "in-try-catch"],
+    "typescript/switch-exhaustiveness-check": "error",
     "typescript/triple-slash-reference": "error",
     "typescript/unbound-method": "error",
     "typescript/unified-signatures": "error",

@@ -231,6 +231,7 @@ export function conditionMatches(
       return data.some((entry) => values.includes(entry));
     case Operators.NONE:
       return !data.some((entry) => values.includes(entry));
+    case undefined:
     default:
       return false;
   }
