@@ -17,6 +17,7 @@ import {
   ONE_OF_KEY,
   optionsList,
   toConstant,
+  toDisplayString,
   TranslatableString,
 } from '@rjsf/utils';
 
@@ -113,7 +114,7 @@ function BooleanField<
                 // sharing `false`'s label
                 title:
                   option.title ||
-                  (Array.isArray(enumNames) ? enumNames[index] : enumNames?.[String(constant)]) ||
+                  (Array.isArray(enumNames) ? enumNames[index] : enumNames?.[toDisplayString(constant)]) ||
                   booleanConstantTitle(constant, yes, no),
               };
             }

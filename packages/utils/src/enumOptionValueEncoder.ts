@@ -24,8 +24,8 @@ export default function enumOptionValueEncoder(
   if (value == null) {
     return '';
   }
-  if (typeof value === 'object') {
-    return String(index);
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+    return String(value);
   }
-  return String(value);
+  return String(index);
 }

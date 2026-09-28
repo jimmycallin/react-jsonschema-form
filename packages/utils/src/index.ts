@@ -112,6 +112,7 @@ import type { SelectedOptionDescriptionProps } from './SelectedOptionDescription
 import shouldRenderOptionalField from './shouldRenderOptionalField.ts';
 import toConstant from './toConstant.ts';
 import toDateString from './toDateString.ts';
+import toDisplayString from './toDisplayString.ts';
 import toErrorList from './toErrorList.ts';
 import toErrorSchema from './toErrorSchema.ts';
 import unwrapErrorHandler from './unwrapErrorHandler.ts';
@@ -253,6 +254,7 @@ export {
   titleId,
   toConstant,
   toDateString,
+  toDisplayString,
   toErrorList,
   toErrorSchema,
   ROOT_FIELD_PATH,

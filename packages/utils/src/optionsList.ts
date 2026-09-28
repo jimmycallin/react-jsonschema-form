@@ -4,6 +4,7 @@ import getPropertySchema from './getPropertySchema.ts';
 import getUiOptions from './getUiOptions.ts';
 import { getByPath } from './pathUtils.ts';
 import toConstant from './toConstant.ts';
+import toDisplayString from './toDisplayString.ts';
 import type { RJSFSchema, EnumOptionsType, EnumValue, StrictRJSFSchema, FormContextType, UiSchema } from './types.ts';
 
 /** Reorders `options` according to `order`, which may contain a `'*'` wildcard representing all
@@ -55,8 +56,8 @@ export default function optionsList<
     }
     let options = schema.enum.map((value, i) => {
       const label = Array.isArray(enumNames)
-        ? enumNames[i] || String(value)
-        : enumNames?.[String(value)] || String(value);
+        ? enumNames[i] || toDisplayString(value)
+        : enumNames?.[toDisplayString(value)] || toDisplayString(value);
       return { label, value };
     });
     if (enumOrder) {

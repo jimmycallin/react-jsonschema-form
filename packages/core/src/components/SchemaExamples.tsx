@@ -1,5 +1,5 @@
 import type { RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
-import { examplesId } from '@rjsf/utils';
+import { examplesId, toDisplayString } from '@rjsf/utils';
 
 export interface SchemaExamplesProps<S extends StrictRJSFSchema = RJSFSchema> {
   /** The id of the input element this datalist is for */
@@ -25,7 +25,7 @@ export default function SchemaExamples<S extends StrictRJSFSchema = RJSFSchema>(
     <datalist key={`datalist_${id}`} id={examplesId(id)}>
       {(examples as string[])
         .concat(
-          schemaDefault !== undefined && !examples.map(String).includes(String(schemaDefault))
+          schemaDefault !== undefined && !examples.map(toDisplayString).includes(toDisplayString(schemaDefault))
             ? ([schemaDefault] as string[])
             : [],
         )
