@@ -113,5 +113,5 @@ export default function getWidget<
     }
   }
 
-  throw new Error(`No widget '${widget}' for type '${type}' in schema: ${JSON.stringify(schema)}`);
+  throw new Error(`No widget '${widget}' for type '${String(type)}' in schema: ${JSON.stringify(schema)}`);
 }

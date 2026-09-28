@@ -425,7 +425,7 @@ function SchemaFieldRender<
   const hidden = uiOptions.widget === 'hidden' || deprecatedHandling === 'hide';
 
   const hasErrors = hasVisibleErrors({ rawErrors: __errors, hideError });
-  const classNames = ['rjsf-field', `rjsf-field-${getSchemaType(schema)}`];
+  const classNames = ['rjsf-field', `rjsf-field-${String(getSchemaType(schema))}`];
   if (hasErrors) {
     classNames.push('rjsf-field-error');
   }

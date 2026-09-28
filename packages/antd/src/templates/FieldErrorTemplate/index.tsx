@@ -19,7 +19,7 @@ export default function FieldErrorTemplate<
   return (
     <div id={id}>
       {errors.map((error) => (
-        <div key={`field-${id}-error-${error}`}>{error}</div>
+        <div key={`field-${id}-error-${String(error)}`}>{error}</div>
       ))}
     </div>
   );
