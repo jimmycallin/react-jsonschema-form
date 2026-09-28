@@ -890,6 +890,21 @@ otherwise. NOTE, since `ButtonTemplates` are not overridden in `uiSchema` only t
 
 - TemplatesType&lt;T, S, F>[Name] - The template from either the `uiSchema` or `registry` for the `name`
 
+### getTemplates&lt;T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = FormContextType>()
+
+Returns every template in the `registry`, with each one that `uiOptions` overrides resolved the way `getTemplate()`
+resolves it. Destructure the templates a component renders from the result, e.g.
+`const { FieldTemplate, FieldErrorTemplate } = getTemplates(registry, uiOptions)`.
+
+#### Parameters
+
+- registry: Registry&lt;T, S, F> - The `Registry` from which to read the templates
+- [uiOptions=\{}]: UIOptionsType&lt;T, S, F> - The `UIOptionsType` from which to read alternate templates
+
+#### Returns
+
+- TemplatesType&lt;T, S, F> - The templates from either the `uiSchema` or `registry`
+
 ### getTestIds()
 
 Returns an object of test IDs that can only be used in test mode.
@@ -969,6 +984,25 @@ schema type and `widget` name. If no widget component can be found an `Error` is
 #### Throws
 
 - An error if there is no `Widget` component that can be returned
+
+### getWidgetName&lt;T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = FormContextType>()
+
+Returns the key in `registeredWidgets` of the widget named `widget`: `widget` itself when it is registered under that
+name, otherwise the registered name its alias maps to for the schema type (e.g. `select` → `SelectWidget`).
+
+#### Parameters
+
+- schema: RJSFSchema - The schema for the field
+- widget: string - The name or alias of the widget
+- [registeredWidgets={}]: RegistryWidgetsType&lt;T, S, F> - A registry of widget name to `Widget` implementation
+
+#### Returns
+
+- string: The name the widget is registered under
+
+#### Throws
+
+- An error if no registered name matches `widget` for the schema type
 
 ### groupEnumOptions&lt;S extends StrictRJSFSchema = RJSFSchema>()
 
