@@ -660,9 +660,9 @@ describe('LayoutMultiSchemaField', () => {
     ['hands its FieldTemplate the errors it is showing', false, ['first error', 'second error']],
     ['withholds the errors from its FieldTemplate while they are hidden', true, []],
   ] satisfies [string, boolean, string[]][])('%s', (_, hidden, expectedVisibleErrors) => {
-    let templateProps: FieldTemplateProps | undefined;
+    const recordTemplateProps = vi.fn<(props: FieldTemplateProps) => void>();
     function RecordingFieldTemplate(props: FieldTemplateProps) {
-      templateProps = props;
+      recordTemplateProps(props);
       return <FakeFieldTemplate {...props} />;
     }
     const props = getProps({
@@ -672,6 +672,7 @@ describe('LayoutMultiSchemaField', () => {
     });
 
     render(<LayoutMultiSchemaField {...props} />);
+    const templateProps = recordTemplateProps.mock.lastCall?.[0];
 
     expect(templateProps?.rawErrors).toEqual(hidden ? undefined : ['first error', 'second error']);
     expect(templateProps?.hideError).toBe(hidden);
