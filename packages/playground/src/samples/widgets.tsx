@@ -247,7 +247,9 @@ const widgets: Sample = {
         return (
           <input
             className='form-control'
-            onChange={(event) => onChange(event.target.value)}
+            onChange={(event) => {
+              onChange(event.target.value);
+            }}
             style={{ backgroundColor }}
             value={value}
           />
@@ -273,7 +275,9 @@ const widgets: Sample = {
             className='form-control'
             style={{ backgroundColor }}
             value={value}
-            onChange={(event) => onChange(event.target.value)}
+            onChange={(event) => {
+              onChange(event.target.value);
+            }}
           >
             {enumOptions.map(({ label: enumLabel, value: enumValue }, i) => (
               // oxlint-disable-next-line react/no-array-index-key

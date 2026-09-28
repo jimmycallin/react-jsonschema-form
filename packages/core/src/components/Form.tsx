@@ -1630,7 +1630,9 @@ export default class Form<
    * @param [id] - The id of the field that caused the change
    */
   onChange = (newValue: T | undefined, fieldPath: FieldPath, newErrorSchema?: ErrorSchema<T>, id?: string) => {
-    this.enqueue((advance) => this.processChange({ newValue, fieldPath, newErrorSchema, id }, advance), true);
+    this.enqueue((advance) => {
+      this.processChange({ newValue, fieldPath, newErrorSchema, id }, advance);
+    }, true);
   };
 
   /** Applies one `change` with `applyChange()` and does with the result the one thing that differs between the two
@@ -1649,9 +1651,9 @@ export default class Form<
     const deferLiveValidate = this.queue.some((operation, index) => index > 0 && operation.isChange);
     const next = applyChange(current, change, this.props, deferLiveValidate);
     if (!current.isControlled) {
-      this.setSharedState(current, next, () =>
-        advanceAfter(advance, () => onChange?.(toIChangeEvent(this.state), change.id)),
-      );
+      this.setSharedState(current, next, () => {
+        advanceAfter(advance, () => onChange?.(toIChangeEvent(this.state), change.id));
+      });
       return;
     }
     const isValidated = !deferLiveValidate && isLiveValidated(this.props);
@@ -1693,9 +1695,9 @@ export default class Form<
         this.setSharedState(this.state, cleared, advance);
         return;
       }
-      this.setSharedState(this.state, applyReset(this.state, this.props), () =>
-        advanceAfter(advance, () => this.props.onChange?.(toIChangeEvent(this.state))),
-      );
+      this.setSharedState(this.state, applyReset(this.state, this.props), () => {
+        advanceAfter(advance, () => this.props.onChange?.(toIChangeEvent(this.state)));
+      });
     });
   };
 
@@ -1715,7 +1717,9 @@ export default class Form<
     if ((omitExtraData === true && liveOmit === 'onBlur') || liveValidate === 'onBlur') {
       // Queued like a change: a blur in the same tick as an edit must validate or omit the data that edit produced,
       // not the data from before it
-      this.enqueue((advance) => this.processBlur(id, advance));
+      this.enqueue((advance) => {
+        this.processBlur(id, advance);
+      });
     }
   };
 
@@ -1745,13 +1749,13 @@ export default class Form<
       }
       return;
     }
-    this.setSharedState(committed, next, () =>
+    this.setSharedState(committed, next, () => {
       advanceAfter(advance, () => {
         if (onChange && hasChanges) {
           onChange(toIChangeEvent(this.state), id);
         }
-      }),
-    );
+      });
+    });
   }
 
   /** Callback function to handle when a field on the form is focused. Calls the `onFocus` callback for the `Form` if it
@@ -1784,7 +1788,9 @@ export default class Form<
 
     event.persist();
     // Queued like a change: a submit in the same tick as an edit submits the data that edit produced
-    this.enqueue((advance) => this.processSubmit(event, advance));
+    this.enqueue((advance) => {
+      this.processSubmit(event, advance);
+    });
   };
 
   /** Validates and submits the data the form renders, see `onSubmit()`
@@ -1807,11 +1813,11 @@ export default class Form<
       return;
     }
     // There are no errors generated through schema validation, so only the user-provided ones are shown
-    this.setSharedState(this.state, applySubmit(this.state, this.props, newFormData), () =>
+    this.setSharedState(this.state, applySubmit(this.state, this.props, newFormData), () => {
       advanceAfter(advance, () =>
         onSubmit?.(toIChangeEvent({ ...this.state, formData: newFormData }, 'submitted'), event),
-      ),
-    );
+      );
+    });
   }
 
   /** Provides a function that can be used to programmatically submit the `Form` */

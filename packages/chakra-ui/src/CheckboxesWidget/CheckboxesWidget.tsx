@@ -25,10 +25,12 @@ export default function CheckboxesWidget<
   const { enumOptions, enumDisabled, emptyValue } = options;
   const optionValueFormat = getOptionValueFormat(options);
 
-  const handleBlur = ({ target }: FocusEvent<HTMLInputElement | any>) =>
+  const handleBlur = ({ target }: FocusEvent<HTMLInputElement | any>) => {
     onBlur(id, enumOptionValueDecoder<S>(target?.value, enumOptions, optionValueFormat, emptyValue));
-  const handleFocus = ({ target }: FocusEvent<HTMLInputElement | any>) =>
+  };
+  const handleFocus = ({ target }: FocusEvent<HTMLInputElement | any>) => {
     onFocus(id, enumOptionValueDecoder<S>(target?.value, enumOptions, optionValueFormat, emptyValue));
+  };
 
   const row = options ? options.inline : false;
   const selectValue = enumOptionSelectedValue<S>(value, enumOptions, true, optionValueFormat, []) as string[];
@@ -40,9 +42,9 @@ export default function CheckboxesWidget<
     <FieldsetRoot mb={1} disabled={disabled || readonly} invalid={hasError} {...(chakraProps as any)}>
       {!hideLabel && label && <FieldsetLegend>{labelValue(label)}</FieldsetLegend>}
       <CheckboxGroup
-        onValueChange={(option) =>
-          onChange(enumOptionValueDecoder<S>(option, enumOptions, optionValueFormat, emptyValue))
-        }
+        onValueChange={(option) => {
+          onChange(enumOptionValueDecoder<S>(option, enumOptions, optionValueFormat, emptyValue));
+        }}
         value={selectValue}
         aria-describedby={ariaDescribedByIds(id)}
         readOnly={readonly}

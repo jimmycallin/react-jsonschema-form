@@ -51,10 +51,12 @@ export default function CheckboxesWidget<
       }
     };
 
-  const handleBlur = ({ target }: FocusEvent<HTMLInputElement>) =>
+  const handleBlur = ({ target }: FocusEvent<HTMLInputElement>) => {
     onBlur(id, enumOptionValueDecoder<S>(target?.value, enumOptions, optionValueFormat, emptyValue));
-  const handleFocus = ({ target }: FocusEvent<HTMLInputElement>) =>
+  };
+  const handleFocus = ({ target }: FocusEvent<HTMLInputElement>) => {
     onFocus(id, enumOptionValueDecoder<S>(target?.value, enumOptions, optionValueFormat, emptyValue));
+  };
 
   return (
     <>

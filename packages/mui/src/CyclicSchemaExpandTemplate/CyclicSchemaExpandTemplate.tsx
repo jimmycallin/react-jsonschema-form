@@ -20,7 +20,15 @@ export default function CyclicSchemaExpandTemplate<
       <Typography variant='body2' sx={{ color: 'warning.main', mb: 1 }}>
         {translateString(TranslatableString.CycleDetected, [name])}
       </Typography>
-      <Button id={expandButtonId(id)} size='small' variant='outlined' color='warning' onClick={() => onExpand(id)}>
+      <Button
+        id={expandButtonId(id)}
+        size='small'
+        variant='outlined'
+        color='warning'
+        onClick={() => {
+          onExpand(id);
+        }}
+      >
         {translateString(TranslatableString.ExpandButton)}
       </Button>
     </Box>

@@ -53,9 +53,13 @@ export default function DateWidget<
     }
   };
 
-  const handleBlur = () => onBlur(id, value);
+  const handleBlur = () => {
+    onBlur(id, value);
+  };
 
-  const handleFocus = () => onFocus(id, value);
+  const handleFocus = () => {
+    onFocus(id, value);
+  };
 
   const getPopupContainer = DateWidget.getPopupContainerCallback();
 

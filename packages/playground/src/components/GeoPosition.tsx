@@ -21,7 +21,9 @@ export default function GeoPosition({ id }: FieldProps) {
             type='number'
             value={lat}
             step='0.00001'
-            onChange={(e) => setLat(parseFloat(e.target.value))}
+            onChange={(e) => {
+              setLat(parseFloat(e.target.value));
+            }}
           />
         </div>
         <div className='col-sm-6'>
@@ -32,7 +34,9 @@ export default function GeoPosition({ id }: FieldProps) {
             type='number'
             value={lon}
             step='0.00001'
-            onChange={(e) => setLon(parseFloat(e.target.value))}
+            onChange={(e) => {
+              setLon(parseFloat(e.target.value));
+            }}
           />
         </div>
       </div>

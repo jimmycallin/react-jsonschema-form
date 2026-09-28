@@ -18,12 +18,17 @@ export default function PasswordWidget<
 
   const emptyValue = options.emptyValue || '';
 
-  const handleChange = ({ target }: ChangeEvent<HTMLInputElement>) =>
+  const handleChange = ({ target }: ChangeEvent<HTMLInputElement>) => {
     onChange(target.value === '' ? emptyValue : target.value);
+  };
 
-  const handleBlur = ({ target }: FocusEvent<HTMLInputElement>) => onBlur(id, target.value);
+  const handleBlur = ({ target }: FocusEvent<HTMLInputElement>) => {
+    onBlur(id, target.value);
+  };
 
-  const handleFocus = ({ target }: FocusEvent<HTMLInputElement>) => onFocus(id, target.value);
+  const handleFocus = ({ target }: FocusEvent<HTMLInputElement>) => {
+    onFocus(id, target.value);
+  };
 
   return (
     <Input.Password

@@ -147,11 +147,11 @@ export default function SelectWidget<
           selectedValues.includes(encodedValue) ? 'bg-primary/10' : ''
         }`}
         onClick={option.disabled ? undefined : handleOptionClick}
-        onKeyDown={(e) =>
-          !option.disabled &&
-          (e.key === 'Enter' || e.key === ' ') &&
-          handleOptionClick(e as unknown as React.MouseEvent<HTMLLIElement>)
-        }
+        onKeyDown={(e) => {
+          if (!option.disabled && (e.key === 'Enter' || e.key === ' ')) {
+            handleOptionClick(e as unknown as React.MouseEvent<HTMLLIElement>);
+          }
+        }}
         data-value={option.index}
       >
         <div className='flex items-center gap-2'>

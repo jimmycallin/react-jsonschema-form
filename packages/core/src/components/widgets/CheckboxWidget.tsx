@@ -48,17 +48,23 @@ function CheckboxWidget<
   const trueValueRequired = schemaRequiresTrueValue<S>(schema) && required;
 
   const handleChange = useCallback(
-    (event: ChangeEvent<HTMLInputElement>) => onChange(event.target.checked),
+    (event: ChangeEvent<HTMLInputElement>) => {
+      onChange(event.target.checked);
+    },
     [onChange],
   );
 
   const handleBlur = useCallback(
-    (event: FocusEvent<HTMLInputElement>) => onBlur(id, event.target.checked),
+    (event: FocusEvent<HTMLInputElement>) => {
+      onBlur(id, event.target.checked);
+    },
     [onBlur, id],
   );
 
   const handleFocus = useCallback(
-    (event: FocusEvent<HTMLInputElement>) => onFocus(id, event.target.checked),
+    (event: FocusEvent<HTMLInputElement>) => {
+      onFocus(id, event.target.checked);
+    },
     [onFocus, id],
   );
 

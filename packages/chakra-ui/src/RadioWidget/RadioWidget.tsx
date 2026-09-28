@@ -37,12 +37,15 @@ export default function RadioWidget<
   const { enumOptions, enumDisabled, emptyValue } = options;
   const optionValueFormat = getOptionValueFormat(options);
 
-  const handleChange = ({ target: { value: enumValue } }: ChangeEvent<HTMLInputElement>) =>
+  const handleChange = ({ target: { value: enumValue } }: ChangeEvent<HTMLInputElement>) => {
     onChange(enumOptionValueDecoder<S>(enumValue, enumOptions, optionValueFormat, emptyValue));
-  const handleBlur = ({ target: { value: enumValue } }: FocusEvent<HTMLInputElement>) =>
+  };
+  const handleBlur = ({ target: { value: enumValue } }: FocusEvent<HTMLInputElement>) => {
     onBlur(id, enumOptionValueDecoder<S>(enumValue, enumOptions, optionValueFormat, emptyValue));
-  const handleFocus = ({ target: { value: enumValue } }: FocusEvent<HTMLInputElement>) =>
+  };
+  const handleFocus = ({ target: { value: enumValue } }: FocusEvent<HTMLInputElement>) => {
     onFocus(id, enumOptionValueDecoder<S>(enumValue, enumOptions, optionValueFormat, emptyValue));
+  };
 
   const row = options ? options.inline : false;
   const selectValue = enumOptionSelectedValue<S>(value, enumOptions, false, optionValueFormat, null);

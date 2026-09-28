@@ -9,8 +9,12 @@ interface RawValidatorTestProps {
 
 export default function RawValidatorTest({ validator, schema, formData }: RawValidatorTestProps) {
   const [rawValidation, setRawValidation] = useState<{ errors?: any[]; validationError?: Error } | undefined>();
-  const handleClearClick = () => setRawValidation(undefined);
-  const handleRawClick = () => setRawValidation(validator.rawValidation(schema, formData));
+  const handleClearClick = () => {
+    setRawValidation(undefined);
+  };
+  const handleRawClick = () => {
+    setRawValidation(validator.rawValidation(schema, formData));
+  };
 
   let displayErrors = 'Validation not run';
   if (rawValidation) {

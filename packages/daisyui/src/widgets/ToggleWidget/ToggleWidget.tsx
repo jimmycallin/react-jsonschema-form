@@ -23,7 +23,9 @@ export default function ToggleWidget<
    * @param event - The change event
    */
   const handleChange = useCallback(
-    ({ target: { checked } }: ChangeEvent<HTMLInputElement>) => onChange(checked),
+    ({ target: { checked } }: ChangeEvent<HTMLInputElement>) => {
+      onChange(checked);
+    },
     [onChange],
   );
 

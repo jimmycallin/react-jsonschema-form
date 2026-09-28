@@ -59,12 +59,17 @@ export default function SelectWidget<
   const { enumOptions, enumDisabled, emptyValue, optgroups } = options;
   const optionValueFormat = getOptionValueFormat(options);
 
-  const handleChange = (nextValue: any) =>
+  const handleChange = (nextValue: any) => {
     onChange(enumOptionValueDecoder<S>(nextValue, enumOptions, optionValueFormat, emptyValue));
+  };
 
-  const handleBlur = () => onBlur(id, enumOptionValueDecoder<S>(value, enumOptions, optionValueFormat, emptyValue));
+  const handleBlur = () => {
+    onBlur(id, enumOptionValueDecoder<S>(value, enumOptions, optionValueFormat, emptyValue));
+  };
 
-  const handleFocus = () => onFocus(id, enumOptionValueDecoder<S>(value, enumOptions, optionValueFormat, emptyValue));
+  const handleFocus = () => {
+    onFocus(id, enumOptionValueDecoder<S>(value, enumOptions, optionValueFormat, emptyValue));
+  };
 
   const filterOption: SelectProps['filterOption'] = (input, option) => {
     // A group is offered here before its own options are, and matching one keeps every option it holds, including the

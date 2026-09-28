@@ -68,13 +68,21 @@ export default function BaseInputTemplate<
   }
 
   const handleChange = useCallback(
-    ({ target: { value: newValue } }: ChangeEvent<HTMLInputElement>) =>
-      onChange(newValue === '' ? options.emptyValue : newValue),
+    ({ target: { value: newValue } }: ChangeEvent<HTMLInputElement>) => {
+      onChange(newValue === '' ? options.emptyValue : newValue);
+    },
     [onChange, options],
   );
-  const handleBlur = useCallback(({ target }: FocusEvent<HTMLInputElement>) => onBlur(id, target?.value), [onBlur, id]);
+  const handleBlur = useCallback(
+    ({ target }: FocusEvent<HTMLInputElement>) => {
+      onBlur(id, target?.value);
+    },
+    [onBlur, id],
+  );
   const handleFocus = useCallback(
-    ({ target }: FocusEvent<HTMLInputElement>) => onFocus(id, target?.value),
+    ({ target }: FocusEvent<HTMLInputElement>) => {
+      onFocus(id, target?.value);
+    },
     [onFocus, id],
   );
   const handleClear = useCallback(

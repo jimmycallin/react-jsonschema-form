@@ -18,8 +18,9 @@ export default function DateTimeWidget<
   const BaseInputTemplate = getTemplate<'BaseInputTemplate', T, S, F>('BaseInputTemplate', registry, options);
   const { isIsoDateTime, localValue: isoLocalValue } = getDateTimeLocalValue(schema, value);
   const localValue = isIsoDateTime ? isoLocalValue : utcToLocal(value);
-  const handleChange = (newValue: string) =>
+  const handleChange = (newValue: string) => {
     onChange(isIsoDateTime ? padTimeSeconds(newValue) || undefined : localToUTC(newValue));
+  };
 
   return <BaseInputTemplate type='datetime-local' {...props} value={localValue} onChange={handleChange} />;
 }

@@ -49,8 +49,14 @@ export default function FileWidget<
       return (
         <Pill.Group>
           {filesInfo.map((file, index) => (
-            // oxlint-disable-next-line react/no-array-index-key
-            <Pill key={index} withRemoveButton onRemove={() => handleRemove(index)}>
+            <Pill
+              // oxlint-disable-next-line react/no-array-index-key
+              key={index}
+              withRemoveButton
+              onRemove={() => {
+                handleRemove(index);
+              }}
+            >
               {file.name}
             </Pill>
           ))}

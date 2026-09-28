@@ -52,10 +52,15 @@ export default function BaseInputTemplate<
     ...callerPattern,
     ...(extraProps && 'inputMode' in extraProps ? { inputMode: extraProps.inputMode } : undefined),
   };
-  const handleChange = ({ target: { value: newValue } }: ChangeEvent<HTMLInputElement>) =>
+  const handleChange = ({ target: { value: newValue } }: ChangeEvent<HTMLInputElement>) => {
     onChange(newValue === '' ? options.emptyValue : newValue);
-  const handleBlur = ({ target }: FocusEvent<HTMLInputElement>) => onBlur(id, target?.value);
-  const handleFocus = ({ target }: FocusEvent<HTMLInputElement>) => onFocus(id, target?.value);
+  };
+  const handleBlur = ({ target }: FocusEvent<HTMLInputElement>) => {
+    onBlur(id, target?.value);
+  };
+  const handleFocus = ({ target }: FocusEvent<HTMLInputElement>) => {
+    onFocus(id, target?.value);
+  };
   const handleClear = useCallback(
     (e: MouseEvent) => {
       e.preventDefault();

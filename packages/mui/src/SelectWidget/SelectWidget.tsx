@@ -84,12 +84,15 @@ export default function SelectWidget<
   const isEmpty =
     typeof value === 'undefined' || (isMultiple && value.length < 1) || (!isMultiple && value === emptyValue);
 
-  const handleChange = ({ target: { value: newValue } }: ChangeEvent<{ value: string }>) =>
+  const handleChange = ({ target: { value: newValue } }: ChangeEvent<{ value: string }>) => {
     onChange(enumOptionValueDecoder<S>(newValue, enumOptions, optionValueFormat, optEmptyVal));
-  const handleBlur = ({ target }: FocusEvent<HTMLInputElement>) =>
+  };
+  const handleBlur = ({ target }: FocusEvent<HTMLInputElement>) => {
     onBlur(id, enumOptionValueDecoder<S>(target?.value, enumOptions, optionValueFormat, optEmptyVal));
-  const handleFocus = ({ target }: FocusEvent<HTMLInputElement>) =>
+  };
+  const handleFocus = ({ target }: FocusEvent<HTMLInputElement>) => {
     onFocus(id, enumOptionValueDecoder<S>(target?.value, enumOptions, optionValueFormat, optEmptyVal));
+  };
   const { rjsfSlotProps: muiSlotProps, ...otherMuiProps } = getMuiProps<T, S, F, SelectWidgetMuiProps>(options);
 
   const { InputLabelProps, SelectProps, autocomplete, ...textFieldRemainingProps } = textFieldProps;

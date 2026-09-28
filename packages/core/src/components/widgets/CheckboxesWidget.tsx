@@ -38,14 +38,16 @@ function CheckboxesWidget<
   const checkboxesValues = Array.isArray(value) ? value : [value];
 
   const handleBlur = useCallback(
-    ({ target }: FocusEvent<HTMLInputElement>) =>
-      onBlur(id, enumOptionValueDecoder<S>(target?.value, enumOptions, optionValueFormat, emptyValue)),
+    ({ target }: FocusEvent<HTMLInputElement>) => {
+      onBlur(id, enumOptionValueDecoder<S>(target?.value, enumOptions, optionValueFormat, emptyValue));
+    },
     [onBlur, id, enumOptions, emptyValue, optionValueFormat],
   );
 
   const handleFocus = useCallback(
-    ({ target }: FocusEvent<HTMLInputElement>) =>
-      onFocus(id, enumOptionValueDecoder<S>(target?.value, enumOptions, optionValueFormat, emptyValue)),
+    ({ target }: FocusEvent<HTMLInputElement>) => {
+      onFocus(id, enumOptionValueDecoder<S>(target?.value, enumOptions, optionValueFormat, emptyValue));
+    },
     [onFocus, id, enumOptions, emptyValue, optionValueFormat],
   );
 

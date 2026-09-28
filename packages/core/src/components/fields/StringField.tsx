@@ -36,7 +36,9 @@ function StringField<T = unknown, S extends StrictRJSFSchema = RJSFSchema, F ext
   const label = uiTitle ?? title ?? schemaTitle ?? name;
   const Widget = getWidget<T, S, F>(schema, widget, widgets);
   const onWidgetChange = useCallback(
-    (value: T | undefined, errorSchema?: ErrorSchema, id?: string) => onChange(value, fieldPath, errorSchema, id),
+    (value: T | undefined, errorSchema?: ErrorSchema, id?: string) => {
+      onChange(value, fieldPath, errorSchema, id);
+    },
     [onChange, fieldPath],
   );
   return (

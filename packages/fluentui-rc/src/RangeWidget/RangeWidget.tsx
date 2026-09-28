@@ -21,8 +21,12 @@ export default function RangeWidget<
   const handleChange = (_: any, data: SliderOnChangeData) => {
     onChange(data.value ?? options.emptyValue);
   };
-  const handleBlur = ({ target }: FocusEvent<HTMLInputElement>) => onBlur(id, target?.value);
-  const handleFocus = ({ target }: FocusEvent<HTMLInputElement>) => onFocus(id, target?.value);
+  const handleBlur = ({ target }: FocusEvent<HTMLInputElement>) => {
+    onBlur(id, target?.value);
+  };
+  const handleFocus = ({ target }: FocusEvent<HTMLInputElement>) => {
+    onFocus(id, target?.value);
+  };
 
   return (
     <>

@@ -33,11 +33,17 @@ export default function RangeWidget<
 
   const emptyValue = options.emptyValue || '';
 
-  const handleChange = (nextValue: any) => onChange(nextValue === '' ? emptyValue : nextValue);
+  const handleChange = (nextValue: any) => {
+    onChange(nextValue === '' ? emptyValue : nextValue);
+  };
 
-  const handleBlur = () => onBlur(id, value);
+  const handleBlur = () => {
+    onBlur(id, value);
+  };
 
-  const handleFocus = () => onFocus(id, value);
+  const handleFocus = () => {
+    onFocus(id, value);
+  };
 
   // Antd's typescript definitions do not contain the following props that are actually necessary and, if provided,
   // they are used, so hacking them in via by spreading `extraProps` on the component to avoid typescript errors

@@ -154,7 +154,9 @@ export function FancyMultiSelect({
         aria-controls={`${item.value}-command-item`}
         aria-labelledby={`${item.value}-command-item`}
         id={`${item.value}-command-item`}
-        onSelect={() => handleSelect(item)}
+        onSelect={() => {
+          handleSelect(item);
+        }}
         className='cursor-pointer'
       >
         {item.label}
@@ -188,12 +190,18 @@ export function FancyMultiSelect({
               <button
                 type='button'
                 className='rtl:mr-1 ltr:ml-1 ring-offset-background rounded-full outline-none focus:ring-1 focus:ring-ring focus:ring-offset-1'
-                onKeyDown={(e) => e.key === 'Enter' && !disabled && handleUnselect(item)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !disabled) {
+                    handleUnselect(item);
+                  }
+                }}
                 onMouseDown={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
                 }}
-                onClick={() => handleUnselect(item)}
+                onClick={() => {
+                  handleUnselect(item);
+                }}
                 disabled={disabled}
               >
                 <X
@@ -209,8 +217,14 @@ export function FancyMultiSelect({
             ref={inputRef}
             value={inputValue}
             onValueChange={setInputValue}
-            onBlur={() => setOpen(false)}
-            onFocus={() => !disabled && setOpen(true)}
+            onBlur={() => {
+              setOpen(false);
+            }}
+            onFocus={() => {
+              if (!disabled) {
+                setOpen(true);
+              }
+            }}
             placeholder='Select ...'
             className='rtl:mr-2 ltr:ml-2 bg-transparent outline-none placeholder:text-muted-foreground flex-1'
             disabled={disabled}

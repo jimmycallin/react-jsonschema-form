@@ -26,18 +26,23 @@ function TextareaWidget<
   htmlName,
 }: WidgetProps<T, S, F>) {
   const handleChange = useCallback(
-    ({ target: { value: newValue } }: ChangeEvent<HTMLTextAreaElement>) =>
-      onChange(newValue === '' ? options.emptyValue : newValue),
+    ({ target: { value: newValue } }: ChangeEvent<HTMLTextAreaElement>) => {
+      onChange(newValue === '' ? options.emptyValue : newValue);
+    },
     [onChange, options.emptyValue],
   );
 
   const handleBlur = useCallback(
-    ({ target }: FocusEvent<HTMLTextAreaElement>) => onBlur(id, target?.value),
+    ({ target }: FocusEvent<HTMLTextAreaElement>) => {
+      onBlur(id, target?.value);
+    },
     [onBlur, id],
   );
 
   const handleFocus = useCallback(
-    ({ target }: FocusEvent<HTMLTextAreaElement>) => onFocus(id, target?.value),
+    ({ target }: FocusEvent<HTMLTextAreaElement>) => {
+      onFocus(id, target?.value);
+    },
     [id, onFocus],
   );
 

@@ -159,7 +159,11 @@ export function FancySelect({
         disabled={disabled}
         aria-expanded={open}
         aria-haspopup='listbox'
-        onClick={() => !disabled && setOpen(!open)}
+        onClick={() => {
+          if (!disabled) {
+            setOpen(!open);
+          }
+        }}
         onKeyDown={(e) => {
           if ((e.key === 'Enter' || e.key === ' ') && !disabled) {
             e.preventDefault();

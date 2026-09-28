@@ -43,9 +43,15 @@ export default function CheckboxWidget<
     options,
   );
 
-  const handleChange = (checked: boolean) => onChange(checked);
-  const handleBlur = () => onBlur(id, value);
-  const handleFocus = () => onFocus(id, value);
+  const handleChange = (checked: boolean) => {
+    onChange(checked);
+  };
+  const handleBlur = () => {
+    onBlur(id, value);
+  };
+  const handleFocus = () => {
+    onFocus(id, value);
+  };
 
   const description = options.description || schema.description;
   return (

@@ -10,9 +10,15 @@ export default function RangeWidget<
 >(props: WidgetProps<T, S, F>) {
   const { id, value, disabled, onChange, onBlur, onFocus, schema } = props;
 
-  const handleChange = ({ target: { value: newValue } }: ChangeEvent<HTMLInputElement>) => onChange(newValue);
-  const handleBlur = ({ target: { value: newValue } }: FocusEvent<HTMLInputElement>) => onBlur(id, newValue);
-  const handleFocus = ({ target: { value: newValue } }: FocusEvent<HTMLInputElement>) => onFocus(id, newValue);
+  const handleChange = ({ target: { value: newValue } }: ChangeEvent<HTMLInputElement>) => {
+    onChange(newValue);
+  };
+  const handleBlur = ({ target: { value: newValue } }: FocusEvent<HTMLInputElement>) => {
+    onBlur(id, newValue);
+  };
+  const handleFocus = ({ target: { value: newValue } }: FocusEvent<HTMLInputElement>) => {
+    onFocus(id, newValue);
+  };
 
   const rangeProps = {
     value,

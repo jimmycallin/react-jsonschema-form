@@ -96,7 +96,9 @@ export default function SampleSelector({ onSelected, selectedSample }: SampleSel
   };
   function onLabelClick(event: SyntheticEvent, label: string) {
     event.preventDefault();
-    setTimeout(() => onSelected(label), 0);
+    setTimeout(() => {
+      onSelected(label);
+    }, 0);
   }
 
   return (

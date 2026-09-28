@@ -31,7 +31,13 @@ export default function CyclicSchemaExpandTemplate<
     <Card appearance='outline' className={classes.card}>
       <Text>{translateString(TranslatableString.CycleDetected, [name])}</Text>
       <div className={classes.buttonRow}>
-        <Button id={expandButtonId(id)} appearance='secondary' onClick={() => onExpand(id)}>
+        <Button
+          id={expandButtonId(id)}
+          appearance='secondary'
+          onClick={() => {
+            onExpand(id);
+          }}
+        >
           {translateString(TranslatableString.ExpandButton)}
         </Button>
       </div>

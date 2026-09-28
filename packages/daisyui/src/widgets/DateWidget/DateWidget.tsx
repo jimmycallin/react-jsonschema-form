@@ -49,7 +49,9 @@ function useClickOutside(ref: RefObject<HTMLDivElement | null>, callback: () => 
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
   }, [ref, callback]);
 }
 
@@ -175,7 +177,12 @@ export default function DateWidget<
   }, [localDate, setMonth]);
 
   // Update the month when the user navigates the calendar.
-  const handleMonthChange = useCallback((date: Date) => setMonth(date), [setMonth]);
+  const handleMonthChange = useCallback(
+    (date: Date) => {
+      setMonth(date);
+    },
+    [setMonth],
+  );
 
   // Update local state on day selection (but do not commit immediately).
   const handleSelect = useCallback((date: Date | undefined) => {
@@ -325,7 +332,9 @@ export default function DateWidget<
     };
 
     document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+    };
   }, [id, isOpen, setIsOpen, onBlur, value]);
 
   // Add the handleDoneClick callback near the top of the component, with the other event handlers
@@ -376,7 +385,9 @@ export default function DateWidget<
               maxHeight: 'none',
               overflow: 'visible',
             }}
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+            }}
           >
             <MemoizedDatePickerPopup
               selectedDate={localDate}

@@ -24,7 +24,15 @@ export default function CyclicSchemaExpandTemplate<
       mt='md'
     >
       <Group>
-        <Button id={expandButtonId(id)} size='xs' variant='outline' color='yellow' onClick={() => onExpand(id)}>
+        <Button
+          id={expandButtonId(id)}
+          size='xs'
+          variant='outline'
+          color='yellow'
+          onClick={() => {
+            onExpand(id);
+          }}
+        >
           {translateString(TranslatableString.ExpandButton)}
         </Button>
       </Group>

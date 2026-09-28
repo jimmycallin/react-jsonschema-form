@@ -39,10 +39,15 @@ export default function TextareaWidget<
     schema,
   } = props;
   const classes = useStyles();
-  const handleChange = ({ target: { value: newValue } }: ChangeEvent<HTMLTextAreaElement>) =>
+  const handleChange = ({ target: { value: newValue } }: ChangeEvent<HTMLTextAreaElement>) => {
     onChange(newValue === '' ? options.emptyValue : newValue);
-  const handleBlur = ({ target }: FocusEvent<HTMLTextAreaElement>) => onBlur(id, target?.value);
-  const handleFocus = ({ target }: FocusEvent<HTMLTextAreaElement>) => onFocus(id, target?.value);
+  };
+  const handleBlur = ({ target }: FocusEvent<HTMLTextAreaElement>) => {
+    onBlur(id, target?.value);
+  };
+  const handleFocus = ({ target }: FocusEvent<HTMLTextAreaElement>) => {
+    onFocus(id, target?.value);
+  };
 
   let rows: string | number = 5;
   if (typeof options.rows === 'string' || typeof options.rows === 'number') {

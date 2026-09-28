@@ -66,7 +66,12 @@ export function DateElement<
   } = props;
   const id = `${rootId}_${type}`;
   const { SelectWidget } = registry.widgets;
-  const onChange = useCallback((newValue: any) => select(type as keyof DateObject, newValue), [select, type]);
+  const onChange = useCallback(
+    (newValue: any) => {
+      select(type as keyof DateObject, newValue);
+    },
+    [select, type],
+  );
   return (
     <SelectWidget
       schema={{ type: 'integer' } as S}

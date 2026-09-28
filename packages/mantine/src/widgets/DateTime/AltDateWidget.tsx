@@ -44,7 +44,9 @@ export default function AltDateWidget<
                 disabled={disabled || readonly}
                 data={dateRangeOptions<S>(elemProps.range[0], elemProps.range[1]).map((item) => item.value.toString())}
                 value={!elemProps.value || elemProps.value < 0 ? null : elemProps.value.toString()}
-                onChange={(v) => handleChange(elemProps.type as keyof DateObject, v || undefined)}
+                onChange={(v) => {
+                  handleChange(elemProps.type as keyof DateObject, v || undefined);
+                }}
                 searchable={false}
                 allowDeselect={false}
                 comboboxProps={{ withinPortal: false }}

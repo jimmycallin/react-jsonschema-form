@@ -150,12 +150,12 @@ function AntdPopupPatcher({ frameDoc }: { frameDoc: Document }) {
 
     // Reposition visible popups on scroll so they track the trigger element.
     const handleScroll = () => {
-      frameDoc
-        .querySelectorAll<HTMLElement>('.ant-select-dropdown:not(.ant-select-dropdown-hidden)')
-        .forEach((el) => correctPosition(el, '.ant-select-focused, .ant-select-open'));
-      frameDoc
-        .querySelectorAll<HTMLElement>('.ant-picker-dropdown:not(.ant-picker-dropdown-hidden)')
-        .forEach((el) => correctPosition(el, '.ant-picker-focused, .ant-picker-open'));
+      frameDoc.querySelectorAll<HTMLElement>('.ant-select-dropdown:not(.ant-select-dropdown-hidden)').forEach((el) => {
+        correctPosition(el, '.ant-select-focused, .ant-select-open');
+      });
+      frameDoc.querySelectorAll<HTMLElement>('.ant-picker-dropdown:not(.ant-picker-dropdown-hidden)').forEach((el) => {
+        correctPosition(el, '.ant-picker-focused, .ant-picker-open');
+      });
     };
     frameDoc.addEventListener('scroll', handleScroll, true);
 

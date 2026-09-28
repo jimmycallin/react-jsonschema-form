@@ -70,7 +70,9 @@ function FilesInfo<T = unknown, S extends StrictRJSFSchema = RJSFSchema, F exten
     <ul className='file-info'>
       {filesInfo.map((fileInfo, key) => {
         const { name, size, type } = fileInfo;
-        const handleRemove = () => onRemove(key);
+        const handleRemove = () => {
+          onRemove(key);
+        };
         return (
           // oxlint-disable-next-line react/no-array-index-key
           <li key={key}>

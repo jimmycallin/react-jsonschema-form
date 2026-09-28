@@ -36,14 +36,16 @@ function RadioWidget<
   const optionValueFormat = getOptionValueFormat(options);
 
   const handleBlur = useCallback(
-    ({ target }: FocusEvent<HTMLInputElement>) =>
-      onBlur(id, enumOptionValueDecoder<S>(target?.value, enumOptions, optionValueFormat, emptyValue)),
+    ({ target }: FocusEvent<HTMLInputElement>) => {
+      onBlur(id, enumOptionValueDecoder<S>(target?.value, enumOptions, optionValueFormat, emptyValue));
+    },
     [onBlur, enumOptions, emptyValue, id, optionValueFormat],
   );
 
   const handleFocus = useCallback(
-    ({ target }: FocusEvent<HTMLInputElement>) =>
-      onFocus(id, enumOptionValueDecoder<S>(target?.value, enumOptions, optionValueFormat, emptyValue)),
+    ({ target }: FocusEvent<HTMLInputElement>) => {
+      onFocus(id, enumOptionValueDecoder<S>(target?.value, enumOptions, optionValueFormat, emptyValue));
+    },
     [onFocus, enumOptions, emptyValue, id, optionValueFormat],
   );
 
@@ -55,7 +57,9 @@ function RadioWidget<
           const itemDisabled = Array.isArray(enumDisabled) && enumDisabled.includes(option.value);
           const disabledCls = disabled || itemDisabled || readonly ? 'disabled' : '';
 
-          const handleChange = () => onChange(option.value);
+          const handleChange = () => {
+            onChange(option.value);
+          };
 
           const radio = (
             <span>

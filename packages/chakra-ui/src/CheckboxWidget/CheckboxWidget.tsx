@@ -40,9 +40,15 @@ export default function CheckboxWidget<
   const description = isCheckbox ? undefined : (options.description ?? schema.description);
   const trueValueRequired = schemaRequiresTrueValue(schema) && required;
 
-  const handleChange = ({ checked }: CheckboxCheckedChangeDetails) => onChange(checked);
-  const handleBlur = ({ target }: FocusEvent<HTMLInputElement | any>) => onBlur(id, target?.checked);
-  const handleFocus = ({ target }: FocusEvent<HTMLInputElement | any>) => onFocus(id, target?.checked);
+  const handleChange = ({ checked }: CheckboxCheckedChangeDetails) => {
+    onChange(checked);
+  };
+  const handleBlur = ({ target }: FocusEvent<HTMLInputElement | any>) => {
+    onBlur(id, target?.checked);
+  };
+  const handleFocus = ({ target }: FocusEvent<HTMLInputElement | any>) => {
+    onFocus(id, target?.checked);
+  };
 
   const chakraProps = getChakra({ uiSchema });
 

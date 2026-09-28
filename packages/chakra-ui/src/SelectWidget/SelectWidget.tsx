@@ -56,19 +56,22 @@ export default function SelectWidget<
   const { enumOptions, enumDisabled, emptyValue, optgroups } = options;
   const optionValueFormat = getOptionValueFormat(options);
 
-  const handleMultiChange = ({ value: newValue }: SelectValueChangeDetails) =>
+  const handleMultiChange = ({ value: newValue }: SelectValueChangeDetails) => {
     onChange(enumOptionValueDecoder<S>(newValue, enumOptions, optionValueFormat, emptyValue));
+  };
 
   const handleSingleChange = ({ value: newValue }: SelectValueChangeDetails) => {
     const selected = enumOptionValueDecoder<S>(newValue, enumOptions, optionValueFormat, emptyValue);
-    return onChange(Array.isArray(selected) && selected.length === 1 ? selected[0] : selected);
+    onChange(Array.isArray(selected) && selected.length === 1 ? selected[0] : selected);
   };
 
-  const handleBlur = ({ target }: FocusEvent<HTMLInputElement>) =>
+  const handleBlur = ({ target }: FocusEvent<HTMLInputElement>) => {
     onBlur(id, enumOptionValueDecoder<S>(target?.value, enumOptions, optionValueFormat, emptyValue));
+  };
 
-  const handleFocus = ({ target }: FocusEvent<HTMLInputElement>) =>
+  const handleFocus = ({ target }: FocusEvent<HTMLInputElement>) => {
     onFocus(id, enumOptionValueDecoder<S>(target?.value, enumOptions, optionValueFormat, emptyValue));
+  };
 
   logUnsupportedDefaultForEnum<S>(id, schema, enumOptions, multiple);
 

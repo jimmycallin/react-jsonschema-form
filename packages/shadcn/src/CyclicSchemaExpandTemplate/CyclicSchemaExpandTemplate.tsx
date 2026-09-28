@@ -29,7 +29,9 @@ export default function CyclicSchemaExpandTemplate<
         variant='outline'
         size='sm'
         className={cn('my-1')}
-        onClick={() => onExpand(id)}
+        onClick={() => {
+          onExpand(id);
+        }}
       >
         {translateString(TranslatableString.ExpandButton)}
       </Button>

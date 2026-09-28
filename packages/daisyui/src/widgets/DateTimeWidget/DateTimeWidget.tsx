@@ -54,7 +54,9 @@ function useClickOutside(ref: RefObject<HTMLDivElement | null>, callback: () => 
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
   }, [ref, callback]);
 }
 
@@ -224,7 +226,12 @@ export default function DateTimeWidget<
   }, [localDate, setMonth]);
 
   // Update the month when the user navigates the calendar.
-  const handleMonthChange = useCallback((date: Date) => setMonth(date), [setMonth]);
+  const handleMonthChange = useCallback(
+    (date: Date) => {
+      setMonth(date);
+    },
+    [setMonth],
+  );
 
   // Update local state on day selection (but do not commit immediately).
   const handleSelect = useCallback(
@@ -306,7 +313,9 @@ export default function DateTimeWidget<
 
     // Need to use native DOM events since we're attaching to document
     document.addEventListener('keydown', handleEscape as (e: KeyboardEvent) => void);
-    return () => document.removeEventListener('keydown', handleEscape as (e: KeyboardEvent) => void);
+    return () => {
+      document.removeEventListener('keydown', handleEscape as (e: KeyboardEvent) => void);
+    };
   }, [id, isOpen, setIsOpen, onBlur, value]);
 
   // Add the handleDoneClick callback near the top of the component, with the other event handlers

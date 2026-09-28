@@ -17,7 +17,14 @@ export default function CyclicSchemaExpandTemplate<
       <div className='alert alert-warning mb-2'>
         <span>{translateString(TranslatableString.CycleDetected, [name])}</span>
       </div>
-      <button id={expandButtonId(id)} type='button' className='btn btn-sm btn-warning' onClick={() => onExpand(id)}>
+      <button
+        id={expandButtonId(id)}
+        type='button'
+        className='btn btn-sm btn-warning'
+        onClick={() => {
+          onExpand(id);
+        }}
+      >
         {translateString(TranslatableString.ExpandButton)}
       </button>
     </div>

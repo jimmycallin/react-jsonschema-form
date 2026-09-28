@@ -52,14 +52,17 @@ export default function NativeSelectWidget<
   } = props;
   const { enumOptions, enumDisabled, emptyValue, optgroups } = options;
 
-  const handleChange = ({ target }: ChangeEvent<HTMLSelectElement>) =>
+  const handleChange = ({ target }: ChangeEvent<HTMLSelectElement>) => {
     onChange(enumOptionsValueForIndex<S>(target?.value, enumOptions, emptyValue));
+  };
 
-  const handleBlur = ({ target }: FocusEvent<HTMLSelectElement>) =>
+  const handleBlur = ({ target }: FocusEvent<HTMLSelectElement>) => {
     onBlur(id, enumOptionsValueForIndex<S>(target?.value, enumOptions, emptyValue));
+  };
 
-  const handleFocus = ({ target }: FocusEvent<HTMLSelectElement>) =>
+  const handleFocus = ({ target }: FocusEvent<HTMLSelectElement>) => {
     onFocus(id, enumOptionsValueForIndex<S>(target?.value, enumOptions, emptyValue));
+  };
 
   const showPlaceholderOption = !multiple && schema.default === undefined;
   logUnsupportedDefaultForEnum<S>(id, schema, enumOptions, multiple);

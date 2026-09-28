@@ -30,7 +30,9 @@ export default function CyclicSchemaField<
         uiSchema={uiSchema}
         name={name}
         id={id}
-        onExpand={() => setExpanded(true)}
+        onExpand={() => {
+          setExpanded(true);
+        }}
       />
     );
   }

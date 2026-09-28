@@ -141,7 +141,9 @@ function BooleanField<
     }
   }
   const onWidgetChange = useCallback(
-    (value: T | undefined, errorSchema?: ErrorSchema, id?: string) => onChange(value, fieldPath, errorSchema, id),
+    (value: T | undefined, errorSchema?: ErrorSchema, id?: string) => {
+      onChange(value, fieldPath, errorSchema, id);
+    },
     [onChange, fieldPath],
   );
 

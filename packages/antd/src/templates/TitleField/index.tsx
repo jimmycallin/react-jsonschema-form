@@ -45,7 +45,11 @@ export default function TitleField<
       className={labelClassName}
       htmlFor={id}
       onClick={handleLabelClick}
-      onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && handleLabelClick()}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          handleLabelClick();
+        }
+      }}
       title={typeof title === 'string' ? title : ''}
     >
       {labelChildren}

@@ -16,7 +16,14 @@ export default function CyclicSchemaExpandTemplate<
     <div style={{ marginTop: '1rem' }}>
       <div className='text-danger'>{translateString(TranslatableString.CycleDetected, [name])}</div>
       <div>
-        <button id={expandButtonId(id)} type='button' className='btn btn-sm btn-warning' onClick={() => onExpand(id)}>
+        <button
+          id={expandButtonId(id)}
+          type='button'
+          className='btn btn-sm btn-warning'
+          onClick={() => {
+            onExpand(id);
+          }}
+        >
           {translateString(TranslatableString.ExpandButton)}
         </button>{' '}
       </div>

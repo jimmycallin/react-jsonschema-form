@@ -37,7 +37,9 @@ export default function RangeWidget<
   S extends StrictRJSFSchema = RJSFSchema,
   F extends FormContextType = FormContextType,
 >({ value, readonly, disabled, options, schema, onChange, label, id }: WidgetProps<T, S, F>) {
-  const handleChange = (newValue: number[]) => onChange(newValue[0]);
+  const handleChange = (newValue: number[]) => {
+    onChange(newValue[0]);
+  };
 
   const sliderProps = { value, label, id, ...rangeSpec<S>(schema) };
   const optionProps = new Map(Object.entries(options.props ?? {}));

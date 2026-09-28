@@ -45,7 +45,12 @@ export default function BaseInputTemplate<
   const themeProps = cleanupOptions(options);
   const descriptionProps = getDescriptionProps(props);
 
-  const handleNumberChange = useCallback((newValue: number | string) => onChange(newValue), [onChange]);
+  const handleNumberChange = useCallback(
+    (newValue: number | string) => {
+      onChange(newValue);
+    },
+    [onChange],
+  );
 
   const handleChange = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {

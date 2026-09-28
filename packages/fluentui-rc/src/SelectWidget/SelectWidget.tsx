@@ -70,11 +70,15 @@ function SelectWidget<
     .map((index) => (enumOptions ? enumOptions[Number(index)].label : undefined))
     .join(', ');
 
-  const handleBlur = () => onBlur(id, selectedIndexes);
-  const handleFocus = () => onFocus(id, selectedIndexes);
+  const handleBlur = () => {
+    onBlur(id, selectedIndexes);
+  };
+  const handleFocus = () => {
+    onFocus(id, selectedIndexes);
+  };
   const handleChange = (_: any, data: OptionOnSelectData) => {
     const newValue = getValue(data, multiple);
-    return onChange(enumOptionValueDecoder<S>(newValue, enumOptions, optionValueFormat, optEmptyVal));
+    onChange(enumOptionValueDecoder<S>(newValue, enumOptions, optionValueFormat, optEmptyVal));
   };
   const showPlaceholderOption = !multiple && schema.default === undefined;
   logUnsupportedDefaultForEnum<S>(id, schema, enumOptions, multiple);
