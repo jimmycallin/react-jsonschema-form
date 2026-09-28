@@ -78,7 +78,7 @@ export default function SelectWidget<
   const { enumOptions, enumDisabled, emptyValue: optEmptyVal, optgroups } = options;
   const optionValueFormat = getOptionValueFormat(options);
 
-  const isMultiple = typeof multiple === 'undefined' ? false : !!multiple;
+  const isMultiple = multiple ?? false;
 
   const emptyValue = isMultiple ? [] : '';
   const isEmpty =

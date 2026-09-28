@@ -63,7 +63,7 @@ function SelectWidget<
   if (typeof selectedIndexes === 'string') {
     selectedIndexesAsArray = [selectedIndexes];
   } else if (Array.isArray(selectedIndexes)) {
-    selectedIndexesAsArray = selectedIndexes.map((index) => String(index));
+    selectedIndexesAsArray = selectedIndexes;
   }
 
   const dropdownValue = selectedIndexesAsArray

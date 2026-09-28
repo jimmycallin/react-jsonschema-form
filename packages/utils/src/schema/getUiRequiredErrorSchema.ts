@@ -185,7 +185,7 @@ function walk<T, S extends StrictRJSFSchema, F extends FormContextType>(
     customMergeAllOf,
     ONE_OF_KEY in schema || ANY_OF_KEY in schema,
   );
-  const effectiveRequired = fieldUiRequired !== undefined ? Boolean(fieldUiRequired) : required;
+  const effectiveRequired = fieldUiRequired ?? required;
   // Plain object/array Optional Data Controls hide their real fields (rendering only the "Add" control) whenever
   // `!isFormDataAvailable(formData)` — also true for `null` and `{}`, not just `undefined` — matching ObjectField's
   // and ArrayField's own `hasFormData` gate exactly. `anyOf`/`oneOf`-typed nodes are different: MultiSchemaField
