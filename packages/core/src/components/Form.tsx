@@ -1,5 +1,5 @@
 import type { ElementType, ReactNode, Ref, RefObject, SubmitEvent } from 'react';
-import { memo, useImperativeHandle, useLayoutEffect, useRef, useState } from 'react';
+import { memo, useImperativeHandle, useInsertionEffect, useRef, useState } from 'react';
 import type {
   CustomValidator,
   ErrorSchema,
@@ -372,7 +372,12 @@ function readSubmitPayload<T>(event: Event): SubmitPayload<T> | undefined {
  * the caller handed data over
  */
 function createSubmitEvent<T>(payload: SubmitPayload<T> | undefined): Event {
-  const event = new Event('submit', { bubbles: true, cancelable: true });
+  const init = { bubbles: true, cancelable: true };
+  // A `SubmitEvent` where the platform has one, so `nativeEvent.submitter` is `null` as after `requestSubmit()`
+  const event =
+    typeof SubmitEvent === 'function'
+      ? new SubmitEvent('submit', { ...init, submitter: null })
+      : new Event('submit', init);
   if (payload) {
     Object.assign(event, { [SUBMIT_DATA]: payload });
   }
@@ -1525,6 +1530,10 @@ function Form<T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends Fo
     setCommitted((prevState) => {
       const shared = replaceEqualDeep(prevState, prevState === state ? next : reapply(prevState));
       if (shared === prevState || !prevState.isControlled) {
+        if (isDevelopment && !prevState.isControlled) {
+          // A re-applied operation produces data the handler never saw, so the handler's freeze did not reach it
+          freezeFormData(shared.formData);
+        }
         return shared;
       }
       let owned = prevState;
@@ -1536,6 +1545,12 @@ function Form<T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends Fo
       return owned;
     });
   };
+
+  /** `formData` without the fields the schema does not describe, when `omitExtraData` asks for it: what a submit and
+   * `validateForm()` act on
+   */
+  const withExtraDataOmitted = (formData: T | undefined) =>
+    props.omitExtraData === true ? state.schemaUtils.omitExtraData(state.schema, formData) : formData;
 
   /** Validates `formData` for a submission or a programmatic validation, committing the errors it reports and calling
    * `onError` with them, or focusing the first one when `focusOnFirstError` asks for it. The data itself is never
@@ -1668,12 +1683,9 @@ function Form<T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends Fo
       return;
     }
     // oxlint-disable-next-line typescript/no-deprecated
-    const { omitExtraData, noValidate } = props;
+    const { noValidate } = props;
     const payload = readSubmitPayload<T>(event.nativeEvent);
-    let formData = payload ? payload.formData : state.formData;
-    if (omitExtraData === true) {
-      formData = state.schemaUtils.omitExtraData(state.schema, formData);
-    }
+    const formData = withExtraDataOmitted(payload ? payload.formData : state.formData);
     if (!noValidate && !runValidation(formData)) {
       return;
     }
@@ -1780,13 +1792,8 @@ function Form<T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends Fo
     /** Programmatically validates the form, see `FormHandle.validateForm()`: the given `formData`, or the rendered
      * data when none is given, with extra data omitted first when `omitExtraData` is set.
      */
-    validateForm: (formData?: T) => {
-      let data = formData === undefined ? state.formData : formData;
-      if (props.omitExtraData === true) {
-        data = state.schemaUtils.omitExtraData(state.schema, data);
-      }
-      return runValidation(data);
-    },
+    validateForm: (formData?: T) =>
+      runValidation(withExtraDataOmitted(formData === undefined ? state.formData : formData)),
 
     /** Validates the given `formData` as it is, see `FormHandle.validateFormWithFormData()` */
     validateFormWithFormData: (formData?: T) => runValidation(formData),
@@ -1799,14 +1806,16 @@ function Form<T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends Fo
 
   /** This render's handlers, reached through the stable functions below. The fields memoize on their props, so the
    * handlers they receive must keep their identity across renders while acting on the render that was committed
-   * last; the same holds for the handle a parent keeps. The committed render is the one React just laid out, so the
-   * layout effect is where it is recorded: nothing reads it while rendering, and it holds no state of its own, only
-   * the closures of the last commit, exactly what `this` gives a class component. It is the `useEffectEvent`
+   * last; the same holds for the handle a parent keeps. It is recorded in an insertion effect, which runs before any
+   * child's layout effect, callback ref or `componentDidUpdate`: a field that reports a change from one of those in
+   * the commit that rendered it must act on this render, not the previous one, or a parent-owned form would propose
+   * from data its parent has already moved past. Nothing reads it while rendering, and it holds no state of its own,
+   * only the closures of the last commit, exactly what `this` gives a class component. It is the `useEffectEvent`
    * polyfill the React docs give, unrolled.
    */
   const rendered: RenderedHandlers<T> = { onChange, onBlur, onFocus, onSubmit, handle };
   const latest = useRef(rendered);
-  useLayoutEffect(() => {
+  useInsertionEffect(() => {
     latest.current = rendered;
   });
   // oxlint-disable-next-line react/hook-use-state -- created once for the life of the form, never set again

@@ -314,15 +314,23 @@ export default function DateWidget<
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
         setIsOpen(false);
-        if (onBlur) {
-          onBlur(id, value);
-        }
       }
     };
 
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
-  }, [id, isOpen, setIsOpen, onBlur, value]);
+  }, [isOpen, setIsOpen]);
+
+  // Picking a day moves focus into the popup, so closing it by a click outside or Escape leaves nothing to blur: the
+  // blur is reported once the closed picker has rendered, after the pick was committed, never from the handler that
+  // called `onChange`. Done refocuses the trigger instead and lets its native blur report
+  const wasOpen = useRef(isOpen);
+  useEffect(() => {
+    if (wasOpen.current && !isOpen && document.activeElement !== inputRef.current) {
+      onBlur?.(id, value);
+    }
+    wasOpen.current = isOpen;
+  }, [isOpen, id, value, onBlur]);
 
   // Add the handleDoneClick callback near the top of the component, with the other event handlers
   /** Handle clicking the "Done" button

@@ -50,6 +50,26 @@ describe('DateTimeWidget', () => {
       expect(onChange).toHaveBeenCalledWith('2016-04-05T14:01:30.000Z');
     });
 
+    test('reports the blur after the pick when a click outside closes the picker', async () => {
+      const onChange = vi.fn();
+      const onBlur = vi.fn();
+      const { container } = render(
+        <>
+          <DateTimeWidget {...makeWidgetMockProps({ value: '2016-04-05T14:01:30.000Z', onChange, onBlur, schema })} />
+          <p>elsewhere</p>
+        </>,
+      );
+
+      await user.click(container.querySelector('[role=button]')!);
+      // Picking a day moves focus into the popup, so the trigger's own blur has already fired, suppressed
+      await user.click(screen.getByText('15'));
+      await user.click(screen.getByText('elsewhere'));
+
+      expect(onChange).toHaveBeenCalledWith('2016-04-15T14:01:00.000Z');
+      expect(onBlur).toHaveBeenCalledTimes(1);
+      expect(onBlur.mock.invocationCallOrder[0]).toBeGreaterThan(onChange.mock.invocationCallOrder[0]);
+    });
+
     test('commits an empty string instead of throwing when the stored value is unparsable', async () => {
       const onChange = vi.fn();
       const { container } = render(

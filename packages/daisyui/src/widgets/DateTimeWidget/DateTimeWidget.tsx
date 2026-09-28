@@ -294,16 +294,24 @@ export default function DateTimeWidget<
     const handleEscape = (e: React.KeyboardEvent | KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
         setIsOpen(false);
-        if (onBlur) {
-          onBlur(id, value);
-        }
       }
     };
 
     // Need to use native DOM events since we're attaching to document
     document.addEventListener('keydown', handleEscape as (e: KeyboardEvent) => void);
     return () => document.removeEventListener('keydown', handleEscape as (e: KeyboardEvent) => void);
-  }, [id, isOpen, setIsOpen, onBlur, value]);
+  }, [isOpen, setIsOpen]);
+
+  // Picking a day moves focus into the popup, so closing it by a click outside or Escape leaves nothing to blur: the
+  // blur is reported once the closed picker has rendered, after the pick was committed, never from the handler that
+  // called `onChange`. Done refocuses the trigger instead and lets its native blur report
+  const wasOpen = useRef(isOpen);
+  useEffect(() => {
+    if (wasOpen.current && !isOpen && document.activeElement !== inputRef.current) {
+      onBlur?.(id, value);
+    }
+    wasOpen.current = isOpen;
+  }, [isOpen, id, value, onBlur]);
 
   // Add the handleDoneClick callback near the top of the component, with the other event handlers
   /** Handle clicking the "Done" button

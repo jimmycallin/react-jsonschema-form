@@ -22,6 +22,24 @@ import {
 
 const user = userEvent.setup();
 
+/** Collects what React reports to `window` while `run` runs: an error thrown from a DOM event handler goes there
+ * instead of to the dispatcher
+ */
+async function reportedBy(run: () => Promise<void>) {
+  const reported: unknown[] = [];
+  const report = (event: ErrorEvent) => {
+    event.preventDefault();
+    reported.push(event.error);
+  };
+  window.addEventListener('error', report);
+  try {
+    await run();
+  } finally {
+    window.removeEventListener('error', report);
+  }
+  return reported;
+}
+
 const schema: RJSFSchema = {
   type: 'object',
   properties: {
@@ -466,7 +484,7 @@ describe('form data ownership', () => {
       expect(input(container, 'root_b')).toHaveValue('derived');
     });
 
-    it('the queue advances past a rejected proposal and a missing handler', async () => {
+    it('a rejected proposal and a missing onChange leave the next operation unaffected', async () => {
       const ref = createRef<FormHandle>();
       const { rerender } = render(<Form ref={ref} schema={schema} validator={validator} formData={{ a: '' }} />);
       await act(async () => {
@@ -1124,18 +1142,7 @@ describeOwnerships('operations in one tick', (createFormComponent) => {
       },
     });
 
-    // React reports an error thrown from an event handler instead of throwing it to the dispatcher
-    const reported: unknown[] = [];
-    const report = (event: ErrorEvent) => {
-      event.preventDefault();
-      reported.push(event.error);
-    };
-    window.addEventListener('error', report);
-    try {
-      await user.click(node.querySelector('button[type=submit]')!);
-    } finally {
-      window.removeEventListener('error', report);
-    }
+    const reported = await reportedBy(() => user.click(node.querySelector('button[type=submit]')!));
     act(() => ref.current!.setFieldValue('a', 'new'));
 
     expect(reported).toEqual([new Error('boom')]);
@@ -1171,19 +1178,7 @@ describeOwnerships('operations in one tick', (createFormComponent) => {
     });
 
     // The submit runs from the DOM event `submit()` dispatches, whose handler's error React reports to `window`
-    const reported: unknown[] = [];
-    const report = (event: ErrorEvent) => {
-      event.preventDefault();
-      reported.push(event.error);
-    };
-    window.addEventListener('error', report);
-    try {
-      await user.click(node.querySelector('#root_a-go')!);
-    } finally {
-      window.removeEventListener('error', report);
-    }
-
-    expect(reported).toEqual([new Error('boom')]);
+    expect(await reportedBy(() => user.click(node.querySelector('#root_a-go')!))).toEqual([new Error('boom')]);
     expect(ref.current).not.toBeNull();
     act(() => ref.current!.setFieldValue('a', 'later'));
     expect(getFormData()).toEqual({ a: 'later' });
@@ -1251,22 +1246,6 @@ describeOwnerships('operations in one tick', (createFormComponent) => {
  * caller of a handle method, and to `window`, where React reports it, for a DOM event. Neither unmounts the form.
  */
 describe('a throwing callback on a self-owned form', () => {
-  /** Collects what React reports to `window` while `run` runs */
-  async function reportedBy(run: () => Promise<void>) {
-    const reported: unknown[] = [];
-    const report = (event: ErrorEvent) => {
-      event.preventDefault();
-      reported.push(event.error);
-    };
-    window.addEventListener('error', report);
-    try {
-      await run();
-    } finally {
-      window.removeEventListener('error', report);
-    }
-    return reported;
-  }
-
   it('an onChange that throws keeps the form mounted', () => {
     const ref = createRef<FormHandle>();
     const { getFormData } = createFormComponent({
