@@ -294,6 +294,12 @@ export interface FormState<
   hasNestedConditionalSchema: boolean;
   /** Flag indicating whether the initial form defaults have been generated */
   initialDefaultsGenerated: boolean;
+  /** The data `schemaValidationErrors` and `schemaValidationErrorSchema` describe, by identity: what the last
+   * validation ran on, or the data the form mounted or reset with, which nothing has validated. Under live
+   * validation the render validates whenever `formData` is not this value, so a commit that composed an operation
+   * on top of another, and so holds data no handler validated, gets its errors from the render.
+   */
+  validatedFormData?: T;
   /** The registry (re)computed only when props changed */
   registry: Registry<T, S, F>;
   /** Whether the parent owns the data (a `formData` prop at mount) or the form does. Decided once, at construction */
@@ -313,7 +319,7 @@ type ValidationProps<T, S extends StrictRJSFSchema, F extends FormContextType> =
 /** The validation half of the state */
 type ErrorState<T> = Pick<
   FormState<T>,
-  'errors' | 'errorSchema' | 'schemaValidationErrors' | 'schemaValidationErrorSchema'
+  'errors' | 'errorSchema' | 'schemaValidationErrors' | 'schemaValidationErrorSchema' | 'validatedFormData'
 >;
 
 /** Converts the full `FormState` into the `IChangeEvent` version by picking out the public values
@@ -557,7 +563,7 @@ function runLiveValidation<T, S extends StrictRJSFSchema, F extends FormContextT
   const schemaValidation = validateFormData(props, context, formData, retrievedSchema);
   const { errors: schemaValidationErrors, errorSchema: schemaValidationErrorSchema } = schemaValidation;
   const mergedErrors = mergeErrors(schemaValidation, props.extraErrors, customErrors);
-  return { ...mergedErrors, schemaValidationErrors, schemaValidationErrorSchema };
+  return { ...mergedErrors, schemaValidationErrors, schemaValidationErrorSchema, validatedFormData: formData };
 }
 
 /** Whether `prefix` addresses `path` itself or a container holding it, comparing the segments the way `toPath()` spells
@@ -927,9 +933,11 @@ function deriveOwnedState<T, S extends StrictRJSFSchema, F extends FormContextTy
   const edit = current ? current.edit : inputFormData !== undefined;
   // Construction validates nothing: the errors of a seed the user has not touched are not shown until they are earned
   const isDataChanged = current !== undefined && formData !== current.formData;
+  // Data no handler validated, committed by an operation re-applied on top of another, counts as changed too
+  const isUnvalidated = current !== undefined && current.formData !== current.validatedFormData;
   const errors = reconcileErrors(current, props, context, formData, {
     isSchemaChanged,
-    mustValidate: mustLiveValidate(props, edit, isDataChanged || isValidationPropChanged),
+    mustValidate: mustLiveValidate(props, edit, isDataChanged || isValidationPropChanged || isUnvalidated),
     validationSchema: areSchemaUtilsReused ? context.retrievedSchema : undefined,
   });
   return {
@@ -937,6 +945,8 @@ function deriveOwnedState<T, S extends StrictRJSFSchema, F extends FormContextTy
     ...context,
     formData,
     edit,
+    // A seed is not validated, and neither is data a schema change transformed on a form that has not been edited
+    validatedFormData: formData,
     ...errors,
     initialDefaultsGenerated: true,
   };
@@ -965,7 +975,9 @@ function deriveControlledState<T, S extends StrictRJSFSchema, F extends FormCont
   const { isSchemaChanged, isValidationPropChanged } = detectContextChanges(current, context);
   const edit = props.formData !== undefined;
   // Validated the way an edit is, with the schema resolved for this very data, whenever the utilities that resolve it
-  // are unchanged; a parent handing a proposal back therefore shows the errors the event carried
+  // are unchanged; a parent handing a proposal back therefore shows the errors the event carried. The gate is the
+  // prop changing, not provenance: a declined proposal leaves the parent's value as it was, and errors it never earned
+  // are not shown for it
   const errors = reconcileErrors(current, props, context, formData, {
     isSchemaChanged,
     mustValidate: current !== undefined && mustLiveValidate(props, edit, isDataChanged || isValidationPropChanged),
@@ -980,7 +992,7 @@ function deriveControlledState<T, S extends StrictRJSFSchema, F extends FormCont
         : () => getChangedFields(formData, current.formData, true),
   });
   return {
-    ...(current ?? { isControlled: true, initialDefaultsGenerated: true }),
+    ...(current ?? { isControlled: true, initialDefaultsGenerated: true, validatedFormData: formData }),
     ...context,
     formData,
     edit,
@@ -1015,6 +1027,7 @@ const PARENT_OWNED_COMMIT_KEYS = [
   'errorSchema',
   'schemaValidationErrors',
   'schemaValidationErrorSchema',
+  'validatedFormData',
 ] as const satisfies readonly (keyof FormState)[];
 
 declare const process: { env: Record<string, string | undefined> };
@@ -1201,6 +1214,7 @@ function applyChange<T, S extends StrictRJSFSchema, F extends FormContextType>(
   current: FormState<T, S, F>,
   change: PendingChange<T>,
   props: FormProps<T, S, F>,
+  validate = true,
 ): FormState<T, S, F> {
   const { formData: newFormData, context, newValue, path } = applyChangeData(current, change, props);
   const { newErrorSchema } = change;
@@ -1217,7 +1231,7 @@ function applyChange<T, S extends StrictRJSFSchema, F extends FormContextType>(
   // The stored validator result, when a raise made part of it stale
   let storedValidation: Partial<Pick<FormState<T, S, F>, 'schemaValidationErrors' | 'schemaValidationErrorSchema'>> =
     {};
-  const mustValidate = !noValidate && liveValidate === 'onChange';
+  const mustValidate = validate && !noValidate && liveValidate === 'onChange';
 
   if (newErrorSchema) {
     // First check to see if there is an existing validation error on this path...
@@ -1337,6 +1351,8 @@ function applyReset<T, S extends StrictRJSFSchema, F extends FormContextType>(
     errors,
     schemaValidationErrors: [],
     schemaValidationErrorSchema: {},
+    // The reset data is not validated, like a seed
+    validatedFormData: formData,
     // The reset pass has generated the initial defaults, so the next unrelated recompute is not an initial pass and
     // will not resurrect a `ui:initialValue` the user has since cleared
     initialDefaultsGenerated: true,
@@ -1401,11 +1417,19 @@ function applyValidation<T, S extends StrictRJSFSchema, F extends FormContextTyp
       errorSchema,
       schemaValidationErrors: schemaValidation.errors,
       schemaValidationErrorSchema: schemaValidation.errorSchema,
+      validatedFormData: formData,
     };
   } else if (errors.length > 0 || prevErrors.length > 0) {
     // Either non-blocking `extraErrors` are on display without `onError` firing, or the errors that were on display
     // are gone; the validator's own results are empty for both
-    next = { ...current, errors, errorSchema, schemaValidationErrors: [], schemaValidationErrorSchema: {} };
+    next = {
+      ...current,
+      errors,
+      errorSchema,
+      schemaValidationErrors: [],
+      schemaValidationErrorSchema: {},
+      validatedFormData: formData,
+    };
   }
   // Unlike the other `apply*` functions this one shares here rather than leaving it to `setSharedState()`, because
   // the caller decides whether to commit at all by comparing the result to the state it started from
@@ -1488,8 +1512,13 @@ function deriveState<T, S extends StrictRJSFSchema, F extends FormContextType>(
   if (context.schemaUtils !== state.schemaUtils || context.uiSchema !== state.uiSchema) {
     return replaceEqualDeep(state, deriveOwnedState(state, state.formData, props));
   }
+  // Data no handler validated, committed by an operation re-applied on top of another, is validated here whatever
+  // `edit` says: there is data, an edit made it, and the errors it earns are the render's to derive
+  const isUnvalidated = state.formData !== state.validatedFormData;
   const errors = reconcileErrors(state, props, context, state.formData, {
-    mustValidate: mustLiveValidate(props, state.edit, context.validationProps !== state.validationProps),
+    mustValidate:
+      (isLiveValidated(props) && isUnvalidated) ||
+      mustLiveValidate(props, state.edit, context.validationProps !== state.validationProps),
     validationSchema: state.retrievedSchema,
   });
   return replaceEqualDeep(state, { ...state, ...context, ...errors });
@@ -1625,7 +1654,9 @@ function Form<T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends Fo
       freezeFormData(next.formData);
     }
     if (!state.isControlled) {
-      commit(next, (base) => applyChange(base, change, props));
+      // Re-applied on top of an earlier same-tick commit without validating: the data it produces was seen by no
+      // handler, and the render validates data whose provenance does not match
+      commit(next, (base) => applyChange(base, change, props, false));
       props.onChange?.(toIChangeEvent(next, applyTo), id);
       return;
     }
@@ -1635,7 +1666,7 @@ function Form<T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends Fo
     const owned = (result: FormState<T, S, F>, base: FormState<T, S, F>) =>
       isLiveValidated(props) ? { ...base, customErrors: result.customErrors } : result;
     // Committed before the parent is told, so a throwing handler cannot lose the errors the form owns
-    commit(owned(next, state), (base) => owned(applyChange(base, change, props), base));
+    commit(owned(next, state), (base) => owned(applyChange(base, change, props, false), base));
     props.onChange?.(toIChangeEvent(next, applyTo), id);
   };
 
