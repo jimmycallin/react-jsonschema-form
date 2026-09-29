@@ -8,7 +8,7 @@ import { act, render, fireEvent } from '@testing-library/react';
 import type { UserEvent } from '@testing-library/user-event';
 import type { Mock, MockInstance } from 'vitest';
 
-import type { FormHandle, FormProps, IChangeEvent } from '../src/index.ts';
+import type { EventFormData, FormHandle, FormProps, IChangeEvent } from '../src/index.ts';
 import Form from '../src/index.ts';
 
 export type NoValFormProps = Omit<FormProps, 'validator'>;
@@ -73,6 +73,29 @@ export function AcceptingParent<T>({ initialValue, log, ...formProps }: Controll
         log?.proposals.push(event.formData);
         log?.events.push(event);
         setValue(event.formData);
+      }}
+    />
+  );
+}
+
+/** Stores every proposal as an updater, `setData(event.applyTo)`, so proposals made in one tick compose in its own
+ * update queue, each applied to the previous one's result
+ */
+export function ComposingParent<T>({ initialValue, log, ...formProps }: ControlledParentProps<T>) {
+  const [value, setValue] = useState(initialValue);
+  Object.assign(log ?? {}, { value });
+  return (
+    <Form<T>
+      {...formProps}
+      validator={validator}
+      formData={value}
+      onChange={(event) => {
+        log?.proposals.push(event.formData);
+        log?.events.push(event);
+        // `EventFormData<T>` narrows a generic `T` the way the state's `T | undefined` cannot express, so tsc needs
+        // both casts; tsgolint sees through the first one and calls it unnecessary
+        // oxlint-disable-next-line typescript/no-unnecessary-type-assertion
+        setValue((base) => event.applyTo(base as EventFormData<T>) as T | undefined);
       }}
     />
   );

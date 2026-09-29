@@ -579,7 +579,16 @@ Sometimes you may want to trigger events or modify external state when a field h
 ## onChange
 
 Called with the same first argument as `onSubmit` for every edit: user input, `setFieldValue()`, and blur validation or omission. It is never called on mount or when a prop changes. For a form whose data you own, the event is a proposal: see [`formData`](#formdata) for how to apply it.
-It is called from the handler that made the edit, before React commits, with the edit applied to the data the form renders, as a controlled `<input>` reports a change: two edits in one tick each report their own, and `getFormData()` inside the handler still returns the previous value. A handler that adds to a proposal composes it, `setData({ ...event.formData, b })`, rather than calling `setFieldValue()` from inside `onChange`.
+It is called from the handler that made the edit, before React commits, with the edit applied to the data the form renders, as a controlled `<input>` reports a change: two edits in one tick each report their own, and `getFormData()` inside the handler still returns the previous value.
+
+The event also carries the proposal as a function: `event.applyTo(base)` applies this edit to any value, and `event.formData` is `applyTo` of the data the form rendered. It is pure and does not validate, so you can hand it straight to React, the way TanStack Table's `onSortingChange` takes an updater:
+
+```tsx
+const [data, setData] = useState(initial);
+<Form formData={data} onChange={(event) => setData(event.applyTo)} />;
+```
+
+Stored this way, proposals made in one tick compose in your own update queue, each applied to the previous one's result, so a `setFieldValue()` called from inside `onChange` lands on top of the edit being handled. Stored as `setData(event.formData)`, the last proposal wins, as with a controlled `<input>`.
 It will also receive, as the second argument, the `id` of the field which experienced the change.
 Generally, this will be the `id` of the field for which input data is modified.
 In the case of adding/removing of new fields in arrays or objects with `additionalProperties` or `patternProperties` and the rearranging of items in arrays, the `id` will be that of the array or object itself, rather than the item/field being added, removed or moved.

@@ -9,6 +9,7 @@ import type { FormHandle, IChangeEvent } from '../src/index.ts';
 import Form from '../src/index.ts';
 import {
   AcceptingParent,
+  ComposingParent,
   createFormComponent,
   createParentLog,
   describeOwnerships,
@@ -330,7 +331,7 @@ describe('form data ownership', () => {
     const acceptAll = () => true;
     const keepProposal = (proposal: Data) => proposal;
 
-    function ComposingParent({
+    function PolicyParent({
       ref,
       accept = acceptAll,
       transform = keepProposal,
@@ -363,7 +364,7 @@ describe('form data ownership', () => {
     it('two path changes in one tick each propose from the rendered value, and the parent keeps the last', async () => {
       const ref = createRef<FormHandle<Data>>();
       const log = { proposals: [] as Data[] } as { value?: Data; proposals: Data[] };
-      const { container } = render(<ComposingParent ref={ref} log={log} />);
+      const { container } = render(<PolicyParent ref={ref} log={log} />);
 
       await act(async () => {
         ref.current!.setFieldValue('a', 'first');
@@ -384,11 +385,7 @@ describe('form data ownership', () => {
       const ref = createRef<FormHandle<Data>>();
       const log = { proposals: [] as Data[] } as { value?: Data; proposals: Data[] };
       const { container } = render(
-        <ComposingParent
-          ref={ref}
-          log={log}
-          transform={(proposal) => ({ ...proposal, a: proposal.a?.toUpperCase() })}
-        />,
+        <PolicyParent ref={ref} log={log} transform={(proposal) => ({ ...proposal, a: proposal.a?.toUpperCase() })} />,
       );
 
       await act(async () => {
@@ -404,7 +401,7 @@ describe('form data ownership', () => {
     it('a rejected first value is not resurrected by the second change', async () => {
       const ref = createRef<FormHandle<Data>>();
       const log = { proposals: [] as Data[] } as { value?: Data; proposals: Data[] };
-      render(<ComposingParent ref={ref} log={log} accept={(proposal) => proposal.a !== 'first'} />);
+      render(<PolicyParent ref={ref} log={log} accept={(proposal) => proposal.a !== 'first'} />);
 
       await act(async () => {
         ref.current!.setFieldValue('a', 'first');
@@ -482,6 +479,102 @@ describe('form data ownership', () => {
       expect(proposals).toEqual([{ a: 'first', b: '' }]);
       expect(input(container, 'root_a')).toHaveValue('first');
       expect(input(container, 'root_b')).toHaveValue('derived');
+    });
+
+    it('a composing parent keeps both of two path changes made in one tick', async () => {
+      const ref = createRef<FormHandle<Data>>();
+      const log = createParentLog<Data>();
+      const { container } = render(
+        <ComposingParent<Data> ref={ref} schema={schema} initialValue={{ a: '', b: '' }} log={log} />,
+      );
+
+      await act(async () => {
+        ref.current!.setFieldValue('a', 'first');
+        ref.current!.setFieldValue('b', 'second');
+      });
+
+      // Each proposal is still computed from the rendered value; the parent's own update queue composes them
+      expect(log.proposals).toEqual([
+        { a: 'first', b: '' },
+        { a: '', b: 'second' },
+      ]);
+      expect(log.value).toEqual({ a: 'first', b: 'second' });
+      expect(input(container, 'root_a')).toHaveValue('first');
+      expect(input(container, 'root_b')).toHaveValue('second');
+    });
+
+    it('a composing parent keeps a setFieldValue made from inside onChange', async () => {
+      const ref = createRef<FormHandle<Data>>();
+      function ReentrantComposingParent() {
+        const [data, setData] = useState<Data>({ a: '', b: '' });
+        return (
+          <Form<Data>
+            ref={ref}
+            schema={schema}
+            validator={validator}
+            formData={data}
+            onChange={(event) => {
+              setData(event.applyTo);
+              if (event.formData.a === 'first' && event.formData.b === '') {
+                ref.current!.setFieldValue('b', 'derived');
+              }
+            }}
+          />
+        );
+      }
+      const { container } = render(<ReentrantComposingParent />);
+
+      await act(async () => {
+        ref.current!.setFieldValue('a', 'first');
+      });
+
+      expect(input(container, 'root_a')).toHaveValue('first');
+      expect(input(container, 'root_b')).toHaveValue('derived');
+    });
+
+    it('applyTo re-applies a change to any base', () => {
+      const ref = createRef<FormHandle>();
+      const { onChange } = createFormComponent({ ref, schema, initialFormData: { a: '', b: 'kept' } });
+
+      act(() => ref.current!.setFieldValue('a', 'x'));
+
+      const [event] = onChange.mock.calls[0] as [IChangeEvent<Data>];
+      expect(event.formData).toEqual({ a: 'x', b: 'kept' });
+      expect(event.applyTo({ a: 'other', b: 'base' })).toEqual({ a: 'x', b: 'base' });
+      expect(event.applyTo(event.formData)).toEqual(event.formData);
+      expect(event.formData).toEqual({ a: 'x', b: 'kept' });
+    });
+
+    it("a blur's applyTo omits extra data from any base", async () => {
+      const { node, onChange } = createFormComponent({
+        schema,
+        initialFormData: { a: 'x', extra: 1 },
+        omitExtraData: true,
+        liveOmit: 'onBlur',
+      });
+
+      await user.click(node.querySelector('#root_a')!);
+      await user.tab();
+
+      const [event] = onChange.mock.lastCall as [IChangeEvent<Data>];
+      expect(event.formData).toEqual({ a: 'x' });
+      expect(event.applyTo({ a: 'y', extra: 2 } as Data)).toEqual({ a: 'y' });
+    });
+
+    it("a reset's and a submit's applyTo hand back their data whatever the base", async () => {
+      const ref = createRef<FormHandle>();
+      const { node, onChange, onSubmit } = createFormComponent({ ref, schema, initialFormData: { a: 'seed' } });
+
+      await user.type(input(node as HTMLElement, 'root_a'), 'x');
+      act(() => ref.current!.reset());
+      const [resetEvent] = onChange.mock.lastCall as [IChangeEvent<Data>];
+      expect(resetEvent.formData).toEqual({ a: 'seed' });
+      expect(resetEvent.applyTo({ a: 'anything' })).toEqual({ a: 'seed' });
+
+      await submitForm(node, user);
+      const [submitEvent] = onSubmit.mock.lastCall as [IChangeEvent<Data>];
+      expect(submitEvent.formData).toEqual({ a: 'seed' });
+      expect(submitEvent.applyTo({ a: 'anything' })).toEqual({ a: 'seed' });
     });
 
     it('a rejected proposal and a missing onChange leave the next operation unaffected', async () => {

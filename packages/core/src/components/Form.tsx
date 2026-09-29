@@ -319,6 +319,7 @@ type ErrorState<T> = Pick<
 /** Converts the full `FormState` into the `IChangeEvent` version by picking out the public values
  *
  * @param state - The state of the form
+ * @param applyTo - The event's proposal as a function of any base, see `IChangeEvent.applyTo`
  * @param status - The status provided by the onSubmit
  * @returns - The `IChangeEvent` for the state
  */
@@ -326,13 +327,18 @@ function toIChangeEvent<
   T = unknown,
   S extends StrictRJSFSchema = RJSFSchema,
   F extends FormContextType = FormContextType,
->(state: FormState<T, S, F>, status?: IChangeEvent['status']): IChangeEvent<T, S, F> {
+>(
+  state: FormState<T, S, F>,
+  applyTo: (base: T | undefined) => T | undefined,
+  status?: IChangeEvent['status'],
+): IChangeEvent<T, S, F> {
   const { schema, uiSchema, schemaUtils, formData, errors, errorSchema } = state;
   return {
     schema,
     uiSchema,
     schemaUtils,
     formData: formData as EventFormData<T>,
+    applyTo: applyTo as IChangeEvent<T, S, F>['applyTo'],
     errors,
     errorSchema,
     ...(status !== undefined && { status }),
@@ -1613,12 +1619,14 @@ function Form<T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends Fo
   ) => {
     const change: PendingChange<T> = { newValue, fieldPath, newErrorSchema, id };
     const next = applyChange(state, change, props);
+    // The change as a function of any base, for a parent that composes proposals itself
+    const applyTo = (base: T | undefined) => applyChangeData({ ...state, formData: base }, change, props).formData;
     if (isDevelopment) {
       freezeFormData(next.formData);
     }
     if (!state.isControlled) {
       commit(next, (base) => applyChange(base, change, props));
-      props.onChange?.(toIChangeEvent(next), id);
+      props.onChange?.(toIChangeEvent(next, applyTo), id);
       return;
     }
     // Validated errors describe the proposal, which the parent may yet refuse, so they wait for the parent's answer
@@ -1628,7 +1636,7 @@ function Form<T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends Fo
       isLiveValidated(props) ? { ...base, customErrors: result.customErrors } : result;
     // Committed before the parent is told, so a throwing handler cannot lose the errors the form owns
     commit(owned(next, state), (base) => owned(applyChange(base, change, props), base));
-    props.onChange?.(toIChangeEvent(next), id);
+    props.onChange?.(toIChangeEvent(next, applyTo), id);
   };
 
   /** Callback function to handle when a field on the form is blurred. Calls the `onBlur` callback for the `Form` if it
@@ -1649,6 +1657,9 @@ function Form<T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends Fo
     // Shared so an unchanged error list keeps its reference and does not count as a change below
     const blur = (base: FormState<T, S, F>) => replaceEqualDeep(base, applyBlur(base, props));
     const next = blur(state);
+    // A blur proposes the omission, when it omits, and nothing else
+    const applyTo = (base: T | undefined) =>
+      omitExtraData === true && liveOmit === 'onBlur' ? state.schemaUtils.omitExtraData(state.schema, base) : base;
     // Only the `IChangeEvent` members count; the validator's own results are not among them
     const hasChanges = (['formData', 'errors', 'errorSchema'] as const).some((key) => state[key] !== next[key]);
     if (isDevelopment) {
@@ -1657,13 +1668,13 @@ function Form<T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends Fo
     if (!state.isControlled) {
       commit(next, blur);
       if (hasChanges) {
-        props.onChange?.(toIChangeEvent(next), id);
+        props.onChange?.(toIChangeEvent(next, applyTo), id);
       }
       return;
     }
     commit(next, blur);
     if (hasChanges) {
-      props.onChange?.(toIChangeEvent(next), id);
+      props.onChange?.(toIChangeEvent(next, applyTo), id);
     }
   };
 
@@ -1701,7 +1712,10 @@ function Form<T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends Fo
     // There are no errors generated through schema validation, so only the user-provided ones are shown
     const next = applySubmit(state, props);
     commit(next, (base) => applySubmit(base, props));
-    props.onSubmit?.(toIChangeEvent({ ...next, formData }, 'submitted'), event);
+    props.onSubmit?.(
+      toIChangeEvent({ ...next, formData }, () => formData, 'submitted'),
+      event,
+    );
   };
 
   /** Attempts to focus on the field associated with the `error`. Uses the `property` field to compute path of the error
@@ -1775,7 +1789,8 @@ function Form<T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends Fo
       }
       const next = applyReset(state, props);
       commit(next, (base) => applyReset(base, props));
-      props.onChange?.(toIChangeEvent(next));
+      // A reset replaces whatever a parent holds with the reset data
+      props.onChange?.(toIChangeEvent(next, () => next.formData));
     },
 
     /** Sets the value of the field at `fieldPath`, see `FormHandle.setFieldValue()`. The dotted form splits on `.`

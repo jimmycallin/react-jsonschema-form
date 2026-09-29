@@ -35,8 +35,21 @@ export interface IChangeEvent<
   readonly uiSchema: UiSchema<T, S, F>;
   /** The schemaUtils implementation used by the `Form`, created from the `validator` and the `schema` */
   readonly schemaUtils: SchemaUtilsType<T, S, F>;
-  /** The current data for the form, computed from the `formData` prop and the changes made by the user */
+  /** The current data for the form: this event's proposal applied to the data the form rendered, `applyTo` of it */
   readonly formData: EventFormData<T>;
+  /** This event's proposal applied to `base`: what `formData` is to the rendered data, `applyTo(base)` is to any
+   * value. For a change it sets the field's value at its path and applies defaults, sanitization and
+   * `liveOmit: 'onChange'` omission; for a blur under `liveOmit: 'onBlur'` it omits extra data from `base`; for a
+   * reset or a submit it hands back that event's data whatever `base` is. It is pure and does not validate, so a
+   * parent may hand it straight to React, `setData(event.applyTo)`, and proposals made in one tick then compose in
+   * the parent's own update queue, each applied to the previous one's result, exactly as two `setState()` updaters
+   * do. A parent that stores `formData` instead keeps the last proposal, as a controlled `<input>` would.
+   *
+   * Declared as a method type, which TypeScript checks bivariantly, so the event of a typed form stays assignable to
+   * the default `IChangeEvent` and a handler written against the default still fits a typed form; a function-typed
+   * property would be checked contravariantly on `base` and break that.
+   */
+  readonly applyTo: { bivarianceHack(base: EventFormData<T>): EventFormData<T> }['bivarianceHack'];
   /** The current list of errors for the form, includes `extraErrors` */
   readonly errors: RJSFValidationError[];
   /** The current errors, in `ErrorSchema` format, for the form, includes `extraErrors` */
