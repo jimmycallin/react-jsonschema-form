@@ -1054,42 +1054,40 @@ function copyAlongPath<T>(data: T, path: FieldPathList): T {
   return root as T;
 }
 
-/** Applies one `change` to `current`, returning the next state. The `newValue` is set at the change's path in the
- * data, which is then run through `deriveFormData()` for any missing defaults and, when the resolved schema changed,
- * sanitization. If `omitExtraData` and `liveOmit` are turned on, the data is filtered to remove any extra data not in
- * a form field. The change's `newErrorSchema`, if any, either updates an existing validation error at its path or
- * becomes a custom error; then the data is validated if required. Reads nothing but its arguments and performs no
- * callbacks: committing the result and notifying are the caller's, which is what lets one pipeline serve a form that
- * owns its data and one whose parent does.
+/** What the data half of a change settles on, see `applyChangeData()` */
+interface ChangedData<T, S extends StrictRJSFSchema, F extends FormContextType> {
+  /** The data with the change set at its path, defaults, sanitization and `liveOmit: 'onChange'` omission applied */
+  formData: T | undefined;
+  /** The render context the data was settled with, the schema resolved for it included */
+  context: RenderContext<T, S, F>;
+  /** The change's value */
+  newValue: T | undefined;
+  /** The change's path as segments */
+  path: FieldPathList;
+}
+
+/** The data half of `applyChange()`: the change set at its path in `current.formData`, then defaults, sanitization
+ * and `liveOmit: 'onChange'` omission. Pure, reads nothing but its arguments, and validates nothing, which is what
+ * lets `IChangeEvent.applyTo` re-run a change on a base other than the one the form rendered.
  *
  * @param current - The state the change applies to
  * @param change - The change to apply
  * @param props - The current props
- * @returns - The next state, sharing every unchanged subtree with `current`
+ * @returns - The settled data with the context and the change the error half needs
  */
-function applyChange<T, S extends StrictRJSFSchema, F extends FormContextType>(
+function applyChangeData<T, S extends StrictRJSFSchema, F extends FormContextType>(
   current: FormState<T, S, F>,
   change: PendingChange<T>,
   props: FormProps<T, S, F>,
-): FormState<T, S, F> {
-  const { newValue, fieldPath, newErrorSchema } = change;
+): ChangedData<T, S, F> {
+  const { newValue, fieldPath } = change;
   // The single place where a `FieldPath` is parsed back into segments for writing into the formData
   const path = fieldPathToList(fieldPath);
-  // oxlint-disable-next-line typescript/no-deprecated
-  const { extraErrors, omitExtraData, liveOmit, noValidate, liveValidate, disabled, readonly } = props;
-  const { formData: oldFormData, schemaValidationErrorSchema, schemaValidationErrors } = current;
-  let { customErrors } = current;
+  const { omitExtraData, liveOmit, disabled, readonly } = props;
+  const { formData: oldFormData } = current;
   // The derivation below hands back the context for the data it settled on, resolved schema included, so committing
   // whatever it returns is what keeps state's resolved schema and the utilities that resolved it in step.
   let context: RenderContext<T, S, F> = current;
-  // Use the un-merged AJV-only schema as the base for re-merging extraErrors, as `reconcileErrors()` does:
-  // state.errorSchema already carries them, so merging onto it would add each a second time.
-  let mergeBaseErrorSchema: ErrorSchema<T> = schemaValidationErrorSchema;
-  // `state.errors` is the matching list and needs the same treatment; see the merge below.
-  let mergeBaseErrors = schemaValidationErrors;
-  // The stored validator result, when a raise made part of it stale
-  let storedValidation: Partial<Pick<FormState<T, S, F>, 'schemaValidationErrors' | 'schemaValidationErrorSchema'>> =
-    {};
   const isRootPath = path.length === 0;
   let formData: T | undefined;
   if (isRootPath) {
@@ -1173,12 +1171,47 @@ function applyChange<T, S extends StrictRJSFSchema, F extends FormContextType>(
     }
   }
 
-  const mustValidate = !noValidate && liveValidate === 'onChange';
-  let newFormData = formData;
+  const newFormData =
+    omitExtraData === true && liveOmit === 'onChange'
+      ? context.schemaUtils.omitExtraData(context.schema, formData)
+      : formData;
+  return { formData: newFormData, context, newValue, path };
+}
 
-  if (omitExtraData === true && liveOmit === 'onChange') {
-    newFormData = context.schemaUtils.omitExtraData(context.schema, formData);
-  }
+/** Applies one `change` to `current`, returning the next state. The `newValue` is set at the change's path in the
+ * data, which is then run through `deriveFormData()` for any missing defaults and, when the resolved schema changed,
+ * sanitization. If `omitExtraData` and `liveOmit` are turned on, the data is filtered to remove any extra data not in
+ * a form field. The change's `newErrorSchema`, if any, either updates an existing validation error at its path or
+ * becomes a custom error; then the data is validated if required. Reads nothing but its arguments and performs no
+ * callbacks: committing the result and notifying are the caller's, which is what lets one pipeline serve a form that
+ * owns its data and one whose parent does.
+ *
+ * @param current - The state the change applies to
+ * @param change - The change to apply
+ * @param props - The current props
+ * @returns - The next state, sharing every unchanged subtree with `current`
+ */
+function applyChange<T, S extends StrictRJSFSchema, F extends FormContextType>(
+  current: FormState<T, S, F>,
+  change: PendingChange<T>,
+  props: FormProps<T, S, F>,
+): FormState<T, S, F> {
+  const { formData: newFormData, context, newValue, path } = applyChangeData(current, change, props);
+  const { newErrorSchema } = change;
+  const isRootPath = path.length === 0;
+  // oxlint-disable-next-line typescript/no-deprecated
+  const { extraErrors, noValidate, liveValidate } = props;
+  const { schemaValidationErrorSchema, schemaValidationErrors } = current;
+  let { customErrors } = current;
+  // Use the un-merged AJV-only schema as the base for re-merging extraErrors, as `reconcileErrors()` does:
+  // state.errorSchema already carries them, so merging onto it would add each a second time.
+  let mergeBaseErrorSchema: ErrorSchema<T> = schemaValidationErrorSchema;
+  // `state.errors` is the matching list and needs the same treatment; see the merge below.
+  let mergeBaseErrors = schemaValidationErrors;
+  // The stored validator result, when a raise made part of it stale
+  let storedValidation: Partial<Pick<FormState<T, S, F>, 'schemaValidationErrors' | 'schemaValidationErrorSchema'>> =
+    {};
+  const mustValidate = !noValidate && liveValidate === 'onChange';
 
   if (newErrorSchema) {
     // First check to see if there is an existing validation error on this path...
