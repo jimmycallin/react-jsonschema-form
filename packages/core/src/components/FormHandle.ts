@@ -7,6 +7,13 @@ import type { EventFormData } from './IChangeEvent.ts';
  * parent-owned (a `formData` prop, accepted through `onChange`) or self-owned (seeded by `initialFormData`); this
  * handle is the same for both, and it is the contract a later function-component `Form` keeps.
  *
+ * Every member acts on the data the form renders, or on the data it is given. Nothing waits for a commit: an edit and
+ * a read, or two edits, made in the same tick each see the render they were made from, as two changes to a
+ * controlled `<input>` would. The members fall into three kinds: writes (`setFieldValue()`, `reset()`), reads
+ * (`getFormData()`) and actions (`validateForm()`, `submit()`), and an action never installs data it is given. A
+ * sequence that needs fresher data than the render is spelled with the data-taking forms: one root replacement
+ * instead of several `setFieldValue()` calls, then `submit(data)` or `validateForm(data)` with that same value.
+ *
  * Only the members listed here are supported. Everything else on the class instance may change without notice.
  */
 export interface FormHandle<T = unknown> {
@@ -14,37 +21,43 @@ export interface FormHandle<T = unknown> {
    * data of a self-owned one. It is the read path for a self-owned form, whose data is not otherwise reachable between
    * `onChange` calls (autosave, route guards, a submit button outside the form).
    *
-   * It reads committed data only: an edit or `setFieldValue()` in the same tick is not visible until React commits it,
-   * and for a parent-owned form a proposal is not visible until the parent has passed it back. Treat the result as
-   * read-only: mutating it mutates what the form renders.
+   * It reads the render only: an edit or `setFieldValue()` in the same tick is not visible until React commits it,
+   * which is also why it returns the previous value inside `onChange`, where `event.formData` is the edit; and for a
+   * parent-owned form a proposal is not visible until the parent has passed it back. Treat the result as read-only:
+   * mutating it mutates what the form renders.
    */
   getFormData(): EventFormData<T>;
   /** Programmatically submits the `Form`, running validation and `onSubmit`/`onError` as a submit button would, on the
-   * data it is given, or, when none is, on the data the form holds once the edits, `setFieldValue()` calls and resets
-   * in flight have run: it is queued behind them. Data it is given is never installed: a self-owned form keeps what it
-   * holds, a parent-owned form renders what its parent passes, and nothing is proposed. A submit of the data the form
-   * holds keeps, as it always has, the copy without the extra data `omitExtraData` drops. The submit goes through the
-   * DOM, so HTML5 validation runs unless `noHtml5Validate`, and a `tagName` other than `form` cannot submit. Passing
-   * `undefined` is the same as passing nothing.
+   * data it is given, or on the rendered data when none is: an edit made in the same tick is not yet rendered, so
+   * `setFieldValue([], next)` followed by `submit(next)` is how a set-and-submit is spelled. Data it is given is never
+   * installed: a self-owned form keeps what it holds, a parent-owned form renders what its parent passes, and nothing
+   * is proposed. A submit of the data the form holds keeps, as it always has, the copy without the extra data
+   * `omitExtraData` drops. The submit goes through the DOM, so HTML5 validation runs unless `noHtml5Validate`, and a
+   * `tagName` other than `form` cannot submit. Passing `undefined` is the same as passing nothing.
    *
-   * @param [formData] - The data to submit in place of the data the form holds
+   * @param [formData] - The data to submit in place of the rendered data
    */
   submit(formData?: T): void;
   /** Clears the validation errors and, for a self-owned form, resets the data to `initialFormData` and the schema's
-   * defaults; a parent-owned form's data is the parent's to reset. Queued behind any operation in flight.
+   * defaults, reporting the result through `onChange`; a parent-owned form's data is the parent's to reset.
    */
   reset(): void;
-  /** Sets the value of the field at `fieldPath`, either a dotted path or a `FieldPathList`. Use `''` or `[]` for the
-   * root. Passing `undefined` clears the field. A function is an updater, called with the field's current value when
-   * the queued change runs, the way a field's `onChange` treats one.
+  /** Sets the value of the field at `fieldPath`, either a dotted path or a `FieldPathList`, computed from the rendered
+   * data and reported through `onChange`: a self-owned form commits it, a parent-owned form proposes it. Use `''` or
+   * `[]` for the root, which replaces the whole value and is how several fields are written at once. Passing
+   * `undefined` clears the field. A function is an updater, called with the field's current value, the way a field's
+   * `onChange` treats one. Two calls in the same tick each report their own change applied to the rendered data; a
+   * self-owned form still commits both, and a parent-owned form's parent keeps both when it stores `event.applyTo`,
+   * the last when it stores `event.formData`.
    */
   setFieldValue(fieldPath: string | FieldPathList, newValue?: unknown): void;
-  /** Validates the given `formData`, or the committed data when none is given, filtering extra data first when
-   * `omitExtraData` is set, and calls `onError` as a submission would. It returns its answer at once, so without an
-   * argument it reads committed data like `getFormData()`: an edit or `setFieldValue()` made in the same tick is
-   * validated by passing its value. The data is never installed. Passing `undefined` is the same as passing nothing.
+  /** Validates the given `formData`, or the rendered data when none is given, filtering extra data first when
+   * `omitExtraData` is set, and calls `onError` as a submission would. It returns its answer at once and reads the
+   * render like `getFormData()`: an edit made in the same tick is validated by passing its value. The data is never
+   * installed. The errors it commits describe the data it validated, so a parent-owned form that wants a draft's
+   * errors shown sets its state to the draft as well. Passing `undefined` is the same as passing nothing.
    *
-   * @param [formData] - The data to validate in place of the committed data
+   * @param [formData] - The data to validate in place of the rendered data
    * @returns - True if the form is valid, false otherwise.
    */
   validateForm(formData?: T): boolean;
