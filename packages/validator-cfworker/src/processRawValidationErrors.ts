@@ -1,5 +1,6 @@
 import type {
   CustomValidator,
+  ErrorSchemaValidationError,
   ErrorTransformer,
   FormContextType,
   RJSFSchema,
@@ -102,6 +103,18 @@ export function transformRJSFValidationErrors<
   T = unknown,
   S extends StrictRJSFSchema = RJSFSchema,
   F extends FormContextType = FormContextType,
+  E extends RJSFValidationError = RJSFValidationError,
+>(
+  errors?: CFWorkerValidationError[],
+  uiSchema?: UiSchema<T, S, F>,
+  suppressDuplicateFiltering?: SuppressDuplicateFilteringType,
+  schema?: S,
+): E[];
+// The errors are built here as plain `RJSFValidationError`s; `E` is the validator's type claiming what they are
+export function transformRJSFValidationErrors<
+  T = unknown,
+  S extends StrictRJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
 >(
   errors: CFWorkerValidationError[] = [],
   uiSchema?: UiSchema<T, S, F>,
@@ -198,19 +211,25 @@ export default function processRawValidationErrors<
   T = unknown,
   S extends StrictRJSFSchema = RJSFSchema,
   F extends FormContextType = FormContextType,
+  E extends RJSFValidationError = RJSFValidationError,
 >(
   context: SchemaContext<S, F>,
   rawErrors: RawValidationErrorsType<CFWorkerValidationError>,
   formData: T | undefined,
   schema: S,
   customValidate?: CustomValidator<T, S, F>,
-  transformErrors?: ErrorTransformer<T, S, F>,
+  transformErrors?: ErrorTransformer<T, S, F, E>,
   uiSchema?: UiSchema<T, S, F>,
   suppressDuplicateFiltering?: SuppressDuplicateFilteringType,
   getCustomValidateFormData?: () => T,
 ) {
   const { validationError } = rawErrors;
-  let errors = transformRJSFValidationErrors<T, S, F>(rawErrors.errors, uiSchema, suppressDuplicateFiltering, schema);
+  let errors: (E | ErrorSchemaValidationError)[] = transformRJSFValidationErrors<T, S, F, E>(
+    rawErrors.errors,
+    uiSchema,
+    suppressDuplicateFiltering,
+    schema,
+  );
   if (validationError) {
     errors = [...errors, { stack: validationError.message }];
   }
@@ -240,5 +259,5 @@ export default function processRawValidationErrors<
       }) as T);
   const errorHandler = customValidate(newFormData, createErrorHandler<T>(newFormData), uiSchema, errorSchema);
   const userErrorSchema = unwrapErrorHandler<T>(errorHandler);
-  return validationDataMerge<T>({ errors, errorSchema }, userErrorSchema);
+  return validationDataMerge<T, E>({ errors, errorSchema }, userErrorSchema);
 }

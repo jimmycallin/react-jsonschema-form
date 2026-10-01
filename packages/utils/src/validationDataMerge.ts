@@ -1,6 +1,6 @@
 import mergeObjects from './mergeObjects.ts';
 import toErrorList from './toErrorList.ts';
-import type { ErrorSchema, ValidationData } from './types.ts';
+import type { ErrorSchema, ErrorSchemaValidationError, RJSFValidationError, ValidationData } from './types.ts';
 
 /** Merges the errors in `additionalErrorSchema` into the existing `validationData` by combining the hierarchies in the
  * two `ErrorSchema`s and then appending the error list from the `additionalErrorSchema` obtained by calling
@@ -12,16 +12,16 @@ import type { ErrorSchema, ValidationData } from './types.ts';
  * @param [preventDuplicates=false] - Optional flag, if true, will call `mergeObjects()` with `preventDuplicates`
  * @returns - The `validationData` with the additional errors from `additionalErrorSchema` merged into it, if provided.
  */
-export default function validationDataMerge<T = unknown>(
-  validationData: ValidationData<T>,
+export default function validationDataMerge<T = unknown, E extends RJSFValidationError = RJSFValidationError>(
+  validationData: ValidationData<T, E>,
   additionalErrorSchema?: ErrorSchema<T>,
   preventDuplicates = false,
-): ValidationData<T> {
+): ValidationData<T, E> {
   if (!additionalErrorSchema) {
     return validationData;
   }
   const { errors: oldErrors, errorSchema: oldErrorSchema } = validationData;
-  let errors = toErrorList(additionalErrorSchema);
+  let errors: (E | ErrorSchemaValidationError)[] = toErrorList(additionalErrorSchema);
   let errorSchema = additionalErrorSchema;
   if (oldErrorSchema && Object.keys(oldErrorSchema).length > 0) {
     errorSchema = mergeObjects(

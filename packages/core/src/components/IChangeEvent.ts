@@ -1,5 +1,6 @@
 import type {
   ErrorSchema,
+  ErrorSchemaValidationError,
   FormContextType,
   RJSFSchema,
   RJSFValidationError,
@@ -28,6 +29,7 @@ export interface IChangeEvent<
   T = unknown,
   S extends StrictRJSFSchema = RJSFSchema,
   F extends FormContextType = FormContextType,
+  E extends RJSFValidationError = RJSFValidationError,
 > {
   /** The JSON schema object for the form */
   readonly schema: S;
@@ -38,7 +40,7 @@ export interface IChangeEvent<
   /** The current data for the form, computed from the `formData` prop and the changes made by the user */
   readonly formData: EventFormData<T>;
   /** The current list of errors for the form, includes `extraErrors` */
-  readonly errors: RJSFValidationError[];
+  readonly errors: (E | ErrorSchemaValidationError)[];
   /** The current errors, in `ErrorSchema` format, for the form, includes `extraErrors` */
   readonly errorSchema: ErrorSchema<T>;
   /** The status of the form when submitted */

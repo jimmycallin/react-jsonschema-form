@@ -383,11 +383,64 @@ Each element in the `errors` list passed to `transformErrors` is a `RJSFValidati
 
 - `name`: optional name of the error, for example, "required" or "minLength"
 - `message`: optional message, for example, "is a required property" or "should NOT be shorter than 3 characters"
-- `params`: optional object with the error params returned by ajv ([see doc](https://github.com/ajv-validator/ajv/tree/6a671057ea6aae690b5967ee26a0ddf8452c6297#error-parameters) for more info).
+- `params`: optional object with the error params returned by ajv ([see doc](https://github.com/ajv-validator/ajv/tree/6a671057ea6aae690b5967ee26a0ddf8452c6297#error-parameters) for more info). Its values are `unknown`; see [Typed error params](#typed-error-params) to have them typed.
 - `property`: optional string in Javascript property accessor notation to the data path of the field with the error. For example, `.name` or `.first-name`.
 - `schemaPath`: optional JSON pointer to the schema of the keyword that failed validation. For example, `#/fields/firstName/required`. (Note: this may sometimes be wrong due to a [bug in ajv](https://github.com/ajv-validator/ajv/issues/512)).
 - `stack`: full error name, for example ".name is a required property".
 - `title`: optional string containing title property for the field with error.
+
+### Typed error params
+
+`params` values are `unknown` unless the validator says what its errors are. `@rjsf/validator-ajv8` exports `AjvValidationError`, one member per AJV built-in keyword with the params AJV declares for it. Create the validator with it and `Form` types every error it hands back, so narrowing on `error.name` types `error.params`:
+
+```tsx
+import type { FormContextType, RJSFSchema } from '@rjsf/utils';
+import { customizeValidator, type AjvValidationError } from '@rjsf/validator-ajv8';
+
+const validator = customizeValidator<RJSFSchema, FormContextType, AjvValidationError>();
+
+<Form
+  schema={schema}
+  validator={validator}
+  transformErrors={(errors) =>
+    errors.map((error) => {
+      switch (error.name) {
+        case 'minLength':
+          return { ...error, message: `Use at least ${error.params.limit} characters` };
+        case 'required':
+          return { ...error, message: `${error.params.missingProperty} is required` };
+        default:
+          return error;
+      }
+    })
+  }
+  onError={(errors) => errors.forEach((error) => error.name === 'pattern' && console.log(error.params.pattern))}
+/>;
+```
+
+`Form` takes the error type from `validator`, so `transformErrors`, `onError`, `focusOnFirstError`, `IChangeEvent.errors` and `FormHandle.validate()` all carry it without annotations. `createPrecompiledValidator<S, F, AjvValidationError>()` works the same way. The errors RJSF builds itself, from `customValidate`, `extraErrors` and `ui:required`, are `ErrorSchemaValidationError`s, which have no `name` or `params`, so a list holds `AjvValidationError | ErrorSchemaValidationError` and narrowing still works across it.
+
+An `ErrorListTemplate` that reads typed params declares its `errors` and stays generic over the form data, as templates do:
+
+```tsx
+function ErrorListTemplate<T>({
+  errors,
+}: Omit<ErrorListProps<T>, 'errors'> & { errors: (AjvValidationError | ErrorSchemaValidationError)[] }) {
+  // …
+}
+```
+
+The type argument is a claim about how the validator is set up. `AjvValidationError` lists AJV's built-in keywords, so a keyword added through [`extenderFn`](#extenderfn), `ajvOptionsOverrides` or the [raw Ajv instance](#using-the-raw-ajv-instance), such as `ajv-errors`' `errorMessage`, produces errors it doesn't describe. Add those to the type yourself:
+
+```ts
+const validator = customizeValidator<
+  RJSFSchema,
+  FormContextType,
+  AjvValidationError | (RJSFValidationError & { name: 'errorMessage' })
+>({ extenderFn: ajvErrors });
+```
+
+`@rjsf/validator-ata` and `@rjsf/validator-cfworker` take the same type argument but export no error type of their own.
 
 ## Error List Display
 

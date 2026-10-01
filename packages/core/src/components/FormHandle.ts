@@ -1,4 +1,4 @@
-import type { FieldPathList, RJSFValidationError, ValidationData } from '@rjsf/utils';
+import type { ErrorSchemaValidationError, FieldPathList, RJSFValidationError, ValidationData } from '@rjsf/utils';
 
 import type { EventFormData } from './IChangeEvent.ts';
 
@@ -9,7 +9,7 @@ import type { EventFormData } from './IChangeEvent.ts';
  *
  * Only the members listed here are supported. Everything else on the class instance may change without notice.
  */
-export interface FormHandle<T = unknown> {
+export interface FormHandle<T = unknown, E extends RJSFValidationError = RJSFValidationError> {
   /** Returns the form data the `Form` currently renders: the `formData` prop of a parent-owned form, the committed
    * data of a self-owned one. It is the read path for a self-owned form, whose data is not otherwise reachable between
    * `onChange` calls (autosave, route guards, a submit button outside the form).
@@ -46,7 +46,7 @@ export interface FormHandle<T = unknown> {
   /** Runs the validator over `formData` against the form's schema and returns the raw errors without touching form
    * state
    */
-  validate(formData: T | undefined): ValidationData<T>;
+  validate(formData: T | undefined): ValidationData<T, E>;
   /** Moves focus to the field the given error belongs to */
-  focusOnError(error: RJSFValidationError): void;
+  focusOnError(error: E | ErrorSchemaValidationError): void;
 }

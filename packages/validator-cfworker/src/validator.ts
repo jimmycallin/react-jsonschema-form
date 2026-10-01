@@ -4,6 +4,7 @@ import type {
   ErrorTransformer,
   FormContextType,
   RJSFSchema,
+  RJSFValidationError,
   StrictRJSFSchema,
   UiSchema,
   ValidationData,
@@ -57,7 +58,8 @@ export function normalizeFormDataForValidation<D>(data: D): D {
 export default class CFWorkerValidator<
   S extends StrictRJSFSchema = RJSFSchema,
   F extends FormContextType = FormContextType,
-> implements ValidatorType<S, F> {
+  E extends RJSFValidationError = RJSFValidationError,
+> implements ValidatorType<S, F, E> {
   /** The resolved options used to configure this validator.
    *
    * @private
@@ -164,10 +166,10 @@ export default class CFWorkerValidator<
     formData: T | undefined,
     schema: S,
     customValidate?: CustomValidator<T, S, F>,
-    transformErrors?: ErrorTransformer<T, S, F>,
+    transformErrors?: ErrorTransformer<T, S, F, E>,
     uiSchema?: UiSchema<T, S, F>,
     getCustomValidateFormData?: () => T,
-  ): ValidationData<T> {
+  ): ValidationData<T, E> {
     const rawErrors = this.rawValidation<CFWorkerValidationError>(schema, formData);
     return processRawValidationErrors(
       { validator: this },

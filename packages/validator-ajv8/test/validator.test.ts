@@ -1,5 +1,6 @@
 import type {
   ErrorSchema,
+  FormContextType,
   FormValidation,
   RJSFSchema,
   RJSFValidationError,
@@ -14,7 +15,8 @@ import { Ajv2020 } from 'ajv/dist/2020.js';
 import metaSchemaDraft6 from 'ajv/lib/refs/json-schema-draft-06.json' with { type: 'json' };
 import type { Mock } from 'vitest';
 
-import type { Localizer } from '../src/index.ts';
+import type { AjvValidationError, Localizer } from '../src/index.ts';
+import { customizeValidator } from '../src/index.ts';
 import AJV8Validator from '../src/validator.ts';
 import { expectWarn } from './harness/testData.ts';
 
@@ -590,6 +592,27 @@ describe('AJV8Validator', () => {
         });
         it('transformErrors function was called with uiSchema', () => {
           expect(transformErrors).toHaveBeenCalledWith(expect.any(Array), uiSchema);
+        });
+        it('types params by the error name for a validator created with AjvValidationError', () => {
+          const typedValidator = customizeValidator<RJSFSchema, FormContextType, AjvValidationError>();
+          const schema: RJSFSchema = {
+            type: 'object',
+            required: ['name'],
+            properties: { name: { type: 'string' }, code: { type: 'string', minLength: 3 } },
+          };
+          const { errors } = typedValidator.validateFormData({ code: 'ab' }, schema, undefined, (errors) =>
+            errors.map((error) => {
+              switch (error.name) {
+                case 'required':
+                  return { ...error, message: `${error.params.missingProperty} is missing` };
+                case 'minLength':
+                  return { ...error, message: `needs ${error.params.limit + 0} characters` };
+                default:
+                  return error;
+              }
+            }),
+          );
+          expect(errors.map(({ message }) => message).sort()).toEqual(['name is missing', 'needs 3 characters']);
         });
       });
       describe('Custom validate function', () => {

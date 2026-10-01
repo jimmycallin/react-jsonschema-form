@@ -1,4 +1,4 @@
-import type { FormContextType, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
+import type { FormContextType, RJSFSchema, RJSFValidationError, StrictRJSFSchema } from '@rjsf/utils';
 
 import type { CustomValidatorOptionsType, Localizer } from './types.ts';
 import ATAValidator from './validator.ts';
@@ -10,6 +10,7 @@ import ATAValidator from './validator.ts';
 export default function customizeValidator<
   S extends StrictRJSFSchema = RJSFSchema,
   F extends FormContextType = FormContextType,
+  E extends RJSFValidationError = RJSFValidationError,
 >(options: CustomValidatorOptionsType = {}, localizer?: Localizer) {
-  return new ATAValidator<S, F>(options, localizer);
+  return new ATAValidator<S, F, E>(options, localizer);
 }
