@@ -20,7 +20,7 @@ import { userEvent } from '@testing-library/user-event';
 import ArrayField from '../src/components/fields/ArrayField.tsx';
 import SchemaField from '../src/components/fields/SchemaField.tsx';
 import {
-  AcceptingParent,
+  ComposingParent,
   createFormComponent,
   createParentLog,
   expectToHaveBeenCalledWithFormData,
@@ -4009,7 +4009,7 @@ describe('ArrayField', () => {
   });
 });
 
-describe('array edits in a parent that stores each proposal', () => {
+describe('array edits in a parent that stores each event as an updater', () => {
   const RemoveTwiceButtonsTemplate = (props: ArrayFieldItemButtonsTemplateProps) => (
     <button
       type='button'
@@ -4028,7 +4028,7 @@ describe('array edits in a parent that stores each proposal', () => {
   it('keeps both removals made in one click, in the rows and in the data', async () => {
     const log = createParentLog<string[]>();
     const { container } = render(
-      <AcceptingParent<string[]>
+      <ComposingParent<string[]>
         schema={{ type: 'array', items: { type: 'string' } }}
         initialValue={['a', 'b', 'c', 'd']}
         templates={{ ArrayFieldItemButtonsTemplate: RemoveTwiceButtonsTemplate }}

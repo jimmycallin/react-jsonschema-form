@@ -329,9 +329,21 @@ type ErrorState<T> = Pick<
   'errors' | 'errorSchema' | 'schemaValidationErrors' | 'schemaValidationErrorSchema'
 >;
 
+/** Narrows the data the form holds to the `EventFormData` it hands out. The one cast behind every `EventFormData`:
+ * the type is a documented promise, not something a check can establish, since an object or array root is `undefined`
+ * only after a root-level write the type does not model (see `EventFormData`)
+ *
+ * @param formData - The data the form holds
+ * @returns - The same data, typed as `EventFormData`
+ */
+function toEventFormData<T>(formData: T | undefined): EventFormData<T> {
+  return formData as EventFormData<T>;
+}
+
 /** Converts the full `FormState` into the `IChangeEvent` version by picking out the public values
  *
  * @param state - The state of the form
+ * @param applyTo - The event's proposal as a function of any base, see `IChangeEvent.applyTo`
  * @param status - The status provided by the onSubmit
  * @returns - The `IChangeEvent` for the state
  */
@@ -339,13 +351,18 @@ function toIChangeEvent<
   T = unknown,
   S extends StrictRJSFSchema = RJSFSchema,
   F extends FormContextType = FormContextType,
->(state: FormState<T, S, F>, status?: IChangeEvent['status']): IChangeEvent<T, S, F> {
+>(
+  state: FormState<T, S, F>,
+  applyTo: (base: T | undefined) => T | undefined,
+  status?: IChangeEvent['status'],
+): IChangeEvent<T, S, F> {
   const { schema, uiSchema, schemaUtils, formData, errors, errorSchema } = state;
   return {
     schema,
     uiSchema,
     schemaUtils,
-    formData: formData as EventFormData<T>,
+    formData: toEventFormData(formData),
+    applyTo: (base) => toEventFormData(applyTo(base)),
     errors,
     errorSchema,
     ...(status !== undefined && { status }),
@@ -1209,50 +1226,47 @@ function isWholeValueSelectAt<T, S extends StrictRJSFSchema, F extends FormConte
   return isWholeValueSelect<S>(fieldSchema);
 }
 
-/** Applies one `change` to `current`, returning the next state. The `newValue` is set at the change's path in the
- * data, which is then run through `deriveFormData()` for any missing defaults and, when the resolved schema changed,
- * sanitization. If `omitExtraData` and `liveOmit` are turned on, the data is filtered to remove any extra data not in
- * a form field. The change's `newErrorSchema`, if any, either updates an existing validation error at its path or
- * becomes a custom error; then the data is validated if required. Reads nothing but its arguments and performs no
- * callbacks: committing the result and notifying are the caller's, which is what lets one pipeline serve a form that
- * owns its data and one whose parent does.
+/** What the data half of a change settles on, see `applyChangeData()` */
+interface ChangedData<T, S extends StrictRJSFSchema, F extends FormContextType> {
+  /** The data with the change set at its path, defaults, sanitization and `liveOmit: 'onChange'` omission applied */
+  formData: T | undefined;
+  /** The render context the data was settled with, the schema resolved for it included */
+  context: RenderContext<T, S, F>;
+  /** The value `current` holds at the change's path, which an updater is applied to */
+  oldValue: T | undefined;
+  /** The change's value with its updater, if it was one, resolved against `current` */
+  newValue: T | undefined;
+  /** The change's path as segments */
+  path: FieldPathList;
+}
+
+/** The data half of `applyChange()`: the change, its updater resolved against what `current` holds at its path, set at
+ * that path in `current.formData`, then defaults, sanitization and `liveOmit: 'onChange'` omission. Pure, reads
+ * nothing but its arguments, and validates nothing, which is what lets `IChangeEvent.applyTo` re-run a change on a
+ * base other than the one the form rendered.
  *
  * @param current - The state the change applies to
  * @param change - The change to apply
  * @param props - The current props
- * @param deferLiveValidate - Whether live validation waits for a later queued change; it runs once, for the last one
- * @returns - The next state, sharing every unchanged subtree with `current`
+ * @returns - The settled data with the context and the resolved change the error half needs
  */
-function applyChange<T, S extends StrictRJSFSchema, F extends FormContextType>(
+function applyChangeData<T, S extends StrictRJSFSchema, F extends FormContextType>(
   current: FormState<T, S, F>,
   change: PendingChange<T>,
   props: FormProps<T, S, F>,
-  deferLiveValidate: boolean,
-): FormState<T, S, F> {
+): ChangedData<T, S, F> {
   const { fieldPath } = change;
   // The single place where a `FieldPath` is parsed back into segments for writing into the formData
   const path = fieldPathToList(fieldPath);
-  const isRootPath = path.length === 0;
   // An updater is applied to what the form holds now, which the queue guarantees includes every earlier change
-  const oldValue = isRootPath ? current.formData : getByPath<T | undefined>(current.formData, path);
-  const oldErrorSchema = isRootPath ? current.errorSchema : getByPath<ErrorSchema<T>>(current.errorSchema, path);
+  const oldValue = path.length === 0 ? current.formData : getByPath<T | undefined>(current.formData, path);
   const newValue = resolveFieldChange(change.newValue, oldValue);
-  const newErrorSchema = resolveFieldChange(change.newErrorSchema, oldErrorSchema, oldValue);
-  // oxlint-disable-next-line typescript/no-deprecated
-  const { extraErrors, omitExtraData, liveOmit, noValidate, liveValidate, disabled, readonly } = props;
-  const { formData: oldFormData, schemaValidationErrorSchema, schemaValidationErrors } = current;
-  let { customErrors } = current;
+  const { omitExtraData, liveOmit, disabled, readonly } = props;
+  const { formData: oldFormData } = current;
   // The derivation below hands back the context for the data it settled on, resolved schema included, so committing
   // whatever it returns is what keeps state's resolved schema and the utilities that resolved it in step.
   let context: RenderContext<T, S, F> = current;
-  // Use the un-merged AJV-only schema as the base for re-merging extraErrors, as `reconcileErrors()` does:
-  // state.errorSchema already carries them, so merging onto it would add each a second time.
-  let mergeBaseErrorSchema: ErrorSchema<T> = schemaValidationErrorSchema;
-  // `state.errors` is the matching list and needs the same treatment; see the merge below.
-  let mergeBaseErrors = schemaValidationErrors;
-  // The stored validator result, when a raise made part of it stale
-  let storedValidation: Partial<Pick<FormState<T, S, F>, 'schemaValidationErrors' | 'schemaValidationErrorSchema'>> =
-    {};
+  const isRootPath = path.length === 0;
   let formData: T | undefined;
   if (isRootPath) {
     formData = newValue;
@@ -1339,12 +1353,50 @@ function applyChange<T, S extends StrictRJSFSchema, F extends FormContextType>(
     }
   }
 
-  const mustValidate = !noValidate && liveValidate === 'onChange';
-  let newFormData = formData;
+  const newFormData =
+    omitExtraData === true && liveOmit === 'onChange'
+      ? context.schemaUtils.omitExtraData(context.schema, formData)
+      : formData;
+  return { formData: newFormData, context, oldValue, newValue, path };
+}
 
-  if (omitExtraData === true && liveOmit === 'onChange') {
-    newFormData = context.schemaUtils.omitExtraData(context.schema, formData);
-  }
+/** Applies one `change` to `current`, returning the next state. The `newValue` is set at the change's path in the
+ * data, which is then run through `deriveFormData()` for any missing defaults and, when the resolved schema changed,
+ * sanitization. If `omitExtraData` and `liveOmit` are turned on, the data is filtered to remove any extra data not in
+ * a form field. The change's `newErrorSchema`, if any, either updates an existing validation error at its path or
+ * becomes a custom error; then the data is validated if required. Reads nothing but its arguments and performs no
+ * callbacks: committing the result and notifying are the caller's, which is what lets one pipeline serve a form that
+ * owns its data and one whose parent does.
+ *
+ * @param current - The state the change applies to
+ * @param change - The change to apply
+ * @param props - The current props
+ * @param deferLiveValidate - Whether live validation waits for a later queued change; it runs once, for the last one
+ * @returns - The next state, sharing every unchanged subtree with `current`
+ */
+function applyChange<T, S extends StrictRJSFSchema, F extends FormContextType>(
+  current: FormState<T, S, F>,
+  change: PendingChange<T>,
+  props: FormProps<T, S, F>,
+  deferLiveValidate: boolean,
+): FormState<T, S, F> {
+  const { formData: newFormData, context, oldValue, newValue, path } = applyChangeData(current, change, props);
+  const isRootPath = path.length === 0;
+  const oldErrorSchema = isRootPath ? current.errorSchema : getByPath<ErrorSchema<T>>(current.errorSchema, path);
+  const newErrorSchema = resolveFieldChange(change.newErrorSchema, oldErrorSchema, oldValue);
+  // oxlint-disable-next-line typescript/no-deprecated
+  const { extraErrors, noValidate, liveValidate } = props;
+  const { schemaValidationErrorSchema, schemaValidationErrors } = current;
+  let { customErrors } = current;
+  // Use the un-merged AJV-only schema as the base for re-merging extraErrors, as `reconcileErrors()` does:
+  // state.errorSchema already carries them, so merging onto it would add each a second time.
+  let mergeBaseErrorSchema: ErrorSchema<T> = schemaValidationErrorSchema;
+  // `state.errors` is the matching list and needs the same treatment; see the merge below.
+  let mergeBaseErrors = schemaValidationErrors;
+  // The stored validator result, when a raise made part of it stale
+  let storedValidation: Partial<Pick<FormState<T, S, F>, 'schemaValidationErrors' | 'schemaValidationErrorSchema'>> =
+    {};
+  const mustValidate = !noValidate && liveValidate === 'onChange';
 
   if (newErrorSchema) {
     // First check to see if there is an existing validation error on this path...
@@ -1806,7 +1858,7 @@ export default class Form<
    * @param newValue - The new form data from a change to a field, or an updater computing it from the data at
    *        `fieldPath`
    * @param fieldPath - The `FieldPath` of the change at which to set the formData
-   * @param [newErrorSchema] - The new `ErrorSchema` based on the field change, or an updater computing them from the
+   * @param [newErrorSchema] - The new `ErrorSchema` based on the field change, or an updater computing it from the
    *        errors at `fieldPath`
    * @param [id] - The id of the field that caused the change
    */
@@ -1829,23 +1881,31 @@ export default class Form<
    * @param advance - Advances the queue past this change
    */
   private processChange(change: PendingChange<T>, advance: () => void) {
-    const { onChange } = this.props;
+    const { props } = this;
+    const { onChange } = props;
     const current = this.state;
     // If a later change is queued, skip live validation since it will happen with the last change
     const deferLiveValidate = this.queue.some((operation, index) => index > 0 && operation.isChange);
-    const next = applyChange(current, change, this.props, deferLiveValidate);
+    const next = applyChange(current, change, props, deferLiveValidate);
+    const { formData: nextFormData } = next;
+    // The change as a function of any base, for a parent that composes proposals itself. The rendered data is the
+    // common base, whose result `applyChange()` has already settled
+    const applyTo = (base: T | undefined) =>
+      base === current.formData
+        ? nextFormData
+        : applyChangeData({ ...current, formData: base }, change, props).formData;
     if (!current.isControlled) {
       this.setSharedState(current, next, () =>
-        advanceAfter(advance, () => onChange?.(toIChangeEvent(this.state), change.id)),
+        advanceAfter(advance, () => onChange?.(toIChangeEvent(this.state, applyTo), change.id)),
       );
       return;
     }
-    const isValidated = !deferLiveValidate && isLiveValidated(this.props);
+    const isValidated = !deferLiveValidate && isLiveValidated(props);
     if (isDevelopment) {
       freezeFormData(next.formData);
     }
     try {
-      onChange?.(toIChangeEvent(next), change.id);
+      onChange?.(toIChangeEvent(next, applyTo), change.id);
     } finally {
       // Validated errors describe the proposal, which the parent may yet refuse, so they wait for the parent's
       // answer in `getDerivedStateFromProps`; without live validation they describe the committed data plus the
@@ -1857,7 +1917,7 @@ export default class Form<
   /** Returns the form data currently rendered, see `FormHandle.getFormData()`: the `formData` prop of a parent-owned
    * form, the committed data of a self-owned one.
    */
-  getFormData = (): EventFormData<T> => this.state.formData as EventFormData<T>;
+  getFormData = (): EventFormData<T> => toEventFormData(this.state.formData);
 
   /** Resets the form, queued behind any change in flight. A self-owned form re-derives its data from
    * `initialFormData` and the schema the way an initial render does, clears every error and tells `onChange`. A
@@ -1880,7 +1940,11 @@ export default class Form<
         return;
       }
       this.setSharedState(this.state, applyReset(this.state, this.props), () =>
-        advanceAfter(advance, () => this.props.onChange?.(toIChangeEvent(this.state))),
+        advanceAfter(advance, () => {
+          // A reset replaces whatever a parent holds with the reset data
+          const { formData } = this.state;
+          this.props.onChange?.(toIChangeEvent(this.state, () => formData));
+        }),
       );
     });
   };
@@ -1912,10 +1976,15 @@ export default class Form<
    * @param advance - Advances the queue past this blur
    */
   private processBlur(id: string, advance: () => void) {
-    const { onChange } = this.props;
+    const { onChange, omitExtraData, liveOmit } = this.props;
     const committed = this.state;
     // Shared here so an unchanged error list keeps its reference and does not count as a change below
     const next = replaceEqualDeep(committed, applyBlur(committed, this.props));
+    // A blur proposes the omission, when it omits, and nothing else
+    const applyTo = (base: T | undefined) =>
+      omitExtraData === true && liveOmit === 'onBlur'
+        ? committed.schemaUtils.omitExtraData(committed.schema, base)
+        : base;
     // Only the `IChangeEvent` members count; the validator's own results are not among them
     const hasChanges = (['formData', 'errors', 'errorSchema'] as const).some((key) => committed[key] !== next[key]);
     if (committed.isControlled) {
@@ -1924,7 +1993,7 @@ export default class Form<
       }
       try {
         if (onChange && hasChanges) {
-          onChange(toIChangeEvent(next), id);
+          onChange(toIChangeEvent(next, applyTo), id);
         }
       } finally {
         this.setSharedState(committed, next, advance);
@@ -1934,7 +2003,7 @@ export default class Form<
     this.setSharedState(committed, next, () =>
       advanceAfter(advance, () => {
         if (onChange && hasChanges) {
-          onChange(toIChangeEvent(this.state), id);
+          onChange(toIChangeEvent(this.state, applyTo), id);
         }
       }),
     );
@@ -1995,7 +2064,10 @@ export default class Form<
     // There are no errors generated through schema validation, so only the user-provided ones are shown
     this.setSharedState(this.state, applySubmit(this.state, this.props, newFormData), () =>
       advanceAfter(advance, () =>
-        onSubmit?.(toIChangeEvent({ ...this.state, formData: newFormData }, 'submitted'), event),
+        onSubmit?.(
+          toIChangeEvent({ ...this.state, formData: newFormData }, () => newFormData, 'submitted'),
+          event,
+        ),
       ),
     );
   }

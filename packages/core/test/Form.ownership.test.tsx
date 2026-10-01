@@ -1,4 +1,4 @@
-import { createRef, StrictMode, useLayoutEffect, useState } from 'react';
+import { createRef, StrictMode, startTransition, useLayoutEffect, useState } from 'react';
 import type { ErrorSchema, FieldProps, RJSFSchema, WidgetProps } from '@rjsf/utils';
 import { createSchemaUtils, getTemplates, getUiOptions, noop } from '@rjsf/utils';
 import validator from '@rjsf/validator-ajv8';
@@ -9,6 +9,7 @@ import type { IChangeEvent } from '../src/index.ts';
 import Form from '../src/index.ts';
 import {
   AcceptingParent,
+  ComposingParent,
   createFormComponent,
   createParentLog,
   describeOwnerships,
@@ -16,6 +17,7 @@ import {
   input,
   RejectingParent,
   setupConsoleWarnSuppression,
+  submitForm,
   TransformingParent,
 } from './testUtils.tsx';
 
@@ -313,7 +315,7 @@ describe('form data ownership', () => {
     const acceptAll = () => true;
     const keepProposal = (proposal: Data) => proposal;
 
-    function ComposingParent({
+    function PolicyParent({
       ref,
       accept = acceptAll,
       transform = keepProposal,
@@ -346,7 +348,7 @@ describe('form data ownership', () => {
     it('two path changes within one act both reach an accepting parent', async () => {
       const ref = createRef<Form<Data>>();
       const log = { proposals: [] as Data[] } as { value?: Data; proposals: Data[] };
-      const { container } = render(<ComposingParent ref={ref} log={log} />);
+      const { container } = render(<PolicyParent ref={ref} log={log} />);
 
       await act(async () => {
         ref.current!.setFieldValue('a', 'first');
@@ -366,11 +368,7 @@ describe('form data ownership', () => {
       const ref = createRef<Form<Data>>();
       const log = { proposals: [] as Data[] } as { value?: Data; proposals: Data[] };
       render(
-        <ComposingParent
-          ref={ref}
-          log={log}
-          transform={(proposal) => ({ ...proposal, a: proposal.a?.toUpperCase() })}
-        />,
+        <PolicyParent ref={ref} log={log} transform={(proposal) => ({ ...proposal, a: proposal.a?.toUpperCase() })} />,
       );
 
       await act(async () => {
@@ -385,7 +383,7 @@ describe('form data ownership', () => {
     it('a rejected first value is not resurrected by the second change', async () => {
       const ref = createRef<Form<Data>>();
       const log = { proposals: [] as Data[] } as { value?: Data; proposals: Data[] };
-      render(<ComposingParent ref={ref} log={log} accept={(proposal) => proposal.a !== 'first'} />);
+      render(<PolicyParent ref={ref} log={log} accept={(proposal) => proposal.a !== 'first'} />);
 
       await act(async () => {
         ref.current!.setFieldValue('a', 'first');
@@ -399,32 +397,36 @@ describe('form data ownership', () => {
       ]);
     });
 
+    /** Sends two updaters from one click, each adding one to the count */
+    function IncrementTwiceField({ fieldPath, formData, onChange }: FieldProps<number>) {
+      return (
+        <button
+          type='button'
+          onClick={() => {
+            onChange((current) => (current ?? 0) + 1, fieldPath);
+            onChange((current) => (current ?? 0) + 1, fieldPath);
+          }}
+        >
+          {String(formData)}
+        </button>
+      );
+    }
+    interface CountData {
+      count?: number;
+    }
+    const countSchema: RJSFSchema = { type: 'object', properties: { count: { type: 'number' } } };
+    const countUiSchema = { count: { 'ui:field': IncrementTwiceField } };
+
     it("a field's two updaters in one click both reach a parent that stores each proposal as a value", async () => {
       // The queue runs the second updater only after the parent has committed the first proposal, so it applies to
       // that value rather than to the one the field rendered with
-      function IncrementTwiceField({ fieldPath, formData, onChange }: FieldProps<number>) {
-        return (
-          <button
-            type='button'
-            onClick={() => {
-              onChange((current) => (current ?? 0) + 1, fieldPath);
-              onChange((current) => (current ?? 0) + 1, fieldPath);
-            }}
-          >
-            {String(formData)}
-          </button>
-        );
-      }
-      interface CountData {
-        count?: number;
-      }
       const proposals: CountData[] = [];
       function CountParent() {
         const [data, setData] = useState<CountData>({ count: 1 });
         return (
           <Form<CountData>
-            schema={{ type: 'object', properties: { count: { type: 'number' } } }}
-            uiSchema={{ count: { 'ui:field': IncrementTwiceField } }}
+            schema={countSchema}
+            uiSchema={countUiSchema}
             validator={validator}
             formData={data}
             onChange={(event) => {
@@ -440,6 +442,41 @@ describe('form data ownership', () => {
 
       expect(proposals).toEqual([{ count: 2 }, { count: 3 }]);
       expect(container.querySelector('button[type=button]')).toHaveTextContent('3');
+    });
+
+    describe('a parent that hands the proposal back in a transition', () => {
+      // The form's own commit lands before the parent's transition does, so the queue runs the second updater against
+      // the `formData` the form still renders, and its proposal is computed from the value before the first
+      function TransitionParent({ store }: { store: 'formData' | 'applyTo' }) {
+        const [data, setData] = useState<CountData>({ count: 1 });
+        return (
+          <Form<CountData>
+            schema={countSchema}
+            uiSchema={countUiSchema}
+            validator={validator}
+            formData={data}
+            onChange={(event) => {
+              startTransition(() => setData(store === 'applyTo' ? event.applyTo : event.formData));
+            }}
+          />
+        );
+      }
+
+      it('keeps only the last of two updaters when it stores event.formData', async () => {
+        const { container } = render(<TransitionParent store='formData' />);
+
+        await user.click(screen.getByRole('button', { name: '1' }));
+
+        expect(container.querySelector('button[type=button]')).toHaveTextContent('2');
+      });
+
+      it('keeps both of two updaters when it stores event.applyTo', async () => {
+        const { container } = render(<TransitionParent store='applyTo' />);
+
+        await user.click(screen.getByRole('button', { name: '1' }));
+
+        expect(container.querySelector('button[type=button]')).toHaveTextContent('3');
+      });
     });
 
     it('a change made from inside onChange is queued behind the one being handled', async () => {
@@ -475,6 +512,106 @@ describe('form data ownership', () => {
         { a: 'first', b: 'derived' },
       ]);
       expect(input(container, 'root_b')).toHaveValue('derived');
+    });
+
+    it('a composing parent keeps both of two path changes made in one tick', async () => {
+      const ref = createRef<Form<Data>>();
+      const log = createParentLog<Data>();
+      const { container } = render(
+        <ComposingParent<Data> ref={ref} schema={schema} initialValue={{ a: '', b: '' }} log={log} />,
+      );
+
+      await act(async () => {
+        ref.current?.setFieldValue('a', 'first');
+        ref.current?.setFieldValue('b', 'second');
+      });
+
+      expect(log.value).toEqual({ a: 'first', b: 'second' });
+      expect(log.proposals).toEqual([
+        { a: 'first', b: '' },
+        { a: 'first', b: 'second' },
+      ]);
+      expect(input(container, 'root_a')).toHaveValue('first');
+      expect(input(container, 'root_b')).toHaveValue('second');
+    });
+
+    it('a composing parent keeps a setFieldValue made from inside onChange', async () => {
+      const ref = createRef<Form<Data>>();
+      function ReentrantComposingParent() {
+        const [data, setData] = useState<Data>({ a: '', b: '' });
+        return (
+          <Form<Data>
+            ref={ref}
+            schema={schema}
+            validator={validator}
+            formData={data}
+            onChange={(event) => {
+              setData(event.applyTo);
+              if (event.formData.a === 'first' && event.formData.b === '') {
+                ref.current?.setFieldValue('b', 'derived');
+              }
+            }}
+          />
+        );
+      }
+      const { container } = render(<ReentrantComposingParent />);
+
+      await act(async () => {
+        ref.current?.setFieldValue('a', 'first');
+      });
+
+      expect(input(container, 'root_a')).toHaveValue('first');
+      expect(input(container, 'root_b')).toHaveValue('derived');
+    });
+
+    it('applyTo re-applies a change to any base', () => {
+      const ref = createRef<Form>();
+      const onChange = vi.fn<(event: IChangeEvent) => void>();
+      createFormComponent({ ref, schema, initialFormData: { a: '', b: 'kept' }, onChange });
+
+      act(() => ref.current?.setFieldValue('a', 'x'));
+
+      const [event] = onChange.mock.calls[0];
+      expect(event.formData).toEqual({ a: 'x', b: 'kept' });
+      expect(event.applyTo({ a: 'other', b: 'base' })).toEqual({ a: 'x', b: 'base' });
+      expect(event.applyTo(event.formData)).toEqual(event.formData);
+      expect(event.formData).toEqual({ a: 'x', b: 'kept' });
+    });
+
+    it("a blur's applyTo omits extra data from any base", async () => {
+      const onChange = vi.fn<(event: IChangeEvent) => void>();
+      createFormComponent({
+        schema,
+        initialFormData: { a: 'x', extra: 1 },
+        omitExtraData: true,
+        liveOmit: 'onBlur',
+        onChange,
+      });
+
+      await user.click(screen.getByDisplayValue('x'));
+      await user.tab();
+
+      const [event] = onChange.mock.lastCall ?? [];
+      expect(event?.formData).toEqual({ a: 'x' });
+      expect(event?.applyTo({ a: 'y', extra: 2 })).toEqual({ a: 'y' });
+    });
+
+    it("a reset's and a submit's applyTo hand back their data whatever the base", async () => {
+      const ref = createRef<Form>();
+      const onChange = vi.fn<(event: IChangeEvent) => void>();
+      const onSubmit = vi.fn<(event: IChangeEvent) => void>();
+      const { node } = createFormComponent({ ref, schema, initialFormData: { a: 'seed' }, onChange, onSubmit });
+
+      await user.type(screen.getByDisplayValue('seed'), 'x');
+      act(() => ref.current?.reset());
+      const [resetEvent] = onChange.mock.lastCall ?? [];
+      expect(resetEvent?.formData).toEqual({ a: 'seed' });
+      expect(resetEvent?.applyTo({ a: 'anything' })).toEqual({ a: 'seed' });
+
+      await submitForm(node, user);
+      const [submitEvent] = onSubmit.mock.lastCall ?? [];
+      expect(submitEvent?.formData).toEqual({ a: 'seed' });
+      expect(submitEvent?.applyTo({ a: 'anything' })).toEqual({ a: 'seed' });
     });
 
     it('the queue advances past a rejected proposal and a missing handler', async () => {

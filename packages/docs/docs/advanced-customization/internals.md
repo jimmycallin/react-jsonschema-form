@@ -101,7 +101,7 @@ function saveDraft() {
 <Form ref={formRef} schema={schema} validator={validator} initialFormData={{ title: 'Untitled' }} />;
 ```
 
-It reads committed data, so an edit or `setFieldValue()` in the same tick is visible only after React commits. With a `formData` prop it returns that prop: the form renders nothing else, so a proposal your `onChange` handler declined is never returned.
+It reads committed data, so an edit or `setFieldValue()` in the same tick is visible only after React commits. With a `formData` prop it returns that prop: the form renders nothing else, so a proposal your `onChange` handler declined is never returned. A parent that wants to keep every proposal, including several made in one tick, stores the event's updater, `setData(event.applyTo)`; see [`onChange`](../api-reference/form-props.md#onchange).
 
 ## Submit form programmatically
 
