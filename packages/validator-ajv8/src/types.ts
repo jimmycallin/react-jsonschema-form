@@ -1,6 +1,21 @@
-import type { CustomMergeAllOf, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
-import type { Options, ErrorObject, Ajv } from 'ajv';
+import type { CustomMergeAllOf, RJSFSchema, RJSFValidationError, StrictRJSFSchema } from '@rjsf/utils';
+import type { Options, DefinedError, ErrorObject, Ajv } from 'ajv';
 import type { FormatsPluginOptions } from 'ajv-formats';
+
+/** The errors this validator reports, one per AJV built-in keyword: its `name` is the keyword and its `params` that
+ * keyword's params, so narrowing on `name` types `params`. Opt in with `customizeValidator<S, F, AjvValidationError>()`
+ * or `createPrecompiledValidator<S, F, AjvValidationError>()`, and every error a `Form` hands back is typed by it. It
+ * is a claim about the validator's setup: a keyword added through `extenderFn`, `ajvOptionsOverrides` or the raw `ajv`
+ * instance (such as `ajv-errors`' `errorMessage`) produces errors it doesn't list. AJV declares the params as
+ * interfaces, which aren't assignable to `RJSFValidationError`'s `Record<string, unknown>`, so each is mapped to an
+ * object type.
+ */
+export type AjvValidationError = {
+  [E in DefinedError as E['keyword']]: RJSFValidationError & {
+    name: E['keyword'];
+    params: { [K in keyof E['params']]: E['params'][K] };
+  };
+}[DefinedError['keyword']];
 
 /** The type describing the value for the `suppressDuplicateFiltering` option */
 export type SuppressDuplicateFilteringType = 'anyOf' | 'oneOf' | 'all' | 'none';

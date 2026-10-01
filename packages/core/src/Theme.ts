@@ -3,6 +3,7 @@ import type {
   GlobalFormOptions,
   Registry,
   RJSFSchema,
+  RJSFValidationError,
   SchemaUtilsType,
   StrictRJSFSchema,
 } from '@rjsf/utils';
@@ -41,7 +42,8 @@ function getGlobalFormOptions<
   T = unknown,
   S extends StrictRJSFSchema = RJSFSchema,
   F extends FormContextType = FormContextType,
->(props: FormProps<T, S, F>): GlobalFormOptions {
+  E extends RJSFValidationError = RJSFValidationError,
+>(props: FormProps<T, S, F, E>): GlobalFormOptions {
   const {
     idSeparator = DEFAULT_ID_SEPARATOR,
     idPrefix = DEFAULT_ID_PREFIX,
@@ -67,7 +69,8 @@ export function buildRegistry<
   T = unknown,
   S extends StrictRJSFSchema = RJSFSchema,
   F extends FormContextType = FormContextType,
->(props: FormProps<T, S, F>, schema: S, schemaUtils: SchemaUtilsType<T, S, F>): Registry<T, S, F> {
+  E extends RJSFValidationError = RJSFValidationError,
+>(props: FormProps<T, S, F, E>, schema: S, schemaUtils: SchemaUtilsType<T, S, F>): Registry<T, S, F> {
   const { translateString = englishStringTranslator, uiSchema } = props;
   const { fields, templates, widgets } = generateTheme<T, S, F>();
   return {

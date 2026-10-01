@@ -3,6 +3,7 @@ import type {
   ErrorTransformer,
   FormContextType,
   RJSFSchema,
+  RJSFValidationError,
   StrictRJSFSchema,
   UiSchema,
   ValidationData,
@@ -21,7 +22,8 @@ import type { CustomValidatorOptionsType, Localizer, SuppressDuplicateFilteringT
 export default class AJV8Validator<
   S extends StrictRJSFSchema = RJSFSchema,
   F extends FormContextType = FormContextType,
-> implements ValidatorType<S, F> {
+  E extends RJSFValidationError = RJSFValidationError,
+> implements ValidatorType<S, F, E> {
   /** The AJV instance to use for all validations
    *
    * @private
@@ -195,10 +197,10 @@ export default class AJV8Validator<
     formData: T | undefined,
     schema: S,
     customValidate?: CustomValidator<T, S, F>,
-    transformErrors?: ErrorTransformer<T, S, F>,
+    transformErrors?: ErrorTransformer<T, S, F, E>,
     uiSchema?: UiSchema<T, S, F>,
     getCustomValidateFormData?: () => T,
-  ): ValidationData<T> {
+  ): ValidationData<T, E> {
     const rawErrors = this.rawValidation<ErrorObject>(schema, formData);
     return processRawValidationErrors(
       { validator: this },

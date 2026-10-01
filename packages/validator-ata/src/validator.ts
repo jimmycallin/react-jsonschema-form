@@ -3,6 +3,7 @@ import type {
   ErrorTransformer,
   FormContextType,
   RJSFSchema,
+  RJSFValidationError,
   StrictRJSFSchema,
   UiSchema,
   ValidationData,
@@ -26,7 +27,8 @@ import type { CustomValidatorOptionsType, Localizer, SuppressDuplicateFilteringT
 export default class ATAValidator<
   S extends StrictRJSFSchema = RJSFSchema,
   F extends FormContextType = FormContextType,
-> implements ValidatorType<S, F> {
+  E extends RJSFValidationError = RJSFValidationError,
+> implements ValidatorType<S, F, E> {
   /** Stable copy of the constructor options, used when (re)building per-schema
    * `Validator` instances on demand.
    *
@@ -174,10 +176,10 @@ export default class ATAValidator<
     formData: T | undefined,
     schema: S,
     customValidate?: CustomValidator<T, S, F>,
-    transformErrors?: ErrorTransformer<T, S, F>,
+    transformErrors?: ErrorTransformer<T, S, F, E>,
     uiSchema?: UiSchema<T, S, F>,
     getCustomValidateFormData?: () => T,
-  ): ValidationData<T> {
+  ): ValidationData<T, E> {
     const rawErrors = this.rawValidation<ValidationError>(schema, formData);
     return processRawValidationErrors(
       { validator: this },

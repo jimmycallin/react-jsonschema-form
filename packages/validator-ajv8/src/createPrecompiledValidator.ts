@@ -1,4 +1,4 @@
-import type { FormContextType, RJSFSchema, StrictRJSFSchema, ValidatorType } from '@rjsf/utils';
+import type { FormContextType, RJSFSchema, RJSFValidationError, StrictRJSFSchema, ValidatorType } from '@rjsf/utils';
 
 import AJV8PrecompiledValidator from './precompiledValidator.ts';
 import type { PrecompiledValidatorOptionsType, ValidatorFunctions } from './types.ts';
@@ -19,6 +19,11 @@ import type { PrecompiledValidatorOptionsType, ValidatorFunctions } from './type
 export default function createPrecompiledValidator<
   S extends StrictRJSFSchema = RJSFSchema,
   F extends FormContextType = FormContextType,
->(validateFns: ValidatorFunctions, rootSchema: S, options?: PrecompiledValidatorOptionsType<S>): ValidatorType<S, F> {
-  return new AJV8PrecompiledValidator<S, F>(validateFns, rootSchema, options);
+  E extends RJSFValidationError = RJSFValidationError,
+>(
+  validateFns: ValidatorFunctions,
+  rootSchema: S,
+  options?: PrecompiledValidatorOptionsType<S>,
+): ValidatorType<S, F, E> {
+  return new AJV8PrecompiledValidator<S, F, E>(validateFns, rootSchema, options);
 }

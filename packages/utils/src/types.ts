@@ -320,6 +320,15 @@ export interface RJSFValidationError {
   title?: string;
 }
 
+/** An error RJSF builds itself from an `ErrorSchema`, such as one raised by `customValidate`, an `extraErrors` entry or
+ * `ui:required`, or the error a validator reports for an invalid schema. It names no keyword and carries no params, so
+ * it sits beside a validator's own, narrower error type without breaking narrowing on `name`
+ */
+export interface ErrorSchemaValidationError extends RJSFValidationError {
+  name?: undefined;
+  params?: undefined;
+}
+
 /** The type that describes an error in a field */
 export type FieldError = string;
 
@@ -1754,26 +1763,33 @@ export type CustomValidator<
 ) => FormValidation<T>;
 
 /** An `ErrorTransformer` function will take in a list of `errors` & a `uiSchema` and potentially return a
- * transformation of those errors in what ever way it deems necessary
+ * transformation of those errors in what ever way it deems necessary. `E` is the type of the errors its validator
+ * reports, such as `@rjsf/validator-ajv8`'s `AjvValidationError`
  */
 export type ErrorTransformer<
   T = unknown,
   S extends StrictRJSFSchema = RJSFSchema,
   F extends FormContextType = FormContextType,
-> = (errors: RJSFValidationError[], uiSchema?: UiSchema<T, S, F>) => RJSFValidationError[];
+  E extends RJSFValidationError = RJSFValidationError,
+> = (errors: (E | ErrorSchemaValidationError)[], uiSchema?: UiSchema<T, S, F>) => (E | ErrorSchemaValidationError)[];
 
 /** The type that describes the data that is returned from the `ValidatorType.validateFormData()` function */
-export interface ValidationData<T> {
-  /** The validation errors as a list of `RJSFValidationError` objects */
-  errors: RJSFValidationError[];
+export interface ValidationData<T, E extends RJSFValidationError = RJSFValidationError> {
+  /** The validation errors: the validator's own, typed `E`, and those RJSF builds from an `ErrorSchema` */
+  errors: (E | ErrorSchemaValidationError)[];
   /** The validation errors in the form of an `ErrorSchema` */
   errorSchema: ErrorSchema<T>;
 }
 
 /** The interface that describes the validation functions that are provided by a Validator implementation used by the
- * schema utilities.
+ * schema utilities. `E` is the type of the errors it reports. It is only a type: a validator builds plain
+ * `RJSFValidationError`s, and narrowing `E` is the caller's claim about how the validator is set up.
  */
-export interface ValidatorType<S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = FormContextType> {
+export interface ValidatorType<
+  S extends StrictRJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+  E extends RJSFValidationError = RJSFValidationError,
+> {
   /** This function processes the `formData` with an optional user contributed `customValidate` function, which receives
    * the form data and a `errorHandler` function that will be used to add custom validation errors for each field. Also
    * supports a `transformErrors` function that will take the raw AJV validation errors, prior to custom validation and
@@ -1797,10 +1813,10 @@ export interface ValidatorType<S extends StrictRJSFSchema = RJSFSchema, F extend
     formData: T | undefined,
     schema: S,
     customValidate?: CustomValidator<T, S, F>,
-    transformErrors?: ErrorTransformer<T, S, F>,
+    transformErrors?: ErrorTransformer<T, S, F, E>,
     uiSchema?: UiSchema<T, S, F>,
     getCustomValidateFormData?: () => T,
-  ): ValidationData<T>;
+  ): ValidationData<T, E>;
   /** Validates data against a schema, returning true if the data is valid, or
    * false otherwise. If the schema is invalid, then this function will return
    * false.

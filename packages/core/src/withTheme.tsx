@@ -1,5 +1,5 @@
 import type { ReactElement } from 'react';
-import type { FormContextType, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
+import type { FormContextType, RJSFSchema, RJSFValidationError, StrictRJSFSchema } from '@rjsf/utils';
 
 import type { FormProps } from './components/Form.tsx';
 import Form from './components/Form.tsx';
@@ -21,7 +21,9 @@ export type ThemedForm<
   T = unknown,
   S extends StrictRJSFSchema = RJSFSchema,
   F extends FormContextType = FormContextType,
-> = <TT extends T = T>(props: FormProps<TT, S, F>) => ReactElement;
+> = <TT extends T = T, E extends RJSFValidationError = RJSFValidationError>(
+  props: FormProps<TT, S, F, E>,
+) => ReactElement;
 
 /** A Higher-Order component that creates a wrapper around a `Form` with the overrides from the `WithThemeProps`.
  *
@@ -35,13 +37,13 @@ export default function withTheme<
   S extends StrictRJSFSchema = RJSFSchema,
   F extends FormContextType = FormContextType,
 >(themeProps: ThemeProps<T, S, F>): ThemedForm<T, S, F> {
-  return function ThemedForm<TT extends T = T>({
+  return function ThemedForm<TT extends T = T, E extends RJSFValidationError = RJSFValidationError>({
     fields: propFields,
     widgets: propWidgets,
     templates: propTemplates,
     ref,
     ...directProps
-  }: FormProps<TT, S, F>) {
+  }: FormProps<TT, S, F, E>) {
     // The theme's components were typed for `T`; they render the narrower `TT` the form is given
     const theme = themeProps as ThemeProps<TT, S, F>;
     const fields = { ...theme?.fields, ...propFields };
@@ -55,6 +57,6 @@ export default function withTheme<
       },
     };
 
-    return <Form<TT, S, F> {...directProps} fields={fields} widgets={widgets} templates={templates} ref={ref} />;
+    return <Form<TT, S, F, E> {...directProps} fields={fields} widgets={widgets} templates={templates} ref={ref} />;
   };
 }

@@ -3,6 +3,7 @@ import type {
   ErrorTransformer,
   FormContextType,
   RJSFSchema,
+  RJSFValidationError,
   SchemaContext,
   StrictRJSFSchema,
   UiSchema,
@@ -28,7 +29,8 @@ import type {
 export default class ATAPrecompiledValidator<
   S extends StrictRJSFSchema = RJSFSchema,
   F extends FormContextType = FormContextType,
-> implements ValidatorType<S, F> {
+  E extends RJSFValidationError = RJSFValidationError,
+> implements ValidatorType<S, F, E> {
   /** The root schema object used to construct this validator
    *
    * @private
@@ -163,10 +165,10 @@ export default class ATAPrecompiledValidator<
     formData: T | undefined,
     schema: S,
     customValidate?: CustomValidator<T, S, F>,
-    transformErrors?: ErrorTransformer<T, S, F>,
+    transformErrors?: ErrorTransformer<T, S, F, E>,
     uiSchema?: UiSchema<T, S, F>,
     getCustomValidateFormData?: () => T,
-  ): ValidationData<T> {
+  ): ValidationData<T, E> {
     const rawErrors = this.rawValidation<ValidationError>(schema, formData);
     return processRawValidationErrors(
       this.schemaContext,

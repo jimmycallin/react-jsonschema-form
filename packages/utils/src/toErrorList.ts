@@ -1,6 +1,6 @@
 import { ERRORS_KEY } from './constants.ts';
 import isPlainObject from './isPlainObject.ts';
-import type { ErrorSchema, RJSFValidationError } from './types.ts';
+import type { ErrorSchema, ErrorSchemaValidationError } from './types.ts';
 
 /** Converts an `errorSchema` into a list of `RJSFValidationErrors`
  *
@@ -11,7 +11,7 @@ import type { ErrorSchema, RJSFValidationError } from './types.ts';
 export default function toErrorList<T = unknown>(
   errorSchema?: ErrorSchema<T>,
   fieldPath: string[] = [],
-): RJSFValidationError[] {
+): ErrorSchemaValidationError[] {
   return errorSchema ? errorsFrom(errorSchema, fieldPath) : [];
 }
 
@@ -22,10 +22,10 @@ export default function toErrorList<T = unknown>(
  * @param fieldPath - The current field path
  * @returns - The list of `RJSFValidationErrors` extracted from the `errorSchema`
  */
-function errorsFrom(errorSchema: Record<string, unknown>, fieldPath: string[]): RJSFValidationError[] {
+function errorsFrom(errorSchema: Record<string, unknown>, fieldPath: string[]): ErrorSchemaValidationError[] {
   const errors = errorSchema[ERRORS_KEY];
   const property = `.${fieldPath.join('.')}`;
-  const errorList: RJSFValidationError[] = Array.isArray(errors)
+  const errorList: ErrorSchemaValidationError[] = Array.isArray(errors)
     ? errors.map((message: string) => ({ property, message, stack: `${property} ${message}` }))
     : [];
   return Object.keys(errorSchema).reduce((currentList, key) => {
