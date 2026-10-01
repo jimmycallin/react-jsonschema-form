@@ -78,6 +78,25 @@ export function AcceptingParent<T>({ initialValue, log, ...formProps }: Controll
   );
 }
 
+/** Stores every proposal as an updater, `setData(event.applyTo)`, so proposals made in one tick compose in its own
+ * update queue, each applied to the previous one's result
+ */
+export function ComposingParent<T>({ initialValue, log, ...formProps }: ControlledParentProps<T>) {
+  const [value, setValue] = useState(initialValue);
+  Object.assign(log ?? {}, { value });
+  return (
+    <Form<T>
+      {...formProps}
+      validator={validator}
+      formData={value}
+      onChange={(event) => {
+        log?.proposals.push(event.formData);
+        setValue(event.applyTo);
+      }}
+    />
+  );
+}
+
 /** Keeps rendering its initial value whatever the form proposes, the shape of a parent whose validation refused */
 export function RejectingParent<T>({ initialValue, log, ...formProps }: ControlledParentProps<T>) {
   Object.assign(log ?? {}, { value: initialValue });

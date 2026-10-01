@@ -628,6 +628,16 @@ It will also receive, as the second argument, the `id` of the field which experi
 Generally, this will be the `id` of the field for which input data is modified.
 In the case of adding/removing of new fields in arrays or objects with `additionalProperties` or `patternProperties` and the rearranging of items in arrays, the `id` will be that of the array or object itself, rather than the item/field being added, removed or moved.
 
+The event also carries the proposal as a function: `event.applyTo(base)` applies this edit to any value, and `event.formData` is `applyTo` of the data the form rendered. It depends only on `base` and on what the form rendered and was given when it made the event, and it does not validate, so you can hand it straight to React, the way TanStack Table's `onSortingChange` takes an updater:
+
+```tsx
+const [data, setData] = useState(initial);
+<Form formData={data} onChange={(event) => setData(event.applyTo)} />;
+```
+
+Stored this way, edits made in one event compose in your own update queue, each applied to the previous one's result, even when you update inside `startTransition()`, from an external store or after a debounce. Stored as `setData(event.formData)`, they compose only when you hand the data back in the render that follows; otherwise the last proposal wins, as with a controlled `<input>`.
+`applyTo` settles `base` against the schema resolved for the data the form rendered, so a `base` whose data selects a different `if`/`then`/`else` branch or `oneOf` option than the rendered data is sanitized as though it moved from the rendered data's branch.
+
 ## onError
 
 To react when submitted form data are invalid, pass an `onError` handler. It will be passed the list of encountered errors:

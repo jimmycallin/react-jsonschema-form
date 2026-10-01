@@ -9,13 +9,15 @@ import type {
 } from '@rjsf/utils';
 import { getTemplates, getUiOptions } from '@rjsf/utils';
 import { customizeValidator } from '@rjsf/validator-ajv8';
-import { act, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 
 import type { FormProps, IChangeEvent } from '../src/index.ts';
 import type Form from '../src/index.ts';
 import {
+  ComposingParent,
   createFormComponent,
+  createParentLog,
   describeRepeated,
   errorListMessages,
   expectToHaveBeenCalledWithFormData,
@@ -893,6 +895,40 @@ describeRepeated('Form common: event handlers', (createFormComponent) => {
 
       expectToHaveBeenCalledWithFormData(onChange, { count: 3 }, 'root_count');
       expect(node.querySelector('button[type=button]')).toHaveTextContent('3');
+      // Each event's `applyTo` carries its own updater, so a parent composing them lands on the same result
+      const [first] = onChange.mock.calls[0];
+      const [second] = onChange.mock.calls[1];
+      expect(second.applyTo(first.applyTo({ count: 1 }))).toEqual({ count: 3 });
+    });
+
+    it('a parent storing each event as an updater keeps both of two updaters a field sends in one click', async () => {
+      function IncrementTwiceField({ fieldPath, formData, onChange }: FieldProps<number>) {
+        return (
+          <button
+            type='button'
+            onClick={() => {
+              onChange((current) => (current ?? 0) + 1, fieldPath);
+              onChange((current) => (current ?? 0) + 1, fieldPath);
+            }}
+          >
+            {String(formData)}
+          </button>
+        );
+      }
+      const log = createParentLog<{ count?: number }>();
+      const { container } = render(
+        <ComposingParent<{ count?: number }>
+          schema={{ type: 'object', properties: { count: { type: 'number' } } }}
+          uiSchema={{ count: { 'ui:field': IncrementTwiceField } }}
+          initialValue={{ count: 1 }}
+          log={log}
+        />,
+      );
+
+      await user.click(screen.getByRole('button', { name: '1' }));
+
+      expect(log.value).toEqual({ count: 3 });
+      expect(container.querySelector('button[type=button]')).toHaveTextContent('3');
     });
   });
 
