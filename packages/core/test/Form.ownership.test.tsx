@@ -707,6 +707,34 @@ describe('form data ownership', () => {
       ]);
     });
 
+    it('live-validates the data two same-tick edits compose, which no handler validated', () => {
+      const ref = createRef<Form>();
+      const minLength: RJSFSchema = {
+        type: 'object',
+        properties: { a: { type: 'string', minLength: 3 }, b: { type: 'string', minLength: 3 } },
+      };
+      const { node, onChange, getFormData } = createFormComponent({
+        ref,
+        schema: minLength,
+        initialFormData: { a: 'long enough', b: 'long enough' },
+        liveValidate: 'onChange',
+      });
+
+      act(() => {
+        ref.current?.setFieldValue('a', 'x');
+        ref.current?.setFieldValue('b', 'y');
+      });
+
+      // The second commit was re-applied on top of the first without validating; the render validated the result
+      expect(getFormData()).toEqual({ a: 'x', b: 'y' });
+      expect(fieldErrorsById(node)).toEqual({
+        root_a: ['must NOT have fewer than 3 characters'],
+        root_b: ['must NOT have fewer than 3 characters'],
+      });
+      // Each event still carries the errors of its own edit applied to the rendered data
+      expect(onChange.mock.calls.map(([event]) => Object.keys(event.errorSchema))).toEqual([['a'], ['b']]);
+    });
+
     const withDefault: RJSFSchema = {
       type: 'object',
       properties: { a: { type: 'string', default: 'A' }, b: { type: 'string' } },
