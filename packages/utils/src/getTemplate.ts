@@ -20,10 +20,11 @@ export default function getTemplate<
   }
   const override = uiOptions[name];
   // Allow templates to be customized per-field by using string keys from the registry
-  if (typeof override === 'string' && Object.hasOwn(templates, override)) {
-    return templates[override] as TemplatesType<T, S, F>[Name];
+  const template = typeof override === 'string' && Object.hasOwn(templates, override) ? templates[override] : override;
+  if (typeof template === 'function' || (typeof template === 'object' && template !== null)) {
+    // The uiSchema can hold any value under this name and a registry key can name any template, so nothing proves
+    // the component takes `Name`'s props; this is the one place the uiSchema is trusted to have picked the right one
+    return template;
   }
-  // `Name` is only constrained to `string`, so the lookup widens to every template's type; the cast keeps TS from
-  // expanding that union (TS2590) and states what the `ui:` override for this name is
-  return (override as TemplatesType<T, S, F>[Name]) || templates[name];
+  return templates[name];
 }

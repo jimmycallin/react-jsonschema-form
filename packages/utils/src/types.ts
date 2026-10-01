@@ -2,12 +2,12 @@ import type {
   ButtonHTMLAttributes,
   ChangeEvent,
   Component,
+  CSSProperties,
   FocusEvent,
   HTMLAttributes,
   MouseEvent,
   ReactElement,
   ReactNode,
-  StyleHTMLAttributes,
 } from 'react';
 import type { JSONSchema7 } from 'json-schema';
 
@@ -589,7 +589,8 @@ export type TemplatesType<
   T = unknown,
   S extends StrictRJSFSchema = RJSFSchema,
   F extends FormContextType = FormContextType,
-> = TemplatesTypeKeys<T, S, F> & Record<string, unknown>;
+> = TemplatesTypeKeys<T, S, F> &
+  Record<string, TemplatesTypeKeys<T, S, F>[keyof TemplatesTypeKeys<T, S, F>] | undefined>;
 
 /** The declared keys of `GlobalUISchemaOptions`, kept separate from its `GenericObjectType &` index signature so
  * a closed vocabulary (like `StrictUiSchema`'s) can pick up these keys without also reopening
@@ -786,7 +787,7 @@ export type FieldTemplateProps<
   /** A string containing the base CSS classes, merged with any custom ones defined in your uiSchema */
   classNames?: string;
   /** An object containing the style as defined in the `uiSchema` */
-  style?: StyleHTMLAttributes<HTMLElement>;
+  style?: CSSProperties;
   /** The computed label for this field, as a string */
   label: string;
   /** The name of this field's property in its parent object, carrying none of the decoration `label` may have picked
@@ -1375,7 +1376,7 @@ type UIOptionsBaseType<
     /** Any classnames that the user wants to be applied to a field in the ui */
     classNames?: string;
     /** Any custom style that the user wants to apply to a field in the ui, applied on the same element as classNames */
-    style?: StyleHTMLAttributes<HTMLElement>;
+    style?: CSSProperties;
     /** We know that for title, it will be a string, if it is provided */
     title?: string;
     /** We know that for description, it will be a string, if it is provided */
@@ -1562,7 +1563,7 @@ type CommonUiOptions<T, S extends StrictRJSFSchema, F extends FormContextType> =
     title?: string;
     description?: string;
     classNames?: string;
-    style?: StyleHTMLAttributes<HTMLElement>;
+    style?: CSSProperties;
     autofocus?: boolean;
     disabled?: boolean;
     readonly?: boolean;
