@@ -11,7 +11,7 @@ import type {
 import validator from '@rjsf/validator-ajv8';
 import { render } from '@testing-library/react';
 
-import type { IChangeEvent } from '../src/index.ts';
+import type { FormHandle, IChangeEvent } from '../src/index.ts';
 import Form from '../src/index.ts';
 
 interface MyData {
@@ -79,7 +79,7 @@ describe('form data inference', () => {
   });
 
   it('does not infer T from formData when an unannotated ref is passed', () => {
-    const ref = createRef<Form>();
+    const ref = createRef<FormHandle>();
     render(
       <Form
         schema={schema}

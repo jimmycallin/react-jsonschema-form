@@ -77,7 +77,7 @@ i.glyphicon {
 
 ## The imperative handle
 
-A `ref` on `Form` exposes its `FormHandle`: `getFormData()`, `submit()`, `reset()`, `setFieldValue()`, `validateForm()`, `validateFormWithFormData()`, `validate()` and `focusOnError()`. Nothing else on the instance is supported. Type the ref as `Form` (TSX types a class element's `ref` by its instance) and narrow to `FormHandle` where you use it.
+A `ref` on `Form` exposes its `FormHandle`: `getFormData()`, `submit()`, `reset()`, `setFieldValue()`, `validateForm()`, `validate()` and `focusOnError()`, plus the deprecated `validateFormWithFormData()`. Type the ref as `FormHandle`, or `FormHandle<MyData>` for a typed form. Every member acts on the data the form renders, or on the data it is given: nothing waits for a commit, so two operations in one tick each see the render they were made from, as two changes to a controlled `<input>` would. The members are writes (`setFieldValue()`, `reset()`), reads (`getFormData()`) and actions (`validateForm()`, `submit()`), and an action never installs data it is given.
 
 ## Read form data programmatically
 
@@ -91,11 +91,10 @@ import type { RJSFSchema } from '@rjsf/utils';
 import validator from '@rjsf/validator-ajv8';
 
 const schema: RJSFSchema = { type: 'object', properties: { title: { type: 'string' } } };
-const formRef = createRef<Form>();
+const formRef = createRef<FormHandle>();
 
 function saveDraft() {
-  const form: FormHandle | null = formRef.current;
-  localStorage.setItem('draft', JSON.stringify(form?.getFormData()));
+  localStorage.setItem('draft', JSON.stringify(formRef.current?.getFormData()));
 }
 
 <Form ref={formRef} schema={schema} validator={validator} initialFormData={{ title: 'Untitled' }} />;
@@ -112,6 +111,7 @@ It submits the data the form renders, or the data it is given: `submit(data)` va
 ```tsx
 import { createRef } from 'react';
 import { RJSFSchema, UiSchema } from '@rjsf/utils';
+import type { FormHandle } from '@rjsf/core';
 import { Form } from '@rjsf/core';
 import validator from '@rjsf/validator-ajv8';
 
@@ -122,7 +122,7 @@ const schema: RJSFSchema = {
   type: 'string',
 };
 
-const formRef = createRef<Form>();
+const formRef = createRef<FormHandle>();
 
 render(
   <Form schema={schema} validator={validator} onSubmit={onSubmit} ref={formRef} />,
@@ -140,6 +140,7 @@ This method will dispatch the `onChange` event of the form, with the change appl
 ```tsx
 import { createRef } from 'react';
 import { RJSFSchema, UiSchema } from '@rjsf/utils';
+import type { FormHandle } from '@rjsf/core';
 import { Form } from '@rjsf/core';
 import validator from '@rjsf/validator-ajv8';
 
@@ -162,7 +163,7 @@ const schema: RJSFSchema = {
   required: ['foo'],
 };
 
-const formRef = createRef<Form>();
+const formRef = createRef<FormHandle>();
 
 render(
   <Form schema={schema} validator={validator} onSubmit={onSubmit} ref={formRef} />,

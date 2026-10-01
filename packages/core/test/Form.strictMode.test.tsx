@@ -4,6 +4,7 @@ import validator from '@rjsf/validator-ajv8';
 import { act, render, screen } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 
+import type { FormHandle } from '../src/index.ts';
 import Form from '../src/index.ts';
 import { AcceptingParent, createParentLog, fieldErrorsById, input } from './testUtils.tsx';
 
@@ -25,7 +26,7 @@ const schema: RJSFSchema = {
  */
 describe('Form under StrictMode', () => {
   it('a self-owned form seeds, edits, composes same-tick edits, validates on blur, submits and resets once', async () => {
-    const ref = createRef<Form>();
+    const ref = createRef<FormHandle>();
     const onChange = vi.fn();
     const onSubmit = vi.fn();
     const onError = vi.fn();
