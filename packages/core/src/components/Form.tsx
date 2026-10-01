@@ -382,6 +382,43 @@ interface PendingChange<T> {
   id?: string;
 }
 
+/** The property a programmatic `submit(formData)` tags its submit event with, so the handler submits that data
+ * instead of the rendered data. A symbol, so nothing else on the event can collide with it.
+ */
+const SUBMIT_DATA = Symbol('rjsf.submitData');
+
+/** The data riding on a submit event, when `submit(formData)` put some there */
+interface SubmitPayload<T> {
+  formData: T | undefined;
+}
+
+/** Reads the data a programmatic submit put on `event`, if any. The one cast behind the payload: the event crosses the
+ * DOM, which keeps no type, and only this form's `submit()` writes the symbol, with data of the form's own `T`
+ *
+ * @param event - The native submit event
+ * @returns - The payload `submit(formData)` put there, if it did
+ */
+function readSubmitPayload<T>(event: Event): SubmitPayload<T> | undefined {
+  return (event as Event & { [SUBMIT_DATA]?: SubmitPayload<T> })[SUBMIT_DATA];
+}
+
+/** The submit event `submit(formData)` dispatches: bubbling and cancelable like the one `requestSubmit()` fires, so
+ * React's root listener dispatches it to `onSubmit` and a DOM listener on the form sees it too, and tagged with the
+ * data the caller handed over
+ *
+ * @param payload - The data to submit in place of the data the form holds
+ * @returns - The event to dispatch on the form element
+ */
+function createSubmitEvent<T>(payload: SubmitPayload<T>): Event {
+  const init = { bubbles: true, cancelable: true };
+  // A `SubmitEvent` where the platform has one, so `nativeEvent.submitter` is `null` as after `requestSubmit()`
+  const event =
+    typeof SubmitEvent === 'function'
+      ? new SubmitEvent('submit', { ...init, submitter: null })
+      : new Event('submit', init);
+  return Object.assign(event, { [SUBMIT_DATA]: payload });
+}
+
 /** An operation waiting in the `Form` queue */
 interface QueuedOperation {
   /** Runs the operation, which calls `advance` once React has committed its result */
@@ -1586,22 +1623,25 @@ function applyValidation<T, S extends StrictRJSFSchema, F extends FormContextTyp
   return { hasError, next: replaceEqualDeep(current, next) };
 }
 
-/** The state after a valid submission: the submitted data, with `extraErrors` as the only errors on display
+/** The state after a valid submission: `extraErrors` as the only errors on display. A submit of the data the form
+ * holds keeps the copy it submitted, without the extra data `omitExtraData` drops; `submit(formData)` acts on data the
+ * form does not hold, so it leaves the data alone.
  *
  * @param current - The state at the submission
  * @param props - The current props
- * @param formData - The submitted data
+ * @param isHeldDataSubmitted - Whether the submission was of the data the form holds
  * @returns - The next state, sharing every unchanged subtree with `current`
  */
 function applySubmit<T, S extends StrictRJSFSchema, F extends FormContextType>(
   current: FormState<T, S, F>,
   props: FormProps<T, S, F>,
-  formData: T | undefined,
+  isHeldDataSubmitted: boolean,
 ): FormState<T, S, F> {
-  const { extraErrors } = props;
+  const { extraErrors, omitExtraData } = props;
+  const { schemaUtils, schema, formData } = current;
   return {
     ...current,
-    formData,
+    formData: isHeldDataSubmitted && omitExtraData === true ? schemaUtils.omitExtraData(schema, formData) : formData,
     errors: extraErrors ? toErrorList(extraErrors) : [],
     errorSchema: extraErrors ?? {},
     schemaValidationErrors: [],
@@ -2023,11 +2063,13 @@ export default class Form<
   };
 
   /** Callback function to handle when the form is submitted. First, it prevents the default event behavior. Nothing
-   * happens if the target and currentTarget of the event are not the same. It will omit any extra data in the
-   * `formData` if `omitExtraData` is true. It will validate the resulting `formData`, reporting errors via the
-   * `onError()` callback unless validation is disabled. Finally, it will add in any `extraErrors` and then call back
-   * the `onSubmit` callback if it was provided. A self-owned form keeps the omitted data as its own; a parent-owned
-   * form submits it without rendering it, since only the parent can change what it renders.
+   * happens if the target and currentTarget of the event are not the same. It submits the data the form renders, or
+   * the data a programmatic `submit(formData)` put on the event. It will omit any extra data in the `formData` if
+   * `omitExtraData` is true. It will validate the resulting `formData`, reporting errors via the `onError()` callback
+   * unless validation is disabled. Finally, it will add in any `extraErrors` and then call back the `onSubmit`
+   * callback if it was provided. A self-owned form keeps the omitted copy of the data it held as its own; a
+   * parent-owned form submits it without rendering it, since only the parent can change what it renders. Data handed
+   * to `submit(formData)` is never installed.
    *
    * @param event - The submit HTML form event
    */
@@ -2042,27 +2084,24 @@ export default class Form<
     this.enqueue((advance) => this.processSubmit(event, advance));
   };
 
-  /** Validates and submits the data the form renders, see `onSubmit()`
+  /** Validates and submits the data the form renders, or the data `submit(formData)` handed over, see `onSubmit()`
    *
    * @param event - The submit HTML form event
    * @param advance - Advances the queue past this submit
    */
   private processSubmit(event: SubmitEvent<HTMLFormElement>, advance: () => void) {
     // oxlint-disable-next-line typescript/no-deprecated
-    const { omitExtraData, noValidate, onSubmit } = this.props;
-    let { formData: newFormData } = this.state;
+    const { noValidate, onSubmit } = this.props;
+    const payload = readSubmitPayload<T>(event.nativeEvent);
+    const newFormData = this.withExtraDataOmitted(payload ? payload.formData : this.state.formData);
 
-    if (omitExtraData === true) {
-      newFormData = this.state.schemaUtils.omitExtraData(this.state.schema, newFormData);
-    }
-
-    if (!noValidate && !this.validateFormWithFormData(newFormData)) {
+    if (!noValidate && !this.runValidation(newFormData)) {
       // The validation has committed its errors; the queue waits for that commit like any operation's
       this.setState((state) => state, advance);
       return;
     }
     // There are no errors generated through schema validation, so only the user-provided ones are shown
-    this.setSharedState(this.state, applySubmit(this.state, this.props, newFormData), () =>
+    this.setSharedState(this.state, applySubmit(this.state, this.props, !payload), () =>
       advanceAfter(advance, () =>
         onSubmit?.(
           toIChangeEvent({ ...this.state, formData: newFormData }, () => newFormData, 'submitted'),
@@ -2072,19 +2111,35 @@ export default class Form<
     );
   }
 
-  /** Provides a function that can be used to programmatically submit the `Form` */
-  submit = () => {
+  /** Programmatically submits the `Form`, see `FormHandle.submit()`. The submit goes through the DOM so that HTML5
+   * validation runs, a DOM listener on the form sees the event, and `onSubmit` receives one. Without data it is the
+   * form's own submission, `requestSubmit()`. With data, which `requestSubmit()` cannot carry, it runs the browser's
+   * constraint validation, unless `noHtml5Validate`, and dispatches one bubbling, cancelable submit event that React
+   * dispatches to `onSubmit`, carrying `formData`.
+   *
+   * @param [formData] - The data to submit in place of the data the form holds
+   */
+  submit = (formData?: T) => {
     const form = this.formElement.current;
-    if (form) {
-      const submitCustomEvent = new CustomEvent('submit', {
-        cancelable: true,
-      });
-      submitCustomEvent.preventDefault();
-      form.dispatchEvent(submitCustomEvent);
-      if (form instanceof HTMLFormElement) {
-        form.requestSubmit();
+    if (formData === undefined) {
+      if (form) {
+        const submitCustomEvent = new CustomEvent('submit', {
+          cancelable: true,
+        });
+        submitCustomEvent.preventDefault();
+        form.dispatchEvent(submitCustomEvent);
+        if (form instanceof HTMLFormElement) {
+          form.requestSubmit();
+        }
       }
+      return;
     }
+    // Only a `<form>` submits; the documented cost of another `tagName` is that submission, native and programmatic,
+    // is gone with it
+    if (!(form instanceof HTMLFormElement) || (!this.props.noHtml5Validate && !form.reportValidity())) {
+      return;
+    }
+    form.dispatchEvent(createSubmitEvent<T>({ formData }));
   };
 
   /** Attempts to focus on the field associated with the `error`. Uses the `property` field to compute path of the error
@@ -2115,13 +2170,25 @@ export default class Form<
     }
   };
 
-  /** Validates the form using the given `formData`. For use on form submission or on programmatic validation.
-   * If `onError` is provided, then it will be called with the list of errors.
+  /** `formData` without the fields the schema does not describe, when `omitExtraData` asks for it: what a submit and
+   * `validateForm()` act on
+   *
+   * @param formData - The data to submit or validate
+   * @returns - The data with its extra fields omitted when `omitExtraData` is set, `formData` itself otherwise
+   */
+  private withExtraDataOmitted(formData: T | undefined) {
+    const { schemaUtils, schema } = this.state;
+    return this.props.omitExtraData === true ? schemaUtils.omitExtraData(schema, formData) : formData;
+  }
+
+  /** Validates `formData` for a submission or a programmatic validation, committing the errors it reports and calling
+   * `onError` with them, or focusing the first one when `focusOnFirstError` asks for it. The data itself is never
+   * installed: an action never writes.
    *
    * @param formData - The form data to validate
    * @returns - True if the form is valid, false otherwise.
    */
-  validateFormWithFormData = (formData?: T): boolean => {
+  private runValidation(formData: T | undefined): boolean {
     const { focusOnFirstError, onError } = this.props;
     const { hasError, next } = applyValidation(this.state, this.props, formData);
     const { errors } = next;
@@ -2149,22 +2216,26 @@ export default class Form<
       this.setSharedState(this.state, next);
     }
     return !hasError;
-  };
+  }
 
-  /** Programmatically validate the form.  If `omitExtraData` is true, the `formData` will first be filtered to remove
-   * any extra data not in a form field. If `onError` is provided, then it will be called with the list of errors the
-   * same way as would happen on form submission.
+  /** Validates the given `formData` as it is, see `FormHandle.validateFormWithFormData()`
    *
+   * @deprecated Use `validateForm(formData)`, which also omits extra data when `omitExtraData` is set
+   * @param formData - The form data to validate
    * @returns - True if the form is valid, false otherwise.
    */
-  validateForm = (): boolean => {
-    const { omitExtraData } = this.props;
-    let { formData: newFormData } = this.state;
-    if (omitExtraData === true) {
-      newFormData = this.state.schemaUtils.omitExtraData(this.state.schema, newFormData);
-    }
-    return this.validateFormWithFormData(newFormData);
-  };
+  validateFormWithFormData = (formData?: T): boolean => this.runValidation(formData);
+
+  /** Programmatically validates the form, see `FormHandle.validateForm()`: the given `formData`, or the rendered data
+   * when none is given. If `omitExtraData` is true, the data is first filtered to remove any extra data not in a form
+   * field. If `onError` is provided, then it will be called with the list of errors the same way as would happen on
+   * form submission.
+   *
+   * @param [formData] - The data to validate in place of the rendered data
+   * @returns - True if the form is valid, false otherwise.
+   */
+  validateForm = (formData: T | undefined = this.state.formData): boolean =>
+    this.runValidation(this.withExtraDataOmitted(formData));
 
   /** Renders the `Form` fields inside the <form> | `tagName`, rendering any errors if needed along with the submit
    * button or any children of the form.

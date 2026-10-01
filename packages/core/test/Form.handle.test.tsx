@@ -68,7 +68,7 @@ describe('FormHandle', () => {
     });
 
     it('reports invalid data to onError instead', () => {
-      // `requestSubmit()` runs the browser's own constraint validation first, so the required input has to be exempt
+      // `submit()` runs the browser's own constraint validation first, so the required input has to be exempt
       // from it for the submit event to reach the form
       const { handle, onSubmit, onError } = mountWithHandle({
         schema: requiredSchema,
@@ -91,8 +91,8 @@ describe('FormHandle', () => {
     });
 
     it('cannot submit when tagName renders something other than a form', () => {
-      // Only a `<form>` has `requestSubmit()`; the documented cost of another `tagName` is that native submission is
-      // gone, and the programmatic one goes with it
+      // Only a `<form>` submits; the documented cost of another `tagName` is that native submission is gone, and the
+      // programmatic one goes with it
       const { handle, onSubmit } = mountWithHandle({ schema, initialFormData: { name: 'a' }, tagName: 'div' });
 
       expect(() => act(() => handle.submit())).not.toThrow();

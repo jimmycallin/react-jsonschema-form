@@ -1140,6 +1140,68 @@ describeOwnerships('operations in one tick', (createFormComponent) => {
     expect(onSubmit.mock.calls[0][0].formData).toEqual({ a: 'new' });
   });
 
+  it('a root replacement and a submit of the same value in one tick submit the edit', () => {
+    const ref = createRef<Form>();
+    const { onSubmit, getFormData } = createFormComponent({ ref, schema, initialFormData: { a: 'old' } });
+
+    act(() => {
+      const next = { a: 'new' };
+      ref.current?.setFieldValue([], next);
+      ref.current?.submit(next);
+    });
+
+    expect(onSubmit).toHaveBeenCalledTimes(1);
+    expect(onSubmit.mock.calls[0][0].formData).toEqual({ a: 'new' });
+    expect(getFormData()).toEqual({ a: 'new' });
+  });
+
+  it('submit(formData) and validateForm(formData) act on their argument without installing it', () => {
+    const ref = createRef<Form>();
+    const required: RJSFSchema = { ...schema, required: ['a', 'b'] };
+    const { node, onSubmit, onError, onChange, getFormData } = createFormComponent({
+      ref,
+      schema: required,
+      initialFormData: { a: 'old' },
+      noHtml5Validate: true,
+    });
+
+    act(() => {
+      expect(ref.current?.validateForm({ a: 'draft' })).toBe(false);
+    });
+    expect(onError).toHaveBeenCalledTimes(1);
+    expect(onError.mock.calls[0][0].map(({ message }: { message?: string }) => message)).toEqual([
+      "must have required property 'b'",
+    ]);
+    expect(getFormData()).toEqual({ a: 'old' });
+    expect(onChange).not.toHaveBeenCalled();
+
+    act(() => {
+      ref.current?.submit({ a: 'draft', b: 'ok' });
+    });
+    expect(onSubmit).toHaveBeenCalledTimes(1);
+    expect(onSubmit.mock.calls[0][0].formData).toEqual({ a: 'draft', b: 'ok' });
+    expect(getFormData()).toEqual({ a: 'old' });
+    expect(onChange).not.toHaveBeenCalled();
+    // A valid submit leaves only the parent's errors on display, so the draft's error is gone with it
+    expect(fieldErrorsById(node)).toEqual({});
+  });
+
+  it('validateForm(formData) validates an edit made in the same tick, which validateForm() cannot see yet', () => {
+    const ref = createRef<Form>();
+    const required: RJSFSchema = { ...schema, required: ['a'] };
+    const { onError } = createFormComponent({ ref, schema: required, initialFormData: {}, noHtml5Validate: true });
+    const results: (boolean | undefined)[] = [];
+
+    act(() => {
+      const next = { a: 'new' };
+      ref.current?.setFieldValue([], next);
+      results.push(ref.current?.validateForm(), ref.current?.validateForm(next));
+    });
+
+    expect(results).toEqual([false, true]);
+    expect(onError).toHaveBeenCalledTimes(1);
+  });
+
   it('an invalid submit in the same tick as an edit reports the edited data and lets later operations run', () => {
     const ref = createRef<Form>();
     const required: RJSFSchema = { ...schema, required: ['a', 'b'] };
@@ -1291,6 +1353,26 @@ describeOwnerships('operations in one tick', (createFormComponent) => {
     await user.click(node.querySelector('#root_foo-commit')!);
 
     expect(fieldErrorsById(node)).toEqual({ root_foo: ['must NOT have fewer than 5 characters'] });
+  });
+});
+
+describe('submitting a self-owned form with omitExtraData', () => {
+  it('keeps the omitted copy of the data it held, and leaves it alone for submit(formData)', async () => {
+    const ref = createRef<Form>();
+    const { node, onSubmit, getFormData } = createFormComponent({
+      ref,
+      schema,
+      initialFormData: { a: 'kept', extra: 1 },
+      omitExtraData: true,
+    });
+
+    await submitForm(node, user);
+    expect(onSubmit.mock.lastCall?.[0].formData).toEqual({ a: 'kept' });
+    expect(getFormData()).toEqual({ a: 'kept' });
+
+    act(() => ref.current?.submit({ a: 'draft', extra: 2 }));
+    expect(onSubmit.mock.lastCall?.[0].formData).toEqual({ a: 'draft' });
+    expect(getFormData()).toEqual({ a: 'kept' });
   });
 });
 
