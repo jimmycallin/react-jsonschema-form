@@ -1,5 +1,5 @@
 import type { ElementType, ReactNode, Ref, SubmitEvent } from 'react';
-import { memo, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { memo, useImperativeHandle, useInsertionEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type {
   CustomValidator,
   ErrorSchema,
@@ -1921,9 +1921,10 @@ function Form<T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends Fo
 
   /** This render, reached through the stable functions below. The fields memoize on their props, so the handlers they
    * receive must keep their identity across renders while acting on the render that was committed last; the same
-   * holds for the handle a parent keeps and for the operations the queue runs. The committed render is the one React
-   * just laid out, so the layout effect is where it is recorded: nothing reads it while rendering, and it holds no
-   * state of its own, only the closures of the last commit, what `this` gives a class component.
+   * holds for the handle a parent keeps and for the operations the queue runs. It is recorded in an insertion effect,
+   * which runs before any child's layout effect, callback ref or `componentDidUpdate()`, so a field reporting a change
+   * from one of those acts on the commit that rendered it, as it would through a class's `this`. Nothing reads it
+   * while rendering, and it holds no state of its own, only the closures of the last commit.
    */
   const rendered: Rendered<T, S, F> = {
     state,
@@ -1939,8 +1940,10 @@ function Form<T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends Fo
     handle,
   };
   const latest = useRef(rendered);
-  useLayoutEffect(() => {
+  useInsertionEffect(() => {
     latest.current = rendered;
+  });
+  useLayoutEffect(() => {
     // What a class ran from its `setState()` callbacks, in the phase they ran in: the callbacks waiting for this
     // commit, which advance the queue and report the committed result
     const callbacks = afterCommit.current;
