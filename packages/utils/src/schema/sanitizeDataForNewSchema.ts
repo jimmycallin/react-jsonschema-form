@@ -93,7 +93,7 @@ function replacementForInvalidEnumValue<S extends StrictRJSFSchema = RJSFSchema>
  * @param rootSchema - The root JSON schema of the entire form
  * @param [newSchema] - The new schema for which the data is being sanitized
  * @param [oldSchema] - The old schema from which the data originated
- * @param [data={}] - The form data associated with the schema, defaulting to an empty object when undefined
+ * @param [data] - The form data associated with the schema
  * @returns - The new form data, with all the fields uniquely associated with the old schema set
  *      to `undefined`. Will return `undefined` if the new schema is not an object containing properties.
  */
@@ -101,7 +101,7 @@ export default function sanitizeDataForNewSchema<
   T = unknown,
   S extends StrictRJSFSchema = RJSFSchema,
   F extends FormContextType = FormContextType,
->(context: SchemaContext<S, F>, rootSchema: S, newSchema?: S, oldSchema?: S, data: any = {}): T {
+>(context: SchemaContext<S, F>, rootSchema: S, newSchema?: S, oldSchema?: S, data?: T): T {
   // By default, we will clear the form data
   let newFormData;
   const newProperties = newSchema?.[PROPERTIES_KEY];
@@ -121,18 +121,18 @@ export default function sanitizeDataForNewSchema<
     // Create a place to store nested data that will be a side-effect of the filter
     const nestedData: GenericObjectType = {};
     keys.forEach((key) => {
-      const formValue = data?.[key];
+      const formValue = getByPath(data, key);
       const isNewProperty = !hasByPath(oldSchema, [PROPERTIES_KEY, key]);
       const oldRawKeyedSchema = getPropertySchema<S>(oldSchema, key);
       const newRawKeyedSchema = getPropertySchema<S>(newSchema, key);
       // Resolve refs, dependencies, if/then/else and allOf so a dependency nested inside this key
       // (not just at the root schema) is taken into account when sanitizing its data (#5250)
-      const oldKeyedSchema = retrieveSchema<T, S, F>(context, oldRawKeyedSchema, rootSchema, formValue);
+      const oldKeyedSchema = retrieveSchema<unknown, S, F>(context, oldRawKeyedSchema, rootSchema, formValue);
       // The old and new raw schema for a key are usually identical (most keys aren't touched by whatever changed),
       // so skip resolving (and re-running any oneOf/dependency validity checks) a second time in that common case.
       const newKeyedSchema = deepEquals(oldRawKeyedSchema, newRawKeyedSchema)
         ? oldKeyedSchema
-        : retrieveSchema<T, S, F>(context, newRawKeyedSchema, rootSchema, formValue);
+        : retrieveSchema<unknown, S, F>(context, newRawKeyedSchema, rootSchema, formValue);
       // Now get types and see if they are the same. A type that was guessed from the data of an `additionalProperties`
       // entry the schema puts no constraint on describes what that data was rather than what the schema requires, so
       // it is treated as no type at all: the data changing type is a change of data, not a change of schema. That only
@@ -154,7 +154,7 @@ export default function sanitizeDataForNewSchema<
           !isWholeValueSelect<S>(newKeyedSchema);
         if (isContainer) {
           // SIDE-EFFECT: process the new schema type of object recursively to save iterations
-          const itemData = sanitizeDataForNewSchema<T, S, F>(
+          const itemData = sanitizeDataForNewSchema<unknown, S, F>(
             context,
             rootSchema,
             newKeyedSchema,
@@ -199,7 +199,7 @@ export default function sanitizeDataForNewSchema<
     });
 
     newFormData = {
-      ...(typeof data === 'string' || Array.isArray(data) ? undefined : data),
+      ...(isObject(data) ? data : undefined),
       ...removeOldSchemaData,
       ...nestedData,
     };
@@ -221,11 +221,11 @@ export default function sanitizeDataForNewSchema<
       const newSchemaItemsRaw = newSchemaItems as S;
       // Resolve refs, dependencies, if/then/else and allOf, not just a direct `$ref`, so the type check below
       // reflects an items schema whose object type is only reachable through one of those keywords (#5250)
-      oldSchemaItems = retrieveSchema<T, S, F>(context, oldSchemaItemsRaw, rootSchema, data as T);
+      oldSchemaItems = retrieveSchema<T, S, F>(context, oldSchemaItemsRaw, rootSchema, data);
       // The old and new raw items schema are usually identical, so skip resolving a second time in that common case
       newSchemaItems = deepEquals(oldSchemaItemsRaw, newSchemaItemsRaw)
         ? oldSchemaItems
-        : retrieveSchema<T, S, F>(context, newSchemaItemsRaw, rootSchema, data as T);
+        : retrieveSchema<T, S, F>(context, newSchemaItemsRaw, rootSchema, data);
       // Now get types and see if they are the same
       const oldSchemaType = getByPath(oldSchemaItems, 'type');
       const newSchemaType = getByPath(newSchemaItems, 'type');

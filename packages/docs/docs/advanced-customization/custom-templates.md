@@ -821,7 +821,7 @@ The following props are passed to a custom field template component:
 - `fieldPath`: The `FieldPath` string identifying where this field's data lives, such as `friends[0].firstName`.
 - `id`: The id of the field in the hierarchy. You can use it to render a label targeting the wrapped widget.
 - `classNames`: A string containing the base Bootstrap CSS classes, merged with any [custom ones](../api-reference/uiSchema.md#classnames) defined in your uiSchema.
-- `style`: An object containing the `StyleHTMLAttributes` defined in the `uiSchema`.
+- `style`: An object containing the `CSSProperties` defined in the `uiSchema`.
 - `label`: The computed label for this field, as a string.
 - `keyName`: The name of this field's property in its parent object, carrying none of the decoration `label` may have picked up — a `ui:title`, or the marker a `deprecated` schema adds.
   The key of an `additionalProperties` property is this rather than its `label`, so renaming one reads and writes the real key.
@@ -1286,7 +1286,7 @@ The following props are passed to the `WrapIfAdditionalTemplate`:
 
 - `id`: The id of the field in the hierarchy. You can use it to render a label targeting the wrapped widget.
 - `classNames`: A string containing the base Bootstrap CSS classes, merged with any [custom ones](../api-reference/uiSchema.md#classnames) defined in your uiSchema.
-- `style`: An object containing the `StyleHTMLAttributes` defined in the `uiSchema`.
+- `style`: An object containing the `CSSProperties` defined in the `uiSchema`.
 - `label`: The computed label for this field, as a string.
 - `keyName`: The name of this field's property in its parent object, carrying none of the decoration `label` may have picked up — a `ui:title`, or the marker a `deprecated` schema adds.
   The key of an `additionalProperties` property is this rather than its `label`, so renaming one reads and writes the real key.

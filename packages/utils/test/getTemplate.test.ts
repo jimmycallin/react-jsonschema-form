@@ -120,6 +120,18 @@ describe('getTemplate', () => {
     expect(getTemplate(customTemplateKey, newRegistry)).toBe(FakeTemplate);
   });
 
+  it('returns a uiOptions template that is an object component, like one made by memo()', () => {
+    const MemoTemplate = { $$typeof: Symbol.for('react.memo'), type: CustomTemplate };
+
+    expect(getTemplate('CustomTemplate', registry, { CustomTemplate: MemoTemplate })).toBe(MemoTemplate);
+  });
+  it('falls back to the registry when the uiOptions value is not a component or a registered name', () => {
+    const newRegistry = { ...registry, templates: { ...registry.templates, CustomTemplate: FakeTemplate } };
+
+    expect(getTemplate('CustomTemplate', newRegistry, { CustomTemplate: 'NotRegistered' })).toBe(FakeTemplate);
+    expect(getTemplate('CustomTemplate', newRegistry, { CustomTemplate: 42 })).toBe(FakeTemplate);
+  });
+
   it('returns undefined when the custom template is not in the registry', () => {
     const customTemplateKey = 'CustomTemplate';
 
