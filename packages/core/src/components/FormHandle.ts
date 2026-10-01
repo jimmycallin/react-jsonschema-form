@@ -19,10 +19,17 @@ export interface FormHandle<T = unknown> {
    * read-only: mutating it mutates what the form renders.
    */
   getFormData(): EventFormData<T>;
-  /** Programmatically submits the `Form`, running validation and `onSubmit`/`onError` as a submit button would. Queued
-   * behind any edit, `setFieldValue()` or reset in flight, so it submits the data they produced.
+  /** Programmatically submits the `Form`, running validation and `onSubmit`/`onError` as a submit button would, on the
+   * data it is given, or, when none is, on the data the form holds once the edits, `setFieldValue()` calls and resets
+   * in flight have run: it is queued behind them. Data it is given is never installed: a self-owned form keeps what it
+   * holds, a parent-owned form renders what its parent passes, and nothing is proposed. A submit of the data the form
+   * holds keeps, as it always has, the copy without the extra data `omitExtraData` drops. The submit goes through the
+   * DOM, so HTML5 validation runs unless `noHtml5Validate`, and a `tagName` other than `form` cannot submit. Passing
+   * `undefined` is the same as passing nothing.
+   *
+   * @param [formData] - The data to submit in place of the data the form holds
    */
-  submit(): void;
+  submit(formData?: T): void;
   /** Clears the validation errors and, for a self-owned form, resets the data to `initialFormData` and the schema's
    * defaults; a parent-owned form's data is the parent's to reset. Queued behind any operation in flight.
    */
@@ -32,15 +39,18 @@ export interface FormHandle<T = unknown> {
    * the queued change runs, the way a field's `onChange` treats one.
    */
   setFieldValue(fieldPath: string | FieldPathList, newValue?: unknown): void;
-  /** Validates the current form data, filtering extra data first when `omitExtraData` is set, and calls `onError` as a
-   * submission would. It returns its answer at once, so it reads committed data like `getFormData()`: an edit or
-   * `setFieldValue()` in the same tick is not validated until React commits it. `submit()` is queued and sees them.
+  /** Validates the given `formData`, or the committed data when none is given, filtering extra data first when
+   * `omitExtraData` is set, and calls `onError` as a submission would. It returns its answer at once, so without an
+   * argument it reads committed data like `getFormData()`: an edit or `setFieldValue()` made in the same tick is
+   * validated by passing its value. The data is never installed. Passing `undefined` is the same as passing nothing.
    *
+   * @param [formData] - The data to validate in place of the committed data
    * @returns - True if the form is valid, false otherwise.
    */
-  validateForm(): boolean;
-  /** Validates the given `formData` without making it the form's data, calling `onError` as a submission would.
+  validateForm(formData?: T): boolean;
+  /** Validates the given `formData` as it is, without omitting extra data, calling `onError` as a submission would.
    *
+   * @deprecated Use `validateForm(formData)`, which omits extra data when `omitExtraData` is set like a submit does
    * @returns - True if the form is valid, false otherwise.
    */
   validateFormWithFormData(formData?: T): boolean;
