@@ -11,9 +11,6 @@ import { createFormComponent, createFormRef } from './testUtils.tsx';
 
 const schema: RJSFSchema = { type: 'object', properties: { name: { type: 'string' } } };
 
-/** The supported pattern: the ref is typed as the class because TSX types a class element's `ref` by its instance,
- * and consuming code narrows to the handle so nothing outside it is relied upon.
- */
 /** The handle a mounted `Form` put on `ref` */
 function currentHandle(ref: RefObject<FormHandle | null>): FormHandle {
   if (!ref.current) {
