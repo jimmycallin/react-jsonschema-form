@@ -12,8 +12,7 @@ import { customizeValidator } from '@rjsf/validator-ajv8';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 
-import type { FormProps, IChangeEvent } from '../src/index.ts';
-import type Form from '../src/index.ts';
+import type { FormHandle, FormProps, IChangeEvent } from '../src/index.ts';
 import {
   ComposingParent,
   createFormComponent,
@@ -114,7 +113,7 @@ describeRepeated('Form common: event handlers', (createFormComponent) => {
       };
 
       const secondOnChange = vi.fn();
-      const ref = createRef<Form>();
+      const ref = createRef<FormHandle>();
 
       const { onChange, rerender } = createFormComponent({ ref, schema, initialFormData: { foo: 'bar1' } });
 
@@ -564,12 +563,12 @@ describeRepeated('Form common: event handlers', (createFormComponent) => {
     });
     it('should keep a form value set in the same render as an unrelated prop change', async () => {
       const schema: RJSFSchema = { type: 'object', properties: { name: { type: 'string' } } };
-      const ref = createRef<Form>();
+      const ref = createRef<FormHandle>();
       const { node, rerender } = createFormComponent({ schema, ref });
 
       await user.type(node.querySelector<HTMLInputElement>('#root_name')!, 'a');
       act(() => {
-        ref.current!.setFieldValue('name', 'x');
+        ref.current?.setFieldValue('name', 'x');
         rerender({ schema, ref, disabled: true });
       });
 
@@ -620,10 +619,10 @@ describeRepeated('Form common: event handlers', (createFormComponent) => {
     });
     it('should clear the errors of an uncontrolled form when noValidate is turned on', () => {
       const schema: RJSFSchema = { type: 'object', properties: { name: { type: 'string' } }, required: ['name'] };
-      const ref = createRef<Form>();
+      const ref = createRef<FormHandle>();
       const { node, rerender } = createFormComponent({ schema, ref });
       act(() => {
-        ref.current!.validateForm();
+        ref.current?.validateForm();
       });
       expect(errorListMessages(node)).toHaveLength(1);
 

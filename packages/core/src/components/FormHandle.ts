@@ -2,10 +2,8 @@ import type { FieldPathList, RJSFValidationError, ValidationData } from '@rjsf/u
 
 import type { EventFormData } from './IChangeEvent.ts';
 
-/** The imperative surface a `Form` exposes through its `ref`. It is the supported alternative to holding a ref to the
- * `Form` class instance, whose `state` and lifecycle are internals rather than API. A `Form` will be either
- * parent-owned (a `formData` prop, accepted through `onChange`) or self-owned (seeded by `initialFormData`); this
- * handle is the same for both, and it is the contract a later function-component `Form` keeps.
+/** The imperative surface a `Form` exposes through its `ref`. A `Form` will be either parent-owned (a `formData`
+ * prop, accepted through `onChange`) or self-owned (seeded by `initialFormData`); this handle is the same for both.
  *
  * Every member acts on the data the form renders, or on the data it is given. Nothing waits for a commit: an edit and
  * a read, or two edits, made in the same tick each see the render they were made from, as two changes to a
@@ -13,8 +11,6 @@ import type { EventFormData } from './IChangeEvent.ts';
  * (`getFormData()`) and actions (`validateForm()`, `submit()`), and an action never installs data it is given. A
  * sequence that needs fresher data than the render is spelled with the data-taking forms: one root replacement
  * instead of several `setFieldValue()` calls, then `submit(data)` or `validateForm(data)` with that same value.
- *
- * Only the members listed here are supported. Everything else on the class instance may change without notice.
  */
 export interface FormHandle<T = unknown> {
   /** Returns the form data the `Form` currently renders: the `formData` prop of a parent-owned form, the committed

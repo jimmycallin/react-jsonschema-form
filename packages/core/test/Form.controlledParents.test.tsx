@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useState } from 'react';
 import type { FieldProps, RJSFSchema, UiSchema, WidgetProps } from '@rjsf/utils';
 import { getTemplates, getUiOptions } from '@rjsf/utils';
 import validator from '@rjsf/validator-ajv8';
@@ -140,5 +140,53 @@ describe('controlled parent harnesses', () => {
     await user.type(input(container, 'root_name'), 'x');
 
     await waitFor(() => expect(committed.at(-1)).toEqual({ name: 'x', other: null }));
+  });
+
+  it('a dependent field clearing itself from a layout effect proposes from the commit that rendered it', async () => {
+    // A layout effect runs before the form has recorded the commit's handlers in a layout effect of its own, so the
+    // clear must still act on the commit it fired in: proposing from the previous one would hand the parent back the
+    // sibling's old value and undo the edit it just rendered
+    function ClearWhenSiblingChanges({
+      formData,
+      fieldPath,
+      onChange,
+      registry,
+    }: FieldProps<string | null | undefined, RJSFSchema, Data>) {
+      const sibling = registry.formContext.name;
+      useLayoutEffect(() => {
+        if (sibling) {
+          onChange(null, fieldPath);
+        }
+      }, [sibling, fieldPath, onChange]);
+      return <span id='root_other'>{formData ?? 'null'}</span>;
+    }
+    const uiSchema: UiSchema<Data, RJSFSchema, Data> = { other: { 'ui:field': ClearWhenSiblingChanges } };
+    const proposals: (Data | undefined)[] = [];
+    function Parent() {
+      const [data, setData] = useState<Data | undefined>({ name: '', other: 'keep' });
+      return (
+        <Form<Data, RJSFSchema, Data>
+          schema={schema}
+          uiSchema={uiSchema}
+          validator={validator}
+          formData={data}
+          formContext={{ name: data?.name }}
+          onChange={(event) => {
+            proposals.push(event.formData);
+            setData(event.formData);
+          }}
+        />
+      );
+    }
+    const { container } = render(<Parent />);
+
+    await user.type(input(container, 'root_name'), 'x');
+
+    await waitFor(() => expect(proposals).toHaveLength(2));
+    expect(proposals).toEqual([
+      { name: 'x', other: 'keep' },
+      { name: 'x', other: null },
+    ]);
+    expect(input(container, 'root_name')).toHaveValue('x');
   });
 });

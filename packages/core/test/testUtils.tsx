@@ -1,4 +1,4 @@
-import type { ComponentType, RefObject } from 'react';
+import type { ComponentType } from 'react';
 import { createRef, useState } from 'react';
 import type { GenericObjectType, ValidatorType } from '@rjsf/utils';
 import { createSchemaUtils, noop } from '@rjsf/utils';
@@ -7,16 +7,14 @@ import { act, render, fireEvent } from '@testing-library/react';
 import type { UserEvent } from '@testing-library/user-event';
 import type { Mock, MockInstance } from 'vitest';
 
-import type { FormProps, IChangeEvent } from '../src/index.ts';
+import type { FormHandle, FormProps, IChangeEvent } from '../src/index.ts';
 import Form from '../src/index.ts';
 
 export type NoValFormProps = Omit<FormProps, 'validator'>;
 
-/** A ref for a `Form`, typed the way TSX requires for a class element. The one place the tests name that type, so the
- * function-component `Form` changes it to `RefObject<FormHandle>` here and nowhere else.
- */
+/** A ref for a `Form`, which hands back its `FormHandle` */
 export function createFormRef() {
-  return createRef<Form>();
+  return createRef<FormHandle>();
 }
 
 export function input(container: HTMLElement, id: string) {
@@ -162,7 +160,8 @@ export function createComponent(Component: ComponentType<FormProps>, theProps: F
   if (!node) {
     throw new Error('node is not defined');
   }
-  const getFormData = () => (ref as RefObject<Form | null>).current?.getFormData();
+  // A callback ref passed in keeps the handle to itself
+  const getFormData = () => (typeof ref === 'function' || ref === null ? undefined : ref.current?.getFormData());
 
   return { container, node, onChange, onError, onSubmit, rerender: rerenderFunction, unmount, getFormData };
 }
