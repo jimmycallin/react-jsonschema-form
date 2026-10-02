@@ -1754,14 +1754,18 @@ interface RenderedHandlers<T> {
 
 /** Hands back functions that keep their identity for the life of the form and forward to the handlers of the render
  * that was committed last. The fields memoize on their props, so the handlers they receive must keep their identity
- * across renders; so must the handle a parent keeps, which may hold on to `ref.current`. A function component has one way to give a stable function the latest committed closures: a ref written
- * after each commit and read only from events, the `useEffectEvent` polyfill the React docs give, which is what React
- * itself does for a class's `this`. This is the one ref holding something other than a DOM node in `Form`, and the
- * one effect: it holds no state of its own, nothing reads it while rendering, and it sequences nothing.
+ * across renders; so must the handle a parent keeps, which may hold on to `ref.current`. React documents no primitive
+ * for this: `useCallback` would hand out a new function whenever a prop the handlers read changes, the parent's
+ * `onChange` included, and react.dev says an Effect Event must never be passed to other components. So this is the
+ * userland `useEvent` from React's RFC (reactjs/rfcs#220): a ref written after each commit, never during rendering as
+ * react.dev's `useRef` caveats require, and read only from events. This is the one ref holding something other than a
+ * DOM node in `Form`, and the one effect: it holds no state of its own and it sequences nothing.
  *
  * It is written in an insertion effect, which runs before any child's layout effect, callback ref or
- * `componentDidUpdate`: a field that reports a change from one of those in the commit that rendered it must act on
- * this render, not the previous one, or a parent-owned form would propose from data its parent has already moved past.
+ * `componentDidUpdate`, the timing that RFC gives the built-in version. react.dev documents `useInsertionEffect` for
+ * CSS-in-JS libraries; it is used here for that timing alone, because a field that reports a change from one of those
+ * in the commit that rendered it must act on this render, not the previous one, or a parent-owned form would propose
+ * from data its parent has already moved past.
  *
  * @param rendered - The handlers and the handle of the current render
  * @returns - Stable functions forwarding to the handlers of the render committed last
