@@ -2111,11 +2111,12 @@ export default class Form<
     );
   }
 
-  /** Programmatically submits the `Form`, see `FormHandle.submit()`. The submit goes through the DOM so that HTML5
-   * validation runs, a DOM listener on the form sees the event, and `onSubmit` receives one. Without data it is the
-   * form's own submission, `requestSubmit()`. With data, which `requestSubmit()` cannot carry, it runs the browser's
-   * constraint validation, unless `noHtml5Validate`, and dispatches one bubbling, cancelable submit event that React
-   * dispatches to `onSubmit`, carrying `formData`.
+  /** Programmatically submits the `Form`, see `FormHandle.submit()`. The submit goes through the DOM so that a DOM
+   * listener on the form sees the event and `onSubmit` receives one. Without data it is the form's own submission,
+   * `requestSubmit()`, so HTML5 validation runs. With data, which `requestSubmit()` cannot carry, it dispatches one
+   * bubbling, cancelable submit event that React dispatches to `onSubmit`, carrying `formData`. HTML5 validation is
+   * skipped then: it checks the inputs on screen, which need not show `formData` yet, and the form's own validation
+   * checks `formData` itself.
    *
    * @param [formData] - The data to submit in place of the data the form holds
    */
@@ -2136,7 +2137,7 @@ export default class Form<
     }
     // Only a `<form>` submits; the documented cost of another `tagName` is that submission, native and programmatic,
     // is gone with it
-    if (!(form instanceof HTMLFormElement) || (!this.props.noHtml5Validate && !form.reportValidity())) {
+    if (!(form instanceof HTMLFormElement)) {
       return;
     }
     form.dispatchEvent(createSubmitEvent<T>({ formData }));
