@@ -24,6 +24,7 @@ import {
   createFormComponent,
   createParentLog,
   expectToHaveBeenCalledWithFormData,
+  fieldErrorsById,
   submitForm,
 } from './testUtils.tsx';
 import { TextWidgetTest } from './TextWidgetTest.tsx';
@@ -3966,7 +3967,7 @@ describe('ArrayField', () => {
           </div>
         );
       }
-      const { node, onChange } = createFormComponent({
+      const { node, getFormData } = createFormComponent({
         schema,
         initialFormData: ['a', 'b'],
         templates: { ArrayFieldTemplate: AddThreeTemplate, ArrayFieldItemTemplate: ExposedArrayKeyItemTemplate },
@@ -3974,13 +3975,13 @@ describe('ArrayField', () => {
 
       await user.click(screen.getByRole('button', { name: 'Add three' }));
 
-      // Each add is an updater applied to the items the previous one produced, so none of them is lost
-      expectToHaveBeenCalledWithFormData(onChange, ['a', 'b', undefined, undefined, undefined], 'root');
+      // Each add is an updater the form's commit applies to the items the previous one produced, so none of them is lost
+      expect(getFormData()).toEqual(['a', 'b', undefined, undefined, undefined]);
       expect(new Set(rowKeys(node)).size).toBe(5);
     });
 
     it('should add no item when a move queued behind a remove names an index the remove took away', async () => {
-      const { node, onChange } = createFormComponent({
+      const { node, getFormData } = createFormComponent({
         schema,
         initialFormData: ['a', 'b', 'c'],
         templates: { ArrayFieldItemTemplate: RemoveThenMoveUpItemTemplate },
@@ -3988,12 +3989,12 @@ describe('ArrayField', () => {
 
       await user.click(node.querySelectorAll('.remove-then-move-up')[2]);
 
-      expectToHaveBeenCalledWithFormData(onChange, ['a', 'b'], 'root');
+      expect(getFormData()).toEqual(['a', 'b']);
       expect(node.querySelectorAll('.rjsf-array-item')).toHaveLength(2);
     });
 
     it('should keep the errors in place when a move queued behind a remove names an index the remove took away', async () => {
-      const { node, onChange } = createFormComponent({
+      const { node, getFormData } = createFormComponent({
         schema: { type: 'array', items: { type: 'string', minLength: 2 } },
         initialFormData: ['aa', 'b', 'cc'],
         templates: { ArrayFieldItemTemplate: RemoveThenMoveUpItemTemplate },
@@ -4002,9 +4003,8 @@ describe('ArrayField', () => {
 
       await user.click(node.querySelectorAll('.remove-then-move-up')[2]);
 
-      const event = onChange.mock.lastCall?.[0];
-      expect(event?.formData).toEqual(['aa', 'b']);
-      expect(event?.errorSchema).toEqual({ 1: { __errors: ['must NOT have fewer than 2 characters'] } });
+      expect(getFormData()).toEqual(['aa', 'b']);
+      expect(fieldErrorsById(node)).toEqual({ root_1: ['must NOT have fewer than 2 characters'] });
     });
   });
 });

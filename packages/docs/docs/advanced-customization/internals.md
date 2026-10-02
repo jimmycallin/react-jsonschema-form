@@ -101,13 +101,13 @@ function saveDraft() {
 <Form ref={formRef} schema={schema} validator={validator} initialFormData={{ title: 'Untitled' }} />;
 ```
 
-It reads committed data, so an edit or `setFieldValue()` in the same tick is visible only after React commits. With a `formData` prop it returns that prop: the form renders nothing else, so a proposal your `onChange` handler declined is never returned. A parent that wants to keep every proposal, including several made in one tick, stores the event's updater, `setData(event.applyTo)`; see [`onChange`](../api-reference/form-props.md#onchange).
+It reads the render, so an edit or `setFieldValue()` in the same tick is visible only after React commits, and inside `onChange` it returns the previous value: there, `event.formData` is the edit. With a `formData` prop it returns that prop: the form renders nothing else, so a proposal your `onChange` handler declined is never returned. A parent that wants to keep every proposal, including several made in one tick, stores the event's updater, `setData(event.applyTo)`; see [`onChange`](../api-reference/form-props.md#onchange).
 
 ## Submit form programmatically
 
 You can use the reference to get your `Form` component and call the `submit` method to submit the form programmatically without a submit button.
 This method will dispatch the `submit` event of the form, and the function, that is passed to `onSubmit` props, will be called.
-It is queued behind any change, `setFieldValue()` or reset still in flight, so `setFieldValue('title', 'Draft'); submit();` submits the new title. `validateForm()` returns its result immediately instead, so it validates the data React has already committed. Both also take the data to act on: `submit(data)` validates and submits `data`, and `validateForm(data)` validates it, without making it the form's data.
+It submits the data the form renders, or the data it is given: `submit(data)` validates and submits `data` without making it the form's data, so a set-and-submit is a root replacement followed by a submit of the same value, `setFieldValue([], next); submit(next);`. A `submit()` in the same tick as an edit submits the data before the edit, since the edit is not rendered yet. `validateForm()` and `validateForm(data)` work the same way and return their result at once.
 
 ```tsx
 import { createRef } from 'react';
@@ -135,7 +135,7 @@ formRef.current.submit();
 ## Update field value in form programmatically
 
 You can use the reference to get your `Form` component and call the `setFieldValue(fieldPath: string | FieldPathList, newValue?: unknown): void` method to change the value of a field.
-This method will dispatch the `onChange` event of the form.
+This method will dispatch the `onChange` event of the form, with the change applied to the data the form renders. Two calls in one tick each report their own change applied to the rendered data; write several fields at once by replacing the root instead.
 
 ```tsx
 import { createRef } from 'react';

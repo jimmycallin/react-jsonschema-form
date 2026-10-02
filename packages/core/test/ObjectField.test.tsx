@@ -1362,7 +1362,7 @@ describe('ObjectField', () => {
           </div>
         );
       }
-      const { onChange } = createFormComponent({
+      const { getFormData } = createFormComponent({
         schema,
         initialFormData: { first: 1 },
         templates: { ObjectFieldTemplate: AddTwoTemplate },
@@ -1370,12 +1370,9 @@ describe('ObjectField', () => {
 
       await user.click(screen.getByRole('button', { name: 'Add two' }));
 
-      // Each add is an updater applied to the data the previous one produced, so the second takes the next free name
-      expectToHaveBeenCalledWithFormData(
-        onChange,
-        { first: 1, newKey: expect.any(String), 'newKey-1': expect.any(String) },
-        'root',
-      );
+      // Each add is an updater the form's commit applies to the data the previous one produced, so the second takes the
+      // next free name
+      expect(getFormData()).toEqual({ first: 1, newKey: expect.any(String), 'newKey-1': expect.any(String) });
     });
 
     it('should preserve all properties when two keys are renamed in quick succession', async () => {

@@ -624,6 +624,7 @@ Sometimes you may want to trigger events or modify external state when a field h
 ## onChange
 
 Called with the same first argument as `onSubmit` for every edit: user input, `setFieldValue()`, and blur validation or omission. It is never called on mount or when a prop changes. For a form whose data you own, the event is a proposal: see [`formData`](#formdata) for how to apply it.
+It is called from the handler that made the edit, before React commits, with the edit applied to the data the form renders, as a controlled `<input>` reports a change: two edits in one tick each report their own, and `getFormData()` inside the handler still returns the previous value. A handler that adds to a proposal composes it, `setData({ ...event.formData, b })`, rather than calling `setFieldValue()` from inside `onChange`.
 It will also receive, as the second argument, the `id` of the field which experienced the change.
 Generally, this will be the `id` of the field for which input data is modified.
 In the case of adding/removing of new fields in arrays or objects with `additionalProperties` or `patternProperties` and the rearranging of items in arrays, the `id` will be that of the array or object itself, rather than the item/field being added, removed or moved.
@@ -635,7 +636,7 @@ const [data, setData] = useState(initial);
 <Form formData={data} onChange={(event) => setData(event.applyTo)} />;
 ```
 
-Stored this way, edits made in one event compose in your own update queue, each applied to the previous one's result, even when you update inside `startTransition()`, from an external store or after a debounce. Stored as `setData(event.formData)`, they compose only when you hand the data back in the render that follows; otherwise the last proposal wins, as with a controlled `<input>`.
+Stored this way, edits made in one event compose in your own update queue, each applied to the previous one's result, even when you update inside `startTransition()`, from an external store or after a debounce. Stored as `setData(event.formData)`, the last proposal wins, as with a controlled `<input>`.
 `applyTo` settles `base` against the schema resolved for the data the form rendered, so a `base` whose data selects a different `if`/`then`/`else` branch or `oneOf` option than the rendered data is sanitized as though it moved from the rendered data's branch.
 
 ## onError

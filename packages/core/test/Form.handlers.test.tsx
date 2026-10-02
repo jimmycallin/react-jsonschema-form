@@ -178,16 +178,15 @@ describeRepeated('Form common: event handlers', (createFormComponent) => {
         },
       };
 
-      let formData = {};
+      const reported: unknown[] = [];
       const ids: (string | undefined)[] = [];
       const onChange: FormProps['onChange'] = (data, id) => {
-        const { formData: fd } = data;
-        formData = { ...formData, ...(fd as GenericObjectType) };
+        reported.push(data.formData);
         ids.push(id);
       };
       createFormComponent({
         schema,
-        initialFormData: formData,
+        initialFormData: {},
         onChange,
         uiSchema,
       });
@@ -196,7 +195,13 @@ describeRepeated('Form common: event handlers', (createFormComponent) => {
         expect(ids).toHaveLength(2);
       });
 
-      expect(formData).toEqual({ foo: 'bar2', baz: 'blah2' });
+      // Both changes were made in one commit, so each was computed from the rendered value and reports its own
+      // field's change alone. What the form holds afterwards is the owner's business: a self-owned form composes the
+      // two commits, an accepting parent keeps the last proposal unless it merges them by `id`
+      expect(reported).toEqual([
+        { foo: 'bar2', baz: 'blah' },
+        { foo: 'bar', baz: 'blah2' },
+      ]);
       // One id per updated component; the defaults the seed was given are not reported
       expect(ids).toEqual(['root_foo', 'root_baz']);
     });
@@ -867,9 +872,9 @@ describeRepeated('Form common: event handlers', (createFormComponent) => {
       });
     });
 
-    it('applies each updater a field passes to onChange to the data the form holds when it runs', async () => {
-      // Both updaters run against the latest data, so the second sees the first's result rather than the formData the
-      // field rendered with
+    it('reports each updater a field passes to onChange applied to the rendered data, and carries it in applyTo', async () => {
+      // Both updaters are applied to the data the form renders, so each event proposes `{ count: 2 }`; the edit each
+      // carries in `applyTo` is what composes them, here as the form's own commit and a composing parent both do
       function IncrementTwiceField({ fieldPath, formData, onChange }: FieldProps<number>) {
         return (
           <button
@@ -884,7 +889,7 @@ describeRepeated('Form common: event handlers', (createFormComponent) => {
         );
       }
       const onChange = vi.fn<(event: IChangeEvent, id?: string) => void>();
-      const { node } = createFormComponent({
+      createFormComponent({
         schema: { type: 'object', properties: { count: { type: 'number' } } },
         uiSchema: { count: { 'ui:field': IncrementTwiceField } },
         initialFormData: { count: 1 },
@@ -893,11 +898,9 @@ describeRepeated('Form common: event handlers', (createFormComponent) => {
 
       await user.click(screen.getByRole('button', { name: '1' }));
 
-      expectToHaveBeenCalledWithFormData(onChange, { count: 3 }, 'root_count');
-      expect(node.querySelector('button[type=button]')).toHaveTextContent('3');
-      // Each event's `applyTo` carries its own updater, so a parent composing them lands on the same result
       const [first] = onChange.mock.calls[0];
       const [second] = onChange.mock.calls[1];
+      expect([first.formData, second.formData]).toEqual([{ count: 2 }, { count: 2 }]);
       expect(second.applyTo(first.applyTo({ count: 1 }))).toEqual({ count: 3 });
     });
 

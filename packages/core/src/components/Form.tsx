@@ -419,34 +419,6 @@ function createSubmitEvent<T>(payload: SubmitPayload<T>): Event {
   return Object.assign(event, { [SUBMIT_DATA]: payload });
 }
 
-/** An operation waiting in the `Form` queue */
-interface QueuedOperation {
-  /** Runs the operation, which calls `advance` once React has committed its result */
-  run: (advance: () => void) => void;
-  /** Whether the operation is a field change or `setFieldValue()` */
-  isChange: boolean;
-}
-
-/** Rethrows `error` from a timer: thrown inside React's commit phase, it would unmount the form */
-function rethrowOutsideCommit(error: unknown) {
-  setTimeout(() => {
-    throw error;
-  });
-}
-
-/** Runs `emit` from a `setState()` callback, then advances the queue even if it threw, so a throwing `onChange` or
- * `onSubmit` can neither stall later operations nor unmount the form
- */
-function advanceAfter(advance: () => void, emit: () => void) {
-  try {
-    emit();
-  } catch (error) {
-    rethrowOutsideCommit(error);
-  } finally {
-    advance();
-  }
-}
-
 /** The part of the state that rendering derives from the props and the data alone: the schema utilities, the root and
  * resolved schemas, the uiSchema and the registry. Error and edit bookkeeping is the rest of `FormState`.
  */
@@ -1295,7 +1267,8 @@ function applyChangeData<T, S extends StrictRJSFSchema, F extends FormContextTyp
   const { fieldPath } = change;
   // The single place where a `FieldPath` is parsed back into segments for writing into the formData
   const path = fieldPathToList(fieldPath);
-  // An updater is applied to what the form holds now, which the queue guarantees includes every earlier change
+  // An updater is applied to what `current` holds, so a change re-applied on top of an earlier one in the same tick
+  // builds on that one's result
   const oldValue = path.length === 0 ? current.formData : getByPath<T | undefined>(current.formData, path);
   const newValue = resolveFieldChange(change.newValue, oldValue);
   const { omitExtraData, liveOmit, disabled, readonly } = props;
@@ -1408,14 +1381,12 @@ function applyChangeData<T, S extends StrictRJSFSchema, F extends FormContextTyp
  * @param current - The state the change applies to
  * @param change - The change to apply
  * @param props - The current props
- * @param deferLiveValidate - Whether live validation waits for a later queued change; it runs once, for the last one
  * @returns - The next state, sharing every unchanged subtree with `current`
  */
 function applyChange<T, S extends StrictRJSFSchema, F extends FormContextType>(
   current: FormState<T, S, F>,
   change: PendingChange<T>,
   props: FormProps<T, S, F>,
-  deferLiveValidate: boolean,
 ): FormState<T, S, F> {
   const { formData: newFormData, context, oldValue, newValue, path } = applyChangeData(current, change, props);
   const isRootPath = path.length === 0;
@@ -1509,7 +1480,7 @@ function applyChange<T, S extends StrictRJSFSchema, F extends FormContextType>(
     clearedCustomError = true;
   }
   let next: Partial<FormState<T, S, F>> = { formData: newFormData, customErrors };
-  if (mustValidate && !deferLiveValidate) {
+  if (mustValidate) {
     const liveValidation = runLiveValidation(props, context, newFormData, customErrors, context.retrievedSchema);
     next = { ...next, ...liveValidation };
   } else if ((!noValidate && newErrorSchema) || clearedCustomError) {
@@ -1540,12 +1511,14 @@ function applyReset<T, S extends StrictRJSFSchema, F extends FormContextType>(
   props: FormProps<T, S, F>,
 ): FormState<T, S, F> {
   const { formData, context } = deriveFormData(current, props.initialFormData, { isReset: true }, props);
+  // `extraErrors` are the parent's and stay; merged here so the event carries what the render shows
+  const { errors, errorSchema } = mergeErrors({ errors: [], errorSchema: {} }, props.extraErrors);
   return {
     ...current,
     ...context,
     formData,
-    errorSchema: {},
-    errors: [],
+    errorSchema,
+    errors,
     schemaValidationErrors: [],
     schemaValidationErrorSchema: {},
     // The reset pass has generated the initial defaults, so the next unrelated recompute is not an initial pass and
@@ -1618,7 +1591,7 @@ function applyValidation<T, S extends StrictRJSFSchema, F extends FormContextTyp
     // are gone; the validator's own results are empty for both
     next = { ...current, errors, errorSchema, schemaValidationErrors: [], schemaValidationErrorSchema: {} };
   }
-  // Unlike the other `apply*` functions this one shares here rather than leaving it to `setSharedState()`, because
+  // Unlike the other `apply*` functions this one shares here rather than leaving it to `commit()`, because
   // the caller decides whether to commit at all by comparing the result to the state it started from
   return { hasError, next: replaceEqualDeep(current, next) };
 }
@@ -1663,39 +1636,39 @@ export default class Form<
    */
   formElement: RefObject<HTMLElement | null>;
 
-  /** The operations waiting to run, in order: field changes, `setFieldValue()` calls, blurs, submits and resets. The
-   * first one is running; each advances the queue once React has committed its result, so the next one reads props that already
-   * hold a parent's response to it.
+  /** Commits the owned half of `next`, which `reapply` computed from `current`, the state the operation read. Under
+   * batching an earlier operation in the same tick may already have moved the state on, in which case the operation
+   * is re-applied to what that one produced, so both land. The event the caller emits stays the one computed from
+   * `current`: it describes this operation applied to what the form rendered, which is what a controlled `<input>`
+   * reports too. Every unchanged subtree keeps its reference, so fields' memo boundaries hold across the update; a
+   * parent-owned form commits its errors and nothing else, see `PARENT_OWNED_COMMIT_KEYS`.
+   *
+   * @param current - The state the operation was computed from
+   * @param next - The operation's result for `current`
+   * @param reapply - Computes the operation's result for another base
    */
-  private queue: QueuedOperation[] = [];
-
-  /** `setState` sharing every unchanged subtree of `state` with the current state, so fields' memo boundaries hold
-   * across the update. The updater form keeps it correct under batching. A parent-owned form commits its errors and
-   * nothing else, see `PARENT_OWNED_COMMIT_KEYS`.
-   */
-  private setSharedState(from: FormState<T, S, F>, next: FormState<T, S, F>, callback?: () => void) {
-    // React merges the partial itself; its `Pick` typing has no name for a key set decided at run time
-    const changed = {} as FormState<T, S, F>;
-    for (const key of Object.keys(next) as (keyof FormState<T, S, F>)[]) {
-      if (next[key] !== from[key]) {
-        Object.assign(changed, { [key]: next[key] });
-      }
-    }
+  private commit(
+    current: FormState<T, S, F>,
+    next: FormState<T, S, F>,
+    reapply: (base: FormState<T, S, F>) => FormState<T, S, F>,
+  ) {
     this.setState((prevState) => {
-      if (prevState.isControlled) {
-        const owned = {} as FormState<T, S, F>;
-        for (const key of PARENT_OWNED_COMMIT_KEYS) {
-          if (key in changed) {
-            Object.assign(owned, { [key]: changed[key] });
-          }
+      const shared = replaceEqualDeep(prevState, prevState === current ? next : reapply(prevState));
+      if (shared === prevState || !prevState.isControlled) {
+        if (isDevelopment && !prevState.isControlled) {
+          // A re-applied operation produces data the handler never saw, so the handler's freeze did not reach it
+          freezeFormData(shared.formData);
         }
-        return replaceEqualDeep(prevState, owned);
+        return shared;
       }
-      if (isDevelopment && 'formData' in changed) {
-        freezeFormData(changed.formData);
+      let owned = prevState;
+      for (const key of PARENT_OWNED_COMMIT_KEYS) {
+        if (shared[key] !== prevState[key]) {
+          owned = { ...owned, [key]: shared[key] };
+        }
       }
-      return replaceEqualDeep(prevState, changed);
-    }, callback);
+      return owned;
+    });
   }
 
   /** Derives the state before every render, so a parent's value is rendered the moment it arrives, with no stale
@@ -1793,11 +1766,6 @@ export default class Form<
     }
   }
 
-  /** Drops the operations still queued: none of them has a form to commit to any more */
-  componentWillUnmount() {
-    this.queue.length = 0;
-  }
-
   /** Validates the `formData` against the form's schema, returning the results.
    *
    * @param formData - The new form data to validate
@@ -1851,49 +1819,11 @@ export default class Form<
     );
   };
 
-  /** Queues an operation, running it at once when nothing else is running. The queue is also the reentrancy guard:
-   * an operation a consumer's callback starts is queued behind the one that called it, so it never runs against
-   * props the parent is still updating.
-   *
-   * @param run - The operation to queue; it must call the `advance` it is given once React has committed its result
-   * @param [isChange=false] - Whether the operation is a change, whose live validation covers any change queued before it
-   */
-  private enqueue(run: QueuedOperation['run'], isChange = false) {
-    this.queue.push({ run, isChange });
-    if (this.queue.length === 1) {
-      this.runQueueHead();
-    }
-  }
-
-  /** Runs the operation at the head of the queue. An operation that throws before its commit is dropped so the queue
-   * keeps moving; `advance` only acts for the operation still at the head, so a commit it scheduled before throwing
-   * cannot advance a later one.
-   *
-   * @param [fromCommit=false] - Whether a `setState()` callback of the previous operation is running this one
-   */
-  private runQueueHead(fromCommit = false) {
-    const head = this.queue[0];
-    if (!head) {
-      return;
-    }
-    const advance = () => {
-      if (this.queue[0] === head) {
-        this.queue.shift();
-        this.runQueueHead(true);
-      }
-    };
-    try {
-      head.run(advance);
-    } catch (error) {
-      advance();
-      if (!fromCommit) {
-        throw error;
-      }
-      rethrowOutsideCommit(error);
-    }
-  }
-
-  /** Queues a change to the field at `fieldPath`, see `processChange()`
+  /** Applies a change to the field at `fieldPath` with `applyChange()`, computed from the state the form rendered, and
+   * does with the result the one thing that differs between the two owners. A self-owned form commits it and reports
+   * it through `onChange`. A parent-owned form calls `onChange` with the result as a proposal and commits only what it
+   * owns itself: the custom errors and the errors that go with them. Either way `onChange` is called before this
+   * returns, so a throwing handler throws from the event that caused it.
    *
    * @param newValue - The new form data from a change to a field, or an updater computing it from the data at
    *        `fieldPath`
@@ -1908,25 +1838,10 @@ export default class Form<
     newErrorSchema?: ErrorSchemaChange<T>,
     id?: string,
   ) => {
-    this.enqueue((advance) => this.processChange({ newValue, fieldPath, newErrorSchema, id }, advance), true);
-  };
-
-  /** Applies one `change` with `applyChange()` and does with the result the one thing that differs between the two
-   * owners. A self-owned form commits it and then, once React has, calls `onChange` with what it committed. A
-   * parent-owned form calls `onChange` with the result as a proposal and commits only what it owns itself: the custom
-   * errors and the errors that go with them. Either way the queue advances once React
-   * has committed, so the next change reads the parent's response to this one.
-   *
-   * @param change - The change to apply
-   * @param advance - Advances the queue past this change
-   */
-  private processChange(change: PendingChange<T>, advance: () => void) {
     const { props } = this;
-    const { onChange } = props;
     const current = this.state;
-    // If a later change is queued, skip live validation since it will happen with the last change
-    const deferLiveValidate = this.queue.some((operation, index) => index > 0 && operation.isChange);
-    const next = applyChange(current, change, props, deferLiveValidate);
+    const change: PendingChange<T> = { newValue, fieldPath, newErrorSchema, id };
+    const next = applyChange(current, change, props);
     const { formData: nextFormData } = next;
     // The change as a function of any base, for a parent that composes proposals itself. The rendered data is the
     // common base, whose result `applyChange()` has already settled
@@ -1934,120 +1849,88 @@ export default class Form<
       base === current.formData
         ? nextFormData
         : applyChangeData({ ...current, formData: base }, change, props).formData;
-    if (!current.isControlled) {
-      this.setSharedState(current, next, () =>
-        advanceAfter(advance, () => onChange?.(toIChangeEvent(this.state, applyTo), change.id)),
-      );
-      return;
-    }
-    const isValidated = !deferLiveValidate && isLiveValidated(props);
     if (isDevelopment) {
       freezeFormData(next.formData);
     }
-    try {
-      onChange?.(toIChangeEvent(next, applyTo), change.id);
-    } finally {
-      // Validated errors describe the proposal, which the parent may yet refuse, so they wait for the parent's
-      // answer in `getDerivedStateFromProps`; without live validation they describe the committed data plus the
-      // custom errors, which are the form's own. Committing is also what gives the queue a commit to wait for
-      this.setSharedState(current, isValidated ? { ...current, customErrors: next.customErrors } : next, advance);
+    if (!current.isControlled) {
+      this.commit(current, next, (base) => applyChange(base, change, props));
+      props.onChange?.(toIChangeEvent(next, applyTo), id);
+      return;
     }
-  }
+    // Validated errors describe the proposal, which the parent may yet refuse, so they wait for the parent's answer
+    // in `getDerivedStateFromProps`; without live validation they describe the committed data plus the custom
+    // errors, which are the form's own
+    const owned = (result: FormState<T, S, F>, base: FormState<T, S, F>) =>
+      isLiveValidated(props) ? { ...base, customErrors: result.customErrors } : result;
+    // Committed before the parent is told, so a throwing handler cannot lose the errors the form owns
+    this.commit(current, owned(next, current), (base) => owned(applyChange(base, change, props), base));
+    props.onChange?.(toIChangeEvent(next, applyTo), id);
+  };
 
   /** Returns the form data currently rendered, see `FormHandle.getFormData()`: the `formData` prop of a parent-owned
    * form, the committed data of a self-owned one.
    */
   getFormData = (): EventFormData<T> => toEventFormData(this.state.formData);
 
-  /** Resets the form, queued behind any change in flight. A self-owned form re-derives its data from
-   * `initialFormData` and the schema the way an initial render does, clears every error and tells `onChange`. A
-   * parent-owned form clears its own errors only: the data is the parent's to reset, by passing a new `formData`, so
-   * nothing is proposed and `onChange` is not called. `extraErrors` are the parent's too and stay.
+  /** Resets the form. A self-owned form re-derives its data from `initialFormData` and the schema the way an initial
+   * render does, clears every error and tells `onChange`. A parent-owned form clears its own errors only: the data is
+   * the parent's to reset, by passing a new `formData`, so nothing is proposed and `onChange` is not called.
+   * `extraErrors` are the parent's too and stay.
    */
   reset = () => {
-    this.enqueue((advance) => {
-      if (this.state.isControlled) {
-        // `getDerivedStateFromProps` merges `extraErrors` back onto the cleared errors before the render
-        const cleared: FormState<T, S, F> = {
-          ...this.state,
-          errors: [],
-          errorSchema: {},
-          schemaValidationErrors: [],
-          schemaValidationErrorSchema: {},
-          customErrors: undefined,
-        };
-        this.setSharedState(this.state, cleared, advance);
-        return;
-      }
-      this.setSharedState(this.state, applyReset(this.state, this.props), () =>
-        advanceAfter(advance, () => {
-          // A reset replaces whatever a parent holds with the reset data
-          const { formData } = this.state;
-          this.props.onChange?.(toIChangeEvent(this.state, () => formData));
-        }),
-      );
-    });
+    const current = this.state;
+    if (current.isControlled) {
+      // `getDerivedStateFromProps` merges `extraErrors` back onto the cleared errors before the render
+      const clear = (base: FormState<T, S, F>): FormState<T, S, F> => ({
+        ...base,
+        errors: [],
+        errorSchema: {},
+        schemaValidationErrors: [],
+        schemaValidationErrorSchema: {},
+        customErrors: undefined,
+      });
+      this.commit(current, clear(current), clear);
+      return;
+    }
+    const next = applyReset(current, this.props);
+    this.commit(current, next, (base) => applyReset(base, this.props));
+    // A reset replaces whatever a parent holds with the reset data
+    this.props.onChange?.(toIChangeEvent(next, () => next.formData));
   };
 
   /** Callback function to handle when a field on the form is blurred. Calls the `onBlur` callback for the `Form` if it
    * was provided. Also runs any live validation and/or live omit operations if the flags indicate they should happen
-   * during `onBlur`. For a parent-owned form an omission is a proposal like any other: it goes to `onChange` and is
-   * not rendered until the parent hands it back.
+   * during `onBlur`, on the data the form rendered: a blur in the same handler as a change validates the value before
+   * the change, which is why a widget lets the native blur fire instead. For a parent-owned form an omission is a
+   * proposal like any other: it goes to `onChange` and is not rendered until the parent hands it back.
    *
    * @param id - The unique `id` of the field that was blurred
    * @param data - The data associated with the field that was blurred
    */
   onBlur = (id: string, data: unknown) => {
-    const { onBlur, omitExtraData, liveOmit, liveValidate } = this.props;
-    if (onBlur) {
-      onBlur(id, data);
-    }
-    if ((omitExtraData === true && liveOmit === 'onBlur') || liveValidate === 'onBlur') {
-      // Queued like a change: a blur in the same tick as an edit must validate or omit the data that edit produced,
-      // not the data from before it
-      this.enqueue((advance) => this.processBlur(id, advance));
-    }
-  };
-
-  /** Applies a blur's validation and omission with `applyBlur()`. A self-owned form commits the result and reports it;
-   * a parent-owned form proposes the data and commits the errors, which the blur's validation owns.
-   *
-   * @param id - The unique `id` of the field that was blurred
-   * @param advance - Advances the queue past this blur
-   */
-  private processBlur(id: string, advance: () => void) {
-    const { onChange, omitExtraData, liveOmit } = this.props;
-    const committed = this.state;
-    // Shared here so an unchanged error list keeps its reference and does not count as a change below
-    const next = replaceEqualDeep(committed, applyBlur(committed, this.props));
-    // A blur proposes the omission, when it omits, and nothing else
-    const applyTo = (base: T | undefined) =>
-      omitExtraData === true && liveOmit === 'onBlur'
-        ? committed.schemaUtils.omitExtraData(committed.schema, base)
-        : base;
-    // Only the `IChangeEvent` members count; the validator's own results are not among them
-    const hasChanges = (['formData', 'errors', 'errorSchema'] as const).some((key) => committed[key] !== next[key]);
-    if (committed.isControlled) {
-      if (isDevelopment) {
-        freezeFormData(next.formData);
-      }
-      try {
-        if (onChange && hasChanges) {
-          onChange(toIChangeEvent(next, applyTo), id);
-        }
-      } finally {
-        this.setSharedState(committed, next, advance);
-      }
+    const { props } = this;
+    const { omitExtraData, liveOmit, liveValidate } = props;
+    props.onBlur?.(id, data);
+    if (!((omitExtraData === true && liveOmit === 'onBlur') || liveValidate === 'onBlur')) {
       return;
     }
-    this.setSharedState(committed, next, () =>
-      advanceAfter(advance, () => {
-        if (onChange && hasChanges) {
-          onChange(toIChangeEvent(this.state, applyTo), id);
-        }
-      }),
-    );
-  }
+    const current = this.state;
+    // Shared so an unchanged error list keeps its reference and does not count as a change below
+    const blur = (base: FormState<T, S, F>) => replaceEqualDeep(base, applyBlur(base, props));
+    const next = blur(current);
+    // A blur proposes the omission, when it omits, and nothing else
+    const applyTo = (base: T | undefined) =>
+      omitExtraData === true && liveOmit === 'onBlur' ? current.schemaUtils.omitExtraData(current.schema, base) : base;
+    // Only the `IChangeEvent` members count; the validator's own results are not among them
+    const hasChanges = (['formData', 'errors', 'errorSchema'] as const).some((key) => current[key] !== next[key]);
+    if (isDevelopment) {
+      freezeFormData(next.formData);
+    }
+    this.commit(current, next, blur);
+    if (hasChanges) {
+      props.onChange?.(toIChangeEvent(next, applyTo), id);
+    }
+  };
 
   /** Callback function to handle when a field on the form is focused. Calls the `onFocus` callback for the `Form` if it
    * was provided.
@@ -2078,38 +1961,23 @@ export default class Form<
     if (event.target !== event.currentTarget) {
       return;
     }
-
-    event.persist();
-    // Queued like a change: a submit in the same tick as an edit submits the data that edit produced
-    this.enqueue((advance) => this.processSubmit(event, advance));
-  };
-
-  /** Validates and submits the data the form renders, or the data `submit(formData)` handed over, see `onSubmit()`
-   *
-   * @param event - The submit HTML form event
-   * @param advance - Advances the queue past this submit
-   */
-  private processSubmit(event: SubmitEvent<HTMLFormElement>, advance: () => void) {
     // oxlint-disable-next-line typescript/no-deprecated
     const { noValidate, onSubmit } = this.props;
+    const current = this.state;
     const payload = readSubmitPayload<T>(event.nativeEvent);
-    const newFormData = this.withExtraDataOmitted(payload ? payload.formData : this.state.formData);
-
-    if (!noValidate && !this.runValidation(newFormData)) {
-      // The validation has committed its errors; the queue waits for that commit like any operation's
-      this.setState((state) => state, advance);
+    const formData = this.withExtraDataOmitted(payload ? payload.formData : current.formData);
+    if (!noValidate && !this.runValidation(formData)) {
       return;
     }
     // There are no errors generated through schema validation, so only the user-provided ones are shown
-    this.setSharedState(this.state, applySubmit(this.state, this.props, !payload), () =>
-      advanceAfter(advance, () =>
-        onSubmit?.(
-          toIChangeEvent({ ...this.state, formData: newFormData }, () => newFormData, 'submitted'),
-          event,
-        ),
-      ),
+    const isHeldDataSubmitted = !payload;
+    const next = applySubmit(current, this.props, isHeldDataSubmitted);
+    this.commit(current, next, (base) => applySubmit(base, this.props, isHeldDataSubmitted));
+    onSubmit?.(
+      toIChangeEvent({ ...next, formData }, () => formData, 'submitted'),
+      event,
     );
-  }
+  };
 
   /** Programmatically submits the `Form`, see `FormHandle.submit()`. The submit goes through the DOM so that HTML5
    * validation runs, a DOM listener on the form sees the event, and `onSubmit` receives one. Without data it is the
@@ -2183,39 +2051,36 @@ export default class Form<
 
   /** Validates `formData` for a submission or a programmatic validation, committing the errors it reports and calling
    * `onError` with them, or focusing the first one when `focusOnFirstError` asks for it. The data itself is never
-   * installed: an action never writes.
+   * installed.
    *
    * @param formData - The form data to validate
    * @returns - True if the form is valid, false otherwise.
    */
   private runValidation(formData: T | undefined): boolean {
     const { focusOnFirstError, onError } = this.props;
-    const { hasError, next } = applyValidation(this.state, this.props, formData);
+    const current = this.state;
+    const { hasError, next } = applyValidation(current, this.props, formData);
     const { errors } = next;
-    if (hasError) {
-      if (focusOnFirstError) {
-        if (typeof focusOnFirstError === 'function') {
-          focusOnFirstError(errors[0]);
-        } else {
-          this.focusOnError(errors[0]);
-        }
-      }
-      this.setSharedState(this.state, next, () => {
-        if (onError) {
-          try {
-            onError(errors);
-          } catch (error) {
-            rethrowOutsideCommit(error);
-          }
-        } else {
-          // oxlint-disable-next-line no-console
-          console.error('Form validation failed', errors);
-        }
-      });
-    } else if (next !== this.state) {
-      this.setSharedState(this.state, next);
+    if (next !== current) {
+      this.commit(current, next, (base) => applyValidation(base, this.props, formData).next);
     }
-    return !hasError;
+    if (!hasError) {
+      return true;
+    }
+    if (focusOnFirstError) {
+      if (typeof focusOnFirstError === 'function') {
+        focusOnFirstError(errors[0]);
+      } else {
+        this.focusOnError(errors[0]);
+      }
+    }
+    if (onError) {
+      onError(errors);
+    } else {
+      // oxlint-disable-next-line no-console
+      console.error('Form validation failed', errors);
+    }
+    return false;
   }
 
   /** Validates the given `formData` as it is, see `FormHandle.validateFormWithFormData()`
