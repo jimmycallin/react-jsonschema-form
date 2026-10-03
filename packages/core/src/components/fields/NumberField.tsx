@@ -13,6 +13,8 @@ import { asNumber, getDecimalSeparator, getUiOptions, isFieldUpdater, resolveDef
 // Static matchers for standard '.' separator used during normalization inside handleChange
 const trailingCharMatcherWithPrefix = /\.([0-9]*0)*$/;
 const trailingCharMatcher = /[0.]0*$/;
+// Keep the signed zero outside the compiled function: Compiler 1.0.0 lowers an inline `-0` to `0`.
+const negativeZero = -0;
 
 /**
  * The NumberField class has some special handling for dealing with trailing
@@ -93,7 +95,7 @@ function NumberField<T = unknown, S extends StrictRJSFSchema = RJSFSchema, F ext
     // distinct value here because `String(-0)` is '0', so the sign is compared on its own.
     const lastSign = /^[+-]/.exec(canonicalLastValue)?.[0] ?? '';
     const unsignedLastValue = canonicalLastValue.slice(lastSign.length);
-    const isNegative = value < 0 || Object.is(value, -0);
+    const isNegative = value < 0 || Object.is(value, negativeZero);
 
     // Construct a regular expression that checks for a string that consists
     // of the formData value's magnitude suffixed with zero or one '.' characters and zero

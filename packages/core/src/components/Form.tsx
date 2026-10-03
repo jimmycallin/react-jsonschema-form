@@ -1,5 +1,5 @@
 import type { ElementType, ReactNode, Ref, SubmitEvent } from 'react';
-import { memo, useImperativeHandle, useInsertionEffect, useMemo, useRef, useState } from 'react';
+import { createElement, memo, useImperativeHandle, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import type {
   CustomValidator,
   ErrorSchema,
@@ -62,6 +62,7 @@ import {
   ANY_OF_KEY,
   ONE_OF_KEY,
 } from '@rjsf/utils';
+import { createPortal } from 'react-dom';
 
 import { buildRegistry } from '../Theme.ts';
 import { ADDITIONAL_PROPERTY_KEY_REMOVE } from './constants.ts';
@@ -1752,54 +1753,95 @@ interface RenderedHandlers<T> {
   handle: FormHandle<T>;
 }
 
-/** Hands back functions that keep their identity for the life of the form and forward to the handlers of the render
- * that was committed last. The fields memoize on their props, so the handlers they receive must keep their identity
- * across renders; so must the handle a parent keeps, which may hold on to `ref.current`. They must also be the handlers
- * of the render committed last, because they call the parent's `onChange`, `onSubmit` and `onError` and validate with
- * its props, and an earlier render's are stale closures. React documents no primitive for this: `useCallback` would
- * hand out a new function whenever a prop the handlers read changes, and react.dev says an Effect Event must never be
- * passed to other components. So this is the userland `useEvent` from React's RFC (reactjs/rfcs#220): a ref written
- * after each commit, never during rendering as react.dev's `useRef` caveats require, and read only from events. This is
- * the one ref holding something other than a DOM node in `Form`, and the one effect: it holds no state of its own and
- * it sequences nothing.
+// The server snapshot also covers the first hydration render, where React cannot render a portal.
+// There is no changing external store: subsequent client renders always have the same snapshot.
+const subscribeToClient = () => () => {};
+const clientSnapshot = () => true;
+const serverSnapshot = () => false;
+
+/** Keep field callbacks and retained handles stable without publishing render closures in an Effect.
+ * React installs custom-element event listeners during its DOM commit, before layout effects and callback refs.
+ * Dispatching to this detached portal therefore reaches the committed render, while abandoned renders install
+ * nothing. The portal adds no element to the visible form and never enters its input/submit event propagation.
  *
- * The ref is written in an insertion effect because that is when React switches handlers itself. In the commit's
- * mutation pass, React DOM gives each node the props its event system reads `onChange` from, and the built-in
- * `useEffectEvent` its new function; the insertion effects run in that same pass, and no other hook does. Every layout
- * effect runs later, and children's before their parent's, so in a layout effect the switch would come after a field's
- * own layout effect, callback ref or `componentDidUpdate`. A field that reports a change from one of those would then
- * reach the previous render's handlers: the parent's previous `onChange`, and data the parent has already moved past.
- * It is react.dev's reason for CSS-in-JS styles too: in place "by the time other Effects run in your components". The
- * hook's restrictions don't bear on a ref write: it updates no state and reads no other ref.
- *
- * @param rendered - The handlers and the handle of the current render
- * @returns - Stable functions forwarding to the handlers of the render committed last
+ * The ref cleanup only retains the last committed closure for calls after unmount, when the event target is gone.
+ * It does not select handlers while the target is mounted. Before the first commit, the initial render is the
+ * fallback; `useSyncExternalStore` omits the portal during server rendering and the first hydration render.
  */
-function useCommittedHandlers<T>(rendered: RenderedHandlers<T>): RenderedHandlers<T> {
-  const latest = useRef(rendered);
-  useInsertionEffect(() => {
-    latest.current = rendered;
+function useCommittedHandlers<T>(rendered: RenderedHandlers<T>) {
+  const isClient = useSyncExternalStore(subscribeToClient, clientSnapshot, serverSnapshot);
+  // oxlint-disable-next-line react/hook-use-state -- one event target and entry points for the life of the form
+  const [bridge] = useState(() => {
+    let detached = rendered;
+    const container = typeof document === 'undefined' ? undefined : document.createElement('div');
+    const invoke = <R,>(operation: (handlers: RenderedHandlers<T>) => R): R => {
+      const target = container?.firstElementChild;
+      if (!target) {
+        return operation(detached);
+      }
+      // Native event dispatch reports listener exceptions rather than throwing them to its caller. Preserve the
+      // synchronous return/throw contract of the public handle by carrying the outcome back explicitly.
+      let outcome: { value: R } | { error: unknown } | undefined;
+      target.dispatchEvent(
+        new CustomEvent('rjsf-handler-request', {
+          detail: (handlers: RenderedHandlers<T>) => {
+            try {
+              outcome = { value: operation(handlers) };
+            } catch (error) {
+              outcome = { error };
+            }
+          },
+        }),
+      );
+      if (!outcome) {
+        throw new Error('The form handler target is unavailable');
+      }
+      if ('error' in outcome) {
+        throw outcome.error;
+      }
+      return outcome.value;
+    };
+    const stable: RenderedHandlers<T> = {
+      handleChange: (newValue, fieldPath, newErrorSchema, id) =>
+        invoke((handlers) => handlers.handleChange(newValue, fieldPath, newErrorSchema, id)),
+      handleBlur: (id, data) => invoke((handlers) => handlers.handleBlur(id, data)),
+      handleFocus: (id, data) => invoke((handlers) => handlers.handleFocus(id, data)),
+      handleSubmit: (event) => invoke((handlers) => handlers.handleSubmit(event)),
+      handle: {
+        getFormData: () => invoke((handlers) => handlers.handle.getFormData()),
+        submit: (formData) => invoke((handlers) => handlers.handle.submit(formData)),
+        reset: () => invoke((handlers) => handlers.handle.reset()),
+        setFieldValue: (fieldPath, newValue) =>
+          invoke((handlers) => handlers.handle.setFieldValue(fieldPath, newValue)),
+        validateForm: (formData) => invoke((handlers) => handlers.handle.validateForm(formData)),
+        // oxlint-disable typescript/no-deprecated -- forward both the deprecated member and its invocation until removal
+        validateFormWithFormData: (formData) =>
+          invoke((handlers) => handlers.handle.validateFormWithFormData(formData)),
+        // oxlint-enable typescript/no-deprecated
+        validate: (formData) => invoke((handlers) => handlers.handle.validate(formData)),
+        focusOnError: (error) => invoke((handlers) => handlers.handle.focusOnError(error)),
+      },
+    };
+    return {
+      container,
+      stable,
+      preserve: (handlers: RenderedHandlers<T>) => {
+        detached = handlers;
+      },
+    };
   });
-  // oxlint-disable-next-line react/hook-use-state -- created once for the life of the form, never set again
-  const [stable] = useState<RenderedHandlers<T>>(() => ({
-    handleChange: (newValue, fieldPath, newErrorSchema, id) =>
-      latest.current.handleChange(newValue, fieldPath, newErrorSchema, id),
-    handleBlur: (id, data) => latest.current.handleBlur(id, data),
-    handleFocus: (id, data) => latest.current.handleFocus(id, data),
-    handleSubmit: (event) => latest.current.handleSubmit(event),
-    handle: {
-      getFormData: () => latest.current.handle.getFormData(),
-      submit: (formData) => latest.current.handle.submit(formData),
-      reset: () => latest.current.handle.reset(),
-      setFieldValue: (fieldPath, newValue) => latest.current.handle.setFieldValue(fieldPath, newValue),
-      validateForm: (formData) => latest.current.handle.validateForm(formData),
-      // oxlint-disable-next-line typescript/no-deprecated -- forwarded until it is removed
-      validateFormWithFormData: (formData) => latest.current.handle.validateFormWithFormData(formData),
-      validate: (formData) => latest.current.handle.validate(formData),
-      focusOnError: (error) => latest.current.handle.focusOnError(error),
-    },
-  }));
-  return stable;
+  const receive = (event: CustomEvent<(handlers: RenderedHandlers<T>) => void>) => event.detail(rendered);
+  const portal =
+    isClient && bridge.container
+      ? createPortal(
+          createElement('rjsf-handler-target', {
+            'onrjsf-handler-request': receive,
+            ref: () => () => bridge.preserve(rendered),
+          }),
+          bridge.container,
+        )
+      : null;
+  return { stable: bridge.stable, portal };
 }
 
 /** The `Form` component renders the outer form and all the fields defined in the `schema`. Its state is React state
@@ -2130,7 +2172,12 @@ function Form<T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends Fo
     /** Programmatically validates the form, see `FormHandle.validateForm()`: the given `formData`, or the rendered
      * data when none is given, with extra data omitted first when `omitExtraData` is set.
      */
-    validateForm: (formData: T | undefined = state.formData) => runValidation(withExtraDataOmitted(formData)),
+    validateForm: (formData?: T) => {
+      if (formData === undefined) {
+        return runValidation(withExtraDataOmitted(state.formData));
+      }
+      return runValidation(withExtraDataOmitted(formData));
+    },
 
     /** Validates the given `formData` as it is, see `FormHandle.validateFormWithFormData()` */
     // oxlint-disable-next-line typescript/no-deprecated -- implemented until it is removed
@@ -2142,7 +2189,7 @@ function Form<T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends Fo
     focusOnError,
   };
 
-  const stable = useCommittedHandlers<T>({ handleChange, handleBlur, handleFocus, handleSubmit, handle });
+  const { stable, portal } = useCommittedHandlers<T>({ handleChange, handleBlur, handleFocus, handleSubmit, handle });
   useImperativeHandle(ref, () => stable.handle, [stable]);
 
   const {
@@ -2199,40 +2246,43 @@ function Form<T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends Fo
   };
 
   return (
-    <FormTag
-      className={className || 'rjsf'}
-      id={id}
-      name={name}
-      method={method}
-      target={target}
-      action={action}
-      autoComplete={autoComplete}
-      encType={enctype}
-      acceptCharset={acceptCharset}
-      noValidate={noHtml5Validate}
-      onSubmit={stable.handleSubmit}
-      ref={formElement}
-    >
-      {showErrorList === 'top' && renderErrors()}
-      <SchemaFieldComponent
-        name=''
-        schema={schema}
-        uiSchema={uiSchema}
-        errorSchema={errorSchema}
-        fieldPath={ROOT_FIELD_PATH}
-        id={registry.globalFormOptions.idPrefix}
-        formData={formData}
-        onChange={stable.handleChange}
-        onBlur={stable.handleBlur}
-        onFocus={stable.handleFocus}
-        registry={registry}
-        disabled={disabled}
-        readonly={readonly}
-      />
+    <>
+      <FormTag
+        className={className || 'rjsf'}
+        id={id}
+        name={name}
+        method={method}
+        target={target}
+        action={action}
+        autoComplete={autoComplete}
+        encType={enctype}
+        acceptCharset={acceptCharset}
+        noValidate={noHtml5Validate}
+        onSubmit={stable.handleSubmit}
+        ref={formElement}
+      >
+        {showErrorList === 'top' && renderErrors()}
+        <SchemaFieldComponent
+          name=''
+          schema={schema}
+          uiSchema={uiSchema}
+          errorSchema={errorSchema}
+          fieldPath={ROOT_FIELD_PATH}
+          id={registry.globalFormOptions.idPrefix}
+          formData={formData}
+          onChange={stable.handleChange}
+          onBlur={stable.handleBlur}
+          onFocus={stable.handleFocus}
+          registry={registry}
+          disabled={disabled}
+          readonly={readonly}
+        />
 
-      {children || <SubmitButton uiSchema={submitUiSchema} registry={registry} />}
-      {showErrorList === 'bottom' && renderErrors()}
-    </FormTag>
+        {children || <SubmitButton uiSchema={submitUiSchema} registry={registry} />}
+        {showErrorList === 'bottom' && renderErrors()}
+      </FormTag>
+      {portal}
+    </>
   );
 }
 
