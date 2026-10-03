@@ -1,5 +1,5 @@
 import type { ElementType, ReactNode, Ref, SubmitEvent } from 'react';
-import { memo, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import { createElement, memo, useImperativeHandle, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import type {
   CustomValidator,
   ErrorSchema,
@@ -62,6 +62,7 @@ import {
   ANY_OF_KEY,
   ONE_OF_KEY,
 } from '@rjsf/utils';
+import { createPortal } from 'react-dom';
 
 import { buildRegistry } from '../Theme.ts';
 import { ADDITIONAL_PROPERTY_KEY_REMOVE } from './constants.ts';
@@ -254,8 +255,8 @@ export interface FormProps<
   /** Optional function that allows for custom merging of `allOf` schemas
    */
   customMergeAllOf?: CustomMergeAllOf<S>;
-  /** Support receiving a React ref to the `Form`, which hands back its `FormHandle`. Read `ref.current` at call
-   * time: each commit replaces the handle, and a saved handle retains its render.
+  /** Support receiving a React ref to the `Form`, which hands back its `FormHandle`: one object for the life of the
+   * form, whose members act on the render that was committed last.
    */
   ref?: Ref<FormHandle<T>>;
 }
@@ -1738,6 +1739,111 @@ function deriveState<T, S extends StrictRJSFSchema, F extends FormContextType>(
   return replaceEqualDeep(state, { ...state, ...resolvedContext, ...errors });
 }
 
+/** The handlers and the handle one render of `Form` creates, each closed over that render */
+interface RenderedHandlers<T> {
+  handleChange: (
+    newValue: FieldChange<T | undefined>,
+    fieldPath: FieldPath,
+    newErrorSchema?: ErrorSchemaChange<T>,
+    id?: string,
+  ) => void;
+  handleBlur: (id: string, data: unknown) => void;
+  handleFocus: (id: string, data: unknown) => void;
+  handleSubmit: (event: SubmitEvent<HTMLFormElement>) => void;
+  handle: FormHandle<T>;
+}
+
+// The server snapshot also covers the first hydration render, where React cannot render a portal.
+// There is no changing external store: subsequent client renders always have the same snapshot.
+const subscribeToClient = () => () => {};
+const clientSnapshot = () => true;
+const serverSnapshot = () => false;
+
+/** Keep field callbacks and retained handles stable without publishing render closures in an Effect.
+ * React installs custom-element event listeners during its DOM commit, before layout effects and callback refs.
+ * Dispatching to this detached portal therefore reaches the committed render, while abandoned renders install
+ * nothing. The portal adds no element to the visible form and never enters its input/submit event propagation.
+ *
+ * The ref cleanup only retains the last committed closure for calls after unmount, when the event target is gone.
+ * It does not select handlers while the target is mounted. Before the first commit, the initial render is the
+ * fallback; `useSyncExternalStore` omits the portal during server rendering and the first hydration render.
+ */
+function useCommittedHandlers<T>(rendered: RenderedHandlers<T>) {
+  const isClient = useSyncExternalStore(subscribeToClient, clientSnapshot, serverSnapshot);
+  // oxlint-disable-next-line react/hook-use-state -- one event target and entry points for the life of the form
+  const [bridge] = useState(() => {
+    let detached = rendered;
+    const container = typeof document === 'undefined' ? undefined : document.createElement('div');
+    const invoke = <R,>(operation: (handlers: RenderedHandlers<T>) => R): R => {
+      const target = container?.firstElementChild;
+      if (!target) {
+        return operation(detached);
+      }
+      // Native event dispatch reports listener exceptions rather than throwing them to its caller. Preserve the
+      // synchronous return/throw contract of the public handle by carrying the outcome back explicitly.
+      let outcome: { value: R } | { error: unknown } | undefined;
+      target.dispatchEvent(
+        new CustomEvent('rjsf-handler-request', {
+          detail: (handlers: RenderedHandlers<T>) => {
+            try {
+              outcome = { value: operation(handlers) };
+            } catch (error) {
+              outcome = { error };
+            }
+          },
+        }),
+      );
+      if (!outcome) {
+        throw new Error('The form handler target is unavailable');
+      }
+      if ('error' in outcome) {
+        throw outcome.error;
+      }
+      return outcome.value;
+    };
+    const stable: RenderedHandlers<T> = {
+      handleChange: (newValue, fieldPath, newErrorSchema, id) =>
+        invoke((handlers) => handlers.handleChange(newValue, fieldPath, newErrorSchema, id)),
+      handleBlur: (id, data) => invoke((handlers) => handlers.handleBlur(id, data)),
+      handleFocus: (id, data) => invoke((handlers) => handlers.handleFocus(id, data)),
+      handleSubmit: (event) => invoke((handlers) => handlers.handleSubmit(event)),
+      handle: {
+        getFormData: () => invoke((handlers) => handlers.handle.getFormData()),
+        submit: (formData) => invoke((handlers) => handlers.handle.submit(formData)),
+        reset: () => invoke((handlers) => handlers.handle.reset()),
+        setFieldValue: (fieldPath, newValue) =>
+          invoke((handlers) => handlers.handle.setFieldValue(fieldPath, newValue)),
+        validateForm: (formData) => invoke((handlers) => handlers.handle.validateForm(formData)),
+        // oxlint-disable typescript/no-deprecated -- forward both the deprecated member and its invocation until removal
+        validateFormWithFormData: (formData) =>
+          invoke((handlers) => handlers.handle.validateFormWithFormData(formData)),
+        // oxlint-enable typescript/no-deprecated
+        validate: (formData) => invoke((handlers) => handlers.handle.validate(formData)),
+        focusOnError: (error) => invoke((handlers) => handlers.handle.focusOnError(error)),
+      },
+    };
+    return {
+      container,
+      stable,
+      preserve: (handlers: RenderedHandlers<T>) => {
+        detached = handlers;
+      },
+    };
+  });
+  const receive = (event: CustomEvent<(handlers: RenderedHandlers<T>) => void>) => event.detail(rendered);
+  const portal =
+    isClient && bridge.container
+      ? createPortal(
+          createElement('rjsf-handler-target', {
+            'onrjsf-handler-request': receive,
+            ref: () => () => bridge.preserve(rendered),
+          }),
+          bridge.container,
+        )
+      : null;
+  return { stable: bridge.stable, portal };
+}
+
 /** The `Form` component renders the outer form and all the fields defined in the `schema`. Its state is React state
  * and nothing else: every operation is computed from the state of the render it was dispatched from and committed
  * through an updater, and every callback is called from the handler that caused it, the way a controlled `<input>`
@@ -1769,8 +1875,8 @@ function Form<T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends Fo
    * an earlier operation in the same tick may already have moved the state on, in which case the operation is
    * re-applied to what that one produced, so both land. The event the caller emits stays the one computed from this
    * render: it describes this operation applied to what the render showed, which is what a controlled `<input>`
-   * reports too. Every unchanged data subtree keeps its reference. A parent-owned form commits its errors and
-   * nothing else, see `PARENT_OWNED_COMMIT_KEYS`.
+   * reports too. Every unchanged subtree keeps its reference, so fields' memo boundaries hold across the update; a
+   * parent-owned form commits its errors and nothing else, see `PARENT_OWNED_COMMIT_KEYS`.
    *
    * @param next - The operation's result for `state`
    * @param reapply - Computes the operation's result for another base
@@ -2066,7 +2172,12 @@ function Form<T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends Fo
     /** Programmatically validates the form, see `FormHandle.validateForm()`: the given `formData`, or the rendered
      * data when none is given, with extra data omitted first when `omitExtraData` is set.
      */
-    validateForm: (formData: T | undefined = state.formData) => runValidation(withExtraDataOmitted(formData)),
+    validateForm: (formData?: T) => {
+      if (formData === undefined) {
+        return runValidation(withExtraDataOmitted(state.formData));
+      }
+      return runValidation(withExtraDataOmitted(formData));
+    },
 
     /** Validates the given `formData` as it is, see `FormHandle.validateFormWithFormData()` */
     // oxlint-disable-next-line typescript/no-deprecated -- implemented until it is removed
@@ -2078,8 +2189,8 @@ function Form<T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends Fo
     focusOnError,
   };
 
-  // Each committed render exposes its own closures. Callers read ref.current when invoking an operation.
-  useImperativeHandle(ref, () => handle);
+  const { stable, portal } = useCommittedHandlers<T>({ handleChange, handleBlur, handleFocus, handleSubmit, handle });
+  useImperativeHandle(ref, () => stable.handle, [stable]);
 
   const {
     children,
@@ -2135,40 +2246,43 @@ function Form<T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends Fo
   };
 
   return (
-    <FormTag
-      className={className || 'rjsf'}
-      id={id}
-      name={name}
-      method={method}
-      target={target}
-      action={action}
-      autoComplete={autoComplete}
-      encType={enctype}
-      acceptCharset={acceptCharset}
-      noValidate={noHtml5Validate}
-      onSubmit={handleSubmit}
-      ref={formElement}
-    >
-      {showErrorList === 'top' && renderErrors()}
-      <SchemaFieldComponent
-        name=''
-        schema={schema}
-        uiSchema={uiSchema}
-        errorSchema={errorSchema}
-        fieldPath={ROOT_FIELD_PATH}
-        id={registry.globalFormOptions.idPrefix}
-        formData={formData}
-        onChange={handleChange}
-        onBlur={handleBlur}
-        onFocus={handleFocus}
-        registry={registry}
-        disabled={disabled}
-        readonly={readonly}
-      />
+    <>
+      <FormTag
+        className={className || 'rjsf'}
+        id={id}
+        name={name}
+        method={method}
+        target={target}
+        action={action}
+        autoComplete={autoComplete}
+        encType={enctype}
+        acceptCharset={acceptCharset}
+        noValidate={noHtml5Validate}
+        onSubmit={stable.handleSubmit}
+        ref={formElement}
+      >
+        {showErrorList === 'top' && renderErrors()}
+        <SchemaFieldComponent
+          name=''
+          schema={schema}
+          uiSchema={uiSchema}
+          errorSchema={errorSchema}
+          fieldPath={ROOT_FIELD_PATH}
+          id={registry.globalFormOptions.idPrefix}
+          formData={formData}
+          onChange={stable.handleChange}
+          onBlur={stable.handleBlur}
+          onFocus={stable.handleFocus}
+          registry={registry}
+          disabled={disabled}
+          readonly={readonly}
+        />
 
-      {children || <SubmitButton uiSchema={submitUiSchema} registry={registry} />}
-      {showErrorList === 'bottom' && renderErrors()}
-    </FormTag>
+        {children || <SubmitButton uiSchema={submitUiSchema} registry={registry} />}
+        {showErrorList === 'bottom' && renderErrors()}
+      </FormTag>
+      {portal}
+    </>
   );
 }
 

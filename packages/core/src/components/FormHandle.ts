@@ -5,10 +5,6 @@ import type { EventFormData } from './IChangeEvent.ts';
 /** The imperative surface a `Form` exposes through its `ref`. A `Form` will be either parent-owned (a `formData`
  * prop, accepted through `onChange`) or self-owned (seeded by `initialFormData`); this handle is the same for both.
  *
- * React replaces this handle after each committed render. Read `ref.current` when calling a member; do not cache
- * the handle or destructure its methods across commits. A retained handle keeps the state and props of the render
- * that created it.
- *
  * Every member acts on the data the form renders, or on the data it is given. Nothing waits for a commit: an edit and
  * a read, or two edits, made in the same tick each see the render they were made from, as two changes to a
  * controlled `<input>` would. The members fall into three kinds: writes (`setFieldValue()`, `reset()`), reads

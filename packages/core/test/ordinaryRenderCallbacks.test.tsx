@@ -98,16 +98,16 @@ it('does not publish an abandoned suspended render to retained handles or field 
   expect(oldCallback).toHaveBeenCalledWith(expect.objectContaining({ formData: { a: 'committed', b: 'B' } }), 'root_b');
 });
 
-it('refreshes ref.current while retained handles keep their original render', async () => {
+it('keeps retained handles stable and current after an edit', async () => {
   const ref = createRef<FormHandle>();
   const { container } = render(
     <Form ref={ref} schema={schema} validator={validator} initialFormData={{ a: '', b: '' }} />,
   );
   const initialHandle = ref.current!;
   await user.type(container.querySelector('#root_a')!, 'A');
-  expect(ref.current).not.toBe(initialHandle);
+  expect(ref.current).toBe(initialHandle);
   expect(ref.current!.getFormData()).toEqual({ a: 'A', b: '' });
-  expect(initialHandle.getFormData()).toEqual({ a: '', b: '' });
+  expect(initialHandle.getFormData()).toEqual({ a: 'A', b: '' });
   act(() => ref.current!.setFieldValue('b', 'B'));
   expect(ref.current!.getFormData()).toEqual({ a: 'A', b: 'B' });
 });
@@ -182,7 +182,7 @@ it('a guarded dependent-field layout effect clears once and preserves the siblin
   expect(container.querySelector('#root_a')).toHaveValue('A');
 });
 
-it.each([false, true])('measures widget fan-out over 200 rows, controlled=%s', async (controlled) => {
+it.each([false, true])('renders only the edited widget over 200 rows, controlled=%s', async (controlled) => {
   const rendered = vi.fn();
   function Widget(props: WidgetProps<string[]>) {
     rendered(props.id);
@@ -208,5 +208,5 @@ it.each([false, true])('measures widget fan-out over 200 rows, controlled=%s', a
   rendered.mockClear();
   await user.type(container.querySelector('#root_0')!, 'abc');
   expect(container.querySelector('#root_0')).toHaveValue('abc');
-  expect(rendered).toHaveBeenCalledTimes(600);
+  expect(rendered).toHaveBeenCalledTimes(3);
 });
