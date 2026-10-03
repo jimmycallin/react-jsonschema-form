@@ -1,5 +1,5 @@
 import type { ElementType, ReactNode, Ref, SubmitEvent } from 'react';
-import { memo, useImperativeHandle, useInsertionEffect, useMemo, useRef, useState } from 'react';
+import { memo, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import type {
   CustomValidator,
   ErrorSchema,
@@ -254,8 +254,8 @@ export interface FormProps<
   /** Optional function that allows for custom merging of `allOf` schemas
    */
   customMergeAllOf?: CustomMergeAllOf<S>;
-  /** Support receiving a React ref to the `Form`, which hands back its `FormHandle`: one object for the life of the
-   * form, whose members act on the render that was committed last.
+  /** Support receiving a React ref to the `Form`, which hands back its `FormHandle`. Read `ref.current` at call
+   * time: each commit replaces the handle, and a saved handle retains its render.
    */
   ref?: Ref<FormHandle<T>>;
 }
@@ -1738,70 +1738,6 @@ function deriveState<T, S extends StrictRJSFSchema, F extends FormContextType>(
   return replaceEqualDeep(state, { ...state, ...resolvedContext, ...errors });
 }
 
-/** The handlers and the handle one render of `Form` creates, each closed over that render */
-interface RenderedHandlers<T> {
-  handleChange: (
-    newValue: FieldChange<T | undefined>,
-    fieldPath: FieldPath,
-    newErrorSchema?: ErrorSchemaChange<T>,
-    id?: string,
-  ) => void;
-  handleBlur: (id: string, data: unknown) => void;
-  handleFocus: (id: string, data: unknown) => void;
-  handleSubmit: (event: SubmitEvent<HTMLFormElement>) => void;
-  handle: FormHandle<T>;
-}
-
-/** Hands back functions that keep their identity for the life of the form and forward to the handlers of the render
- * that was committed last. The fields memoize on their props, so the handlers they receive must keep their identity
- * across renders; so must the handle a parent keeps, which may hold on to `ref.current`. They must also be the handlers
- * of the render committed last, because they call the parent's `onChange`, `onSubmit` and `onError` and validate with
- * its props, and an earlier render's are stale closures. React documents no primitive for this: `useCallback` would
- * hand out a new function whenever a prop the handlers read changes, and react.dev says an Effect Event must never be
- * passed to other components. So this is the userland `useEvent` from React's RFC (reactjs/rfcs#220): a ref written
- * after each commit, never during rendering as react.dev's `useRef` caveats require, and read only from events. This is
- * the one ref holding something other than a DOM node in `Form`, and the one effect: it holds no state of its own and
- * it sequences nothing.
- *
- * The ref is written in an insertion effect because that is when React switches handlers itself. In the commit's
- * mutation pass, React DOM gives each node the props its event system reads `onChange` from, and the built-in
- * `useEffectEvent` its new function; the insertion effects run in that same pass, and no other hook does. Every layout
- * effect runs later, and children's before their parent's, so in a layout effect the switch would come after a field's
- * own layout effect, callback ref or `componentDidUpdate`. A field that reports a change from one of those would then
- * reach the previous render's handlers: the parent's previous `onChange`, and data the parent has already moved past.
- * It is react.dev's reason for CSS-in-JS styles too: in place "by the time other Effects run in your components". The
- * hook's restrictions don't bear on a ref write: it updates no state and reads no other ref.
- *
- * @param rendered - The handlers and the handle of the current render
- * @returns - Stable functions forwarding to the handlers of the render committed last
- */
-function useCommittedHandlers<T>(rendered: RenderedHandlers<T>): RenderedHandlers<T> {
-  const latest = useRef(rendered);
-  useInsertionEffect(() => {
-    latest.current = rendered;
-  });
-  // oxlint-disable-next-line react/hook-use-state -- created once for the life of the form, never set again
-  const [stable] = useState<RenderedHandlers<T>>(() => ({
-    handleChange: (newValue, fieldPath, newErrorSchema, id) =>
-      latest.current.handleChange(newValue, fieldPath, newErrorSchema, id),
-    handleBlur: (id, data) => latest.current.handleBlur(id, data),
-    handleFocus: (id, data) => latest.current.handleFocus(id, data),
-    handleSubmit: (event) => latest.current.handleSubmit(event),
-    handle: {
-      getFormData: () => latest.current.handle.getFormData(),
-      submit: (formData) => latest.current.handle.submit(formData),
-      reset: () => latest.current.handle.reset(),
-      setFieldValue: (fieldPath, newValue) => latest.current.handle.setFieldValue(fieldPath, newValue),
-      validateForm: (formData) => latest.current.handle.validateForm(formData),
-      // oxlint-disable-next-line typescript/no-deprecated -- forwarded until it is removed
-      validateFormWithFormData: (formData) => latest.current.handle.validateFormWithFormData(formData),
-      validate: (formData) => latest.current.handle.validate(formData),
-      focusOnError: (error) => latest.current.handle.focusOnError(error),
-    },
-  }));
-  return stable;
-}
-
 /** The `Form` component renders the outer form and all the fields defined in the `schema`. Its state is React state
  * and nothing else: every operation is computed from the state of the render it was dispatched from and committed
  * through an updater, and every callback is called from the handler that caused it, the way a controlled `<input>`
@@ -1833,8 +1769,8 @@ function Form<T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends Fo
    * an earlier operation in the same tick may already have moved the state on, in which case the operation is
    * re-applied to what that one produced, so both land. The event the caller emits stays the one computed from this
    * render: it describes this operation applied to what the render showed, which is what a controlled `<input>`
-   * reports too. Every unchanged subtree keeps its reference, so fields' memo boundaries hold across the update; a
-   * parent-owned form commits its errors and nothing else, see `PARENT_OWNED_COMMIT_KEYS`.
+   * reports too. Every unchanged data subtree keeps its reference. A parent-owned form commits its errors and
+   * nothing else, see `PARENT_OWNED_COMMIT_KEYS`.
    *
    * @param next - The operation's result for `state`
    * @param reapply - Computes the operation's result for another base
@@ -2142,8 +2078,8 @@ function Form<T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends Fo
     focusOnError,
   };
 
-  const stable = useCommittedHandlers<T>({ handleChange, handleBlur, handleFocus, handleSubmit, handle });
-  useImperativeHandle(ref, () => stable.handle, [stable]);
+  // Each committed render exposes its own closures. Callers read ref.current when invoking an operation.
+  useImperativeHandle(ref, () => handle);
 
   const {
     children,
@@ -2210,7 +2146,7 @@ function Form<T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends Fo
       encType={enctype}
       acceptCharset={acceptCharset}
       noValidate={noHtml5Validate}
-      onSubmit={stable.handleSubmit}
+      onSubmit={handleSubmit}
       ref={formElement}
     >
       {showErrorList === 'top' && renderErrors()}
@@ -2222,9 +2158,9 @@ function Form<T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends Fo
         fieldPath={ROOT_FIELD_PATH}
         id={registry.globalFormOptions.idPrefix}
         formData={formData}
-        onChange={stable.handleChange}
-        onBlur={stable.handleBlur}
-        onFocus={stable.handleFocus}
+        onChange={handleChange}
+        onBlur={handleBlur}
+        onFocus={handleFocus}
         registry={registry}
         disabled={disabled}
         readonly={readonly}
