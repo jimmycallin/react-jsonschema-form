@@ -1999,10 +1999,13 @@ function Form<T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends Fo
   ...props
 }: FormProps<T, S, F>) {
   const formElement = useRef<HTMLElement>(null);
-  // oxlint-disable-next-line react/hook-use-state -- one model per mounted form
-  const [model] = useState(() => createFormModel(props));
+  // The model is created once and kept in the render cache, so it lives exactly as long as the mounted form
+  const [cache, setCache] = useState(() => {
+    const created = createFormModel(props);
+    return { model: created, snapshot: created.getSnapshot(), state: created.initial };
+  });
+  const { model } = cache;
   const snapshot = useSyncExternalStore(model.subscribe, model.getSnapshot, model.getServerSnapshot);
-  const [cache, setCache] = useState(() => ({ snapshot, state: model.initial }));
   let base = cache.state;
   if (snapshot !== cache.snapshot) {
     base =
@@ -2012,7 +2015,7 @@ function Form<T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends Fo
   }
   const state = deriveState(props, base);
   if (state !== cache.state || snapshot !== cache.snapshot) {
-    setCache({ snapshot, state });
+    setCache({ model, snapshot, state });
   }
   const isLateFormData = isDevelopment && !state.isControlled && props.formData !== undefined;
   // Logged once when the prop arrives, not on every render that still carries it
