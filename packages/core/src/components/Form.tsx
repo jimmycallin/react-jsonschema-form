@@ -67,7 +67,7 @@ import { createPortal } from 'react-dom';
 import { buildRegistry } from '../Theme.ts';
 import { ADDITIONAL_PROPERTY_KEY_REMOVE } from './constants.ts';
 import type { FormHandle } from './FormHandle.ts';
-import type { EventFormData, IChangeEvent } from './IChangeEvent.ts';
+import type { EventFormData, FormChangeEvent } from './IChangeEvent.ts';
 
 /** `T` itself for any concrete type, but not a position TypeScript infers `T` from. `FormProps` wraps the configuration
  * props and handlers in it, so `T` is inferred from `formData`/`initialFormData` (or a typed `ref`) and an unannotated
@@ -140,7 +140,7 @@ export interface FormProps<
    * receive the same args as `onSubmit` any time a value is updated in the form. Can also return the `id` of the field
    * that caused the change
    */
-  onChange?: (data: IChangeEvent<Uninferred<T>, S, F>, id?: string) => void;
+  onChange?: (data: FormChangeEvent<Uninferred<T>, S, F>, id?: string) => void;
   /** To react when submitted form data are invalid, pass an `onError` handler. It will be passed the list of
    * encountered errors
    */
@@ -149,7 +149,7 @@ export interface FormProps<
    * and its data are valid. It will be passed a result object having a `formData` attribute, which is the valid form
    * data you're usually after. The original event will also be passed as a second parameter
    */
-  onSubmit?: (data: IChangeEvent<Uninferred<T>, S, F>, event: SubmitEvent<HTMLFormElement>) => void;
+  onSubmit?: (data: FormChangeEvent<Uninferred<T>, S, F>, event: SubmitEvent<HTMLFormElement>) => void;
   /** Sometimes you may want to trigger events or modify external state when a field has been touched, so you can pass
    * an `onBlur` handler, which will receive the id of the input that was blurred and the field value
    */
@@ -372,8 +372,8 @@ function toIChangeEvent<
 >(
   state: FormState<T, S, F>,
   applyTo: (base: T | undefined) => T | undefined,
-  status?: IChangeEvent['status'],
-): IChangeEvent<T, S, F> {
+  status?: FormChangeEvent['status'],
+): FormChangeEvent<T, S, F> {
   const { schema, uiSchema, schemaUtils, formData, errors, errorSchema } = state;
   return {
     schema,
