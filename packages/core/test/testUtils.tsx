@@ -7,14 +7,14 @@ import { act, render, fireEvent } from '@testing-library/react';
 import type { UserEvent } from '@testing-library/user-event';
 import type { Mock, MockInstance } from 'vitest';
 
-import type { FormHandle, FormProps, IChangeEvent } from '../src/index.ts';
+import type { FormRef, FormProps, IChangeEvent } from '../src/index.ts';
 import Form from '../src/index.ts';
 
 export type NoValFormProps = Omit<FormProps, 'validator'>;
 
-/** A ref for a `Form`, which hands back its `FormHandle` */
+/** A ref for a `Form`, which hands back its `FormRef` */
 export function createFormRef() {
-  return createRef<FormHandle>();
+  return createRef<FormRef>();
 }
 
 export function input(container: HTMLElement, id: string) {

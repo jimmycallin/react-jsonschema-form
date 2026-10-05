@@ -5,7 +5,7 @@ import { customizeValidator } from '@rjsf/validator-ajv8';
 import { act, waitFor } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 
-import type { FormHandle, FormProps, IChangeEvent } from '../src/index.ts';
+import type { FormRef, FormProps, IChangeEvent } from '../src/index.ts';
 import {
   createFormComponent,
   describeRepeated,
@@ -104,7 +104,7 @@ describeRepeated('Form common: event handlers', (createFormComponent, isControll
       };
 
       const secondOnChange = vi.fn();
-      const ref = createRef<FormHandle>();
+      const ref = createRef<FormRef>();
 
       const { onChange, rerender } = createFormComponent({ ref, schema, initialFormData: { foo: 'bar1' } });
 
@@ -549,7 +549,7 @@ describeRepeated('Form common: event handlers', (createFormComponent, isControll
     });
     it('should keep a form value set in the same render as an unrelated prop change', async () => {
       const schema: RJSFSchema = { type: 'object', properties: { name: { type: 'string' } } };
-      const ref = createRef<FormHandle>();
+      const ref = createRef<FormRef>();
       const { node, rerender } = createFormComponent({ schema, ref });
 
       await user.type(node.querySelector<HTMLInputElement>('#root_name')!, 'a');
@@ -605,7 +605,7 @@ describeRepeated('Form common: event handlers', (createFormComponent, isControll
     });
     it('should clear the errors of an uncontrolled form when noValidate is turned on', () => {
       const schema: RJSFSchema = { type: 'object', properties: { name: { type: 'string' } }, required: ['name'] };
-      const ref = createRef<FormHandle>();
+      const ref = createRef<FormRef>();
       const { node, rerender } = createFormComponent({ schema, ref });
       act(() => {
         ref.current!.validateForm();

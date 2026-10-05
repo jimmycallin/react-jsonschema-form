@@ -77,10 +77,10 @@ i.glyphicon {
 
 ## The imperative handle
 
-Use a ref when an action needs to read, update or submit the form programmatically. Type it as `FormHandle<T>`, where `T` is your form-data type:
+Use a ref when an action needs to read, update or submit the form programmatically. Type it as `FormRef<T>`, where `T` is your form-data type:
 
 ```tsx
-const formRef = useRef<FormHandle<MyData>>(null);
+const formRef = useRef<FormRef<MyData>>(null);
 ```
 
 The handle exposes `getFormData()`, `submit()`, `reset()`, `setFieldValue()`, `validateForm()`, `validateFormWithFormData()`, `validate()` and `focusOnError()`. Form is a function component, so its ref does not expose class state or lifecycle methods.
@@ -91,7 +91,7 @@ Call `getFormData()` to read the current value without storing every `onChange` 
 
 ```tsx
 import { useRef } from 'react';
-import Form, { type FormHandle } from '@rjsf/core';
+import Form, { type FormRef } from '@rjsf/core';
 import type { RJSFSchema } from '@rjsf/utils';
 import validator from '@rjsf/validator-ajv8';
 
@@ -99,7 +99,7 @@ const schema: RJSFSchema = { type: 'object', properties: { title: { type: 'strin
 type Draft = { title?: string };
 
 function DraftEditor() {
-  const formRef = useRef<FormHandle<Draft>>(null);
+  const formRef = useRef<FormRef<Draft>>(null);
 
   function saveDraft() {
     const data = formRef.current?.getFormData();
@@ -128,14 +128,14 @@ Call `submit()` from an event handler to run validation and invoke `onSubmit` wi
 
 ```tsx
 import { useRef } from 'react';
-import Form, { type FormHandle } from '@rjsf/core';
+import Form, { type FormRef } from '@rjsf/core';
 import type { RJSFSchema } from '@rjsf/utils';
 import validator from '@rjsf/validator-ajv8';
 
 const schema: RJSFSchema = { type: 'string' };
 
 function Editor() {
-  const formRef = useRef<FormHandle<string>>(null);
+  const formRef = useRef<FormRef<string>>(null);
 
   return (
     <>

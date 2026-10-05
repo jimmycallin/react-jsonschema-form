@@ -7,7 +7,7 @@ import type { EventFormData } from './IChangeEvent.ts';
  * React rendered. Use event handlers for user actions, or passive Effects for synchronization after prop changes;
  * descendant layout Effects and callback refs can still see the previous configuration.
  */
-export interface FormHandle<T = unknown> {
+export interface FormRef<T = unknown> {
   /** Reads the latest stored value in a self-owned form, or the last rendered parent value in a controlled form.
    * Treat the result as read-only. Self-owned edits can be visible here before the inputs update.
    */

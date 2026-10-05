@@ -3,23 +3,23 @@ import validator from '@rjsf/validator-ajv8';
 import { act, render } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 
-import type { FormHandle, FormProps } from '../src/index.ts';
+import type { FormRef, FormProps } from '../src/index.ts';
 import Form, { withTheme } from '../src/index.ts';
 import { createFormComponent, createFormRef } from './testUtils.tsx';
 
 const schema: RJSFSchema = { type: 'object', properties: { name: { type: 'string' } } };
 
-/** Ref consumers use the existing FormHandle contract, independent of Form's component implementation. */
+/** Ref consumers use the existing FormRef contract, independent of Form's component implementation. */
 function mountWithHandle(props: Parameters<typeof createFormComponent>[0]) {
   const ref = createFormRef();
   const result = createFormComponent({ ...props, ref });
-  const handle: FormHandle = ref.current!;
+  const handle: FormRef = ref.current!;
   return { ...result, handle };
 }
 
 const user = userEvent.setup();
 
-describe('FormHandle', () => {
+describe('FormRef', () => {
   describe('getFormData()', () => {
     it('returns the seed of an uncontrolled form', () => {
       const { handle } = mountWithHandle({ schema, initialFormData: { name: 'seed' } });
@@ -83,7 +83,7 @@ describe('FormHandle', () => {
     it('submits without an onSubmit handler', () => {
       const ref = createFormRef();
       render(<Form ref={ref} schema={requiredSchema} validator={validator} initialFormData={{ name: 'a' }} />);
-      const handle: FormHandle = ref.current!;
+      const handle: FormRef = ref.current!;
 
       expect(() => act(() => handle.submit())).not.toThrow();
     });
@@ -193,26 +193,26 @@ describe('FormHandle', () => {
     const ref = createFormRef();
     const ThemedForm = withTheme({});
     render(<ThemedForm ref={ref} schema={schema} validator={validator} initialFormData={{ name: 'themed' }} />);
-    const handle: FormHandle = ref.current!;
+    const handle: FormRef = ref.current!;
 
     expect(handle.getFormData()).toEqual({ name: 'themed' });
   });
 
   it('is implemented by function Form and exposes only the supported imperative surface', () => {
-    expectTypeOf<FormProps['ref']>().toEqualTypeOf<React.Ref<FormHandle> | undefined>();
+    expectTypeOf<FormProps['ref']>().toEqualTypeOf<React.Ref<FormRef> | undefined>();
 
-    expectTypeOf<FormHandle>().toHaveProperty('getFormData');
-    expectTypeOf<FormHandle>().toHaveProperty('submit');
-    expectTypeOf<FormHandle>().toHaveProperty('reset');
-    expectTypeOf<FormHandle>().toHaveProperty('setFieldValue');
-    expectTypeOf<FormHandle>().toHaveProperty('validateForm');
-    expectTypeOf<FormHandle>().toHaveProperty('validateFormWithFormData');
-    expectTypeOf<FormHandle>().toHaveProperty('validate');
-    expectTypeOf<FormHandle>().toHaveProperty('focusOnError');
+    expectTypeOf<FormRef>().toHaveProperty('getFormData');
+    expectTypeOf<FormRef>().toHaveProperty('submit');
+    expectTypeOf<FormRef>().toHaveProperty('reset');
+    expectTypeOf<FormRef>().toHaveProperty('setFieldValue');
+    expectTypeOf<FormRef>().toHaveProperty('validateForm');
+    expectTypeOf<FormRef>().toHaveProperty('validateFormWithFormData');
+    expectTypeOf<FormRef>().toHaveProperty('validate');
+    expectTypeOf<FormRef>().toHaveProperty('focusOnError');
 
-    expectTypeOf<FormHandle>().not.toHaveProperty('state');
-    expectTypeOf<FormHandle>().not.toHaveProperty('setState');
-    expectTypeOf<FormHandle>().not.toHaveProperty('componentDidUpdate');
-    expectTypeOf<FormHandle>().not.toHaveProperty('getSnapshotBeforeUpdate');
+    expectTypeOf<FormRef>().not.toHaveProperty('state');
+    expectTypeOf<FormRef>().not.toHaveProperty('setState');
+    expectTypeOf<FormRef>().not.toHaveProperty('componentDidUpdate');
+    expectTypeOf<FormRef>().not.toHaveProperty('getSnapshotBeforeUpdate');
   });
 });

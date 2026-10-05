@@ -4,7 +4,7 @@ import validator from '@rjsf/validator-ajv8';
 import { act, render } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 
-import type { FormHandle, IChangeEvent } from '../src/index.ts';
+import type { FormRef, IChangeEvent } from '../src/index.ts';
 import Form, { FieldTemplate as DefaultFieldTemplate } from '../src/index.ts';
 import {
   AcceptingParent,
@@ -405,7 +405,7 @@ describe('render stability across sibling fields', () => {
         ...schema,
         properties: { ...schema.properties, first: { type: 'string', minLength: 1 } },
       };
-      const ref = createRef<FormHandle>();
+      const ref = createRef<FormRef>();
       render(
         <Form
           ref={ref}

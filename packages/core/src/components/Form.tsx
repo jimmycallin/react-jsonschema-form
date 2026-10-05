@@ -62,7 +62,7 @@ import {
 import { buildRegistry } from '../Theme.ts';
 import { ADDITIONAL_PROPERTY_KEY_REMOVE } from './constants.ts';
 import FormDataContext from './FormDataContext.ts';
-import type { FormHandle } from './FormHandle.ts';
+import type { FormRef } from './FormRef.ts';
 import type { EventFormData, IChangeEvent } from './IChangeEvent.ts';
 
 /** `T` itself for any concrete type, but not a position TypeScript infers `T` from. `FormProps` wraps the configuration
@@ -251,8 +251,8 @@ export interface FormProps<
   /** Optional function that allows for custom merging of `allOf` schemas
    */
   customMergeAllOf?: CustomMergeAllOf<S>;
-  /** Receives the supported imperative FormHandle. */
-  ref?: Ref<FormHandle<T>>;
+  /** Receives the supported imperative FormRef. */
+  ref?: Ref<FormRef<T>>;
 }
 
 /** The data that is contained within the state for the `Form` */
@@ -1593,7 +1593,7 @@ interface RenderedHandlers<T> {
   handleBlur: (id: string, data: unknown) => void;
   handleFocus: (id: string, data: unknown) => void;
   handleSubmit: (event: SubmitEvent<HTMLFormElement>) => void;
-  handle: FormHandle<T>;
+  handle: FormRef<T>;
 }
 
 function createHandlers<T, S extends StrictRJSFSchema, F extends FormContextType>(
@@ -1767,8 +1767,8 @@ function createHandlers<T, S extends StrictRJSFSchema, F extends FormContextType
     }
   };
 
-  const handle: FormHandle<T> = {
-    /** Returns the owner data, see `FormHandle.getFormData()`: committed props for a parent-owned form or
+  const handle: FormRef<T> = {
+    /** Returns the owner data, see `FormRef.getFormData()`: committed props for a parent-owned form or
      * current model data for a self-owned one.
      */
     getFormData: () => state.formData as EventFormData<T>,
@@ -1791,7 +1791,7 @@ function createHandlers<T, S extends StrictRJSFSchema, F extends FormContextType
       }
     },
 
-    /** Resets the form, see `FormHandle.reset()`. A self-owned form re-derives its data from `initialFormData` and the
+    /** Resets the form, see `FormRef.reset()`. A self-owned form re-derives its data from `initialFormData` and the
      * schema the way an initial render does, clears every error and tells `onChange`. A parent-owned form clears its
      * own errors only: the data is the parent's to reset, by passing a new `formData`, so nothing is proposed and
      * `onChange` is not called. `extraErrors` are the parent's too and stay.
@@ -1816,7 +1816,7 @@ function createHandlers<T, S extends StrictRJSFSchema, F extends FormContextType
       props.onChange?.(toIChangeEvent(next));
     },
 
-    /** Sets the value of the field at `fieldPath`, see `FormHandle.setFieldValue()`. The dotted form splits on `.`
+    /** Sets the value of the field at `fieldPath`, see `FormRef.setFieldValue()`. The dotted form splits on `.`
      * only, so it cannot express an array index as a number or a property name containing a dot. Pass a
      * `FieldPathList` for either: an item of an array wants the numeric index, since that is what makes a cleared item
      * resolve to `null` rather than `undefined`.
@@ -1839,10 +1839,10 @@ function createHandlers<T, S extends StrictRJSFSchema, F extends FormContextType
     /** Validates current owner data, with extra data omitted when requested. */
     validateForm: () => runValidation(withExtraDataOmitted(state.formData)),
 
-    /** Validates the given `formData` as it is, see `FormHandle.validateFormWithFormData()` */
+    /** Validates the given `formData` as it is, see `FormRef.validateFormWithFormData()` */
     validateFormWithFormData: (formData?: T) => runValidation(formData),
 
-    /** Validates the `formData` against the form's schema, returning the results, see `FormHandle.validate()` */
+    /** Validates the `formData` against the form's schema, returning the results, see `FormRef.validate()` */
     validate: (formData: T | undefined) => validateFormData(props, state, formData),
 
     focusOnError,

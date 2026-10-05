@@ -2,7 +2,7 @@ import { createRef } from 'react';
 import type { RJSFSchema } from '@rjsf/utils';
 import { act } from '@testing-library/react';
 
-import type { FormHandle } from '../src/index.ts';
+import type { FormRef } from '../src/index.ts';
 import { createFormComponent, errorListMessages } from './testUtils.tsx';
 
 /** Deriving state from the props honors every input that changed, whether or not the reconciler's identity-prop
@@ -18,7 +18,7 @@ describe('state derivation', () => {
   };
 
   it('a replaced customValidate takes effect on the next change', async () => {
-    const formRef = createRef<FormHandle>();
+    const formRef = createRef<FormRef>();
     const { node, rerender } = createFormComponent({
       ref: formRef,
       schema,
@@ -66,7 +66,7 @@ describe('state derivation', () => {
   });
 
   it('turning noValidate on drops the validator results, so turning it back off does not bring them back', () => {
-    const formRef = createRef<FormHandle>();
+    const formRef = createRef<FormRef>();
     const props = { ref: formRef, schema: { type: 'string', minLength: 8 } as RJSFSchema, formData: 'short' };
     const { node, rerender } = createFormComponent(props);
     act(() => {
