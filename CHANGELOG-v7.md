@@ -55,6 +55,8 @@ should change the heading of the (upcoming) version to include a major version b
 
 ## @rjsf/core
 
+- **BREAKING CHANGE:** migrate Form to a function component with a private `useSyncExternalStore` model. Keep value-only field callbacks, full-data events and existing imperative method signatures. Self-owned commands read current model data; controlled commands use committed parent props. Callbacks run synchronously, same-tick controlled proposals do not compose automatically, and descendant commit callbacks can see previous configuration. Type refs as `FormHandle<T>`; class internals are unavailable. Preserve stable field handlers without render-time refs and keep custom field views authoritative. ([#111](https://github.com/jimmycallin/react-jsonschema-form/pull/111))
+
 - **BREAKING CHANGE:** `GridType` and `Operators` are now `as const` objects with same-named union types instead of `enum`s, so the source is valid under Node's type stripping. Values and `GridType.ROW`-style member access are unchanged; code that used a member as a type must write `typeof GridType.ROW` instead of `GridType.ROW` ([#5244](https://github.com/rjsf-team/react-jsonschema-form/pull/5244))
 - **BREAKING CHANGE** `withTheme()` now returns a plain function component instead of a `forwardRef`-wrapped one, and `FormProps['onSubmit']`'s event parameter is now typed as `SubmitEvent<HTMLFormElement>` instead of the deprecated `FormEvent<any>`
 - **BREAKING CHANGE:** Removed deprecated `Form` APIs: the `getUsedFormData()` and `getFieldNames()` instance methods (no direct replacement), the `omitExtraData()` instance method (use `SchemaUtils.omitExtraData(schema, formData)` instead), the `removeEmptyOptionalObjects` prop (already a no-op; use `omitExtraData`, which now prunes empty optional objects itself), and `boolean` values for the `liveValidate`/`liveOmit` props (use `'onChange'` in place of `true`, or omit the prop in place of `false`). Also removed the `ui:rootFieldId` uiSchema directive; use the `Form.idPrefix` prop instead
@@ -161,6 +163,8 @@ should change the heading of the (upcoming) version to include a major version b
 - `IconButton` renders a React element `icon` as-is, where it used to put it in a `glyphicon-[object Object]` class name ([#5382](https://github.com/rjsf-team/react-jsonschema-form/pull/5382))
 
 ## @rjsf/daisyui
+
+- Report a date picker's blur after the accepted change, so controlled blur validation cannot undo the pick. ([#111](https://github.com/jimmycallin/react-jsonschema-form/pull/111))
 
 - Fixed the `getTestRegistry()` test helper passing an options object where positional arguments were expected, which silently dropped its templates and widgets; it now imports from `@rjsf/core/testing` ([#5272](https://github.com/rjsf-team/react-jsonschema-form/pull/5272))
 - **BREAKING CHANGE** `TimeWidget` pads missing seconds and appends the browser's local UTC offset to its value on change, matching `@rjsf/core`'s `TimeWidget` (`format: "iso-time"` still pads seconds but skips the offset, since that format's timezone is optional). `DateTimeWidget` similarly formats a `format: "iso-date-time"` value as a naive local date-time string instead of a UTC ISO string, stripping a stored offset before parsing so it displays as the naive wall-clock time it represents; an unparsable stored value resolves to no selected date rather than crashing the calendar on an `Invalid Date` ([#3930](https://github.com/rjsf-team/react-jsonschema-form/issues/3930))

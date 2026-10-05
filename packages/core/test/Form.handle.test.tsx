@@ -3,15 +3,13 @@ import validator from '@rjsf/validator-ajv8';
 import { act, render } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 
-import type { FormHandle } from '../src/index.ts';
+import type { FormHandle, FormProps } from '../src/index.ts';
 import Form, { withTheme } from '../src/index.ts';
 import { createFormComponent, createFormRef } from './testUtils.tsx';
 
 const schema: RJSFSchema = { type: 'object', properties: { name: { type: 'string' } } };
 
-/** The supported pattern: the ref is typed as the class because TSX types a class element's `ref` by its instance,
- * and consuming code narrows to the handle so nothing outside it is relied upon.
- */
+/** Ref consumers use the existing FormHandle contract, independent of Form's component implementation. */
 function mountWithHandle(props: Parameters<typeof createFormComponent>[0]) {
   const ref = createFormRef();
   const result = createFormComponent({ ...props, ref });
@@ -200,8 +198,8 @@ describe('FormHandle', () => {
     expect(handle.getFormData()).toEqual({ name: 'themed' });
   });
 
-  it('is implemented by the Form class and exposes only the supported imperative surface', () => {
-    expectTypeOf<Form>().toExtend<FormHandle>();
+  it('is implemented by function Form and exposes only the supported imperative surface', () => {
+    expectTypeOf<FormProps['ref']>().toEqualTypeOf<React.Ref<FormHandle> | undefined>();
 
     expectTypeOf<FormHandle>().toHaveProperty('getFormData');
     expectTypeOf<FormHandle>().toHaveProperty('submit');

@@ -1,5 +1,5 @@
 import type { FocusEvent } from 'react';
-import { memo, useCallback, useMemo, useRef, useState } from 'react';
+import { memo, use, useCallback, useMemo, useState } from 'react';
 import type {
   ErrorSchema,
   FieldPath,
@@ -35,7 +35,9 @@ import {
   TranslatableString,
 } from '@rjsf/utils';
 
+import useCommittedView from '../../hooks/useCommittedView.ts';
 import { ADDITIONAL_PROPERTY_KEY_REMOVE, EMPTY_UI_SCHEMA } from '../constants.ts';
+import FormDataContext from '../FormDataContext.ts';
 import RichDescription from '../RichDescription.tsx';
 
 /** Returns a flag indicating whether the `name` field is required in the object schema
@@ -270,15 +272,23 @@ export default function ObjectField<
   const uiSchema: UiSchema<T, S, F> = rawUiSchema ?? EMPTY_UI_SCHEMA;
   const { fields, schemaUtils, translateString, globalUiOptions, uiSchemaDefinitions } = registry;
   const { OptionalDataControlsField } = fields;
-  const formDataRef = useRef(formData);
-  formDataRef.current = formData;
+  const access = use(FormDataContext);
+  const view = useCommittedView({ source: formData, data: formData });
+  const readData = useCallback(() => {
+    const committed = view.read();
+    return (access ? access.readField(fieldPath, committed.source, committed.data) : committed.data) as T | undefined;
+  }, [access, fieldPath, view]);
+
   const schema: S = useMemo(
     () => schemaUtils.retrieveSchema(rawSchema, formData, true),
     [schemaUtils, rawSchema, formData],
   );
   const uiOptions = useMemo(() => getUiOptions<T, S, F>(uiSchema, globalUiOptions), [uiSchema, globalUiOptions]);
   const schemaProperties = useMemo(() => schema.properties ?? {}, [schema.properties]);
-  const lastRenamedProperty = useRef({ previousKey: '', currentKey: undefined as string | undefined });
+  const [lastRenamedProperty, setLastRenamedProperty] = useState({
+    previousKey: '',
+    currentKey: undefined as string | undefined,
+  });
   const schemaAdditionalProperties = useMemo(() => getAdditionalPropertyOrder<S>(schemaProperties), [schemaProperties]);
   const [additionalPropertyOrder, setAdditionalPropertyOrder] = useState(schemaAdditionalProperties);
   const definedPropertyOrder = useMemo(() => {
@@ -366,12 +376,13 @@ export default function ObjectField<
     if (!(schema.additionalProperties || schema.patternProperties)) {
       return;
     }
-    const newFormData = { ...formData } as T;
+    const currentFormData = readData();
+    const newFormData = { ...currentFormData } as T;
     // A `propertyNames.enum` makes the generic `newKey` an invalid name, so the new property goes under an allowed
     // name that is still free. `canExpand()` hides the add button once every allowed name is taken, so getting here
     // with none left means a custom template is offering it anyway, and adding no property beats adding one the
     // schema forbids
-    const freeNames = getFreePropertyNames<T, S>(resolvedSchema, formData);
+    const freeNames = getFreePropertyNames<T, S>(resolvedSchema, currentFormData);
     if (freeNames?.length === 0) {
       return;
     }
@@ -390,7 +401,7 @@ export default function ObjectField<
         let apSchema = schema.additionalProperties;
         const wasRef = REF_KEY in apSchema;
         if (wasRef) {
-          apSchema = schemaUtils.retrieveSchema({ [REF_KEY]: apSchema[REF_KEY] } as S, formData);
+          apSchema = schemaUtils.retrieveSchema({ [REF_KEY]: apSchema[REF_KEY] } as S, currentFormData);
           type = apSchema.type;
           constValue = apSchema.const;
         }
@@ -415,14 +426,17 @@ export default function ObjectField<
       setByPath(newFormData, newKey, newValue);
     }
 
-    if (lastRenamedProperty.current.previousKey === newKey) {
-      lastRenamedProperty.current.currentKey = newKey;
-      lastRenamedProperty.current.previousKey = getAvailableKey(newKey, newFormData);
-    }
+    setLastRenamedProperty((previous) =>
+      previous.previousKey === newKey
+        ? { currentKey: newKey, previousKey: getAvailableKey(newKey, newFormData) }
+        : previous,
+    );
     setAdditionalPropertyOrder((order) => [...order, newKey]);
+    view.configure({ ...view.read(), data: newFormData });
     onChange(newFormData, fieldPath);
   }, [
-    formData,
+    readData,
+    view,
     onChange,
     translateString,
     schemaUtils,
@@ -444,7 +458,7 @@ export default function ObjectField<
   const handleKeyRename = useCallback(
     (oldKey: string, newKey: string) => {
       if (oldKey !== newKey) {
-        const currentFormData = formDataRef.current;
+        const currentFormData = readData();
         const actualNewKey = getAvailableKey(newKey, currentFormData);
         const newFormData: GenericObjectType = {
           ...(currentFormData as GenericObjectType),
@@ -457,16 +471,16 @@ export default function ObjectField<
         });
         const renamedObj = Object.assign({}, ...keyValues);
 
-        formDataRef.current = renamedObj as T;
-        if (oldKey !== lastRenamedProperty.current.currentKey) {
-          lastRenamedProperty.current.previousKey = oldKey;
-        }
-        lastRenamedProperty.current.currentKey = actualNewKey;
+        view.configure({ ...view.read(), data: renamedObj as T });
+        setLastRenamedProperty((previous) => ({
+          previousKey: oldKey !== previous.currentKey ? oldKey : previous.previousKey,
+          currentKey: actualNewKey,
+        }));
         setAdditionalPropertyOrder((order) => order.map((property) => (property === oldKey ? actualNewKey : property)));
         onChange(renamedObj, fieldPath);
       }
     },
-    [onChange, fieldPath, getAvailableKey],
+    [onChange, fieldPath, getAvailableKey, view, readData],
   );
 
   /** Handles the remove click which calls the `onChange` callback with the special ADDITIONAL_PROPERTY_FIELD_REMOVE
@@ -485,12 +499,15 @@ export default function ObjectField<
    * existing component instance instead of unmounting/remounting it. This
    * preserves DOM focus naturally without manual focus management.
    */
-  const getStableKey = useCallback((property: string) => {
-    if (lastRenamedProperty.current.currentKey === property) {
-      return lastRenamedProperty.current.previousKey;
-    }
-    return property;
-  }, []);
+  const getStableKey = useCallback(
+    (property: string) => {
+      if (lastRenamedProperty.currentKey === property) {
+        return lastRenamedProperty.previousKey;
+      }
+      return property;
+    },
+    [lastRenamedProperty],
+  );
 
   if (!renderOptionalField || hasFormData) {
     try {

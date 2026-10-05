@@ -6,6 +6,8 @@ import { asNumber, getDecimalSeparator, getUiOptions, resolveDefaultWidget } fro
 const trailingCharMatcherWithPrefix = /\.([0-9]*0)*$/;
 const trailingCharMatcher = /[0.]0*$/;
 
+const NEGATIVE_ZERO = -0;
+
 /**
  * The NumberField class has some special handling for dealing with trailing
  * decimal points and/or zeroes. This logic is designed to allow trailing values
@@ -76,7 +78,7 @@ function NumberField<T = unknown, S extends StrictRJSFSchema = RJSFSchema, F ext
     // distinct value here because `String(-0)` is '0', so the sign is compared on its own.
     const lastSign = /^[+-]/.exec(canonicalLastValue)?.[0] ?? '';
     const unsignedLastValue = canonicalLastValue.slice(lastSign.length);
-    const isNegative = value < 0 || Object.is(value, -0);
+    const isNegative = value < 0 || Object.is(value, NEGATIVE_ZERO);
 
     // Construct a regular expression that checks for a string that consists
     // of the formData value's magnitude suffixed with zero or one '.' characters and zero

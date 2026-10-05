@@ -1,5 +1,5 @@
 import type { MouseEvent } from 'react';
-import { memo, use, useCallback, useMemo, useRef, useState } from 'react';
+import { memo, use, useCallback, useMemo, useState } from 'react';
 import type {
   ArrayFieldTemplateProps,
   ErrorSchema,
@@ -35,7 +35,9 @@ import {
   TranslatableString,
 } from '@rjsf/utils';
 
+import useCommittedView from '../../hooks/useCommittedView.ts';
 import { EMPTY_UI_SCHEMA } from '../constants.ts';
+import FormDataContext from '../FormDataContext.ts';
 import WithheldErrorsContext from './WithheldErrorsContext.ts';
 
 /** An item of the `formData` paired with its stable React key */
@@ -870,16 +872,41 @@ export default function ArrayField<
   const { schema, uiSchema, errorSchema, rawErrors, fieldPath, id: fieldId, registry, formData, onChange } = props;
   const { globalFormOptions, schemaUtils, translateString } = registry;
   const { keyedFormData, updateKeyedFormData } = useKeyedFormData<T>(formData);
-  // Refs keep the latest values accessible inside stable useCallback closures without being in the dep array,
-  // so the four mutation handlers don't get new references on every keyedFormData / errorSchema change.
-  const keyedFormDataRef = useRef(keyedFormData);
-  keyedFormDataRef.current = keyedFormData;
-  const errorSchemaRef = useRef(errorSchema);
+  const access = use(FormDataContext);
   const withheldErrors = use(WithheldErrorsContext);
   // `SchemaField` hands the array's own errors over as `rawErrors`, or withholds them beside a `oneOf`/`anyOf`
   // selector, so they go back in for the handlers to carry over
   const ownErrors = rawErrors ?? (withheldErrors?.fieldPath === fieldPath ? withheldErrors.errors : undefined);
-  errorSchemaRef.current = ownErrors ? { ...errorSchema, [ERRORS_KEY]: ownErrors } : errorSchema;
+  const view = useCommittedView({
+    keyedFormData,
+    source: formData,
+    errorSchema: ownErrors ? { ...errorSchema, [ERRORS_KEY]: ownErrors } : errorSchema,
+  });
+
+  const readRows = useCallback(() => {
+    const committed = view.read();
+    const current = access
+      ? access.readField(
+          fieldPath,
+          committed.source,
+          committed.keyedFormData.map((row) => row.item),
+        )
+      : committed.source;
+    if (!Array.isArray(current)) {
+      return [];
+    }
+    return current.map((item, index) => ({
+      key: committed.keyedFormData[index]?.key ?? generateRowId(),
+      item: item as T,
+    }));
+  }, [access, fieldPath, view]);
+
+  const readErrors = useCallback(() => {
+    const committed = view.read();
+    return (access ? access.readErrors(fieldPath, committed.source, committed.errorSchema) : committed.errorSchema) as
+      | ErrorSchema<T[]>
+      | undefined;
+  }, [access, fieldPath, view]);
 
   /** Callback handler for when the user clicks on the add or add at index buttons. Creates a new row of keyed form data
    * either at the end of the list (when index is not specified) or inserted at the `index` when it is, adding it into
@@ -894,23 +921,22 @@ export default function ArrayField<
         event.preventDefault();
       }
 
-      const newErrorSchema = remapItemErrors(errorSchemaRef.current, (i) =>
-        index === undefined || i < index ? i : i + 1,
-      );
+      const newErrorSchema = remapItemErrors(readErrors(), (i) => (index === undefined || i < index ? i : i + 1));
 
       const newKeyedFormDataRow: KeyedFormDataType<T> = {
         key: generateRowId(),
-        item: getNewFormDataRow<T, S, F>(registry, schema, index ?? keyedFormDataRef.current.length, uiSchema),
+        item: getNewFormDataRow<T, S, F>(registry, schema, index ?? readRows().length, uiSchema),
       };
-      const newKeyedFormData = [...keyedFormDataRef.current];
+      const newKeyedFormData = [...readRows()];
       if (index !== undefined) {
         newKeyedFormData.splice(index, 0, newKeyedFormDataRow);
       } else {
         newKeyedFormData.push(newKeyedFormDataRow);
       }
+      view.configure({ ...view.read(), keyedFormData: newKeyedFormData, errorSchema: newErrorSchema });
       onChange(updateKeyedFormData(newKeyedFormData), fieldPath, newErrorSchema);
     },
-    [registry, schema, uiSchema, onChange, updateKeyedFormData, fieldPath],
+    [registry, schema, uiSchema, onChange, updateKeyedFormData, fieldPath, view, readRows, readErrors],
   );
 
   /** Callback handler for when the user clicks on the copy button on an existing array element. Clones the row of
@@ -925,21 +951,26 @@ export default function ArrayField<
         event.preventDefault();
       }
 
-      const newErrorSchema = remapItemErrors(errorSchemaRef.current, (i) => (i <= index ? i : i + 1));
+      if (index >= readRows().length) {
+        return;
+      }
+
+      const newErrorSchema = remapItemErrors(readErrors(), (i) => (i <= index ? i : i + 1));
 
       const newKeyedFormDataRow: KeyedFormDataType<T> = {
         key: generateRowId(),
-        item: structuredClone(keyedFormDataRef.current[index].item),
+        item: structuredClone(readRows()[index].item),
       };
-      const newKeyedFormData = [...keyedFormDataRef.current];
+      const newKeyedFormData = [...readRows()];
       if (index !== undefined) {
         newKeyedFormData.splice(index + 1, 0, newKeyedFormDataRow);
       } else {
         newKeyedFormData.push(newKeyedFormDataRow);
       }
+      view.configure({ ...view.read(), keyedFormData: newKeyedFormData, errorSchema: newErrorSchema });
       onChange(updateKeyedFormData(newKeyedFormData), fieldPath, newErrorSchema);
     },
-    [onChange, updateKeyedFormData, fieldPath],
+    [onChange, updateKeyedFormData, fieldPath, view, readRows, readErrors],
   );
 
   /** Callback handler for when the user clicks on the remove button on an existing array element. Removes the row of
@@ -954,16 +985,21 @@ export default function ArrayField<
         event.preventDefault();
       }
       // refs #195: revalidate to ensure properly reindexing errors
-      const newErrorSchema = remapItemErrors(errorSchemaRef.current, (i) => {
+      if (index >= readRows().length) {
+        return;
+      }
+
+      const newErrorSchema = remapItemErrors(readErrors(), (i) => {
         if (i === index) {
           return undefined;
         }
         return i < index ? i : i - 1;
       });
-      const newKeyedFormData = keyedFormDataRef.current.filter((_, i) => i !== index);
+      const newKeyedFormData = readRows().filter((_, i) => i !== index);
+      view.configure({ ...view.read(), keyedFormData: newKeyedFormData, errorSchema: newErrorSchema });
       onChange(updateKeyedFormData(newKeyedFormData), fieldPath, newErrorSchema);
     },
-    [onChange, updateKeyedFormData, fieldPath],
+    [onChange, updateKeyedFormData, fieldPath, view, readRows, readErrors],
   );
 
   /** Callback handler for when the user clicks on one of the move item buttons on an existing array element. Moves the
@@ -979,7 +1015,11 @@ export default function ArrayField<
         event.preventDefault();
         event.currentTarget.blur();
       }
-      const newErrorSchema = remapItemErrors(errorSchemaRef.current, (i) => {
+      if (index >= readRows().length) {
+        return;
+      }
+
+      const newErrorSchema = remapItemErrors(readErrors(), (i) => {
         if (i === index) {
           return newIndex;
         }
@@ -987,15 +1027,16 @@ export default function ArrayField<
       });
 
       function reOrderArray() {
-        const newKeyedFormData = keyedFormDataRef.current.slice();
+        const newKeyedFormData = readRows().slice();
         newKeyedFormData.splice(index, 1);
-        newKeyedFormData.splice(newIndex, 0, keyedFormDataRef.current[index]);
+        newKeyedFormData.splice(newIndex, 0, readRows()[index]);
         return newKeyedFormData;
       }
       const newKeyedFormData = reOrderArray();
+      view.configure({ ...view.read(), keyedFormData: newKeyedFormData, errorSchema: newErrorSchema });
       onChange(updateKeyedFormData(newKeyedFormData), fieldPath, newErrorSchema);
     },
-    [onChange, updateKeyedFormData, fieldPath],
+    [onChange, updateKeyedFormData, fieldPath, view, readRows, readErrors],
   );
 
   /** Callback handler used to deal with changing the value of the data in the array at the `index`. Calls the

@@ -802,10 +802,8 @@ describe('Error state consistency when deriving from new props', () => {
     };
     const minLengthError = 'must NOT have fewer than 3 characters';
     const streetPath = toFieldPath('street', toFieldPath('addr'));
-    const formRef = createRef<Form>();
     const { container } = render(
       <Form
-        ref={formRef}
         schema={addrSchema}
         uiSchema={capturingUiSchema}
         validator={validator}
@@ -819,11 +817,8 @@ describe('Error state consistency when deriving from new props', () => {
     expect(street).toEqual({ __errors: [minLengthError] });
     act(() => rootField().onChange('a', streetPath, street));
 
-    // Not a phantom `{ addr: { street: {} } }`, which the next raise on `addr` would read as a validator error
-    expect(formRef.current!.state.schemaValidationErrorSchema).toEqual({
-      addr: { street: { __errors: [minLengthError] } },
-    });
-    expect(formRef.current!.state.schemaValidationErrors.map(({ message }) => message)).toEqual([minLengthError]);
+    // The field still shows the validator's error: a phantom `{ addr: { street: {} } }` would render nothing there
+    expect(fieldErrorsById(container)).toEqual({ root_addr_street: [minLengthError] });
   });
 
   it('clears the errors of a changed field in both the field and the error list while typing under onBlur', async () => {
@@ -1661,8 +1656,6 @@ describe('Calling onChange right after updating a Form with props formData', () 
   const ArrayThatTriggersOnChangeRightAfterUpdated = (fieldProps: FieldProps) => {
     const { ArrayField } = fieldProps.registry.fields;
     const isMounted = useRef(false);
-    const latestProps = useRef(fieldProps);
-    latestProps.current = fieldProps;
     useEffect(() => {
       if (!isMounted.current) {
         isMounted.current = true;
@@ -1672,10 +1665,8 @@ describe('Calling onChange right after updating a Form with props formData', () 
         return;
       }
       changed = true;
-      latestProps.current.onChange(
-        'test',
-        toFieldPath((latestProps.current.formData as unknown[]).length, latestProps.current.fieldPath),
-      );
+      const length = Array.isArray(fieldProps.formData) ? fieldProps.formData.length : 0;
+      fieldProps.onChange('test', toFieldPath(length, fieldProps.fieldPath));
     });
     return <ArrayField {...fieldProps} />;
   };
@@ -3416,8 +3407,6 @@ describe('extraErrors set after submit (#4965)', () => {
       foo: { __errors: ['Server-side error'] },
     };
 
-    const formRef = createFormRef();
-
     function Wrapper() {
       const [extraErrors, setExtraErrors] = useState<ErrorSchema>({});
 
@@ -3427,7 +3416,7 @@ describe('extraErrors set after submit (#4965)', () => {
         setExtraErrors(sampleErrors);
       }, []);
 
-      return <Form ref={formRef} schema={schema} validator={validator} onSubmit={onSubmit} extraErrors={extraErrors} />;
+      return <Form schema={schema} validator={validator} onSubmit={onSubmit} extraErrors={extraErrors} />;
     }
 
     const { container } = render(<Wrapper />);
@@ -3437,14 +3426,8 @@ describe('extraErrors set after submit (#4965)', () => {
 
     await actWrappedDelayPromise(200);
 
-    // Check the form state directly
-    const { state } = formRef.current!;
-    expect(state.errors.length).toBeGreaterThan(0);
-    expect(state.errorSchema).toEqual(sampleErrors);
-
-    // Also check DOM
-    const errorItems = container.querySelectorAll('.error-detail li');
-    expect(errorItems.length).toBeGreaterThan(0);
+    expect(errorListMessages(container)).toEqual(['.foo Server-side error']);
+    expect(fieldErrorsById(container)).toEqual({ root_foo: ['Server-side error'] });
   });
 });
 
@@ -3469,10 +3452,8 @@ describe('extraErrors not duplicated when sibling array field mutated (#5041)', 
       name: { __errors: ['Name is required'] },
     };
 
-    const formRef = createFormRef();
-
     function Wrapper() {
-      return <Form ref={formRef} schema={schema} validator={validator} extraErrors={extraErrors} />;
+      return <Form schema={schema} validator={validator} extraErrors={extraErrors} />;
     }
 
     const { container } = render(<Wrapper />);
@@ -3483,10 +3464,7 @@ describe('extraErrors not duplicated when sibling array field mutated (#5041)', 
     await user.click(addBtn!);
 
     // The name field's extraErrors should still contain exactly one error
-    const { state } = formRef.current!;
-    const nameErrors = (state.errorSchema as ErrorSchema<{ name?: string }>).name?.__errors ?? [];
-    expect(nameErrors).toHaveLength(1);
-    expect(nameErrors[0]).toBe('Name is required');
+    expect(fieldErrorsById(form).root_name).toEqual(['Name is required']);
   });
 
   it('should not accumulate duplicate extraErrors in the error list when a field raises a custom error', async () => {
@@ -3504,9 +3482,7 @@ describe('extraErrors not duplicated when sibling array field mutated (#5041)', 
         />
       );
     }
-    const formRef = createRef<Form>();
     const { node } = createFormComponent({
-      ref: formRef,
       schema,
       fields: { StringField: RaisingField },
       extraErrors: { foo: { __errors: ['extra!'] } },
@@ -3517,8 +3493,7 @@ describe('extraErrors not duplicated when sibling array field mutated (#5041)', 
 
     await user.type(node.querySelectorAll<HTMLInputElement>('input[type=text]')[0], 'abc');
 
-    const { errors } = formRef.current!.state;
-    expect(errors.filter(({ message }) => message === 'extra!')).toHaveLength(1);
+    expect(errorListMessages(node).filter((message) => message.endsWith('extra!'))).toHaveLength(1);
   });
 });
 

@@ -77,11 +77,11 @@ i.glyphicon {
 
 ## The imperative handle
 
-A `ref` on `Form` exposes its `FormHandle`: `getFormData()`, `submit()`, `reset()`, `setFieldValue()`, `validateForm()`, `validateFormWithFormData()`, `validate()` and `focusOnError()`. Nothing else on the instance is supported. Type the ref as `Form` (TSX types a class element's `ref` by its instance) and narrow to `FormHandle` where you use it.
+A `ref` on `Form` exposes its `FormHandle`: `getFormData()`, `submit()`, `reset()`, `setFieldValue()`, `validateForm()`, `validateFormWithFormData()`, `validate()` and `focusOnError()`. Form is a function component. Type its ref as `FormHandle<T>`; class instance state and lifecycle methods are unavailable.
 
 ## Read form data programmatically
 
-`getFormData()` returns the data the form currently renders. Use it with `initialFormData`, where the form owns the data and there is otherwise no way to read it between `onChange` calls:
+`getFormData()` returns current self-owned model data or committed parent-owned data. Use it with `initialFormData`, where the form owns the data and there is otherwise no way to read it between `onChange` calls:
 
 ```tsx
 import { createRef } from 'react';
@@ -91,7 +91,7 @@ import type { RJSFSchema } from '@rjsf/utils';
 import validator from '@rjsf/validator-ajv8';
 
 const schema: RJSFSchema = { type: 'object', properties: { title: { type: 'string' } } };
-const formRef = createRef<Form>();
+const formRef = createRef<FormHandle>();
 
 function saveDraft() {
   const form: FormHandle | null = formRef.current;
@@ -101,18 +101,19 @@ function saveDraft() {
 <Form ref={formRef} schema={schema} validator={validator} initialFormData={{ title: 'Untitled' }} />;
 ```
 
-It reads committed data, so an edit or `setFieldValue()` in the same tick is visible only after React commits. With a `formData` prop it returns that prop: the form renders nothing else, so a proposal your `onChange` handler declined is never returned.
+A self-owned form exposes completed edits immediately, including inside `onChange`, before React updates its inputs. With a `formData` prop it returns the last committed prop: an unaccepted proposal is never returned.
 
 ## Submit form programmatically
 
 You can use the reference to get your `Form` component and call the `submit` method to submit the form programmatically without a submit button.
 This method will dispatch the `submit` event of the form, and the function, that is passed to `onSubmit` props, will be called.
-It is queued behind any change, `setFieldValue()` or reset still in flight, so `setFieldValue('title', 'Draft'); submit();` submits the new title. `validateForm()` returns its result immediately instead, so it validates the data React has already committed.
+`submit()` and `validateForm()` use current owner data. In a self-owned form they see earlier writes in the same tick. In a parent-owned form they see the last committed prop: submit after accepting a proposal. To validate a proposal without installing it, use the existing `validateFormWithFormData(data)` method. A self-owned submit made before the inputs update skips native HTML constraint validation and runs Form's schema validation on the current data.
 
 ```tsx
 import { createRef } from 'react';
 import { RJSFSchema, UiSchema } from '@rjsf/utils';
-import { Form } from '@rjsf/core';
+import Form from '@rjsf/core';
+import type { FormHandle } from '@rjsf/core';
 import validator from '@rjsf/validator-ajv8';
 
 const onSubmit = ({ formData }) => console.log('Data submitted: ', formData);
@@ -122,7 +123,7 @@ const schema: RJSFSchema = {
   type: 'string',
 };
 
-const formRef = createRef<Form>();
+const formRef = createRef<FormHandle>();
 
 render(
   <Form schema={schema} validator={validator} onSubmit={onSubmit} ref={formRef} />,
@@ -140,7 +141,8 @@ This method will dispatch the `onChange` event of the form.
 ```tsx
 import { createRef } from 'react';
 import { RJSFSchema, UiSchema } from '@rjsf/utils';
-import { Form } from '@rjsf/core';
+import Form from '@rjsf/core';
+import type { FormHandle } from '@rjsf/core';
 import validator from '@rjsf/validator-ajv8';
 
 const onChange = ({ formData }) => console.log('Data updated to: ', formData);
@@ -162,7 +164,7 @@ const schema: RJSFSchema = {
   required: ['foo'],
 };
 
-const formRef = createRef<Form>();
+const formRef = createRef<FormHandle>();
 
 render(
   <Form schema={schema} validator={validator} onSubmit={onSubmit} ref={formRef} />,
@@ -174,3 +176,19 @@ formRef.current.setFieldValue(['foo'], { input: 'newvalue' });
 formRef.current.setFieldValue('', { foo: { input: 'another value' } });
 formRef.current.setFieldValue([], { foo: { input: 'more values' } });
 ```
+
+## Command timing
+
+Form synchronizes its external model in a layout Effect. Descendant layout Effects, callback refs and class commit lifecycles can run before that synchronization and see the previous parent data or configuration. Commands that depend on newly supplied props belong in user events or passive `useEffect` callbacks. Render and validation callbacks must remain pure.
+
+```tsx
+useEffect(() => {
+  if (loaded) {
+    formRef.current?.validateForm();
+  }
+}, [loaded]);
+```
+
+Effects should synchronize a real external requirement, rather than echoing every prop back into the form. A controlled form can receive its desired data directly through `formData`.
+
+Store mutations are synchronous and blocking. They cannot be made non-blocking by wrapping a handle method in `startTransition()`.

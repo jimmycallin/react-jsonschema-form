@@ -583,7 +583,7 @@ Flag that describes when live omit will be performed. Live omit happens only whe
 to `true` and the form's data is updated by the user.
 
 If no value is provided, then live omit will not happen. If `onChange` is provided for the flag, then live omit
-will be performed after processing of all pending changes has completed. If `onBlur` is provided, then live omit
+is performed for each change. If `onBlur` is provided, then live omit
 will be performed when a field that was updated is blurred (as a performance optimization).
 
 ## liveValidate
@@ -592,7 +592,7 @@ Flag that describes when live validation will be performed. Live validation mean
 validation and show any validation errors whenever the form data is updated, rather than just on submit.
 
 If no value is provided, then live validation will not happen. If `onChange` is provided for the flag, then live
-validation will be performed after processing of all pending changes has completed. If `onBlur` is provided, then
+validation is performed for each change. If `onBlur` is provided, then
 live validation will be performed when a field that was updated is blurred (as a performance optimization).
 
 ## method
@@ -627,6 +627,10 @@ Called with the same first argument as `onSubmit` for every edit: user input, `s
 It will also receive, as the second argument, the `id` of the field which experienced the change.
 Generally, this will be the `id` of the field for which input data is modified.
 In the case of adding/removing of new fields in arrays or objects with `additionalProperties` or `patternProperties` and the rearranging of items in arrays, the `id` will be that of the array or object itself, rather than the item/field being added, removed or moved.
+
+Callbacks run from the operation that caused them, before React necessarily updates the inputs. Self-owned change events contain cumulative model data. Parent-owned events remain full-data proposals against the last committed `formData`: two proposals in one tick do not compose automatically. Replace several fields with one `setFieldValue([], nextData)` proposal, or update parent data directly. A derived value belongs in the proposal the parent stores, rather than a reentrant `setFieldValue()` call.
+
+See [command timing](../advanced-customization/internals.md#command-timing) for commands issued from consumer Effects.
 
 ## onError
 

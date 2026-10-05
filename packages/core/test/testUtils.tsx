@@ -1,4 +1,4 @@
-import type { ComponentType, RefObject } from 'react';
+import type { ComponentType } from 'react';
 import { createRef, useState } from 'react';
 import type { GenericObjectType, ValidatorType } from '@rjsf/utils';
 import { createSchemaUtils, noop } from '@rjsf/utils';
@@ -7,16 +7,14 @@ import { act, render, fireEvent } from '@testing-library/react';
 import type { UserEvent } from '@testing-library/user-event';
 import type { Mock, MockInstance } from 'vitest';
 
-import type { FormProps } from '../src/index.ts';
+import type { FormHandle, FormProps, IChangeEvent } from '../src/index.ts';
 import Form from '../src/index.ts';
 
 export type NoValFormProps = Omit<FormProps, 'validator'>;
 
-/** A ref for a `Form`, typed the way TSX requires for a class element. The one place the tests name that type, so the
- * function-component `Form` changes it to `RefObject<FormHandle>` here and nowhere else.
- */
+/** A ref for a `Form`, which hands back its `FormHandle` */
 export function createFormRef() {
-  return createRef<Form>();
+  return createRef<FormHandle>();
 }
 
 export function input(container: HTMLElement, id: string) {
@@ -47,10 +45,12 @@ export interface ConsoleSuppressionResult {
 export interface ControlledParentLog<T> {
   value: T | undefined;
   proposals: (T | undefined)[];
+  /** Every event the form sent, for the errors a proposal carried */
+  events: IChangeEvent<T>[];
 }
 
 export function createParentLog<T>(): ControlledParentLog<T> {
-  return { value: undefined, proposals: [] };
+  return { value: undefined, proposals: [], events: [] };
 }
 
 export type ControlledParentProps<T> = Omit<FormProps<T>, 'validator' | 'formData' | 'onChange'> & {
@@ -69,6 +69,7 @@ export function AcceptingParent<T>({ initialValue, log, ...formProps }: Controll
       formData={value}
       onChange={(event) => {
         log?.proposals.push(event.formData);
+        log?.events.push(event);
         setValue(event.formData);
       }}
     />
@@ -83,7 +84,10 @@ export function RejectingParent<T>({ initialValue, log, ...formProps }: Controll
       {...formProps}
       validator={validator}
       formData={initialValue}
-      onChange={(event) => log?.proposals.push(event.formData)}
+      onChange={(event) => {
+        log?.proposals.push(event.formData);
+        log?.events.push(event);
+      }}
     />
   );
 }
@@ -104,6 +108,7 @@ export function TransformingParent<T>({
       formData={value}
       onChange={(event) => {
         log?.proposals.push(event.formData);
+        log?.events.push(event);
         setValue(transform(event.formData));
       }}
     />
@@ -136,7 +141,8 @@ export function createComponent(Component: ComponentType<FormProps>, theProps: F
   if (!node) {
     throw new Error('node is not defined');
   }
-  const getFormData = () => (ref as RefObject<Form | null>).current?.getFormData();
+  // A callback ref passed in keeps the handle to itself
+  const getFormData = () => (typeof ref === 'function' || ref === null ? undefined : ref.current?.getFormData());
 
   return { container, node, onChange, onError, onSubmit, rerender: rerenderFunction, unmount, getFormData };
 }
@@ -197,24 +203,30 @@ interface FormExtraProps {
 /** Runs a group of tests once with the form owning its data and once with an accepting parent owning it, for the
  * behavior ownership must not change: validation, errors, submit and the events that report them
  */
-export function describeOwnerships(title: string, fn: (creatorFn: typeof createFormComponent) => void) {
-  describe(`${title} (self-owned)`, () => fn(createFormComponent));
-  describe(`${title} (parent-owned)`, () => fn(createAcceptingFormComponent));
+export function describeOwnerships(
+  title: string,
+  fn: (creatorFn: typeof createFormComponent, isControlled: boolean) => void,
+) {
+  describe(`${title} (self-owned)`, () => fn(createFormComponent, false));
+  describe(`${title} (parent-owned)`, () => fn(createAcceptingFormComponent, true));
 }
 
 /* Run a group of tests with each combination of omitExtraData and liveOmit as form props, under both owners.
  */
-export function describeRepeated(title: string, fn: (creatorFn: typeof createFormComponent) => void) {
+export function describeRepeated(
+  title: string,
+  fn: (creatorFn: typeof createFormComponent, isControlled: boolean) => void,
+) {
   const formExtraPropsList: FormExtraProps[] = [
     { omitExtraData: false },
     { omitExtraData: true },
     { omitExtraData: true, liveOmit: 'onChange' },
     { omitExtraData: true, liveOmit: 'onBlur' },
   ];
-  describeOwnerships(title, (create) => {
+  describeOwnerships(title, (create, isControlled) => {
     for (const formExtraProps of formExtraPropsList) {
       const createFormComponentFn = (props: NoValFormProps) => create({ ...props, ...formExtraProps });
-      describe(JSON.stringify(formExtraProps), () => fn(createFormComponentFn));
+      describe(JSON.stringify(formExtraProps), () => fn(createFormComponentFn, isControlled));
     }
   });
 }

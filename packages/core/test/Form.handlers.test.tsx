@@ -5,13 +5,18 @@ import { customizeValidator } from '@rjsf/validator-ajv8';
 import { act, waitFor } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 
-import type { FormProps, IChangeEvent } from '../src/index.ts';
-import type Form from '../src/index.ts';
-import { createFormComponent, expectToHaveBeenCalledWithFormData, submitForm, describeRepeated } from './testUtils.tsx';
+import type { FormHandle, FormProps, IChangeEvent } from '../src/index.ts';
+import {
+  createFormComponent,
+  describeRepeated,
+  errorListMessages,
+  expectToHaveBeenCalledWithFormData,
+  submitForm,
+} from './testUtils.tsx';
 
 const user = userEvent.setup();
 
-describeRepeated('Form common: event handlers', (createFormComponent) => {
+describeRepeated('Form common: event handlers', (createFormComponent, isControlled) => {
   describe('Submit handler', () => {
     it('should call provided submit handler with form state', async () => {
       const schema: RJSFSchema = {
@@ -99,7 +104,7 @@ describeRepeated('Form common: event handlers', (createFormComponent) => {
       };
 
       const secondOnChange = vi.fn();
-      const ref = createRef<Form>();
+      const ref = createRef<FormHandle>();
 
       const { onChange, rerender } = createFormComponent({ ref, schema, initialFormData: { foo: 'bar1' } });
 
@@ -181,7 +186,7 @@ describeRepeated('Form common: event handlers', (createFormComponent) => {
         expect(ids).toHaveLength(2);
       });
 
-      expect(formData).toEqual({ foo: 'bar2', baz: 'blah2' });
+      expect(formData).toEqual({ foo: isControlled ? 'bar' : 'bar2', baz: 'blah2' });
       // One id per updated component; the defaults the seed was given are not reported
       expect(ids).toEqual(['root_foo', 'root_baz']);
     });
@@ -527,26 +532,24 @@ describeRepeated('Form common: event handlers', (createFormComponent) => {
             { title: 'No Configuration', type: 'null' },
           ],
         };
-        const ref = createRef<Form>();
         const props = {
           schema: invalidDefaultSchema,
           defaultFormStateBehavior,
           liveValidate: 'onChange',
-          ref,
         } as const;
         const { node, rerender } = createFormComponent(props);
 
         await user.selectOptions(node.querySelector<HTMLSelectElement>('#root__oneof_select')!, '1');
-        const errorsBeforeTheChange = ref.current!.state.errors;
+        const errorsBeforeTheChange = errorListMessages(node);
         rerender({ ...props, uiSchema: { 'ui:disabled': true } });
 
         expect(node.querySelector<HTMLSelectElement>('#root__oneof_select')).toHaveValue('1');
-        expect(ref.current!.state.errors).toEqual(errorsBeforeTheChange);
+        expect(errorListMessages(node)).toEqual(errorsBeforeTheChange);
       });
     });
     it('should keep a form value set in the same render as an unrelated prop change', async () => {
       const schema: RJSFSchema = { type: 'object', properties: { name: { type: 'string' } } };
-      const ref = createRef<Form>();
+      const ref = createRef<FormHandle>();
       const { node, rerender } = createFormComponent({ schema, ref });
 
       await user.type(node.querySelector<HTMLInputElement>('#root_name')!, 'a');
@@ -602,17 +605,17 @@ describeRepeated('Form common: event handlers', (createFormComponent) => {
     });
     it('should clear the errors of an uncontrolled form when noValidate is turned on', () => {
       const schema: RJSFSchema = { type: 'object', properties: { name: { type: 'string' } }, required: ['name'] };
-      const ref = createRef<Form>();
-      const { rerender } = createFormComponent({ schema, ref });
+      const ref = createRef<FormHandle>();
+      const { node, rerender } = createFormComponent({ schema, ref });
       act(() => {
         ref.current!.validateForm();
       });
-      expect(ref.current!.state.errors).toHaveLength(1);
+      expect(errorListMessages(node)).toHaveLength(1);
 
       // oxlint-disable-next-line typescript/no-deprecated -- exercises the deprecated `noValidate` prop
       rerender({ schema, ref, noValidate: true });
 
-      expect(ref.current!.state.errors).toHaveLength(0);
+      expect(errorListMessages(node)).toHaveLength(0);
     });
     describe('should keep a switch to a null oneOf option when a recreated prop rebuilds the schema utilities', () => {
       const schema: RJSFSchema = {

@@ -14,11 +14,12 @@ import type {
   FormValidation,
 } from '@rjsf/utils';
 import { getVisibleErrors, noop } from '@rjsf/utils';
+import { screen } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 
 import ArrayField from '../src/components/fields/ArrayField.tsx';
 import SchemaField from '../src/components/fields/SchemaField.tsx';
-import { createFormComponent, expectToHaveBeenCalledWithFormData, submitForm } from './testUtils.tsx';
+import { createFormComponent, expectToHaveBeenCalledWithFormData, fieldErrorsById, submitForm } from './testUtils.tsx';
 import { TextWidgetTest } from './TextWidgetTest.tsx';
 
 const user = userEvent.setup();
@@ -3909,6 +3910,93 @@ describe('ArrayField', () => {
       const endKeys = rowKeys(node);
       expect(endKeys).toHaveLength(2);
       expect(endKeys).not.toContain(startKeys[0]);
+    });
+  });
+  describe('Several edits in one event', () => {
+    const schema: RJSFSchema = { type: 'array', items: { type: 'string' } };
+    const rowKeys = (node: Element) =>
+      Array.from(node.querySelectorAll('.rjsf-array-item')).map((row) => row.getAttribute(ArrayKeyDataAttr));
+    function RemoveThenMoveUpItemTemplate(props: ArrayFieldItemTemplateProps) {
+      const { onRemoveItem, onMoveUpItem } = props.buttonsProps;
+      return (
+        <div className='rjsf-array-item'>
+          {props.children}
+          <button
+            type='button'
+            className='remove-then-move-up'
+            onClick={(event) => {
+              onRemoveItem(event);
+              onMoveUpItem(event);
+            }}
+          >
+            Remove, then move up
+          </button>
+        </div>
+      );
+    }
+
+    it('should apply every add when one click adds several items', async () => {
+      function AddThreeTemplate(props: ArrayFieldTemplateProps) {
+        return (
+          <div className='array'>
+            {props.items}
+            <button
+              type='button'
+              className='add-three'
+              onClick={(event) => {
+                props.onAddClick(event);
+                props.onAddClick(event);
+                props.onAddClick(event);
+              }}
+            >
+              Add three
+            </button>
+          </div>
+        );
+      }
+      const { node, onChange, getFormData } = createFormComponent({
+        schema,
+        initialFormData: ['a', 'b'],
+        templates: { ArrayFieldTemplate: AddThreeTemplate, ArrayFieldItemTemplate: ExposedArrayKeyItemTemplate },
+      });
+
+      await user.click(screen.getByRole('button', { name: 'Add three' }));
+
+      // Each add reads the current model data through private event access, so none of them is lost
+      expectToHaveBeenCalledWithFormData(onChange, ['a', 'b', undefined, undefined, undefined], 'root');
+      expect(getFormData()).toEqual(['a', 'b', undefined, undefined, undefined]);
+      expect(new Set(rowKeys(node)).size).toBe(5);
+    });
+
+    it('should add no item when a move queued behind a remove names an index the remove took away', async () => {
+      const { node, onChange, getFormData } = createFormComponent({
+        schema,
+        initialFormData: ['a', 'b', 'c'],
+        templates: { ArrayFieldItemTemplate: RemoveThenMoveUpItemTemplate },
+      });
+
+      await user.click(node.querySelectorAll('.remove-then-move-up')[2]);
+
+      expectToHaveBeenCalledWithFormData(onChange, ['a', 'b'], 'root');
+      expect(getFormData()).toEqual(['a', 'b']);
+      expect(node.querySelectorAll('.rjsf-array-item')).toHaveLength(2);
+    });
+
+    it('should keep the errors in place when a move queued behind a remove names an index the remove took away', async () => {
+      const { node, onChange, getFormData } = createFormComponent({
+        schema: { type: 'array', items: { type: 'string', minLength: 2 } },
+        initialFormData: ['aa', 'b', 'cc'],
+        templates: { ArrayFieldItemTemplate: RemoveThenMoveUpItemTemplate },
+      });
+      await submitForm(node, user);
+
+      await user.click(node.querySelectorAll('.remove-then-move-up')[2]);
+
+      const event = onChange.mock.lastCall?.[0];
+      expect(event?.formData).toEqual(['aa', 'b']);
+      expect(event?.errorSchema).toEqual({ 1: { __errors: ['must NOT have fewer than 2 characters'] } });
+      expect(getFormData()).toEqual(['aa', 'b']);
+      expect(fieldErrorsById(node)).toEqual({ root_1: ['must NOT have fewer than 2 characters'] });
     });
   });
 });

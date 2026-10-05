@@ -60,9 +60,9 @@ describe('controlled parent harnesses', () => {
     expect(input(container, 'root_name')).toHaveValue('AB');
   });
 
-  it('two near-simultaneous changes both reach an accepting parent', async () => {
+  it('two same-tick changes each propose against committed parent data', async () => {
     // The Form.handlers variant merges into an external variable, which proves nothing about composition through a
-    // parent. Here the parent is real and the second change composes onto the first committed value.
+    // parent. Both proposals here precede parent acceptance, so the parent stores the last full value.
     function changeOnMount<V extends string | null | undefined>(from: string, to: string) {
       return function Widget(props: WidgetProps<V>) {
         const { value, id, onChange, uiSchema, registry } = props;
@@ -92,7 +92,7 @@ describe('controlled parent harnesses', () => {
       );
     });
 
-    await waitFor(() => expect(log.value).toEqual({ name: 'a2', other: 'b2' }));
+    await waitFor(() => expect(log.value).toEqual({ name: 'a', other: 'b2' }));
   });
 
   it('a dependent field clearing itself from an effect when its sibling changes (#3367)', async () => {
