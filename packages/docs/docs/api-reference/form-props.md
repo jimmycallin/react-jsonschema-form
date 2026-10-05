@@ -579,21 +579,23 @@ You can also create a custom generator by implementing the `NameGeneratorFunctio
 
 ## liveOmit
 
-Flag that describes when live omit will be performed. Live omit happens only when `omitExtraData` is also set to
-to `true` and the form's data is updated by the user.
+Use this prop with `omitExtraData={true}` to remove extra data while editing, rather than waiting for submission.
 
-If no value is provided, then live omit will not happen. If `onChange` is provided for the flag, then live omit
-is performed for each change. If `onBlur` is provided, then live omit
-will be performed when a field that was updated is blurred (as a performance optimization).
+Choose when to omit extra data:
+
+- Omit this prop to disable live omission.
+- Use `liveOmit="onChange"` to omit extra data after each edit.
+- Use `liveOmit="onBlur"` to omit extra data when an edited field loses focus.
 
 ## liveValidate
 
-Flag that describes when live validation will be performed. Live validation means that the form will perform
-validation and show any validation errors whenever the form data is updated, rather than just on submit.
+Use this prop to show validation errors while editing, rather than waiting for submission.
 
-If no value is provided, then live validation will not happen. If `onChange` is provided for the flag, then live
-validation is performed for each change. If `onBlur` is provided, then
-live validation will be performed when a field that was updated is blurred (as a performance optimization).
+Choose when to validate while editing:
+
+- Omit this prop to validate on submission only.
+- Use `liveValidate="onChange"` to validate after each edit.
+- Use `liveValidate="onBlur"` to validate when an edited field loses focus.
 
 ## method
 
@@ -628,9 +630,11 @@ It will also receive, as the second argument, the `id` of the field which experi
 Generally, this will be the `id` of the field for which input data is modified.
 In the case of adding/removing of new fields in arrays or objects with `additionalProperties` or `patternProperties` and the rearranging of items in arrays, the `id` will be that of the array or object itself, rather than the item/field being added, removed or moved.
 
-Callbacks run from the operation that caused them, before React necessarily updates the inputs. Self-owned change events contain cumulative model data. Parent-owned events remain full-data proposals against the last committed `formData`: two proposals in one tick do not compose automatically. Replace several fields with one `setFieldValue([], nextData)` proposal, or update parent data directly. A derived value belongs in the proposal the parent stores, rather than a reentrant `setFieldValue()` call.
+`onChange` runs as the edit is processed. React may update the inputs afterward, so read `event.formData` rather than reading values from the DOM inside the callback.
 
-See [command timing](../advanced-customization/internals.md#command-timing) for commands issued from consumer Effects.
+With `initialFormData`, each event includes earlier edits already stored by Form. With `formData`, each event proposes a complete value based on the last parent value React rendered. Your handler must pass the accepted value back to Form.
+
+For a controlled form, combine several programmatic field changes into one value. Calculate derived fields in the value you store in parent state, rather than calling `setFieldValue()` again from inside `onChange`. See the [migration examples](../migration-guides/v7.x%20upgrade%20guide.md#function-form-and-synchronous-model-timing-breaking-change).
 
 ## onError
 

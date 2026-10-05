@@ -2,14 +2,14 @@ import type { FieldPathList, RJSFValidationError, ValidationData } from '@rjsf/u
 
 import type { EventFormData } from './IChangeEvent.ts';
 
-/** The supported imperative surface exposed by function Form. Self-owned operations read current model data;
- * parent-owned operations read committed props and propose edits. The model is configured in a layout Effect,
- * so descendant layout Effects and callback refs can still reach previous parent data/configuration.
- * Use events or passive Effects for commands that depend on new props.
+/** Public methods exposed by a Form ref.
+ * With initialFormData, commands read Form's latest stored value. With formData, they read the last parent value
+ * React rendered. Use event handlers for user actions, or passive Effects for synchronization after prop changes;
+ * descendant layout Effects and callback refs can still see the previous configuration.
  */
 export interface FormHandle<T = unknown> {
-  /** Returns current model data for a self-owned form, including completed same-tick writes, or committed
-   * parent data for a parent-owned form. Treat it as read-only; model data can be newer than the DOM.
+  /** Reads the latest stored value in a self-owned form, or the last rendered parent value in a controlled form.
+   * Treat the result as read-only. Self-owned edits can be visible here before the inputs update.
    */
   getFormData(): EventFormData<T>;
   /** Submits current owner data through the DOM, with schema validation. When self-owned data is newer than
@@ -24,9 +24,9 @@ export interface FormHandle<T = unknown> {
    * root. Passing `undefined` clears the field.
    */
   setFieldValue(fieldPath: string | FieldPathList, newValue?: unknown): void;
-  /** Validates current owner data, filtering extra data when omitExtraData is set, reporting onError and
-   * returning its result immediately. Self-owned validation sees completed same-tick writes; controlled
-   * proposals must be accepted before they become current. To validate a proposal use validateFormWithFormData().
+  /** Validates the current value, applies omitExtraData when enabled, calls onError for invalid data, and returns
+   * the result immediately. In a controlled form, wait for the accepted value to render, or use
+   * validateFormWithFormData() to check a proposed value directly.
    */
   validateForm(): boolean;
   /** Validates the given `formData` without making it the form's data, calling `onError` as a submission would.
