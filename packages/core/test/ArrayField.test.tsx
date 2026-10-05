@@ -14,12 +14,19 @@ import type {
   FormValidation,
 } from '@rjsf/utils';
 import { getVisibleErrors, noop } from '@rjsf/utils';
-import { screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 
 import ArrayField from '../src/components/fields/ArrayField.tsx';
 import SchemaField from '../src/components/fields/SchemaField.tsx';
-import { createFormComponent, expectToHaveBeenCalledWithFormData, fieldErrorsById, submitForm } from './testUtils.tsx';
+import {
+  AcceptingParent,
+  createFormComponent,
+  createParentLog,
+  expectToHaveBeenCalledWithFormData,
+  fieldErrorsById,
+  submitForm,
+} from './testUtils.tsx';
 import { TextWidgetTest } from './TextWidgetTest.tsx';
 
 const user = userEvent.setup();
@@ -3997,6 +4004,44 @@ describe('ArrayField', () => {
       expect(event?.errorSchema).toEqual({ 1: { __errors: ['must NOT have fewer than 2 characters'] } });
       expect(getFormData()).toEqual(['aa', 'b']);
       expect(fieldErrorsById(node)).toEqual({ root_1: ['must NOT have fewer than 2 characters'] });
+    });
+    it('should start every command from the rendered rows when a controlled parent owns the array', async () => {
+      function KeyedRemoveThenMoveUpItemTemplate(props: ArrayFieldItemTemplateProps) {
+        return (
+          <div data-rjsf-itemkey={props.itemKey}>
+            <RemoveThenMoveUpItemTemplate {...props} />
+          </div>
+        );
+      }
+      const log = createParentLog<string[]>();
+      const { container } = render(
+        <AcceptingParent<string[]>
+          schema={{ type: 'array', items: { type: 'string', minLength: 2 } }}
+          initialValue={['aa', 'bb', 'c']}
+          log={log}
+          onError={noop}
+          templates={{ ArrayFieldItemTemplate: KeyedRemoveThenMoveUpItemTemplate }}
+        />,
+      );
+      await submitForm(container, user);
+      const keysBefore = Array.from(container.querySelectorAll(`[${ArrayKeyDataAttr}]`)).map((row) =>
+        row.getAttribute(ArrayKeyDataAttr),
+      );
+
+      await user.click(container.querySelectorAll('.remove-then-move-up')[1]);
+
+      // Neither proposal has been rendered when the second command runs, so both start from ['aa', 'bb', 'c'] and
+      // the parent ends up with the last one, the move
+      expect(log.proposals.slice(-2)).toEqual([
+        ['aa', 'c'],
+        ['bb', 'aa', 'c'],
+      ]);
+      expect(log.value).toEqual(['bb', 'aa', 'c']);
+      const keysAfter = Array.from(container.querySelectorAll(`[${ArrayKeyDataAttr}]`)).map((row) =>
+        row.getAttribute(ArrayKeyDataAttr),
+      );
+      expect(keysAfter).toEqual([keysBefore[1], keysBefore[0], keysBefore[2]]);
+      expect(fieldErrorsById(container)).toEqual({ root_2: ['must NOT have fewer than 2 characters'] });
     });
   });
 });

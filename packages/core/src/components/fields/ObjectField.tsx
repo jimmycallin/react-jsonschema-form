@@ -1,5 +1,5 @@
 import type { FocusEvent } from 'react';
-import { memo, use, useCallback, useMemo, useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import type {
   ErrorSchema,
   FieldPath,
@@ -35,9 +35,8 @@ import {
   TranslatableString,
 } from '@rjsf/utils';
 
-import useCommittedView from '../../hooks/useCommittedView.ts';
+import useFieldView from '../../hooks/useFieldView.ts';
 import { ADDITIONAL_PROPERTY_KEY_REMOVE, EMPTY_UI_SCHEMA } from '../constants.ts';
-import FormDataContext from '../FormDataContext.ts';
 import RichDescription from '../RichDescription.tsx';
 
 /** Returns a flag indicating whether the `name` field is required in the object schema
@@ -272,12 +271,8 @@ export default function ObjectField<
   const uiSchema: UiSchema<T, S, F> = rawUiSchema ?? EMPTY_UI_SCHEMA;
   const { fields, schemaUtils, translateString, globalUiOptions, uiSchemaDefinitions } = registry;
   const { OptionalDataControlsField } = fields;
-  const access = use(FormDataContext);
-  const view = useCommittedView({ source: formData, data: formData });
-  const readData = useCallback(() => {
-    const committed = view.read();
-    return (access ? access.readField(fieldPath, committed.source, committed.data) : committed.data) as T | undefined;
-  }, [access, fieldPath, view]);
+  const view = useFieldView(fieldPath, { source: formData, data: formData });
+  const readData = useCallback(() => view.readData(view.read().data), [view]);
 
   const schema: S = useMemo(
     () => schemaUtils.retrieveSchema(rawSchema, formData, true),
@@ -432,7 +427,7 @@ export default function ObjectField<
         : previous,
     );
     setAdditionalPropertyOrder((order) => [...order, newKey]);
-    view.configure({ ...view.read(), data: newFormData });
+    view.advance({ ...view.read(), data: newFormData });
     onChange(newFormData, fieldPath);
   }, [
     readData,
@@ -471,7 +466,7 @@ export default function ObjectField<
         });
         const renamedObj = Object.assign({}, ...keyValues);
 
-        view.configure({ ...view.read(), data: renamedObj as T });
+        view.advance({ ...view.read(), data: renamedObj });
         setLastRenamedProperty((previous) => ({
           previousKey: oldKey !== previous.currentKey ? oldKey : previous.previousKey,
           currentKey: actualNewKey,

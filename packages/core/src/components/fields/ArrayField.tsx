@@ -35,9 +35,8 @@ import {
   TranslatableString,
 } from '@rjsf/utils';
 
-import useCommittedView from '../../hooks/useCommittedView.ts';
+import useFieldView from '../../hooks/useFieldView.ts';
 import { EMPTY_UI_SCHEMA } from '../constants.ts';
-import FormDataContext from '../FormDataContext.ts';
 import WithheldErrorsContext from './WithheldErrorsContext.ts';
 
 /** An item of the `formData` paired with its stable React key */
@@ -872,41 +871,26 @@ export default function ArrayField<
   const { schema, uiSchema, errorSchema, rawErrors, fieldPath, id: fieldId, registry, formData, onChange } = props;
   const { globalFormOptions, schemaUtils, translateString } = registry;
   const { keyedFormData, updateKeyedFormData } = useKeyedFormData<T>(formData);
-  const access = use(FormDataContext);
   const withheldErrors = use(WithheldErrorsContext);
   // `SchemaField` hands the array's own errors over as `rawErrors`, or withholds them beside a `oneOf`/`anyOf`
   // selector, so they go back in for the handlers to carry over
   const ownErrors = rawErrors ?? (withheldErrors?.fieldPath === fieldPath ? withheldErrors.errors : undefined);
-  const view = useCommittedView({
+  const view = useFieldView(fieldPath, {
     keyedFormData,
     source: formData,
     errorSchema: ownErrors ? { ...errorSchema, [ERRORS_KEY]: ownErrors } : errorSchema,
   });
 
   const readRows = useCallback(() => {
-    const committed = view.read();
-    const current = access
-      ? access.readField(
-          fieldPath,
-          committed.source,
-          committed.keyedFormData.map((row) => row.item),
-        )
-      : committed.source;
+    const { keyedFormData: rows } = view.read();
+    const current = view.readData<T[] | undefined>(rows.map((row) => row.item));
     if (!Array.isArray(current)) {
       return [];
     }
-    return current.map((item, index) => ({
-      key: committed.keyedFormData[index]?.key ?? generateRowId(),
-      item: item as T,
-    }));
-  }, [access, fieldPath, view]);
+    return current.map((item, index) => ({ key: rows[index]?.key ?? generateRowId(), item }));
+  }, [view]);
 
-  const readErrors = useCallback(() => {
-    const committed = view.read();
-    return (access ? access.readErrors(fieldPath, committed.source, committed.errorSchema) : committed.errorSchema) as
-      | ErrorSchema<T[]>
-      | undefined;
-  }, [access, fieldPath, view]);
+  const readErrors = useCallback(() => view.readErrors(view.read().errorSchema), [view]);
 
   /** Callback handler for when the user clicks on the add or add at index buttons. Creates a new row of keyed form data
    * either at the end of the list (when index is not specified) or inserted at the `index` when it is, adding it into
@@ -934,7 +918,7 @@ export default function ArrayField<
       } else {
         newKeyedFormData.push(newKeyedFormDataRow);
       }
-      view.configure({ ...view.read(), keyedFormData: newKeyedFormData, errorSchema: newErrorSchema });
+      view.advance({ ...view.read(), keyedFormData: newKeyedFormData, errorSchema: newErrorSchema });
       onChange(updateKeyedFormData(newKeyedFormData), fieldPath, newErrorSchema);
     },
     [registry, schema, uiSchema, onChange, updateKeyedFormData, fieldPath, view, readRows, readErrors],
@@ -969,7 +953,7 @@ export default function ArrayField<
       } else {
         newKeyedFormData.push(newKeyedFormDataRow);
       }
-      view.configure({ ...view.read(), keyedFormData: newKeyedFormData, errorSchema: newErrorSchema });
+      view.advance({ ...view.read(), keyedFormData: newKeyedFormData, errorSchema: newErrorSchema });
       onChange(updateKeyedFormData(newKeyedFormData), fieldPath, newErrorSchema);
     },
     [onChange, updateKeyedFormData, fieldPath, view, readRows, readErrors],
@@ -999,7 +983,7 @@ export default function ArrayField<
         return i < index ? i : i - 1;
       });
       const newKeyedFormData = rows.filter((_, i) => i !== index);
-      view.configure({ ...view.read(), keyedFormData: newKeyedFormData, errorSchema: newErrorSchema });
+      view.advance({ ...view.read(), keyedFormData: newKeyedFormData, errorSchema: newErrorSchema });
       onChange(updateKeyedFormData(newKeyedFormData), fieldPath, newErrorSchema);
     },
     [onChange, updateKeyedFormData, fieldPath, view, readRows, readErrors],
@@ -1037,7 +1021,7 @@ export default function ArrayField<
         return newKeyedFormData;
       }
       const newKeyedFormData = reOrderArray();
-      view.configure({ ...view.read(), keyedFormData: newKeyedFormData, errorSchema: newErrorSchema });
+      view.advance({ ...view.read(), keyedFormData: newKeyedFormData, errorSchema: newErrorSchema });
       onChange(updateKeyedFormData(newKeyedFormData), fieldPath, newErrorSchema);
     },
     [onChange, updateKeyedFormData, fieldPath, view, readRows, readErrors],

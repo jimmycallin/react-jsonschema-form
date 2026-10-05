@@ -1893,13 +1893,20 @@ function createFormModel<T, S extends StrictRJSFSchema, F extends FormContextTyp
       listeners.forEach((listener) => listener());
     }
   };
-  const handlers = () =>
-    forRender(
-      configuration.props,
-      snapshot.owner === 'model'
-        ? snapshot.state
-        : replaceEqualDeep(configuration.state, { ...configuration.state, ...snapshot.metadata }),
-    );
+  // Handlers close over one operation frame, so they are rebuilt only when the configuration or the snapshot changes
+  let built:
+    | { configuration: typeof configuration; snapshot: ModelSnapshot<T, S, F>; handlers: RenderedHandlers<T> }
+    | undefined;
+  const handlers = () => {
+    if (built?.configuration !== configuration || built.snapshot !== snapshot) {
+      const state =
+        snapshot.owner === 'model'
+          ? snapshot.state
+          : replaceEqualDeep(configuration.state, { ...configuration.state, ...snapshot.metadata });
+      built = { configuration, snapshot, handlers: forRender(configuration.props, state) };
+    }
+    return built.handlers;
+  };
   const forRender = (renderProps: FormProps<T, S, F>, state: FormState<T, S, F>) =>
     createHandlers(
       renderProps,
@@ -1923,19 +1930,22 @@ function createFormModel<T, S extends StrictRJSFSchema, F extends FormContextTyp
     );
   return {
     initial,
-    readField: (path: FieldPath, committedView: unknown, fallback = committedView) => {
+    chainsEdits: () => snapshot.owner === 'model',
+    readField: <D,>(path: FieldPath, committedView: unknown, fallback: D): D => {
       const segments = fieldPathToList(path);
-      const committed = getByPath(configuration.state.formData, segments);
       // A custom field can present a different view. Reading the root's raw value would bypass that view.
-      if (committed !== committedView) {
-        return snapshot.owner === 'parent' ? committedView : fallback;
+      if (getByPath(configuration.state.formData, segments) !== committedView) {
+        return fallback;
       }
-      return getByPath(snapshot.owner === 'model' ? snapshot.state.formData : configuration.state.formData, segments);
+      return getByPath<D>(
+        snapshot.owner === 'model' ? snapshot.state.formData : configuration.state.formData,
+        segments,
+      );
     },
-    readErrors: (path: FieldPath, committedView: unknown, fallback: unknown) => {
+    readErrors: <E,>(path: FieldPath, committedView: unknown, fallback: E): E => {
       const segments = fieldPathToList(path);
       return snapshot.owner === 'model' && getByPath(configuration.state.formData, segments) === committedView
-        ? getByPath(snapshot.state.errorSchema, segments)
+        ? getByPath<E>(snapshot.state.errorSchema, segments)
         : fallback;
     },
     getSnapshot: () => snapshot,
