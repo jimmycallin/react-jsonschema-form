@@ -689,7 +689,7 @@ describe('form data ownership', () => {
         ref,
         schema,
         initialFormData: { a: '', b: '' },
-        onChange: (event: IChangeEvent) => {
+        onChange: (event: FormChangeEvent) => {
           const data = event.formData;
           reported.push(data);
           if (deepEquals(data, { a: 'first', b: '' })) {
