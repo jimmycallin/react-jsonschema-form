@@ -198,6 +198,7 @@ export function useDatePicker<V>({
   onBlur,
 }: UseDatePickerProps<V>) {
   const [isOpen, setIsOpen] = useState(false);
+  const pendingCloseBlur = useRef(false);
   // A new object for every new value, where `initialDate` alone is `undefined` for every empty one: a value the parent
   // replaces and then restores must not revive a draft made against it
   const basis = useMemo(() => ({ date: initialDate }), [initialDate]);
@@ -247,11 +248,10 @@ export function useDatePicker<V>({
     }
   }, [draft, emptyValue, formatDate, onChange, value]);
 
-  /** Close the popup, storing the date it holds, which every way out of it but Escape does. It reports no blur: one
-   * raised in the same handler as the change validates the value from before it, and a parent-owned form under
-   * `liveValidate: 'onBlur'` proposes that value back, undoing the pick. The native blur reports it once focus leaves
+  /** Close the popup, storing the date it holds, which every way out of it but Escape does
    */
   const closePicker = useCallback(() => {
+    pendingCloseBlur.current = true;
     setIsOpen(false);
     commitDate();
   }, [commitDate]);
@@ -262,18 +262,18 @@ export function useDatePicker<V>({
   const cancelPicker = useCallback(() => {
     returnFocusFromPopup();
     setIsOpen(false);
-  }, [returnFocusFromPopup]);
+    if (onBlur) {
+      onBlur(id, value);
+    }
+  }, [id, onBlur, returnFocusFromPopup, value]);
 
-  // Picking a day moves focus into the popup, so closing it by a press outside leaves nothing to blur: the blur is
-  // reported once the closed picker has rendered, after the pick was committed, never from the handler that called
-  // `onChange`. A way out that refocuses the trigger leaves the report to the trigger's native blur
-  const wasOpen = useRef(isOpen);
+  // Preserve blur-on-close, but wait for the parent to render its accepted value before reporting it.
+  // Consume the request first: changed callback identities or reentrant consumer code must not repeat it.
   useEffect(() => {
-    const trigger = triggerRef.current;
-    if (wasOpen.current && !isOpen && documentOf(trigger).activeElement !== trigger) {
+    if (!isOpen && pendingCloseBlur.current) {
+      pendingCloseBlur.current = false;
       onBlur?.(id, value);
     }
-    wasOpen.current = isOpen;
   }, [isOpen, id, value, onBlur]);
 
   const latestCancel = useLatest(cancelPicker);
