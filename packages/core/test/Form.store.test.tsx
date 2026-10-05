@@ -1,4 +1,4 @@
-import { createRef, Suspense, startTransition, useEffect, useLayoutEffect, useState } from 'react';
+import { createRef, Suspense, startTransition, use, useEffect, useLayoutEffect, useState } from 'react';
 import type {
   ArrayFieldItemButtonsTemplateProps,
   ArrayFieldItemTemplateProps,
@@ -27,8 +27,7 @@ it('an abandoned concurrent render does not publish parent data or callbacks to 
   const never = new Promise<void>(() => {});
   function SuspendingWidget({ value }: WidgetProps) {
     if (value === 'pending') {
-      // oxlint-disable-next-line typescript/only-throw-error -- Suspense receives a thenable
-      throw never;
+      use(never);
     }
     return <span>{value}</span>;
   }
