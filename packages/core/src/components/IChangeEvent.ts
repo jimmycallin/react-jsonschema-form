@@ -53,11 +53,22 @@ export interface IChangeEvent<
    * the default `IChangeEvent` and a handler written against the default still fits a typed form; a function-typed
    * property would be checked contravariantly on `base` and break that.
    */
-  readonly applyTo: { bivarianceHack(base: T | undefined): EventFormData<T> }['bivarianceHack'];
+  readonly applyTo?: { bivarianceHack(base: T | undefined): EventFormData<T> }['bivarianceHack'];
   /** The current list of errors for the form, includes `extraErrors` */
   readonly errors: RJSFValidationError[];
   /** The current errors, in `ErrorSchema` format, for the form, includes `extraErrors` */
   readonly errorSchema: ErrorSchema<T>;
   /** The status of the form when submitted */
   readonly status?: 'submitted';
+}
+
+/** An event emitted by Form. Unlike a legacy consumer-created IChangeEvent, it always carries its edit.
+ * This type is inferred by Form callbacks; use it explicitly when retaining events for composition.
+ */
+export interface FormChangeEvent<
+  T = unknown,
+  S extends StrictRJSFSchema = RJSFSchema,
+  F extends FormContextType = FormContextType,
+> extends IChangeEvent<T, S, F> {
+  readonly applyTo: NonNullable<IChangeEvent<T, S, F>['applyTo']>;
 }
