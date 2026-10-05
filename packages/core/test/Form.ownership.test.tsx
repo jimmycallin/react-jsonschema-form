@@ -1155,6 +1155,26 @@ describeOwnerships('operations in one tick', (createFormComponent) => {
     expect(getFormData()).toEqual({ a: 'new' });
   });
 
+  it('a root replacement and a submit of the same value submit it while a required input on screen is still empty', () => {
+    // The browser's own validation checks the inputs on screen, which still show the value before the replacement
+    const ref = createRef<Form>();
+    const { onSubmit, onError } = createFormComponent({
+      ref,
+      schema: { ...schema, required: ['a'] },
+      initialFormData: {},
+    });
+
+    act(() => {
+      const next = { a: 'new' };
+      ref.current?.setFieldValue([], next);
+      ref.current?.submit(next);
+    });
+
+    expect(onSubmit).toHaveBeenCalledTimes(1);
+    expect(onSubmit.mock.calls[0][0].formData).toEqual({ a: 'new' });
+    expect(onError).not.toHaveBeenCalled();
+  });
+
   it('submit(formData) and validateForm(formData) act on their argument without installing it', () => {
     const ref = createRef<Form>();
     const required: RJSFSchema = { ...schema, required: ['a', 'b'] };

@@ -605,7 +605,7 @@ The value of this prop will be passed to the `name` [HTML attribute on the form]
 
 ## noHtml5Validate
 
-If set to true, turns off HTML5 validation on the form. Set to `false` by default.
+If set to true, turns off HTML5 validation on the form. Set to `false` by default. `submit(formData)` on the form's ref skips it either way, since it checks the inputs on screen rather than `formData`.
 
 ## noValidate
 

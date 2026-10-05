@@ -24,8 +24,9 @@ export interface FormHandle<T = unknown> {
    * in flight have run: it is queued behind them. Data it is given is never installed: a self-owned form keeps what it
    * holds, a parent-owned form renders what its parent passes, and nothing is proposed. A submit of the data the form
    * holds keeps, as it always has, the copy without the extra data `omitExtraData` drops. The submit goes through the
-   * DOM, so HTML5 validation runs unless `noHtml5Validate`, and a `tagName` other than `form` cannot submit. Passing
-   * `undefined` is the same as passing nothing.
+   * DOM, so a `tagName` other than `form` cannot submit. Without data, HTML5 validation runs unless `noHtml5Validate`;
+   * with data it doesn't, since it checks the inputs on screen rather than the data given, which the form's own
+   * validation checks. Passing `undefined` is the same as passing nothing.
    *
    * @param [formData] - The data to submit in place of the data the form holds
    */
