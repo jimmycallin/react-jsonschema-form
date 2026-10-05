@@ -1,5 +1,14 @@
 import type { ElementType, ReactNode, Ref, SubmitEvent } from 'react';
-import { memo, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import {
+  memo,
+  useEffect,
+  useImperativeHandle,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from 'react';
 import type {
   CustomValidator,
   ErrorSchema,
@@ -1599,7 +1608,7 @@ interface RenderedHandlers<T> {
 function createHandlers<T, S extends StrictRJSFSchema, F extends FormContextType>(
   props: FormProps<T, S, F>,
   state: FormState<T, S, F>,
-  commit: (next: FormState<T, S, F>, reapply: (base: FormState<T, S, F>) => FormState<T, S, F>) => void,
+  commit: (next: FormState<T, S, F>, reapply: (base: FormState<T, S, F>) => FormState<T, S, F>) => FormState<T, S, F>,
   getFormElement: () => HTMLElement | null,
   hasUnrenderedData = false,
 ): RenderedHandlers<T> {
@@ -1665,9 +1674,9 @@ function createHandlers<T, S extends StrictRJSFSchema, F extends FormContextType
       freezeFormData(next.formData);
     }
     if (!state.isControlled) {
-      // A reentrant operation may have committed while this one was being calculated.
-      commit(next, (base) => applyChange(base, change, props));
-      props.onChange?.(toIChangeEvent(next), id);
+      // A reentrant operation may have committed while this one was being calculated, so report what was committed
+      const committed = commit(next, (base) => applyChange(base, change, props));
+      props.onChange?.(toIChangeEvent(committed), id);
       return;
     }
     // Validated errors describe the proposal, which the parent may yet refuse, so they wait for the parent's answer
@@ -1703,9 +1712,9 @@ function createHandlers<T, S extends StrictRJSFSchema, F extends FormContextType
     if (isDevelopment) {
       freezeFormData(next.formData);
     }
-    commit(next, blur);
+    const committed = commit(next, blur);
     if (hasChanges) {
-      props.onChange?.(toIChangeEvent(next), id);
+      props.onChange?.(toIChangeEvent(state.isControlled ? next : committed), id);
     }
   };
 
@@ -1810,10 +1819,9 @@ function createHandlers<T, S extends StrictRJSFSchema, F extends FormContextType
         commit(clear(state), clear);
         return;
       }
-      const next = applyReset(state, props);
-      commit(next, (base) => applyReset(base, props));
+      const committed = commit(applyReset(state, props), (base) => applyReset(base, props));
       // A reset replaces whatever a parent holds with the reset data
-      props.onChange?.(toIChangeEvent(next));
+      props.onChange?.(toIChangeEvent(committed));
     },
 
     /** Sets the value of the field at `fieldPath`, see `FormRef.setFieldValue()`. The dotted form splits on `.`
@@ -1908,6 +1916,7 @@ function createFormModel<T, S extends StrictRJSFSchema, F extends FormContextTyp
         } else {
           publish({ owner: 'parent', metadata: ownedMetadata(shared) });
         }
+        return shared;
       },
       () => getFormElement(),
       !state.isControlled && state.formData !== configuration.state.formData,
@@ -1944,17 +1953,17 @@ function createFormModel<T, S extends StrictRJSFSchema, F extends FormContextTyp
       renderedSnapshot: ModelSnapshot<T, S, F>,
     ) => {
       getFormElement = getElement;
-      // Accept the render's reconciled errors, preserving metadata written after that render began.
-      const committed =
-        snapshot.owner === 'parent' && snapshot !== renderedSnapshot
-          ? deriveState(nextProps, { ...configuration.state, ...snapshot.metadata })
-          : state;
-      configuration = { props: nextProps, state: committed };
+      // The render's state is the next one unless an operation committed after that render began; re-deriving it
+      // anyway would rerun live validation and hand the fields new references to equal values
+      const isRendered = snapshot === renderedSnapshot;
       if (snapshot.owner === 'model') {
-        publish({ owner: 'model', state: deriveState(nextProps, snapshot.state) });
-      } else {
-        publish({ owner: 'parent', metadata: ownedMetadata(committed) });
+        configuration = { props: nextProps, state };
+        publish({ owner: 'model', state: isRendered ? state : deriveState(nextProps, snapshot.state) });
+        return;
       }
+      const committed = isRendered ? state : deriveState(nextProps, { ...configuration.state, ...snapshot.metadata });
+      configuration = { props: nextProps, state: committed };
+      publish({ owner: 'parent', metadata: ownedMetadata(committed) });
     },
     handleSubmit: (event: SubmitEvent<HTMLFormElement>) => handlers().handleSubmit(event),
     handle: {
@@ -1995,12 +2004,16 @@ function Form<T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends Fo
   if (state !== cache.state || snapshot !== cache.snapshot) {
     setCache({ snapshot, state });
   }
-  if (isDevelopment && !state.isControlled && props.formData !== undefined) {
-    // oxlint-disable-next-line no-console
-    console.warn(
-      'Form: `formData` was set on a form that mounted without it. Ownership is decided at mount, so the form keeps its own data and ignores this value. To show data that arrives later, either mount the form only once the data is there (`key` it by the record to switch records), or mount it with a complete fallback such as `formData={record ?? {}}` and an `onChange` that stores each proposal.',
-    );
-  }
+  const isLateFormData = isDevelopment && !state.isControlled && props.formData !== undefined;
+  // Logged once when the prop arrives, not on every render that still carries it
+  useEffect(() => {
+    if (isLateFormData) {
+      // oxlint-disable-next-line no-console
+      console.warn(
+        'Form: `formData` was set on a form that mounted without it. Ownership is decided at mount, so the form keeps its own data and ignores this value. To show data that arrives later, either mount the form only once the data is there (`key` it by the record to switch records), or mount it with a complete fallback such as `formData={record ?? {}}` and an `onChange` that stores each proposal.',
+      );
+    }
+  }, [isLateFormData]);
   // Synchronize the external engine before consumer passive Effects can issue commands. Descendant layout
   // Effects and callback refs can still run before this configuration refresh.
   useLayoutEffect(() => {

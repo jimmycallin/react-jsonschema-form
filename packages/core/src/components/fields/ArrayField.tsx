@@ -921,13 +921,14 @@ export default function ArrayField<
         event.preventDefault();
       }
 
+      const rows = readRows();
       const newErrorSchema = remapItemErrors(readErrors(), (i) => (index === undefined || i < index ? i : i + 1));
 
       const newKeyedFormDataRow: KeyedFormDataType<T> = {
         key: generateRowId(),
-        item: getNewFormDataRow<T, S, F>(registry, schema, index ?? readRows().length, uiSchema),
+        item: getNewFormDataRow<T, S, F>(registry, schema, index ?? rows.length, uiSchema),
       };
-      const newKeyedFormData = [...readRows()];
+      const newKeyedFormData = [...rows];
       if (index !== undefined) {
         newKeyedFormData.splice(index, 0, newKeyedFormDataRow);
       } else {
@@ -951,7 +952,8 @@ export default function ArrayField<
         event.preventDefault();
       }
 
-      if (index >= readRows().length) {
+      const rows = readRows();
+      if (index >= rows.length) {
         return;
       }
 
@@ -959,9 +961,9 @@ export default function ArrayField<
 
       const newKeyedFormDataRow: KeyedFormDataType<T> = {
         key: generateRowId(),
-        item: structuredClone(readRows()[index].item),
+        item: structuredClone(rows[index].item),
       };
-      const newKeyedFormData = [...readRows()];
+      const newKeyedFormData = [...rows];
       if (index !== undefined) {
         newKeyedFormData.splice(index + 1, 0, newKeyedFormDataRow);
       } else {
@@ -985,7 +987,8 @@ export default function ArrayField<
         event.preventDefault();
       }
       // refs #195: revalidate to ensure properly reindexing errors
-      if (index >= readRows().length) {
+      const rows = readRows();
+      if (index >= rows.length) {
         return;
       }
 
@@ -995,7 +998,7 @@ export default function ArrayField<
         }
         return i < index ? i : i - 1;
       });
-      const newKeyedFormData = readRows().filter((_, i) => i !== index);
+      const newKeyedFormData = rows.filter((_, i) => i !== index);
       view.configure({ ...view.read(), keyedFormData: newKeyedFormData, errorSchema: newErrorSchema });
       onChange(updateKeyedFormData(newKeyedFormData), fieldPath, newErrorSchema);
     },
@@ -1015,7 +1018,8 @@ export default function ArrayField<
         event.preventDefault();
         event.currentTarget.blur();
       }
-      if (index >= readRows().length) {
+      const rows = readRows();
+      if (index >= rows.length) {
         return;
       }
 
@@ -1027,9 +1031,9 @@ export default function ArrayField<
       });
 
       function reOrderArray() {
-        const newKeyedFormData = readRows().slice();
+        const newKeyedFormData = rows.slice();
         newKeyedFormData.splice(index, 1);
-        newKeyedFormData.splice(newIndex, 0, readRows()[index]);
+        newKeyedFormData.splice(newIndex, 0, rows[index]);
         return newKeyedFormData;
       }
       const newKeyedFormData = reOrderArray();
