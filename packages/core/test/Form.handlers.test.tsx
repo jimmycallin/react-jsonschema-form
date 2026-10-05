@@ -12,7 +12,7 @@ import { customizeValidator } from '@rjsf/validator-ajv8';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 
-import type { FormProps, IChangeEvent } from '../src/index.ts';
+import type { FormProps, FormChangeEvent } from '../src/index.ts';
 import type Form from '../src/index.ts';
 import {
   ComposingParent,
@@ -385,11 +385,11 @@ describeRepeated('Form common: event handlers', (createFormComponent) => {
         default: { types: 'advanced', content: 'placeholder' },
       };
 
-      const onChangeCalls: { event: IChangeEvent; id?: string }[] = [];
+      const onChangeCalls: { event: FormChangeEvent; id?: string }[] = [];
 
       const { node } = createFormComponent({
         schema,
-        onChange: (event: IChangeEvent, id?: string) => onChangeCalls.push({ event, id }),
+        onChange: (event: FormChangeEvent, id?: string) => onChangeCalls.push({ event, id }),
         defaultFormStateBehavior: { emptyObjectFields: 'populateAllDefaults' },
       });
 
@@ -456,13 +456,13 @@ describeRepeated('Form common: event handlers', (createFormComponent) => {
         default: { types: 'advanced', content: 'placeholder' },
       };
 
-      const onChangeCalls: { event: IChangeEvent; id?: string }[] = [];
+      const onChangeCalls: { event: FormChangeEvent; id?: string }[] = [];
       let currentFormData: unknown = undefined;
 
       const { node, rerender } = createFormComponent({
         ref: createRef(),
         schema,
-        onChange: (event: IChangeEvent, id?: string) => {
+        onChange: (event: FormChangeEvent, id?: string) => {
           onChangeCalls.push({ event, id });
           currentFormData = event.formData;
         },
@@ -888,7 +888,7 @@ describeRepeated('Form common: event handlers', (createFormComponent) => {
           </button>
         );
       }
-      const onChange = vi.fn<(event: IChangeEvent, id?: string) => void>();
+      const onChange = vi.fn<(event: FormChangeEvent, id?: string) => void>();
       createFormComponent({
         schema: { type: 'object', properties: { count: { type: 'number' } } },
         uiSchema: { count: { 'ui:field': IncrementTwiceField } },

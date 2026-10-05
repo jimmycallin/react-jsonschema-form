@@ -5,7 +5,7 @@ import validator from '@rjsf/validator-ajv8';
 import { act, render, screen } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 
-import type { IChangeEvent } from '../src/index.ts';
+import type { FormChangeEvent } from '../src/index.ts';
 import Form from '../src/index.ts';
 import {
   AcceptingParent,
@@ -581,7 +581,7 @@ describe('form data ownership', () => {
 
     it('applyTo re-applies a change to any base', () => {
       const ref = createRef<Form>();
-      const onChange = vi.fn<(event: IChangeEvent) => void>();
+      const onChange = vi.fn<(event: FormChangeEvent) => void>();
       createFormComponent({ ref, schema, initialFormData: { a: '', b: 'kept' }, onChange });
 
       act(() => ref.current?.setFieldValue('a', 'x'));
@@ -594,7 +594,7 @@ describe('form data ownership', () => {
     });
 
     it("a blur's applyTo omits extra data from any base", async () => {
-      const onChange = vi.fn<(event: IChangeEvent) => void>();
+      const onChange = vi.fn<(event: FormChangeEvent) => void>();
       createFormComponent({
         schema,
         initialFormData: { a: 'x', extra: 1 },
@@ -613,8 +613,8 @@ describe('form data ownership', () => {
 
     it("a reset's and a submit's applyTo hand back their data whatever the base", async () => {
       const ref = createRef<Form>();
-      const onChange = vi.fn<(event: IChangeEvent) => void>();
-      const onSubmit = vi.fn<(event: IChangeEvent) => void>();
+      const onChange = vi.fn<(event: FormChangeEvent) => void>();
+      const onSubmit = vi.fn<(event: FormChangeEvent) => void>();
       const { node } = createFormComponent({ ref, schema, initialFormData: { a: 'seed' }, onChange, onSubmit });
 
       await user.type(screen.getByDisplayValue('seed'), 'x');
@@ -834,7 +834,7 @@ describe('form data ownership', () => {
         type: 'object',
         properties: { a: { type: 'string' }, list: { type: 'array', items: { type: 'string' } } },
       };
-      let seen: IChangeEvent<{ a: string; list: string[]; when: Date }> | undefined;
+      let seen: FormChangeEvent<{ a: string; list: string[]; when: Date }> | undefined;
       render(
         <Form
           schema={nested}
@@ -1164,7 +1164,7 @@ describe('form data ownership', () => {
 
       await user.click(container.querySelector('#root_foo-raise')!);
 
-      const { errors } = onChange.mock.lastCall![0] as IChangeEvent;
+      const { errors } = onChange.mock.lastCall![0] as FormChangeEvent;
       expect(errors.map(({ name, property, message }) => ({ name, property, message }))).toEqual([
         { name: undefined, property: '.foo', message: 'custom!' },
         { name: 'minLength', property: '.bar', message: 'must NOT have fewer than 5 characters' },
@@ -1546,7 +1546,7 @@ describe('a throwing callback on a self-owned form', () => {
       ref,
       schema,
       initialFormData: { a: 'old' },
-      onChange: ({ formData }: IChangeEvent) => {
+      onChange: ({ formData }: FormChangeEvent) => {
         if ((formData as Data | undefined)?.a === 'first') {
           throw new Error('boom');
         }

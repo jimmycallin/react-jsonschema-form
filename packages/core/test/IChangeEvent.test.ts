@@ -1,4 +1,4 @@
-import type { EventFormData, FormState, IChangeEvent } from '../src/index.ts';
+import type { EventFormData, FormChangeEvent, FormProps, FormState, IChangeEvent } from '../src/index.ts';
 
 type EventKey = Exclude<keyof IChangeEvent, 'status'>;
 type Mutable<O> = { -readonly [K in keyof O]: O[K] };
@@ -37,17 +37,26 @@ describe('IChangeEvent', () => {
   });
 
   it('applies the proposal to a base of the same shape as formData', () => {
-    expectTypeOf<IChangeEvent<{ name: string }>['applyTo']>()
+    expectTypeOf<FormChangeEvent<{ name: string }>['applyTo']>()
       .parameter(0)
       .toEqualTypeOf<{ name: string } | undefined>();
-    expectTypeOf<IChangeEvent<{ name: string }>['applyTo']>().returns.toEqualTypeOf<{ name: string }>();
-    expectTypeOf<IChangeEvent<string>['applyTo']>().returns.toEqualTypeOf<string | undefined>();
+    expectTypeOf<FormChangeEvent<{ name: string }>['applyTo']>().returns.toEqualTypeOf<{ name: string }>();
+    expectTypeOf<FormChangeEvent<string>['applyTo']>().returns.toEqualTypeOf<string | undefined>();
   });
 
   it('is assignable to the event of a looser data type, so a handler typed with the default still fits', () => {
     // A handler written against `IChangeEvent` is passed the event of a typed form; `applyTo` must not stand in the way
     expectTypeOf<IChangeEvent<{ name: string }>>().toExtend<IChangeEvent>();
     expectTypeOf<(event: IChangeEvent) => void>().toExtend<(event: IChangeEvent<{ name: string }>) => void>();
+  });
+
+  it('accepts legacy events without applyTo while Form callbacks guarantee it', () => {
+    expectTypeOf<Omit<IChangeEvent, 'applyTo'>>().toExtend<IChangeEvent>();
+    expectTypeOf<FormChangeEvent<{ name: string }>>().toExtend<IChangeEvent>();
+    expectTypeOf<Parameters<NonNullable<FormProps<{ name: string }>['onChange']>>[0]>().toEqualTypeOf<
+      FormChangeEvent<{ name: string }>
+    >();
+    expectTypeOf<(event: IChangeEvent) => void>().toExtend<NonNullable<FormProps<{ name: string }>['onChange']>>();
   });
 
   it('cannot be written into', () => {
