@@ -13,17 +13,24 @@ export default function getTemplate<
   T = unknown,
   S extends StrictRJSFSchema = RJSFSchema,
   F extends FormContextType = FormContextType,
->(name: Name, registry: Registry<T, S, F>, uiOptions: UIOptionsType<T, S, F> = {}): TemplatesType<T, S, F>[Name] {
-  const { templates } = registry;
+>(name: Name, registry: Registry<T, S, F>, uiOptions?: UIOptionsType<T, S, F>): TemplatesType<T, S, F>[Name];
+// The uiSchema can hold any value under this name and a registry key can name any template, so nothing proves the
+// component takes `Name`'s props; the overload above is the one place the uiSchema is trusted to have picked the right
+// one. Both are read through string-keyed views since indexing them by a generic `Name` overflows TS's union limit
+export default function getTemplate<T, S extends StrictRJSFSchema, F extends FormContextType>(
+  name: string,
+  registry: Registry<T, S, F>,
+  uiOptions: UIOptionsType<T, S, F> = {},
+): unknown {
+  const templates: Record<string, unknown> = registry.templates;
   if (name === 'ButtonTemplates') {
     return templates[name];
   }
-  const override = uiOptions[name];
+  const uiOverrides: Record<string, unknown> = uiOptions;
+  const override = uiOverrides[name];
   // Allow templates to be customized per-field by using string keys from the registry
   const template = typeof override === 'string' && Object.hasOwn(templates, override) ? templates[override] : override;
   if (typeof template === 'function' || (typeof template === 'object' && template !== null)) {
-    // The uiSchema can hold any value under this name and a registry key can name any template, so nothing proves
-    // the component takes `Name`'s props; this is the one place the uiSchema is trusted to have picked the right one
     return template;
   }
   return templates[name];
