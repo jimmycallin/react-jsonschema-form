@@ -17,7 +17,7 @@ import {
 
 const user = userEvent.setup();
 
-describeRepeated('Form common: event handlers', (createFormComponent, isControlled) => {
+describeRepeated('Form common: event handlers', (createFormComponent) => {
   describe('Submit handler', () => {
     it('should call provided submit handler with form state', async () => {
       const schema: RJSFSchema = {
@@ -187,7 +187,8 @@ describeRepeated('Form common: event handlers', (createFormComponent, isControll
         expect(ids).toHaveLength(2);
       });
 
-      expect(formData).toEqual({ foo: isControlled ? 'bar' : 'bar2', baz: 'blah2' });
+      // Both owners keep both: a parent-owned form builds the second proposal on the first
+      expect(formData).toEqual({ foo: 'bar2', baz: 'blah2' });
       // One id per updated component; the defaults the seed was given are not reported
       expect(ids).toEqual(['root_foo', 'root_baz']);
     });

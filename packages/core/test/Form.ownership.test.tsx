@@ -363,7 +363,7 @@ describe('form data ownership', () => {
       );
     }
 
-    it('two path changes in one tick each propose from the rendered value, and the parent keeps the last', async () => {
+    it('two path changes in one tick chain, so the parent keeps both', async () => {
       const ref = createFormRef<Data>();
       const log = { proposals: [] as Data[] } as { value?: Data; proposals: Data[] };
       const { container } = render(<PolicyParent ref={ref} log={log} />);
@@ -373,13 +373,13 @@ describe('form data ownership', () => {
         ref.current!.setFieldValue('b', 'second');
       });
 
-      // Like two changes to a controlled `<input>` in one tick: neither sees the other, the parent stores the last
+      // The second change builds on the first proposal, which React has not rendered yet
       expect(log.proposals).toEqual([
         { a: 'first', b: '' },
-        { a: '', b: 'second' },
+        { a: 'first', b: 'second' },
       ]);
-      expect(log.value).toEqual({ a: '', b: 'second' });
-      expect(input(container, 'root_a')).toHaveValue('');
+      expect(log.value).toEqual({ a: 'first', b: 'second' });
+      expect(input(container, 'root_a')).toHaveValue('first');
       expect(input(container, 'root_b')).toHaveValue('second');
     });
 
@@ -400,7 +400,7 @@ describe('form data ownership', () => {
       expect(input(container, 'root_b')).toHaveValue('second');
     });
 
-    it('a rejected first value is not resurrected by the second change', async () => {
+    it('a parent that rejects a proposal sees it again in a later proposal of the same tick', async () => {
       const ref = createFormRef<Data>();
       const log = { proposals: [] as Data[] } as { value?: Data; proposals: Data[] };
       render(<PolicyParent ref={ref} log={log} accept={(proposal) => proposal.a !== 'first'} />);
@@ -410,14 +410,35 @@ describe('form data ownership', () => {
         ref.current!.setFieldValue('b', 'second');
       });
 
-      expect(log.value).toEqual({ a: '', b: 'second' });
+      // The form cannot know the parent's answer before it renders, so the second proposal still carries the first
+      // edit, and the parent's rule refuses it too
+      expect(log.proposals).toEqual([
+        { a: 'first', b: '' },
+        { a: 'first', b: 'second' },
+      ]);
+      expect(log.value).toEqual({ a: '', b: '' });
+    });
+
+    it('a proposal the parent left unrendered is dropped at the end of the tick', async () => {
+      const ref = createFormRef<Data>();
+      const log = { proposals: [] as Data[] } as { value?: Data; proposals: Data[] };
+      render(<PolicyParent ref={ref} log={log} accept={(proposal) => proposal.a !== 'first'} />);
+
+      await act(async () => {
+        ref.current!.setFieldValue('a', 'first');
+      });
+      await act(async () => {
+        ref.current!.setFieldValue('b', 'second');
+      });
+
       expect(log.proposals).toEqual([
         { a: 'first', b: '' },
         { a: '', b: 'second' },
       ]);
+      expect(log.value).toEqual({ a: '', b: 'second' });
     });
 
-    it('a setFieldValue from inside onChange proposes from the rendered value, not the proposal being handled', async () => {
+    it('a setFieldValue from inside onChange builds on the proposal being handled', async () => {
       const ref = createFormRef<Data>();
       const proposals: Data[] = [];
       function ReentrantParent() {
@@ -447,9 +468,9 @@ describe('form data ownership', () => {
 
       expect(proposals).toEqual([
         { a: 'first', b: '' },
-        { a: '', b: 'derived' },
+        { a: 'first', b: 'derived' },
       ]);
-      expect(input(container, 'root_a')).toHaveValue('');
+      expect(input(container, 'root_a')).toHaveValue('first');
       expect(input(container, 'root_b')).toHaveValue('derived');
     });
 
@@ -513,7 +534,7 @@ describe('form data ownership', () => {
 
       expect(onChange).toHaveBeenCalledTimes(2);
       expect(onChange.mock.calls[0][0].formData).toEqual({ a: 'x' });
-      expect(onChange.mock.calls[1][0].formData).toEqual({ a: '', b: 'y' });
+      expect(onChange.mock.calls[1][0].formData).toEqual({ a: 'x', b: 'y' });
     });
   });
 

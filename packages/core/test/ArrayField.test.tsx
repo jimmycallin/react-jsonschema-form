@@ -21,6 +21,7 @@ import ArrayField from '../src/components/fields/ArrayField.tsx';
 import SchemaField from '../src/components/fields/SchemaField.tsx';
 import {
   AcceptingParent,
+  RejectingParent,
   createFormComponent,
   createFormRef,
   createParentLog,
@@ -3976,6 +3977,79 @@ describe('ArrayField', () => {
       expect(new Set(rowKeys(node)).size).toBe(5);
     });
 
+    it('should report each chained edit with the errors of its own data', async () => {
+      function AddTwoTemplate(props: ArrayFieldTemplateProps) {
+        return (
+          <div className='array'>
+            {props.items}
+            <button
+              type='button'
+              onClick={(event) => {
+                props.onAddClick(event);
+                props.onAddClick(event);
+              }}
+            >
+              Add two
+            </button>
+          </div>
+        );
+      }
+      const { onChange } = createFormComponent({
+        schema: { type: 'array', items: { type: 'string', default: 'x' }, minItems: 3 },
+        initialFormData: ['a'],
+        liveValidate: 'onChange',
+        templates: { ArrayFieldTemplate: AddTwoTemplate },
+      });
+      onChange.mockClear();
+
+      await user.click(screen.getByRole('button', { name: 'Add two' }));
+
+      // Live validation runs per edit, so no event carries errors that describe a different value
+      const events = onChange.mock.calls.map(([event]) => event);
+      expect(events.map((event) => event.formData)).toEqual([
+        ['a', 'x'],
+        ['a', 'x', 'x'],
+      ]);
+      expect(events[0].errors.map((error: { name: string }) => error.name)).toEqual(['minItems']);
+      expect(events[1].errors).toEqual([]);
+    });
+
+    it('should start a later event from the rendered rows when a controlled parent refused the earlier one', async () => {
+      function RemoveTemplate(props: ArrayFieldItemTemplateProps) {
+        return (
+          <div className='rjsf-array-item'>
+            {props.children}
+            <button type='button' className='remove-row' onClick={props.buttonsProps.onRemoveItem}>
+              Remove
+            </button>
+          </div>
+        );
+      }
+      const log = createParentLog<string[]>();
+      const { container } = render(
+        <RejectingParent<string[]>
+          schema={{ type: 'array', items: { type: 'string', minLength: 2 } }}
+          initialValue={['aa', 'bb', 'c']}
+          log={log}
+          onError={noop}
+          templates={{ ArrayFieldItemTemplate: RemoveTemplate }}
+        />,
+      );
+      await submitForm(container, user);
+
+      await user.click(container.querySelectorAll('.remove-row')[0]);
+      await user.click(container.querySelectorAll('.remove-row')[0]);
+
+      // The refused removal is gone once React renders, so the second one starts again from ['aa', 'bb', 'c'], and
+      // moves the error on 'c' from the rendered errors, not from the refused proposal's
+      expect(log.proposals).toEqual([
+        ['bb', 'c'],
+        ['bb', 'c'],
+      ]);
+      const error = { __errors: ['must NOT have fewer than 2 characters'] };
+      expect(log.events.map((event) => event.errorSchema)).toEqual([{ 1: error }, { 1: error }]);
+    });
+
     it('should build a root array edit on a value set earlier in the same event', async () => {
       const formRef = createFormRef();
       function SetThenAddTemplate(props: ArrayFieldTemplateProps) {
@@ -4036,7 +4110,7 @@ describe('ArrayField', () => {
       expect(getFormData()).toEqual(['aa', 'b']);
       expect(fieldErrorsById(node)).toEqual({ root_1: ['must NOT have fewer than 2 characters'] });
     });
-    it('should start every command from the rendered rows when a controlled parent owns the array', async () => {
+    it('should chain every command on the previous proposal when a controlled parent owns the array', async () => {
       function KeyedRemoveThenMoveUpItemTemplate(props: ArrayFieldItemTemplateProps) {
         return (
           <div data-rjsf-itemkey={props.itemKey}>
@@ -4061,18 +4135,18 @@ describe('ArrayField', () => {
 
       await user.click(container.querySelectorAll('.remove-then-move-up')[1]);
 
-      // Neither proposal has been rendered when the second command runs, so both start from ['aa', 'bb', 'c'] and
-      // the parent ends up with the last one, the move
+      // The move builds on the removal's proposal, which React has not rendered yet, as in a self-owned form
       expect(log.proposals.slice(-2)).toEqual([
         ['aa', 'c'],
-        ['bb', 'aa', 'c'],
+        ['c', 'aa'],
       ]);
-      expect(log.value).toEqual(['bb', 'aa', 'c']);
+      expect(log.value).toEqual(['c', 'aa']);
       const keysAfter = Array.from(container.querySelectorAll(`[${ArrayKeyDataAttr}]`)).map((row) =>
         row.getAttribute(ArrayKeyDataAttr),
       );
-      expect(keysAfter).toEqual([keysBefore[1], keysBefore[0], keysBefore[2]]);
-      expect(fieldErrorsById(container)).toEqual({ root_2: ['must NOT have fewer than 2 characters'] });
+      // Each row keeps its key and its error: rows, keys and errors all come from the same proposal
+      expect(keysAfter).toEqual([keysBefore[2], keysBefore[0]]);
+      expect(log.events.at(-1)?.errorSchema).toEqual({ 0: { __errors: ['must NOT have fewer than 2 characters'] } });
     });
   });
 });

@@ -958,8 +958,8 @@ function detectContextChanges<T, S extends StrictRJSFSchema, F extends FormConte
 /** The state of a self-owned form: on construction from its seed, and afterwards from the data it holds whenever the
  * schema, a `ui:emptyValue` or `defaultFormStateBehavior` changed, since those are the props whose change transforms
  * the data (a default it did not have before, a branch that no longer applies). No other prop change runs this: an
- * unrelated re-render must not rerun value initialization, so `getDerivedStateFromProps` re-derives the render context
- * alone for those.
+ * unrelated re-render must not rerun value initialization, so `deriveState()` re-derives the render context alone for
+ * those.
  *
  * @param current - The state the pass starts from; `undefined` on construction
  * @param inputFormData - The seed on construction, the held data afterwards
@@ -1488,8 +1488,8 @@ function applyValidation<T, S extends StrictRJSFSchema, F extends FormContextTyp
     // are gone; the validator's own results are empty for both
     next = { ...current, errors, errorSchema, schemaValidationErrors: [], schemaValidationErrorSchema: {} };
   }
-  // Unlike the other `apply*` functions this one shares here rather than leaving it to `setSharedState()`, because
-  // the caller decides whether to commit at all by comparing the result to the state it started from
+  // Unlike the other `apply*` functions this one shares here rather than leaving it to `commit()`, because the caller
+  // decides whether to commit at all by comparing the result to the state it started from
   return { hasError, next: replaceEqualDeep(current, next) };
 }
 
@@ -1599,7 +1599,11 @@ function createHandlers<T, S extends StrictRJSFSchema, F extends FormContextType
   commit: (next: FormState<T, S, F>, reapply: (base: FormState<T, S, F>) => FormState<T, S, F>) => FormState<T, S, F>,
   getFormElement: () => HTMLElement | null,
   hasUnrenderedData: boolean,
+  pending: FormState<T, S, F> | undefined,
+  propose: (next: FormState<T, S, F>) => void,
 ): RenderedHandlers<T> {
+  /** What an edit builds on: in a parent-owned form, a proposal made earlier in this tick that React has not rendered */
+  const editBase = pending ?? state;
   /** `formData` without the fields the schema does not describe, when `omitExtraData` asks for it: what a submit and
    * `validateForm()` act on
    */
@@ -1657,10 +1661,7 @@ function createHandlers<T, S extends StrictRJSFSchema, F extends FormContextType
     id?: string,
   ) => {
     const change: PendingChange<T> = { newValue, fieldPath, newErrorSchema };
-    const next = applyChange(state, change, props);
-    if (isDevelopment) {
-      freezeFormData(next.formData);
-    }
+    const next = applyChange(editBase, change, props);
     if (!state.isControlled) {
       // A reentrant operation may have committed while this one was being calculated, so report what was committed
       const committed = commit(next, (base) => applyChange(base, change, props));
@@ -1674,6 +1675,11 @@ function createHandlers<T, S extends StrictRJSFSchema, F extends FormContextType
       isLiveValidated(props) ? { ...base, customErrors: result.customErrors } : result;
     // Committed before the parent is told, so a throwing handler cannot lose the errors the form owns
     commit(owned(next, state), (base) => owned(applyChange(base, change, props), base));
+    // `commit()` freezes self-owned data; the proposal never reaches it
+    if (isDevelopment) {
+      freezeFormData(next.formData);
+    }
+    propose(next);
     props.onChange?.(toIChangeEvent(next), id);
   };
 
@@ -1694,16 +1700,20 @@ function createHandlers<T, S extends StrictRJSFSchema, F extends FormContextType
     }
     // Shared so an unchanged error list keeps its reference and does not count as a change below
     const blur = (base: FormState<T, S, F>) => replaceEqualDeep(base, applyBlur(base, props));
-    const next = blur(state);
+    const next = blur(editBase);
     // Only the `IChangeEvent` members count; the validator's own results are not among them
-    const hasChanges = (['formData', 'errors', 'errorSchema'] as const).some((key) => state[key] !== next[key]);
-    if (isDevelopment) {
+    const hasChanges = (['formData', 'errors', 'errorSchema'] as const).some((key) => editBase[key] !== next[key]);
+    if (isDevelopment && state.isControlled) {
       freezeFormData(next.formData);
     }
     const committed = commit(next, blur);
-    if (hasChanges) {
-      props.onChange?.(toIChangeEvent(state.isControlled ? next : committed), id);
+    if (!hasChanges) {
+      return;
     }
+    if (state.isControlled) {
+      propose(next);
+    }
+    props.onChange?.(toIChangeEvent(state.isControlled ? next : committed), id);
   };
 
   /** Callback function to handle when a field on the form is focused. Calls the `onFocus` callback for the `Form` if it
@@ -1897,9 +1907,37 @@ function createFormModel<T, S extends StrictRJSFSchema, F extends FormContextTyp
   let formElement: HTMLElement | null = null;
   const getFormElement = () => formElement;
   const initial = initialState(props);
-  let configuration = { props, state: initial };
   let snapshot = snapshotOf(initial);
   const serverSnapshot = snapshot;
+  // The last committed render: its props, the state it derived and the snapshot it derived that state from. Derived
+  // state (a new registry, live validation of a controlled value) stays here instead of being published back into the
+  // store, which would make `useSyncExternalStore` render and commit a second time.
+  let configuration = { props, state: initial, snapshot };
+  // Set while the form is unmounted, so a late field `onChange` or a retained handle cannot report through it
+  let detached = false;
+  // A parent-owned form's last proposal, until React renders again or the current task ends. Edits made in the same
+  // tick (two fields setting a value from mount Effects, several `setFieldValue()` calls) build on it, as they would
+  // if the parent had already accepted it; the next render, or the end of a task in which the parent did not render,
+  // returns to the value the parent chose. `epoch` counts those returns, so a field's own record of a proposal it
+  // made is dropped with it.
+  let pending: FormState<T, S, F> | undefined;
+  let epoch = 0;
+  const settle = () => {
+    pending = undefined;
+    epoch += 1;
+  };
+  const propose = (next: FormState<T, S, F>) => {
+    pending = next;
+    const proposedAt = epoch;
+    queueMicrotask(() => {
+      if (epoch === proposedAt) {
+        settle();
+      }
+    });
+  };
+  /** The state operations start from: the rendered one, or a newer commit on top of it */
+  const current = () =>
+    snapshot === configuration.snapshot ? configuration.state : stateOf(snapshot, configuration.state);
   const listeners = new Set<() => void>();
   const publish = (next: FormState<T, S, F>) => {
     const shared = replaceEqualDeep(snapshot, snapshotOf(next));
@@ -1910,13 +1948,19 @@ function createFormModel<T, S extends StrictRJSFSchema, F extends FormContextTyp
   };
   // Handlers close over one operation frame, so they are rebuilt only when the configuration or the snapshot changes
   let built:
-    | { configuration: typeof configuration; snapshot: ModelSnapshot<T, S, F>; handlers: RenderedHandlers<T> }
+    | {
+        configuration: typeof configuration;
+        snapshot: ModelSnapshot<T, S, F>;
+        pending: FormState<T, S, F> | undefined;
+        handlers: RenderedHandlers<T>;
+      }
     | undefined;
   const handlers = () => {
-    if (built?.configuration !== configuration || built.snapshot !== snapshot) {
-      const state = stateOf(snapshot, configuration.state);
+    if (built?.configuration !== configuration || built.snapshot !== snapshot || built.pending !== pending) {
+      const frame = snapshot;
+      const state = current();
       const commit = (next: FormState<T, S, F>, reapply: (base: FormState<T, S, F>) => FormState<T, S, F>) => {
-        const base = stateOf(snapshot, state);
+        const base = snapshot === frame ? state : stateOf(snapshot, state);
         const shared = replaceEqualDeep(base, base === state ? next : reapply(base));
         if (isDevelopment && !shared.isControlled) {
           freezeFormData(shared.formData);
@@ -1928,19 +1972,30 @@ function createFormModel<T, S extends StrictRJSFSchema, F extends FormContextTyp
       built = {
         configuration,
         snapshot,
-        handlers: createHandlers(configuration.props, state, commit, getFormElement, hasUnrenderedData),
+        pending,
+        handlers: createHandlers(
+          configuration.props,
+          state,
+          commit,
+          getFormElement,
+          hasUnrenderedData,
+          pending,
+          propose,
+        ),
       };
     }
     return built.handlers;
   };
-  /** The latest self-owned value at `path`, or `fallback` when the field renders a transformed view of it */
+  /** The latest value at `path` (a self-owned edit or a pending proposal), or `fallback` when the field renders a
+   * transformed view of it
+   */
   const readLatest = <V,>(key: 'formData' | 'errorSchema', path: FieldPath, committedView: unknown, fallback: V) => {
     const segments = fieldPathToList(path);
     // A custom field can present a different view. Reading the root's raw value would bypass that view.
-    if (snapshot.owner !== 'model' || getAt(configuration.state.formData, segments) !== committedView) {
+    if (getAt(configuration.state.formData, segments) !== committedView) {
       return fallback;
     }
-    return getAt<V>(snapshot.state[key], segments);
+    return getAt<V>((pending ?? current())[key], segments);
   };
   return {
     initial,
@@ -1948,6 +2003,7 @@ function createFormModel<T, S extends StrictRJSFSchema, F extends FormContextTyp
     setFormElement: (element: HTMLElement | null) => {
       formElement = element;
     },
+    epoch: () => epoch,
     readField: <D,>(path: FieldPath, committedView: unknown, fallback: D) =>
       readLatest('formData', path, committedView, fallback),
     readErrors: <E,>(path: FieldPath, committedView: unknown, fallback: E) =>
@@ -1961,41 +2017,62 @@ function createFormModel<T, S extends StrictRJSFSchema, F extends FormContextTyp
       };
     },
     configure: (nextProps: FormProps<T, S, F>, state: FormState<T, S, F>, renderedSnapshot: ModelSnapshot<T, S, F>) => {
-      // The render's state is the next one unless an operation committed after that render began; re-deriving it
-      // anyway would rerun live validation and hand the fields new references to equal values
-      const next =
-        snapshot === renderedSnapshot ? state : deriveState(nextProps, stateOf(snapshot, configuration.state));
-      // A self-owned form's configuration keeps the rendered state: `hasUnrenderedData` compares the model with it
-      configuration = { props: nextProps, state: snapshot.owner === 'model' ? state : next };
-      publish(next);
+      configuration = { props: nextProps, state, snapshot: renderedSnapshot };
+      settle();
+      if (snapshot !== renderedSnapshot) {
+        // An operation committed after this render began, so a render is already pending; until it runs, operations
+        // start from that commit derived under the new props
+        publish(deriveState(nextProps, current()));
+      }
+    },
+    attach: () => {
+      detached = false;
+      return () => {
+        detached = true;
+      };
     },
     handleSubmit: (event: SubmitEvent<HTMLFormElement>) => handlers().handleSubmit(event),
     handle: {
       getFormData: () => handlers().handle.getFormData(),
       submit: () => handlers().handle.submit(),
-      reset: () => handlers().handle.reset(),
-      setFieldValue: (path: string | FieldPathList, value?: unknown) => handlers().handle.setFieldValue(path, value),
+      reset: () => {
+        if (!detached) {
+          handlers().handle.reset();
+        }
+      },
+      setFieldValue: (path: string | FieldPathList, value?: unknown) => {
+        if (!detached) {
+          handlers().handle.setFieldValue(path, value);
+        }
+      },
       validateForm: () => handlers().handle.validateForm(),
       validateFormWithFormData: (data?: T) => handlers().handle.validateFormWithFormData(data),
       validate: (data: T | undefined) => handlers().handle.validate(data),
       focusOnError: (error: RJSFValidationError) => handlers().handle.focusOnError(error),
     },
-    handleChange: (value: T | undefined, path: FieldPath, errors?: ErrorSchema<T>, id?: string) =>
-      handlers().handleChange(value, path, errors, id),
-    handleBlur: (id: string, data: unknown) => handlers().handleBlur(id, data),
+    handleChange: (value: T | undefined, path: FieldPath, errors?: ErrorSchema<T>, id?: string) => {
+      if (!detached) {
+        handlers().handleChange(value, path, errors, id);
+      }
+    },
+    handleBlur: (id: string, data: unknown) => {
+      if (!detached) {
+        handlers().handleBlur(id, data);
+      }
+    },
     handleFocus: (id: string, data: unknown) => handlers().handleFocus(id, data),
   };
 }
 
 /** The model owns self-owned data and validation metadata. Controlled values are derived from React props. */
 function Form<T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = FormContextType>(
-  allProps: FormProps<T, S, F>,
+  props: FormProps<T, S, F>,
 ) {
-  const { ref, ...props } = allProps;
+  const { ref } = props;
   // The model is created once and kept in the render cache, so it lives exactly as long as the mounted form
   const [cache, setCache] = useState(() => {
     const created = createFormModel(props);
-    return { model: created, snapshot: created.getSnapshot(), state: created.initial, props: allProps };
+    return { model: created, snapshot: created.getSnapshot(), state: created.initial, props };
   });
   const { model } = cache;
   const { setFormElement } = model;
@@ -2003,9 +2080,9 @@ function Form<T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends Fo
   const base = snapshot === cache.snapshot ? cache.state : stateOf(snapshot, cache.state);
   // `deriveState()` is pure, so the re-render that `setCache` triggers, and the one a `configure` publish triggers,
   // reuse its result instead of deriving the same state again
-  const state = allProps === cache.props && base === cache.state ? cache.state : deriveState(props, base);
+  const state = props === cache.props && base === cache.state ? cache.state : deriveState(props, base);
   if (state !== cache.state || snapshot !== cache.snapshot) {
-    setCache({ model, snapshot, state, props: allProps });
+    setCache({ model, snapshot, state, props });
   }
   const isLateFormData = isDevelopment && !state.isControlled && props.formData !== undefined;
   // Logged once when the prop arrives, not on every render that still carries it
@@ -2022,6 +2099,7 @@ function Form<T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends Fo
   useLayoutEffect(() => {
     model.configure(props, state, snapshot);
   }, [model, props, state, snapshot]);
+  useLayoutEffect(() => model.attach(), [model]);
   useImperativeHandle(ref, () => model.handle, [model]);
 
   const {
@@ -2078,7 +2156,7 @@ function Form<T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends Fo
   };
 
   return (
-    <FormDataContext value={state.isControlled ? undefined : model}>
+    <FormDataContext value={model}>
       <FormTag
         className={className || 'rjsf'}
         id={id}

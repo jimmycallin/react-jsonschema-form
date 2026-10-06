@@ -209,3 +209,32 @@ it.each([false, true])(
     );
   },
 );
+
+it('an unmounted form ignores a late field change and a retained handle', async () => {
+  let lateChange: WidgetProps['onChange'] | undefined;
+  function RetainingWidget({ onChange, value }: WidgetProps) {
+    useEffect(() => {
+      lateChange = onChange;
+    }, [onChange]);
+    return <span>{String(value ?? '')}</span>;
+  }
+  const ref = createFormRef();
+  const { onChange, unmount } = createFormComponent({
+    ref,
+    schema,
+    initialFormData: { name: 'a' },
+    uiSchema: { name: { 'ui:widget': RetainingWidget } },
+  });
+  const handle = ref.current;
+  unmount();
+  onChange.mockClear();
+
+  // A debounced widget or an autosave timer firing after a route change
+  act(() => {
+    lateChange?.('late', undefined, 'root_name');
+    handle?.setFieldValue('name', 'later');
+    handle?.reset();
+  });
+
+  expect(onChange).not.toHaveBeenCalled();
+});

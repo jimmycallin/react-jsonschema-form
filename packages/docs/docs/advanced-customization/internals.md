@@ -171,7 +171,7 @@ formRef.current?.setFieldValue('', { address: { city: 'Paris', country: 'France'
 
 A self-owned form stores the edit immediately. A controlled form proposes it through `onChange`; your handler decides what value to pass back through `formData`.
 
-For a controlled form, send one complete value when several fields must change together. Several calls in one event can each start from the previous parent value and overwrite each other. Alternatively, update parent state directly; that does not call Form's `onChange`.
+In a controlled form, several calls in one event build on each other: each proposal includes the edits proposed before it, until React renders the value your handler passed back. A handler that refuses a proposal still sees the refused edit in later proposals of the same event. You can also update parent state directly; that does not call Form's `onChange`.
 
 ## Command timing
 

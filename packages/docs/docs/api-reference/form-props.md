@@ -480,7 +480,7 @@ Ownership is decided when the form mounts and does not change afterwards: a form
 
 Only `undefined` means "not passed". `null`, `false`, `0` and `''` are values, since each is valid JSON; this differs from `<input>`, where `value={null}` is uncontrolled. A form that mounts with `formData` stays yours if the prop later becomes `undefined`: it renders empty fields, generates no defaults and calls no `onChange`, and renders your next `formData` as usual. A field edit under a `null` or `undefined` root proposes the object or array the field lives in, with the defaults the edit creates.
 
-Update `formData` from `onChange` with a plain state update in the handler, as for a controlled `<input>`. Edits made in the same tick are applied one after another, each to the value you stored for the previous one, so a value you transform or decline stays that way. Updating from a Transition, `useDeferredValue`, a timeout or after an `await` is not supported: which value an edit made before your update lands is applied to is unspecified and may change. For expensive work downstream, keep this state synchronous and derive a deferred copy from it.
+Update `formData` from `onChange` with a plain state update in the handler, as for a controlled `<input>`. Edits made in the same tick build on each other's proposals, so later edits in that tick still carry one you transformed or declined; from the next render on, edits start from the value you stored. Updating from a Transition, `useDeferredValue`, a timeout or after an `await` is not supported: which value an edit made before your update lands is applied to is unspecified and may change. For expensive work downstream, keep this state synchronous and derive a deferred copy from it.
 
 The value includes its defaults: the form generates none for data it does not own, on mount or when the schema changes. Seed them yourself with `createSchemaUtils({ validator, customMergeAllOf, defaultFormStateBehavior }, schema).getDefaultFormState(schema, record)`, passing the same `customMergeAllOf` and `defaultFormStateBehavior` you pass to the form: computing defaults merges `allOf`s, so a context missing either setting seeds data the form itself would not produce.
 
@@ -632,9 +632,9 @@ In the case of adding/removing of new fields in arrays or objects with `addition
 
 `onChange` runs as the edit is processed. React may update the inputs afterward, so read `event.formData` rather than reading values from the DOM inside the callback.
 
-With `initialFormData`, each event includes earlier edits already stored by Form. With `formData`, each event proposes a complete value based on the last parent value React rendered. Your handler must pass the accepted value back to Form.
+With `initialFormData`, each event includes earlier edits already stored by Form. With `formData`, each event proposes a complete value: the last value React rendered plus the edits proposed earlier in the same event. Your handler must pass the accepted value back to Form.
 
-For a controlled form, combine several programmatic field changes into one value. Calculate derived fields in the value you store in parent state, rather than calling `setFieldValue()` again from inside `onChange`. See the [migration examples](../migration-guides/v7.x%20upgrade%20guide.md#function-form-and-synchronous-model-timing-breaking-change).
+A `setFieldValue()` call from inside `onChange` builds on the proposal being handled. See the [migration examples](../migration-guides/v7.x%20upgrade%20guide.md#function-form-and-synchronous-model-timing-breaking-change).
 
 ## onError
 

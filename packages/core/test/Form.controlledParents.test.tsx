@@ -60,9 +60,9 @@ describe('controlled parent harnesses', () => {
     expect(input(container, 'root_name')).toHaveValue('AB');
   });
 
-  it('two same-tick changes each propose against committed parent data', async () => {
+  it('two same-tick changes from mount Effects both reach the parent', async () => {
     // The Form.handlers variant merges into an external variable, which proves nothing about composition through a
-    // parent. Both proposals here precede parent acceptance, so the parent stores the last full value.
+    // parent. Both proposals here precede parent acceptance, so the second builds on the first.
     function changeOnMount<V extends string | null | undefined>(from: string, to: string) {
       return function Widget(props: WidgetProps<V>) {
         const { value, id, onChange, uiSchema, registry } = props;
@@ -92,7 +92,7 @@ describe('controlled parent harnesses', () => {
       );
     });
 
-    await waitFor(() => expect(log.value).toEqual({ name: 'a', other: 'b2' }));
+    await waitFor(() => expect(log.value).toEqual({ name: 'a2', other: 'b2' }));
   });
 
   it('a dependent field clearing itself from an effect when its sibling changes (#3367)', async () => {
@@ -135,5 +135,21 @@ describe('controlled parent harnesses', () => {
     await user.type(input(container, 'root_name'), 'x');
 
     await waitFor(() => expect(committed.at(-1)).toEqual({ name: 'x', other: null }));
+  });
+
+  it('sibling null fields both reach the parent when they fill themselves in on mount', async () => {
+    // Each `NullField` proposes `null` from a mount Effect, before the parent has rendered the other's proposal
+    const log = createParentLog<{ a?: null; b?: null }>();
+    await act(async () => {
+      render(
+        <AcceptingParent<{ a?: null; b?: null }>
+          schema={{ type: 'object', properties: { a: { type: 'null' }, b: { type: 'null' } } }}
+          initialValue={{}}
+          log={log}
+        />,
+      );
+    });
+
+    expect(log.value).toEqual({ a: null, b: null });
   });
 });

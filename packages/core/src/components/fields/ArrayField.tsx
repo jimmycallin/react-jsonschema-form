@@ -875,11 +875,15 @@ export default function ArrayField<
   // `SchemaField` hands the array's own errors over as `rawErrors`, or withholds them beside a `oneOf`/`anyOf`
   // selector, so they go back in for the handlers to carry over
   const ownErrors = rawErrors ?? (withheldErrors?.fieldPath === fieldPath ? withheldErrors.errors : undefined);
-  const view = useFieldView(fieldPath, {
-    keyedFormData,
-    source: formData,
-    errorSchema: ownErrors ? { ...errorSchema, [ERRORS_KEY]: ownErrors } : errorSchema,
-  });
+  const fieldView = useMemo(
+    () => ({
+      keyedFormData,
+      source: formData,
+      errorSchema: ownErrors ? { ...errorSchema, [ERRORS_KEY]: ownErrors } : errorSchema,
+    }),
+    [keyedFormData, formData, ownErrors, errorSchema],
+  );
+  const view = useFieldView(fieldPath, fieldView);
 
   const readRows = useCallback(() => {
     const { keyedFormData: rows } = view.read();

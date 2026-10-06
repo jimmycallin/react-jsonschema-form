@@ -3,9 +3,10 @@ import type { FieldPathList, RJSFValidationError, ValidationData } from '@rjsf/u
 import type { EventFormData } from './IChangeEvent.ts';
 
 /** Public methods exposed by a Form ref.
- * With initialFormData, commands read Form's latest stored value. With formData, they read the last parent value
- * React rendered. Use event handlers for user actions, or passive Effects for synchronization after prop changes;
- * descendant layout Effects and callback refs can still see the previous configuration.
+ * With initialFormData, commands read Form's latest stored value. With formData, reads, submission and validation use
+ * the last parent value React rendered, and edits build on any proposal made earlier in the same tick. Use event
+ * handlers for user actions, or passive Effects for synchronization after prop changes; descendant layout Effects and
+ * callback refs can still see the previous configuration.
  */
 export interface FormRef<T = unknown> {
   /** Reads the latest stored value in a self-owned form, or the last rendered parent value in a controlled form.

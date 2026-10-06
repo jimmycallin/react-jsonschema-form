@@ -271,7 +271,8 @@ export default function ObjectField<
   const uiSchema: UiSchema<T, S, F> = rawUiSchema ?? EMPTY_UI_SCHEMA;
   const { fields, schemaUtils, translateString, globalUiOptions, uiSchemaDefinitions } = registry;
   const { OptionalDataControlsField } = fields;
-  const view = useFieldView(fieldPath, { source: formData, data: formData });
+  const fieldView = useMemo(() => ({ source: formData, data: formData }), [formData]);
+  const view = useFieldView(fieldPath, fieldView);
   const readData = useCallback(() => view.readData(view.read().data), [view]);
 
   const schema: S = useMemo(
