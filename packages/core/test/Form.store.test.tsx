@@ -1,4 +1,4 @@
-import { Suspense, startTransition, use, useEffect, useLayoutEffect, useState } from 'react';
+import { Suspense, startTransition, use, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type {
   ArrayFieldItemButtonsTemplateProps,
   ArrayFieldItemTemplateProps,
@@ -7,14 +7,16 @@ import type {
   RJSFSchema,
   WidgetProps,
 } from '@rjsf/utils';
+import { noop } from '@rjsf/utils';
 import validator from '@rjsf/validator-ajv8';
 import { act, render, screen } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { renderToString } from 'react-dom/server';
 
 import ArrayField from '../src/components/fields/ArrayField.tsx';
+import type { FormRef } from '../src/index.ts';
 import Form, { ArrayFieldItemTemplate as DefaultItemTemplate } from '../src/index.ts';
-import { AcceptingParent, createFormComponent, createFormRef } from './testUtils.tsx';
+import { AcceptingParent, createFormComponent, createFormRef, errorListMessages } from './testUtils.tsx';
 
 const user = userEvent.setup();
 const schema: RJSFSchema = { type: 'object', properties: { name: { type: 'string' } } };
@@ -237,4 +239,68 @@ it('an unmounted form ignores a late field change and a retained handle', async 
   });
 
   expect(onChange).not.toHaveBeenCalled();
+});
+
+// Ported from #5043: a parent that validates from a passive Effect after changing `schema` or `formData` must see the
+// errors for the new props, not the previous ones
+describe('validateForm() from a passive Effect after a prop change (#5034)', () => {
+  const schemaA: RJSFSchema = { type: 'string', minLength: 10, maxLength: 15 };
+  const schemaB: RJSFSchema = { type: 'string', minLength: 20 };
+  const valueA = 'invalid';
+  const valueB = 'this is also invalid';
+
+  function ValidatingParent({ validations }: { validations: [RJSFSchema, string, boolean | undefined][] }) {
+    const ref = useRef<FormRef<string>>(null);
+    const [activeSchema, setActiveSchema] = useState(schemaA);
+    const [formData, setFormData] = useState(valueA);
+    useEffect(() => {
+      validations.push([activeSchema, formData, ref.current?.validateForm()]);
+    }, [validations, activeSchema, formData]);
+    return (
+      <>
+        <Form<string>
+          ref={ref}
+          schema={activeSchema}
+          validator={validator}
+          formData={formData}
+          onChange={(event) => setFormData(event.formData ?? '')}
+          onError={noop}
+        />
+        <button type='button' onClick={() => setActiveSchema((previous) => (previous === schemaA ? schemaB : schemaA))}>
+          Toggle schema
+        </button>
+        <button type='button' onClick={() => setFormData((previous) => (previous === valueA ? valueB : valueA))}>
+          Toggle data
+        </button>
+      </>
+    );
+  }
+
+  it('validates the initial props', () => {
+    const validations: [RJSFSchema, string, boolean | undefined][] = [];
+    const { container } = render(<ValidatingParent validations={validations} />);
+
+    expect(validations).toEqual([[schemaA, valueA, false]]);
+    expect(errorListMessages(container)).toEqual(['must NOT have fewer than 10 characters']);
+  });
+
+  it('validates against the new schema', async () => {
+    const validations: [RJSFSchema, string, boolean | undefined][] = [];
+    const { container } = render(<ValidatingParent validations={validations} />);
+
+    await user.click(screen.getByRole('button', { name: 'Toggle schema' }));
+
+    expect(validations.at(-1)).toEqual([schemaB, valueA, false]);
+    expect(errorListMessages(container)).toEqual(['must NOT have fewer than 20 characters']);
+  });
+
+  it('validates the new data', async () => {
+    const validations: [RJSFSchema, string, boolean | undefined][] = [];
+    const { container } = render(<ValidatingParent validations={validations} />);
+
+    await user.click(screen.getByRole('button', { name: 'Toggle data' }));
+
+    expect(validations.at(-1)).toEqual([schemaA, valueB, false]);
+    expect(errorListMessages(container)).toEqual(['must NOT have more than 15 characters']);
+  });
 });

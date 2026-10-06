@@ -2,7 +2,7 @@ import { createRef, useEffect } from 'react';
 import type { DefaultFormStateBehavior, GenericObjectType, RJSFSchema, UiSchema, WidgetProps } from '@rjsf/utils';
 import { getTemplates, getUiOptions } from '@rjsf/utils';
 import { customizeValidator } from '@rjsf/validator-ajv8';
-import { act, waitFor } from '@testing-library/react';
+import { act, screen, waitFor } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 
 import type { FormProps, IChangeEvent } from '../src/index.ts';
@@ -1012,4 +1012,19 @@ describe('Form: the prop changes a self-owned form re-derives its data for', () 
 
     expect(node.querySelector<HTMLSelectElement>('#root__oneof_select')).toHaveValue('1');
   });
+});
+
+// Ported from #5043's `toIChangeEvent` cases: an event is built from the form's state, which holds much more than an
+// `IChangeEvent` describes, so none of that internal state may leak into it
+it('onChange and onSubmit events carry only the public IChangeEvent members', async () => {
+  const { node, onChange, onSubmit } = createFormComponent({
+    schema: { type: 'object', properties: { name: { type: 'string' } } },
+  });
+
+  await user.type(screen.getByRole('textbox'), 'x');
+  await submitForm(node, user);
+
+  const members = ['errorSchema', 'errors', 'formData', 'schema', 'schemaUtils', 'uiSchema'];
+  expect(Object.keys(onChange.mock.lastCall?.[0] ?? {}).sort()).toEqual(members);
+  expect(Object.keys(onSubmit.mock.lastCall?.[0] ?? {}).sort()).toEqual([...members, 'status'].sort());
 });
