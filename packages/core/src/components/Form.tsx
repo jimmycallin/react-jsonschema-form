@@ -1054,18 +1054,6 @@ function freezeFormData(data: unknown) {
   }
 }
 
-/** What a parent-owned form commits: its errors, which are its own. Everything else is derived from the props before
- * every render, so the data an operation computed is the parent's to accept through `onChange`, and the render context
- * an edit resolved for its proposal would describe data the parent has not accepted
- */
-const PARENT_OWNED_COMMIT_KEYS = [
-  'customErrors',
-  'errors',
-  'errorSchema',
-  'schemaValidationErrors',
-  'schemaValidationErrorSchema',
-] as const satisfies readonly (keyof FormState)[];
-
 declare const process: { env: Record<string, string | undefined> };
 /** Whether the development diagnostics run. Vite and esbuild replace `process.env.NODE_ENV` but not `typeof process`,
  * and a browser has no `process`, so only the replaced expression is read; the `catch` covers an environment that
@@ -1857,9 +1845,13 @@ function createHandlers<T, S extends StrictRJSFSchema, F extends FormContextType
   return { handleChange, handleBlur, handleFocus, handleSubmit, handle };
 }
 
+/** What a parent-owned form commits: its errors, which are its own. Everything else is derived from the props before
+ * every render, so the data an operation computed is the parent's to accept through `onChange`, and the render context
+ * an edit resolved for its proposal would describe data the parent has not accepted
+ */
 type OwnedMetadata<T, S extends StrictRJSFSchema, F extends FormContextType> = Pick<
   FormState<T, S, F>,
-  (typeof PARENT_OWNED_COMMIT_KEYS)[number]
+  'customErrors' | 'errors' | 'errorSchema' | 'schemaValidationErrors' | 'schemaValidationErrorSchema'
 >;
 
 type ModelSnapshot<T, S extends StrictRJSFSchema, F extends FormContextType> =
