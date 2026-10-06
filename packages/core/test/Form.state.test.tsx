@@ -8,7 +8,13 @@ import type { Mock } from 'vitest';
 import type { FormRef, FormProps } from '../src/index.ts';
 import Form from '../src/index.ts';
 import type { NoValFormProps, RerenderType } from './testUtils.tsx';
-import { expectToHaveBeenCalledWithFormData, renderNode, submitForm, describeRepeated } from './testUtils.tsx';
+import {
+  expectToHaveBeenCalledWithFormData,
+  renderNode,
+  submitForm,
+  describeRepeated,
+  createFormRef,
+} from './testUtils.tsx';
 
 const user = userEvent.setup();
 
@@ -162,7 +168,7 @@ describeRepeated('Form common: form state updates', (createFormComponent) => {
     let ref: RefObject<FormRef | null>;
 
     beforeEach(() => {
-      ref = createRef<FormRef>();
+      ref = createFormRef();
       formProps = {
         ref,
         schema: {

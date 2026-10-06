@@ -1,14 +1,5 @@
 import type { ElementType, ReactNode, Ref, SubmitEvent } from 'react';
-import {
-  memo,
-  useEffect,
-  useImperativeHandle,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-  useSyncExternalStore,
-} from 'react';
+import { memo, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import type {
   CustomValidator,
   ErrorSchema,
@@ -356,8 +347,7 @@ function toIChangeEvent<
   };
 }
 
-/** The definition of a pending change that will be processed in the `onChange` handler
- */
+/** A field change, applied by `applyChange()` */
 interface PendingChange<T> {
   /** The `FieldPath` into the formData/errorSchema at which the `newValue`/`newErrorSchema` will be set */
   fieldPath: FieldPath;
@@ -365,8 +355,6 @@ interface PendingChange<T> {
   newValue?: T;
   /** The new errors to be set into the errorSchema, if any */
   newErrorSchema?: ErrorSchema<T>;
-  /** The optional id of the field for which the change is being made */
-  id?: string;
 }
 
 /** The part of the state that rendering derives from the props and the data alone: the schema utilities, the root and
@@ -1610,7 +1598,7 @@ function createHandlers<T, S extends StrictRJSFSchema, F extends FormContextType
   state: FormState<T, S, F>,
   commit: (next: FormState<T, S, F>, reapply: (base: FormState<T, S, F>) => FormState<T, S, F>) => FormState<T, S, F>,
   getFormElement: () => HTMLElement | null,
-  hasUnrenderedData = false,
+  hasUnrenderedData: boolean,
 ): RenderedHandlers<T> {
   /** `formData` without the fields the schema does not describe, when `omitExtraData` asks for it: what a submit and
    * `validateForm()` act on
@@ -1668,7 +1656,7 @@ function createHandlers<T, S extends StrictRJSFSchema, F extends FormContextType
     newErrorSchema?: ErrorSchema<T>,
     id?: string,
   ) => {
-    const change: PendingChange<T> = { newValue, fieldPath, newErrorSchema, id };
+    const change: PendingChange<T> = { newValue, fieldPath, newErrorSchema };
     const next = applyChange(state, change, props);
     if (isDevelopment) {
       freezeFormData(next.formData);
@@ -1868,26 +1856,53 @@ type ModelSnapshot<T, S extends StrictRJSFSchema, F extends FormContextType> =
   | { owner: 'model'; state: FormState<T, S, F> }
   | { owner: 'parent'; metadata: OwnedMetadata<T, S, F> };
 
-function ownedMetadata<T, S extends StrictRJSFSchema, F extends FormContextType>(
+/** The snapshot that stores `state`: all of it for a self-owned form, only what `Form` owns for a parent-owned one */
+function snapshotOf<T, S extends StrictRJSFSchema, F extends FormContextType>(
   state: FormState<T, S, F>,
-): OwnedMetadata<T, S, F> {
-  return Object.fromEntries(PARENT_OWNED_COMMIT_KEYS.map((key) => [key, state[key]])) as OwnedMetadata<T, S, F>;
+): ModelSnapshot<T, S, F> {
+  if (!state.isControlled) {
+    return { owner: 'model', state };
+  }
+  const { customErrors, errors, errorSchema, schemaValidationErrors, schemaValidationErrorSchema } = state;
+  const metadata: OwnedMetadata<T, S, F> = {
+    customErrors,
+    errors,
+    errorSchema,
+    schemaValidationErrors,
+    schemaValidationErrorSchema,
+  };
+  return { owner: 'parent', metadata };
+}
+
+/** The state a snapshot stands for: the model's own, or `base` (the props-derived state) with the metadata `Form` owns */
+function stateOf<T, S extends StrictRJSFSchema, F extends FormContextType>(
+  snapshot: ModelSnapshot<T, S, F>,
+  base: FormState<T, S, F>,
+): FormState<T, S, F> {
+  return snapshot.owner === 'model' ? snapshot.state : replaceEqualDeep(base, { ...base, ...snapshot.metadata });
+}
+
+/** `getByPath()` reading an empty path as the root itself. The overload is the one trust point that the value at a
+ * field's path has the type that field renders.
+ */
+function getAt<V>(data: unknown, segments: FieldPathList): V;
+function getAt(data: unknown, segments: FieldPathList): unknown {
+  return segments.length === 0 ? data : getByPath(data, segments);
 }
 
 /** The model owns edits and subscriptions. Self-owned operations read its current snapshot; the committed
  * configuration supplies props and the controlled operation frame, never a second accepted controlled value.
  */
 function createFormModel<T, S extends StrictRJSFSchema, F extends FormContextType>(props: FormProps<T, S, F>) {
-  let getFormElement: () => HTMLElement | null = () => null;
+  let formElement: HTMLElement | null = null;
+  const getFormElement = () => formElement;
   const initial = initialState(props);
   let configuration = { props, state: initial };
-  let snapshot: ModelSnapshot<T, S, F> = initial.isControlled
-    ? { owner: 'parent', metadata: ownedMetadata(initial) }
-    : { owner: 'model', state: initial };
+  let snapshot = snapshotOf(initial);
   const serverSnapshot = snapshot;
   const listeners = new Set<() => void>();
-  const publish = (next: ModelSnapshot<T, S, F>) => {
-    const shared = replaceEqualDeep(snapshot, next);
+  const publish = (next: FormState<T, S, F>) => {
+    const shared = replaceEqualDeep(snapshot, snapshotOf(next));
     if (shared !== snapshot) {
       snapshot = shared;
       listeners.forEach((listener) => listener());
@@ -1899,55 +1914,44 @@ function createFormModel<T, S extends StrictRJSFSchema, F extends FormContextTyp
     | undefined;
   const handlers = () => {
     if (built?.configuration !== configuration || built.snapshot !== snapshot) {
-      const state =
-        snapshot.owner === 'model'
-          ? snapshot.state
-          : replaceEqualDeep(configuration.state, { ...configuration.state, ...snapshot.metadata });
-      built = { configuration, snapshot, handlers: forRender(configuration.props, state) };
+      const state = stateOf(snapshot, configuration.state);
+      const commit = (next: FormState<T, S, F>, reapply: (base: FormState<T, S, F>) => FormState<T, S, F>) => {
+        const base = stateOf(snapshot, state);
+        const shared = replaceEqualDeep(base, base === state ? next : reapply(base));
+        if (isDevelopment && !shared.isControlled) {
+          freezeFormData(shared.formData);
+        }
+        publish(shared);
+        return shared;
+      };
+      const hasUnrenderedData = !state.isControlled && state.formData !== configuration.state.formData;
+      built = {
+        configuration,
+        snapshot,
+        handlers: createHandlers(configuration.props, state, commit, getFormElement, hasUnrenderedData),
+      };
     }
     return built.handlers;
   };
-  const forRender = (renderProps: FormProps<T, S, F>, state: FormState<T, S, F>) =>
-    createHandlers(
-      renderProps,
-      state,
-      (next, reapply) => {
-        const base =
-          snapshot.owner === 'model' ? snapshot.state : replaceEqualDeep(state, { ...state, ...snapshot.metadata });
-        const shared = replaceEqualDeep(base, base === state ? next : reapply(base));
-        if (snapshot.owner === 'model') {
-          if (isDevelopment) {
-            freezeFormData(shared.formData);
-          }
-          publish({ owner: 'model', state: shared });
-        } else {
-          publish({ owner: 'parent', metadata: ownedMetadata(shared) });
-        }
-        return shared;
-      },
-      () => getFormElement(),
-      !state.isControlled && state.formData !== configuration.state.formData,
-    );
+  /** The latest self-owned value at `path`, or `fallback` when the field renders a transformed view of it */
+  const readLatest = <V,>(key: 'formData' | 'errorSchema', path: FieldPath, committedView: unknown, fallback: V) => {
+    const segments = fieldPathToList(path);
+    // A custom field can present a different view. Reading the root's raw value would bypass that view.
+    if (snapshot.owner !== 'model' || getAt(configuration.state.formData, segments) !== committedView) {
+      return fallback;
+    }
+    return getAt<V>(snapshot.state[key], segments);
+  };
   return {
     initial,
-    chainsEdits: () => snapshot.owner === 'model',
-    readField: <D,>(path: FieldPath, committedView: unknown, fallback: D): D => {
-      const segments = fieldPathToList(path);
-      // A custom field can present a different view. Reading the root's raw value would bypass that view.
-      if (getByPath(configuration.state.formData, segments) !== committedView) {
-        return fallback;
-      }
-      return getByPath<D>(
-        snapshot.owner === 'model' ? snapshot.state.formData : configuration.state.formData,
-        segments,
-      );
+    /** The callback ref of the rendered form element */
+    setFormElement: (element: HTMLElement | null) => {
+      formElement = element;
     },
-    readErrors: <E,>(path: FieldPath, committedView: unknown, fallback: E): E => {
-      const segments = fieldPathToList(path);
-      return snapshot.owner === 'model' && getByPath(configuration.state.formData, segments) === committedView
-        ? getByPath<E>(snapshot.state.errorSchema, segments)
-        : fallback;
-    },
+    readField: <D,>(path: FieldPath, committedView: unknown, fallback: D) =>
+      readLatest('formData', path, committedView, fallback),
+    readErrors: <E,>(path: FieldPath, committedView: unknown, fallback: E) =>
+      readLatest('errorSchema', path, committedView, fallback),
     getSnapshot: () => snapshot,
     getServerSnapshot: () => serverSnapshot,
     subscribe: (listener: () => void) => {
@@ -1956,24 +1960,14 @@ function createFormModel<T, S extends StrictRJSFSchema, F extends FormContextTyp
         listeners.delete(listener);
       };
     },
-    configure: (
-      nextProps: FormProps<T, S, F>,
-      state: FormState<T, S, F>,
-      getElement: () => HTMLElement | null,
-      renderedSnapshot: ModelSnapshot<T, S, F>,
-    ) => {
-      getFormElement = getElement;
+    configure: (nextProps: FormProps<T, S, F>, state: FormState<T, S, F>, renderedSnapshot: ModelSnapshot<T, S, F>) => {
       // The render's state is the next one unless an operation committed after that render began; re-deriving it
       // anyway would rerun live validation and hand the fields new references to equal values
-      const isRendered = snapshot === renderedSnapshot;
-      if (snapshot.owner === 'model') {
-        configuration = { props: nextProps, state };
-        publish({ owner: 'model', state: isRendered ? state : deriveState(nextProps, snapshot.state) });
-        return;
-      }
-      const committed = isRendered ? state : deriveState(nextProps, { ...configuration.state, ...snapshot.metadata });
-      configuration = { props: nextProps, state: committed };
-      publish({ owner: 'parent', metadata: ownedMetadata(committed) });
+      const next =
+        snapshot === renderedSnapshot ? state : deriveState(nextProps, stateOf(snapshot, configuration.state));
+      // A self-owned form's configuration keeps the rendered state: `hasUnrenderedData` compares the model with it
+      configuration = { props: nextProps, state: snapshot.owner === 'model' ? state : next };
+      publish(next);
     },
     handleSubmit: (event: SubmitEvent<HTMLFormElement>) => handlers().handleSubmit(event),
     handle: {
@@ -1994,28 +1988,24 @@ function createFormModel<T, S extends StrictRJSFSchema, F extends FormContextTyp
 }
 
 /** The model owns self-owned data and validation metadata. Controlled values are derived from React props. */
-function Form<T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = FormContextType>({
-  ref,
-  ...props
-}: FormProps<T, S, F>) {
-  const formElement = useRef<HTMLElement>(null);
+function Form<T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = FormContextType>(
+  allProps: FormProps<T, S, F>,
+) {
+  const { ref, ...props } = allProps;
   // The model is created once and kept in the render cache, so it lives exactly as long as the mounted form
   const [cache, setCache] = useState(() => {
     const created = createFormModel(props);
-    return { model: created, snapshot: created.getSnapshot(), state: created.initial };
+    return { model: created, snapshot: created.getSnapshot(), state: created.initial, props: allProps };
   });
   const { model } = cache;
+  const { setFormElement } = model;
   const snapshot = useSyncExternalStore(model.subscribe, model.getSnapshot, model.getServerSnapshot);
-  let base = cache.state;
-  if (snapshot !== cache.snapshot) {
-    base =
-      snapshot.owner === 'parent'
-        ? replaceEqualDeep(cache.state, { ...cache.state, ...snapshot.metadata })
-        : snapshot.state;
-  }
-  const state = deriveState(props, base);
+  const base = snapshot === cache.snapshot ? cache.state : stateOf(snapshot, cache.state);
+  // `deriveState()` is pure, so the re-render that `setCache` triggers, and the one a `configure` publish triggers,
+  // reuse its result instead of deriving the same state again
+  const state = allProps === cache.props && base === cache.state ? cache.state : deriveState(props, base);
   if (state !== cache.state || snapshot !== cache.snapshot) {
-    setCache({ model, snapshot, state });
+    setCache({ model, snapshot, state, props: allProps });
   }
   const isLateFormData = isDevelopment && !state.isControlled && props.formData !== undefined;
   // Logged once when the prop arrives, not on every render that still carries it
@@ -2030,7 +2020,7 @@ function Form<T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends Fo
   // Synchronize the external engine before consumer passive Effects can issue commands. Descendant layout
   // Effects and callback refs can still run before this configuration refresh.
   useLayoutEffect(() => {
-    model.configure(props, state, () => formElement.current, snapshot);
+    model.configure(props, state, snapshot);
   }, [model, props, state, snapshot]);
   useImperativeHandle(ref, () => model.handle, [model]);
 
@@ -2088,7 +2078,7 @@ function Form<T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends Fo
   };
 
   return (
-    <FormDataContext value={model}>
+    <FormDataContext value={state.isControlled ? undefined : model}>
       <FormTag
         className={className || 'rjsf'}
         id={id}
@@ -2101,7 +2091,7 @@ function Form<T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends Fo
         acceptCharset={acceptCharset}
         noValidate={noHtml5Validate}
         onSubmit={model.handleSubmit}
-        ref={formElement}
+        ref={setFormElement}
       >
         {showErrorList === 'top' && renderErrors()}
         <SchemaFieldComponent

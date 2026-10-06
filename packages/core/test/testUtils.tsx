@@ -13,8 +13,8 @@ import Form from '../src/index.ts';
 export type NoValFormProps = Omit<FormProps, 'validator'>;
 
 /** A ref for a `Form`, which hands back its `FormRef` */
-export function createFormRef() {
-  return createRef<FormRef>();
+export function createFormRef<T = unknown>() {
+  return createRef<FormRef<T>>();
 }
 
 export function input(container: HTMLElement, id: string) {

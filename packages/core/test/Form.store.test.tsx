@@ -1,4 +1,4 @@
-import { createRef, Suspense, startTransition, use, useEffect, useLayoutEffect, useState } from 'react';
+import { Suspense, startTransition, use, useEffect, useLayoutEffect, useState } from 'react';
 import type {
   ArrayFieldItemButtonsTemplateProps,
   ArrayFieldItemTemplateProps,
@@ -13,15 +13,14 @@ import { userEvent } from '@testing-library/user-event';
 import { renderToString } from 'react-dom/server';
 
 import ArrayField from '../src/components/fields/ArrayField.tsx';
-import type { FormRef } from '../src/index.ts';
 import Form, { ArrayFieldItemTemplate as DefaultItemTemplate } from '../src/index.ts';
-import { AcceptingParent, createFormComponent } from './testUtils.tsx';
+import { AcceptingParent, createFormComponent, createFormRef } from './testUtils.tsx';
 
 const user = userEvent.setup();
 const schema: RJSFSchema = { type: 'object', properties: { name: { type: 'string' } } };
 
 it('an abandoned concurrent render does not publish parent data or callbacks to the model', async () => {
-  const ref = createRef<FormRef<{ name: string }>>();
+  const ref = createFormRef<{ name: string }>();
   const committedCallback = vi.fn();
   const pendingCallback = vi.fn();
   const never = new Promise<void>(() => {});
@@ -90,7 +89,7 @@ it('renders seeded data on the server without a browser or effect publishing a s
 });
 
 it('new controlled props are available to passive Effects after the descendant layout phase', () => {
-  const ref = createRef<FormRef<{ name: string }>>();
+  const ref = createFormRef<{ name: string }>();
   const phases: [string, unknown, unknown][] = [];
   function ObservingWidget({ value }: WidgetProps) {
     useLayoutEffect(() => {
@@ -175,7 +174,7 @@ it.each([false, true])(
 it.each([false, true])(
   'same-tick validation sees owned custom errors without installing a controlled proposal (controlled: %s)',
   async (controlled) => {
-    const ref = createRef<FormRef>();
+    const ref = createFormRef();
     const results: boolean[] = [];
     function RaiseAndValidate({ fieldPath, onChange }: FieldProps) {
       return (

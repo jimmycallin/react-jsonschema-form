@@ -19,7 +19,7 @@ export default function useFieldView<V extends { source: unknown }>(fieldPath: F
     () => ({
       read: () => view.current,
       /** The field's current data: `Form`'s latest edit in a self-owned form, or `fallback`, the view's own data,
-       * when the field shows a transformed view or renders outside a `Form`
+       * when the field shows a transformed view or renders outside a self-owned `Form`
        */
       readData: <D>(fallback: D) => (access ? access.readField(fieldPath, view.current.source, fallback) : fallback),
       /** The field's current errors, with the same choice between `Form`'s latest and `fallback` */
@@ -29,7 +29,7 @@ export default function useFieldView<V extends { source: unknown }>(fieldPath: F
        * the rendered value, so advancing there would pair the rendered data with the proposal's keys and errors.
        */
       advance: (next: V) => {
-        if (access?.chainsEdits()) {
+        if (access) {
           view.current = next;
         }
       },

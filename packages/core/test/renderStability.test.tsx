@@ -1,10 +1,10 @@
-import { createRef, forwardRef, useState } from 'react';
+import { forwardRef, useState } from 'react';
 import type { ErrorSchema, FieldTemplateProps, RJSFSchema, WidgetProps } from '@rjsf/utils';
 import validator from '@rjsf/validator-ajv8';
 import { act, render } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 
-import type { FormRef, IChangeEvent } from '../src/index.ts';
+import type { IChangeEvent } from '../src/index.ts';
 import Form, { FieldTemplate as DefaultFieldTemplate } from '../src/index.ts';
 import {
   AcceptingParent,
@@ -12,6 +12,7 @@ import {
   createParentLog,
   RejectingParent,
   TransformingParent,
+  createFormRef,
 } from './testUtils.tsx';
 
 const user = userEvent.setup();
@@ -405,7 +406,7 @@ describe('render stability across sibling fields', () => {
         ...schema,
         properties: { ...schema.properties, first: { type: 'string', minLength: 1 } },
       };
-      const ref = createRef<FormRef>();
+      const ref = createFormRef();
       render(
         <Form
           ref={ref}

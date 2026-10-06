@@ -1,4 +1,4 @@
-import { createRef, PureComponent } from 'react';
+import { PureComponent } from 'react';
 import type { ComponentType } from 'react';
 import type {
   CustomValidator,
@@ -11,8 +11,9 @@ import type {
 import validator from '@rjsf/validator-ajv8';
 import { render } from '@testing-library/react';
 
-import type { FormRef, IChangeEvent } from '../src/index.ts';
+import type { IChangeEvent } from '../src/index.ts';
 import Form from '../src/index.ts';
+import { createFormRef } from './testUtils.tsx';
 
 interface MyData {
   name: string;
@@ -79,7 +80,7 @@ describe('form data inference', () => {
   });
 
   it('does not infer T from formData when an unannotated ref is passed', () => {
-    const ref = createRef<FormRef>();
+    const ref = createFormRef();
     render(
       <Form
         schema={schema}

@@ -22,6 +22,7 @@ import SchemaField from '../src/components/fields/SchemaField.tsx';
 import {
   AcceptingParent,
   createFormComponent,
+  createFormRef,
   createParentLog,
   expectToHaveBeenCalledWithFormData,
   fieldErrorsById,
@@ -3973,6 +3974,36 @@ describe('ArrayField', () => {
       expectToHaveBeenCalledWithFormData(onChange, ['a', 'b', undefined, undefined, undefined], 'root');
       expect(getFormData()).toEqual(['a', 'b', undefined, undefined, undefined]);
       expect(new Set(rowKeys(node)).size).toBe(5);
+    });
+
+    it('should build a root array edit on a value set earlier in the same event', async () => {
+      const formRef = createFormRef();
+      function SetThenAddTemplate(props: ArrayFieldTemplateProps) {
+        return (
+          <div className='array'>
+            {props.items}
+            <button
+              type='button'
+              onClick={(event) => {
+                formRef.current?.setFieldValue([0], 'x');
+                props.onAddClick(event);
+              }}
+            >
+              Set, then add
+            </button>
+          </div>
+        );
+      }
+      const { getFormData } = createFormComponent({
+        ref: formRef,
+        schema,
+        initialFormData: ['a', 'b'],
+        templates: { ArrayFieldTemplate: SetThenAddTemplate },
+      });
+
+      await user.click(screen.getByRole('button', { name: 'Set, then add' }));
+
+      expect(getFormData()).toEqual(['x', 'b', undefined]);
     });
 
     it('should add no item when a move queued behind a remove names an index the remove took away', async () => {

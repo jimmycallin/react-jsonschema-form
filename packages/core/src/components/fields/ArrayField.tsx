@@ -892,6 +892,15 @@ export default function ArrayField<
 
   const readErrors = useCallback(() => view.readErrors(view.read().errorSchema), [view]);
 
+  /** Proposes the rows a handler built, recording them first so a second handler in the same event starts from them */
+  const commitRows = useCallback(
+    (newKeyedFormData: KeyedFormDataType<T>[], newErrorSchema: ErrorSchema<T[]> | undefined) => {
+      view.advance({ ...view.read(), keyedFormData: newKeyedFormData, errorSchema: newErrorSchema });
+      onChange(updateKeyedFormData(newKeyedFormData), fieldPath, newErrorSchema);
+    },
+    [view, onChange, updateKeyedFormData, fieldPath],
+  );
+
   /** Callback handler for when the user clicks on the add or add at index buttons. Creates a new row of keyed form data
    * either at the end of the list (when index is not specified) or inserted at the `index` when it is, adding it into
    * the state, and then returning `onChange()` with the plain form data converted from the keyed data
@@ -918,10 +927,9 @@ export default function ArrayField<
       } else {
         newKeyedFormData.push(newKeyedFormDataRow);
       }
-      view.advance({ ...view.read(), keyedFormData: newKeyedFormData, errorSchema: newErrorSchema });
-      onChange(updateKeyedFormData(newKeyedFormData), fieldPath, newErrorSchema);
+      commitRows(newKeyedFormData, newErrorSchema);
     },
-    [registry, schema, uiSchema, onChange, updateKeyedFormData, fieldPath, view, readRows, readErrors],
+    [registry, schema, uiSchema, commitRows, readRows, readErrors],
   );
 
   /** Callback handler for when the user clicks on the copy button on an existing array element. Clones the row of
@@ -953,10 +961,9 @@ export default function ArrayField<
       } else {
         newKeyedFormData.push(newKeyedFormDataRow);
       }
-      view.advance({ ...view.read(), keyedFormData: newKeyedFormData, errorSchema: newErrorSchema });
-      onChange(updateKeyedFormData(newKeyedFormData), fieldPath, newErrorSchema);
+      commitRows(newKeyedFormData, newErrorSchema);
     },
-    [onChange, updateKeyedFormData, fieldPath, view, readRows, readErrors],
+    [commitRows, readRows, readErrors],
   );
 
   /** Callback handler for when the user clicks on the remove button on an existing array element. Removes the row of
@@ -983,10 +990,9 @@ export default function ArrayField<
         return i < index ? i : i - 1;
       });
       const newKeyedFormData = rows.filter((_, i) => i !== index);
-      view.advance({ ...view.read(), keyedFormData: newKeyedFormData, errorSchema: newErrorSchema });
-      onChange(updateKeyedFormData(newKeyedFormData), fieldPath, newErrorSchema);
+      commitRows(newKeyedFormData, newErrorSchema);
     },
-    [onChange, updateKeyedFormData, fieldPath, view, readRows, readErrors],
+    [commitRows, readRows, readErrors],
   );
 
   /** Callback handler for when the user clicks on one of the move item buttons on an existing array element. Moves the
@@ -1021,10 +1027,9 @@ export default function ArrayField<
         return newKeyedFormData;
       }
       const newKeyedFormData = reOrderArray();
-      view.advance({ ...view.read(), keyedFormData: newKeyedFormData, errorSchema: newErrorSchema });
-      onChange(updateKeyedFormData(newKeyedFormData), fieldPath, newErrorSchema);
+      commitRows(newKeyedFormData, newErrorSchema);
     },
-    [onChange, updateKeyedFormData, fieldPath, view, readRows, readErrors],
+    [commitRows, readRows, readErrors],
   );
 
   /** Callback handler used to deal with changing the value of the data in the array at the `index`. Calls the
