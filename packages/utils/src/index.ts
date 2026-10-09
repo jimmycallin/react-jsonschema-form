@@ -11,7 +11,6 @@ import callWithDeferredThrow from './callWithDeferredThrow.ts';
 import canExpand from './canExpand.ts';
 import createErrorHandler from './createErrorHandler.ts';
 import createSchemaUtils from './createSchemaUtils.ts';
-import dataURItoBlob from './dataURItoBlob.ts';
 import dateRangeOptions from './dateRangeOptions.ts';
 import deepEquals from './deepEquals.ts';
 import englishStringTranslator from './englishStringTranslator.ts';
@@ -34,11 +33,9 @@ import {
   fieldPathToName,
   toFieldPath,
 } from './fieldPath.ts';
-import findSchemaDefinition from './findSchemaDefinition.ts';
 import flattenGroupedOptions from './flattenGroupedOptions.ts';
 import getChangedFields from './getChangedFields.ts';
 import type { DateElementFormat, DateElementProp } from './getDateElementProps.ts';
-import getDateElementProps from './getDateElementProps.ts';
 import type { DateTimeLocalValueResult } from './getDateTimeLocalValue.ts';
 import getDateTimeLocalValue from './getDateTimeLocalValue.ts';
 import getDecimalSeparator from './getDecimalSeparator.ts';
@@ -50,35 +47,27 @@ import getFreePropertyNames from './getFreePropertyNames.ts';
 import getInputProps from './getInputProps.ts';
 import getItemUiSchemaForItem from './getItemUiSchemaForItem.ts';
 import getNumericInputTitle from './getNumericInputTitle.ts';
-import getOptionMatchingSimpleDiscriminator from './getOptionMatchingSimpleDiscriminator.ts';
 import getOptionUiSchema, { selectOptionUiSchema } from './getOptionUiSchema.ts';
 import getOptionValueFormat from './getOptionValueFormat.ts';
 import getPropertySchema from './getPropertySchema.ts';
 import getSchemaOwnTypes from './getSchemaOwnTypes.ts';
 import getSchemaType from './getSchemaType.ts';
-import getSchemaTypeForValue from './getSchemaTypeForValue.ts';
 import getSelectFieldType from './getSelectFieldType.ts';
 import getStaticItemsUiSchema from './getStaticItemsUiSchema.ts';
 import getSubmitButtonOptions from './getSubmitButtonOptions.ts';
-import getTemplate from './getTemplate.ts';
 import getTemplates from './getTemplates.ts';
 import getTestIds from './getTestIds.ts';
 import getUiOptions from './getUiOptions.ts';
-import getUnionTypes, { getKnownTypes } from './getUnionTypes.ts';
+import getUnionTypes from './getUnionTypes.ts';
 import type { VisibleErrorsProps } from './getVisibleErrors.ts';
 import getVisibleErrors from './getVisibleErrors.ts';
 import type { WidgetAliasFor } from './getWidget.tsx';
-import getWidget, {
-  DEFAULT_BOOLEAN_WIDGET,
-  getFieldTypeForWidget,
-  getWidgetType,
-  resolveWidget,
-} from './getWidget.tsx';
+import { DEFAULT_BOOLEAN_WIDGET, getFieldTypeForWidget, getWidgetType, resolveWidget } from './getWidget.tsx';
 import getXxxOfKey from './getXxxOfKey.ts';
 import getXxxOfOptions from './getXxxOfOptions.ts';
 import groupEnumOptions from './groupEnumOptions.ts';
 import guessType from './guessType.ts';
-import hashForSchema, { hashObject, hashString, schemaKey, sortedJSONStringify } from './hashForSchema.ts';
+import hashForSchema, { hashObject, schemaKey, sortedJSONStringify } from './hashForSchema.ts';
 import hasVisibleErrors from './hasVisibleErrors.ts';
 import hasWidget from './hasWidget.ts';
 import {
@@ -106,32 +95,26 @@ import isFixedItems from './isFixedItems.ts';
 import isFormDataAvailable from './isFormDataAvailable.ts';
 import isObject, { isSchemaObject } from './isObject.ts';
 import isPlainObject from './isPlainObject.ts';
-import isRootSchema from './isRootSchema.ts';
 import isWholeValueSelect from './isWholeValueSelect.ts';
 import labelValue from './labelValue.ts';
-import localTimeToOffsetTime from './localTimeToOffsetTime.ts';
 import localToUTC from './localToUTC.ts';
 import logOnce, { resetLogOnce } from './logOnce.ts';
 import type { LogOnceLevel } from './logOnce.ts';
 import logUnsupportedDefaultForEnum from './logUnsupportedDefaultForEnum.ts';
 import lookupFromFormContext from './lookupFromFormContext.ts';
-import mergeDefaultsWithFormData from './mergeDefaultsWithFormData.ts';
 import mergeObjects from './mergeObjects.ts';
 import mergeSchemas from './mergeSchemas.ts';
 import { bracketNameGenerator, dotNotationNameGenerator } from './nameGenerators.ts';
 import noop from './noop.ts';
-import offsetTimeToLocalTime from './offsetTimeToLocalTime.ts';
 import omitConsumedStyling from './omitConsumedStyling.ts';
 import optionsList from './optionsList.ts';
 import orderProperties from './orderProperties.ts';
-import pad from './pad.ts';
 import padTimeSeconds from './padTimeSeconds.ts';
 import parseDateString from './parseDateString.ts';
 import { getByPath, hasByPath, setByPath, toPath, unsetByPath } from './pathUtils.ts';
 import type { ObjectPath } from './pathUtils.ts';
 import rangeSpec from './rangeSpec.ts';
 import replaceEqualDeep from './replaceEqualDeep.ts';
-import replaceStringParameters from './replaceStringParameters.ts';
 import resolveDefaultWidget from './resolveDefaultWidget.ts';
 import resolveUiSchema from './resolveUiSchema.ts';
 import schemaHasNestedConditional from './schemaHasNestedConditional.ts';
@@ -197,7 +180,6 @@ export {
   createErrorHandler,
   createSchemaUtils,
   DateElement,
-  dataURItoBlob,
   dateElementId,
   dateRangeOptions,
   deepEquals,
@@ -218,11 +200,9 @@ export {
   expandButtonId,
   ErrorSchemaBuilder,
   fieldLabelId,
-  findSchemaDefinition,
   flattenGroupedOptions,
   getAdditionalPropertySchema,
   getChangedFields,
-  getDateElementProps,
   getDateTimeLocalValue,
   getDecimalSeparator,
   getDeprecatedHandling,
@@ -236,25 +216,20 @@ export {
   getMatchingPatternProperties,
   getNumericInputTitle,
   getOptionalDataControlsType,
-  getOptionMatchingSimpleDiscriminator,
   getOptionUiSchema,
   getPropertySchema,
   getOptionValueFormat,
   getSchemaOwnTypes,
   getSchemaType,
-  getSchemaTypeForValue,
   getSelectFieldType,
   getByPath,
-  getKnownTypes,
   getStaticItemsUiSchema,
   getSubmitButtonOptions,
-  getTemplate,
   getTemplates,
   getTestIds,
   getUiOptions,
   getUnionTypes,
   getVisibleErrors,
-  getWidget,
   getWidgetType,
   getXxxOfKey,
   getXxxOfOptions,
@@ -265,7 +240,6 @@ export {
   hasWidget,
   hashForSchema,
   hashObject,
-  hashString,
   helpId,
   isComponentType,
   isConstant,
@@ -277,31 +251,25 @@ export {
   isFormDataAvailable,
   isObject,
   isPlainObject,
-  isRootSchema,
   isSchemaObject,
   isWholeValueSelect,
   labelValue,
-  localTimeToOffsetTime,
   localToUTC,
   logOnce,
   logUnsupportedDefaultForEnum,
   lookupFromFormContext,
-  mergeDefaultsWithFormData,
   mergeObjects,
   mergeSchemas,
   noop,
-  offsetTimeToLocalTime,
   omitConsumedStyling,
   optionalControlsId,
   optionId,
   optionsList,
   orderProperties,
-  pad,
   padTimeSeconds,
   parseDateString,
   rangeSpec,
   replaceEqualDeep,
-  replaceStringParameters,
   resetLogOnce,
   resolveDefaultWidget,
   resolveUiSchema,

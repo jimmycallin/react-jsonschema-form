@@ -283,6 +283,7 @@ export function splitKeyElementFromObject(key: string, object: GenericObjectType
  * @param [baseURI=rootSchema['$id']] - The base URI to be used for resolving relative references
  * @returns - The sub-schema within the `rootSchema` which matches the `$ref` if it exists
  * @throws - Error indicating that no schema for that reference could be resolved
+ * @internal
  */
 export function findSchemaDefinitionRecursive<S extends StrictRJSFSchema = RJSFSchema>(
   $ref?: string,

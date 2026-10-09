@@ -3,6 +3,7 @@ import getUiOptions from './getUiOptions.ts';
 import type { FormContextType, RJSFSchema, StrictRJSFSchema, UiSchema, UISchemaSubmitButtonOptions } from './types.ts';
 
 /** The default submit button options, exported for testing purposes
+ * @internal
  */
 export const DEFAULT_OPTIONS: UISchemaSubmitButtonOptions = {
   props: {

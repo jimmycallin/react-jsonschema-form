@@ -5,12 +5,12 @@ import { act, render, renderHook } from '@testing-library/react';
 import type { UserEvent } from '@testing-library/user-event';
 import { userEvent } from '@testing-library/user-event';
 
+import getDateElementProps from '../src/getDateElementProps.ts';
 import type { DateElementProp, Registry, UseAltDateWidgetResult, WidgetProps } from '../src/index.ts';
 import {
   DateElement,
   enumOptionsIndexForValue,
   enumOptionsValueForIndex,
-  getDateElementProps,
   parseDateString,
   useAltDateWidgetProps,
 } from '../src/index.ts';

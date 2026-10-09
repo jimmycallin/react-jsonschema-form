@@ -9,7 +9,7 @@ import getUiRequiredErrorSchema from './getUiRequiredErrorSchema.ts';
 import isFilesArray from './isFilesArray.ts';
 import isMultiSelect from './isMultiSelect.ts';
 import isSelect from './isSelect.ts';
-import omitExtraData, { isValueEmpty } from './omitExtraData.ts';
+import omitExtraData from './omitExtraData.ts';
 import retrieveSchema, { getAdditionalPropertyType, relaxOptionsForScoring } from './retrieveSchema.ts';
 import sanitizeDataForNewSchema from './sanitizeDataForNewSchema.ts';
 
@@ -26,7 +26,6 @@ export {
   isFilesArray,
   isMultiSelect,
   isSelect,
-  isValueEmpty,
   omitExtraData,
   relaxOptionsForScoring,
   retrieveSchema,

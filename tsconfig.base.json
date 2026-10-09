@@ -2,6 +2,9 @@
   // Each package's tsconfig.lib.json only extends this, and tsdown builds its declarations from it
   "include": ["${configDir}/src"],
   "compilerOptions": {
+    // tsdown sets its own outDir. This one is for knip (`--tsConfig tsconfig.lib.json`), which otherwise resolves an
+    // `@rjsf/*` import to a built lib/ and can't map it back to src/, so cross-package usage goes uncounted after a build
+    "outDir": "${configDir}/lib",
     "target": "esnext",
     "module": "nodenext",
     "lib": ["DOM", "ESNext"],

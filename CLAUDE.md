@@ -6,6 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - `pnpm run build-serial` builds sequentially; use it if the parallel `pnpm run build` causes issues.
 - `pnpm run cs-check` / `pnpm run cs-format` run oxfmt once from the root over every file type it supports (versioned docs excluded). CI runs `cs-check` but nothing in CI formats, so run `cs-format` yourself when committing without the pre-commit hook (fresh worktree, `--no-verify`).
+- `pnpm run knip` runs knip twice: the default run, then one with `knip.utils-exports.jsonc` that reports only on `packages/utils`. The second is what fails on a value `@rjsf/utils` exports that nothing outside `packages/utils` imports: a test in another package counts as a user, utils' own tests don't. Tag an export only utils' own tests use `@internal`.
 - `pnpm run test:update` fans out to the 9 packages that own snapshots (`@rjsf/snapshot-tests` for core's, plus the 8 themes); `cd packages/<pkg> && pnpm run test:update` updates one.
 
 CI is two jobs. `checks` runs `pnpm dedupe --check`, `cs-check`, lint (which is also the typecheck) and knip in that order, once, on Node 24 — none of them depends on the Node version or on a build. `build` runs the build and then the tests on Node 22, 24 and 26. `pnpm run sanity-check` runs all of that locally except `pnpm dedupe --check`, which the pre-commit hook already runs on a staged `pnpm-lock.yaml`. The per-package configs are build-only (see below).

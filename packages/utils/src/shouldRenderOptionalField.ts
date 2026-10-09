@@ -16,6 +16,7 @@ import type {
  *
  * @param schemas - The list of schemas representing the XxxOf options
  * @returns - All of the unique types contained within the oneOf list
+ * @internal
  */
 export function getSchemaTypesForXxxOf<S extends StrictRJSFSchema = RJSFSchema>(schemas: S[]): string | string[] {
   const allTypes: string[] = [...new Set(schemas.flatMap((s) => (isObject(s) ? (getSchemaType<S>(s) ?? []) : [])))];

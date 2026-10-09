@@ -1,0 +1,26 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema-jsonc.json",
+  // The `knip` script's second run, limited to `--workspace packages/utils`: a value `@rjsf/utils` exports has to be
+  // imported somewhere outside packages/utils, and a test in another package counts. `--production` on knip.jsonc
+  // can't say that, since it leaves out every package's tests, so this run has its own config.
+  //
+  // Types are left out: a type that only appears in another export's signature is used without ever being imported
+  // by name, and it has to stay exported for consumers to name it.
+  "include": ["exports"],
+  // What only utils' own tests import is tagged `@internal`.
+  "tags": ["-internal"],
+  "workspaces": {
+    "packages/utils": {
+      "includeEntryExports": true,
+      // Utils' own tests aren't users. With the plugin off they aren't entry points, so knip reads only the shared
+      // suites a test in another package imports, and what those import through the entry point does still count.
+      "vitest": false,
+      // What those suites export for utils' own tests would be reported as unused.
+      "ignore": ["test/**"],
+    },
+    "packages/daisyui": {
+      // As in knip.jsonc: every src file is published, so each one counts as a user.
+      "entry": ["src/**/*.{ts,tsx,css}"],
+    },
+  },
+}
