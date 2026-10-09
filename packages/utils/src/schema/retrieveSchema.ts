@@ -502,7 +502,7 @@ export function resolveSchema<
  *          schema resolved so far, flagged as a cycle, if it does not converge
  * @returns - The list schemas retrieved after having all references resolved
  */
-export function resolveReference<
+function resolveReference<
   T = unknown,
   S extends StrictRJSFSchema = RJSFSchema,
   F extends FormContextType = FormContextType,
@@ -1873,7 +1873,7 @@ function partiallyApplied<
  * @param [passCount=0] - The pass of the `resolveReference` fixpoint loop this resolution belongs to
  * @returns - The schema with the `dependencies` resolved into it
  */
-export function processDependencies<
+function processDependencies<
   T = unknown,
   S extends StrictRJSFSchema = RJSFSchema,
   F extends FormContextType = FormContextType,
@@ -1962,7 +1962,7 @@ export function withDependentProperties<S extends StrictRJSFSchema = RJSFSchema>
  * @param [passCount=0] - The pass of the `resolveReference` fixpoint loop this resolution belongs to
  * @returns - The list of schemas with the dependent schema resolved into them
  */
-export function withDependentSchema<
+function withDependentSchema<
   T = unknown,
   S extends StrictRJSFSchema = RJSFSchema,
   F extends FormContextType = FormContextType,

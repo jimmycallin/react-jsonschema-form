@@ -12,8 +12,8 @@ import type {
 import findSelectedOptionInXxxOf from './findSelectedOptionInXxxOf.ts';
 import getFromSchema from './getFromSchema.ts';
 
-/** Unique schema that represents no schema was found, exported for testing purposes */
-export const NOT_FOUND_SCHEMA = { title: '!@#$_UNKNOWN_$#@!' };
+/** Unique schema that represents no schema was found */
+const NOT_FOUND_SCHEMA = { title: '!@#$_UNKNOWN_$#@!' };
 
 /** Finds the field specified by the `path` within the root or recursed `schema`. If there is no field for the specified
  * `path`, then the default `{ field: undefined, isRequired: undefined }` is returned. It determines whether a leaf

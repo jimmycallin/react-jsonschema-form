@@ -12,7 +12,7 @@ import retrieveSchema, { resolveAllReferences } from './retrieveSchema.ts';
 /** A junk option used to determine when the getFirstMatchingOption call really matches an option rather than returning
  * the first item
  */
-export const JUNK_OPTION: StrictRJSFSchema = {
+const JUNK_OPTION: StrictRJSFSchema = {
   type: 'object',
   $id: JUNK_OPTION_ID,
   properties: {
