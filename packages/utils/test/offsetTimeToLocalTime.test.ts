@@ -1,4 +1,4 @@
-import { offsetTimeToLocalTime } from '../src/index.ts';
+import offsetTimeToLocalTime from '../src/offsetTimeToLocalTime.ts';
 
 describe('offsetTimeToLocalTime()', () => {
   it('should strip a "Z" suffix', () => {

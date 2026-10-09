@@ -1,7 +1,10 @@
 import { ADDITIONAL_PROPERTY_FLAG } from '../src/constants.ts';
-import { findSchemaDefinitionRecursive, makeAllReferencesAbsolute } from '../src/findSchemaDefinition.ts';
+import findSchemaDefinition, {
+  findSchemaDefinitionRecursive,
+  makeAllReferencesAbsolute,
+} from '../src/findSchemaDefinition.ts';
 import type { GenericObjectType, RJSFSchema } from '../src/index.ts';
-import { createSchemaUtils, findSchemaDefinition, ID_KEY } from '../src/index.ts';
+import { createSchemaUtils, ID_KEY } from '../src/index.ts';
 import getTestValidator from './testUtils/getTestValidator.ts';
 
 const schema: RJSFSchema = {

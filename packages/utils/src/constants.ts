@@ -22,7 +22,6 @@ export const ID_KEY = '$id';
 export const IF_KEY = 'if';
 export const ITEMS_KEY = 'items';
 export const JUNK_OPTION_ID = '_$junk_option_schema_id$_';
-export const NAME_KEY = '$name';
 export const ONE_OF_KEY = 'oneOf';
 export const PATTERN_PROPERTIES_KEY = 'patternProperties';
 export const PROPERTIES_KEY = 'properties';
@@ -48,7 +47,7 @@ export const FORM_CONTEXT_NAME = 'formContext';
 /** The name of the `layoutGridLookupMap` attribute in the form context
  */
 export const LOOKUP_MAP_NAME = 'layoutGridLookupMap';
-export const RJSF_PREFIX_KEY = '__rjsf';
+const RJSF_PREFIX_KEY = '__rjsf';
 export const RJSF_ADDITIONAL_PROPERTIES_FLAG = `${RJSF_PREFIX_KEY}_additionalProperties`;
 export const ROOT_SCHEMA_PREFIX = `${RJSF_PREFIX_KEY}_rootSchema`;
 export const UI_FIELD_KEY = 'ui:field';

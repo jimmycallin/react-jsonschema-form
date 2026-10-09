@@ -3,8 +3,9 @@ import type { ForwardedRef } from 'react';
 import { createContext, forwardRef, memo } from 'react';
 import { render } from '@testing-library/react';
 
+import getWidget from '../src/getWidget.tsx';
 import type { Registry, RJSFSchema, WidgetProps, Widget } from '../src/index.ts';
-import { getFieldTypeForWidget, getWidget, getWidgetType, resolveWidget, ROOT_FIELD_PATH } from '../src/index.ts';
+import { getFieldTypeForWidget, getWidgetType, resolveWidget, ROOT_FIELD_PATH } from '../src/index.ts';
 
 const subschema: RJSFSchema = {
   type: 'boolean',
