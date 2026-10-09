@@ -4,9 +4,9 @@ import {
   isSchemaObject,
   ROOT_SCHEMA_PREFIX,
   rootSchemaIdOf,
-  withIdRefPrefix,
   withRootIdRefPrefix,
 } from '../src/index.ts';
+import withIdRefPrefix from '../src/withIdRefPrefix.ts';
 import { miniValidator } from './schema/graph/miniValidator.ts';
 import { PET_RESOURCE_SCHEMA } from './testUtils/testData.ts';
 

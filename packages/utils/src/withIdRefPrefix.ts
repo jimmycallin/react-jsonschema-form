@@ -234,6 +234,7 @@ export function withRootIdRefPrefix<S extends StrictRJSFSchema = RJSFSchema>(
  *
  * @param schemaNode - The object node to which a ROOT_SCHEMA_PREFIX is added when a REF_KEY is part of it
  * @returns - A copy of the `schemaNode` with updated `$ref`s
+ * @internal
  */
 export default function withIdRefPrefix<S extends StrictRJSFSchema = RJSFSchema>(schemaNode: S[]): S[];
 export default function withIdRefPrefix<S extends StrictRJSFSchema = RJSFSchema>(schemaNode: S): S;

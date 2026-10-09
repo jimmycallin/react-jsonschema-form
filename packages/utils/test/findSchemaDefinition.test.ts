@@ -1,6 +1,7 @@
+import findSchemaDefinition from '../src/findSchemaDefinition.ts';
 /* oxlint-disable typescript/no-deprecated -- pins the deprecated wrapper kept for callers written against 6.x */
 import type { RJSFSchema } from '../src/index.ts';
-import { findSchemaDefinition, RJSF_REF_KEY } from '../src/index.ts';
+import { RJSF_REF_KEY } from '../src/index.ts';
 import looseSchema from './schema/graph/looseSchema.ts';
 
 const address: RJSFSchema = { type: 'object', properties: { city: { type: 'string' } } };
