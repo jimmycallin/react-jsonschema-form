@@ -129,17 +129,21 @@ describe('Error state consistency when deriving from new props', () => {
     );
   }
 
-  it('does not duplicate an extraError once the parent declined an edit', async () => {
+  it('keeps an edit the parent did not store across its re-render, with the extraError listed once', async () => {
     const { container } = render(<IgnoringParent />);
 
-    // The parent keeps handing back `shortName`, so this keystroke is only a proposal, and the errors validated for it
-    // go with it
+    // The parent keeps handing back `shortName`, which the form took already, so the edit and its errors stay
     await user.type(container.querySelector<HTMLInputElement>('#root_name')!, 'x');
     await user.click(container.querySelector('button')!);
 
-    expect(container.querySelector<HTMLInputElement>('#root_name')!.value).toBe('short');
-    expect(fieldErrorsById(container)).toEqual({ root_name: ['from the server'] });
-    expect(errorListMessages(container)).toEqual(['.name from the server']);
+    expect(container.querySelector<HTMLInputElement>('#root_name')!.value).toBe('shortx');
+    expect(fieldErrorsById(container)).toEqual({
+      root_name: ['must NOT have fewer than 8 characters', 'from the server'],
+    });
+    expect(errorListMessages(container)).toEqual([
+      '.name must NOT have fewer than 8 characters',
+      '.name from the server',
+    ]);
   });
 
   it('drops the stored validator errors when the schema stops producing them under onBlur', async () => {
@@ -512,7 +516,7 @@ describe('Error state consistency when deriving from new props', () => {
       expect(errorListMessages(container)).toEqual(['.arr.1 must NOT have fewer than 3 characters']);
     });
 
-    it('leaves the errors where they are when a custom field replaces the array without saying how it moved', async () => {
+    it('clears the errors of the items a custom field replaced without saying how it moved them', async () => {
       const { container } = render(
         <Form schema={arraySchema} uiSchema={raisingUiSchema} validator={validator} initialFormData={arrayData} />,
       );
@@ -520,8 +524,9 @@ describe('Error state consistency when deriving from new props', () => {
 
       await raise((field) => field.onChange(['bbbb', 'a', 'cccc'], toFieldPath('arr')));
 
+      // The values at the first two indexes changed, so the error at the first describes a value that is gone
       expect(inputValues(container)).toEqual(['bbbb', 'a', 'cccc']);
-      expect(fieldErrorsById(container)).toEqual({ root_arr_0: ['must NOT have fewer than 3 characters'] });
+      expect(fieldErrorsById(container)).toEqual({});
     });
 
     it('keeps the error on the moved item in an uncontrolled form across later prop changes', async () => {
@@ -535,27 +540,27 @@ describe('Error state consistency when deriving from new props', () => {
       expect(fieldErrorsById(container)).toEqual({ root_arr_1: ['must NOT have fewer than 3 characters'] });
     });
 
-    it('keeps the error on the original item when a controlled parent declines the reorder', async () => {
-      // The parent never follows `onChange`, so the reorder is only a proposal and its own order stays shown
+    it('keeps the error on the moved item when the parent stores nothing back, across its later renders', async () => {
+      // The parent never follows `onChange`; the form owns the reorder and shows it
       const { container, rerender } = render(<Parent formData={arrayData} />);
 
       await submitAndMoveFirstItemDown(container);
-      expect(inputValues(container)).toEqual(['a', 'bbbb', 'cccc']);
-      expect(fieldErrorsById(container)).toEqual({ root_arr_0: ['must NOT have fewer than 3 characters'] });
+      expect(inputValues(container)).toEqual(['bbbb', 'a', 'cccc']);
+      expect(fieldErrorsById(container)).toEqual({ root_arr_1: ['must NOT have fewer than 3 characters'] });
       rerender(<Parent formData={arrayData} restyles={1} />);
 
-      expect(inputValues(container)).toEqual(['a', 'bbbb', 'cccc']);
-      expect(fieldErrorsById(container)).toEqual({ root_arr_0: ['must NOT have fewer than 3 characters'] });
+      expect(inputValues(container)).toEqual(['bbbb', 'a', 'cccc']);
+      expect(fieldErrorsById(container)).toEqual({ root_arr_1: ['must NOT have fewer than 3 characters'] });
     });
 
-    it('keeps the error on the original item when a parent that declines the reorder answers it with an edit', async () => {
+    it('keeps the error on the moved item when a parent answers the reorder with an edit', async () => {
       const ref = createFormRef();
       const countedSchema: RJSFSchema = {
         type: 'object',
         properties: { arr: { type: 'array', items: { type: 'string', minLength: 3 } }, moves: { type: 'string' } },
       };
       let isCounted = false;
-      // The edit is made while the reorder is still an unanswered proposal, so it builds on it
+      // The edit is made from `onChange`, so it builds on the reorder
       const countMove = () => {
         if (!isCounted) {
           isCounted = true;
@@ -568,8 +573,8 @@ describe('Error state consistency when deriving from new props', () => {
 
       await submitAndMoveFirstItemDown(container);
 
-      expect(inputValues(container)).toEqual(['a', 'bbbb', 'cccc', '']);
-      expect(fieldErrorsById(container)).toEqual({ root_arr_0: ['must NOT have fewer than 3 characters'] });
+      expect(inputValues(container)).toEqual(['bbbb', 'a', 'cccc', 'one']);
+      expect(fieldErrorsById(container)).toEqual({ root_arr_1: ['must NOT have fewer than 3 characters'] });
     });
 
     it('leaves no empty entry behind when the only item with an error is removed', async () => {
@@ -605,7 +610,7 @@ describe('Error state consistency when deriving from new props', () => {
       expect(errorListMessages(container)).toEqual(['.arr.length too long']);
     });
 
-    it('clears the moved items errors when a controlled parent echoes the reorder', async () => {
+    it('moves the errors with the items when a parent that stores edits echoes the reorder', async () => {
       function EchoingArrayParent({ restyles = 0 }: { restyles?: number }) {
         const [value, setValue] = useState<unknown>(arrayData);
         return (
@@ -622,17 +627,17 @@ describe('Error state consistency when deriving from new props', () => {
 
       await submitForm(container.querySelector('form')!, user);
       expect(fieldErrorsById(container)).toEqual({ root_arr_0: ['must NOT have fewer than 3 characters'] });
-      // The echo counts both moved items as changed, which clears their errors
+      // The echo hands the form's own data back, so nothing is replaced and the moved errors stay where they went
       await user.click(container.querySelectorAll<HTMLButtonElement>('.rjsf-array-item-move-down')[0]);
 
       expect(inputValues(container)).toEqual(['bbbb', 'a', 'cccc']);
-      expect(fieldErrorsById(container)).toEqual({});
-      expect(errorListMessages(container)).toEqual([]);
+      expect(fieldErrorsById(container)).toEqual({ root_arr_1: ['must NOT have fewer than 3 characters'] });
+      expect(errorListMessages(container)).toEqual(['.arr.1 must NOT have fewer than 3 characters']);
 
       rerender(<EchoingArrayParent restyles={1} />);
 
-      expect(fieldErrorsById(container)).toEqual({});
-      expect(errorListMessages(container)).toEqual([]);
+      expect(fieldErrorsById(container)).toEqual({ root_arr_1: ['must NOT have fewer than 3 characters'] });
+      expect(errorListMessages(container)).toEqual(['.arr.1 must NOT have fewer than 3 characters']);
     });
   });
 
@@ -684,22 +689,16 @@ describe('Error state consistency when deriving from new props', () => {
   });
 
   it.each([
-    {
-      name: 'a server message of its own',
-      street: { type: 'string', minLength: 3 },
-      server: 'server',
-      expected: ['.addr.street must NOT have fewer than 3 characters'],
-    },
+    { name: 'a server message of its own', street: { type: 'string', minLength: 3 }, server: 'server' },
     {
       name: 'the message the validator reports',
       street: { type: 'string', minLength: 3 },
       server: 'must NOT have fewer than 3 characters',
-      expected: ['.addr.street must NOT have fewer than 3 characters'],
     },
-    { name: 'the only error on the path', street: { type: 'string' }, server: 'server', expected: [] },
-  ] satisfies { name: string; street: RJSFSchema; server: string; expected: string[] }[])(
-    'leaves the errors to the validator and the parent when an optional object Remove is declined, with $name',
-    async ({ street, server, expected }) => {
+    { name: 'the only error on the path', street: { type: 'string' }, server: 'server' },
+  ] satisfies { name: string; street: RJSFSchema; server: string }[])(
+    'drops the errors of an optional object a Remove took away, the validator’s with the data and the parent’s with the prop, with $name',
+    async ({ street, server }) => {
       const addrSchema: RJSFSchema = {
         type: 'object',
         properties: { addr: { type: 'object', properties: { street } } },
@@ -722,16 +721,14 @@ describe('Error state consistency when deriving from new props', () => {
       const { container, rerender } = render(<Parent extraErrors={addrServerErrors} />);
 
       await submitForm(container.querySelector('form')!, user);
-      expect(errorListMessages(container)).toEqual([...expected, `.addr.street ${server}`]);
+      expect(errorListMessages(container)).toContain(`.addr.street ${server}`);
 
       await user.click(container.querySelector(`#${optionalControlsId('root_addr', 'Remove')}`)!);
       rerender(<Parent />);
       rerender(<Parent className='x' />);
 
-      expect(errorListMessages(container)).toEqual(expected);
-      expect(Object.values(fieldErrorsById(container)).flat()).toEqual(
-        expected.map((stack) => stack.replace('.addr.street ', '')),
-      );
+      expect(errorListMessages(container)).toEqual([]);
+      expect(fieldErrorsById(container)).toEqual({});
     },
   );
 
@@ -844,12 +841,12 @@ describe('Error state consistency when deriving from new props', () => {
         remaining: [],
       },
       {
-        name: 'a root array of the same length has no error left',
+        name: "a root array of the same length keeps an unchanged item's error",
         schema: list,
         before: ['short', 'brief'],
         validated: [`.0 ${tooShort}`, `.1 ${tooShort}`],
         after: ['short', 'other'],
-        remaining: [],
+        remaining: [`.0 ${tooShort}`],
       },
       {
         name: 'a root value of another type has no error left',

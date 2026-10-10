@@ -19,8 +19,8 @@ export default function useFieldView<V>(fieldPath: FieldPath, value: V, self: un
   const access = use(FormDataContext);
   const readsFormData = useReadsFormData(self);
   const rendered = useRef(value);
-  // The view a handler proposed since the form last rendered, valid until the form drops its own record of a proposal
-  // (see `FormDataAccess.epoch()`)
+  // The view a handler sent since the form last rendered, valid until the form's next commit (see
+  // `FormDataAccess.epoch()`), which renders whatever became of it
   const advanced = useRef<{ view: V; epoch: number } | undefined>(undefined);
   useInsertionEffect(() => {
     rendered.current = value;
@@ -35,12 +35,12 @@ export default function useFieldView<V>(fieldPath: FieldPath, value: V, self: un
        * view of the form's data or renders outside a `Form`
        */
       readData: <D>(fallback: D) => (access && readsFormData ? access.readField<D>(fieldPath) : fallback),
-      /** Proposes the view `next` by calling `send`, recording it first so a second handler before the form's next
-       * commit builds on it, as `Form` builds on the proposal itself. A custom parent may flush a render from `send`,
-       * committing the form before the proposal has gone anywhere, so the record is dated once `send` has returned,
-       * and only then is the form told. It is told when `send` throws too: nothing else would end the record.
+      /** Sends the view `next` by calling `send`, recording it first so a second handler before the form's next
+       * commit builds on it. A custom parent may flush a render from `send`, committing the form before the change
+       * has gone anywhere, so the record is dated once `send` has returned, whether or not it threw, and only then is
+       * the form told.
        *
-       * `newIndexOf` says where the proposal put each item of the field's array, for the form to move their errors
+       * `newIndexOf` says where the change put each item of the field's array, for the form to move their errors
        * along. The indexes are those of the `formData` the field was given, which a custom parent passing the form's
        * data on leaves as they are; one that reorders or filters the items it shows moves the errors by its own
        * indexes.
@@ -49,20 +49,18 @@ export default function useFieldView<V>(fieldPath: FieldPath, value: V, self: un
         const record = access && { view: next, epoch: access.epoch() };
         advanced.current = record;
         const proposed = access?.proposing();
-        const sendProposal = access && newIndexOf ? () => access.sendMove({ fieldPath, newIndexOf }, send) : send;
-        const settle = () => {
+        try {
+          if (access && newIndexOf) {
+            access.sendMove({ fieldPath, newIndexOf }, send);
+          } else {
+            send();
+          }
+        } finally {
           if (access && advanced.current === record) {
             advanced.current = { view: next, epoch: access.epoch() };
           }
           proposed?.();
-        };
-        try {
-          sendProposal();
-        } catch (error) {
-          settle();
-          throw error;
         }
-        settle();
       },
     };
   }, [access, fieldPath, readsFormData]);
