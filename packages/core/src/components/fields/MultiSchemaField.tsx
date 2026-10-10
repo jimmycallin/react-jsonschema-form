@@ -17,7 +17,6 @@ import {
   selectOptionUiSchema,
   shouldRenderOptionalField,
   TranslatableString,
-  withVariantId,
 } from '@rjsf/utils';
 
 import fieldLabelForLog from '../../fieldLabelForLog.ts';
@@ -73,12 +72,10 @@ function AnyOfField<T = unknown, S extends StrictRJSFSchema = RJSFSchema, F exte
     return schemaUtils.getClosestMatchingOption(formData, retrievedOptions, 0, discriminator);
   });
 
-  /** The data the user's last option switch proposed, so the formData-change-driven option recalculation does not
-   * override the explicit choice. Set in onOptionChange (before onChange is called), consumed and reset in the update
-   * effect. It is needed even when the switch is accepted, since getDefaultFormState populates undefined properties
-   * that make deepEquals see a false formData change.
+  /** Set by the user's own option switch, before `onChange` is called, and consumed by the update Effect: the data
+   * that follows the switch, the defaults it adds included, is no reason to re-match the option the user just chose
    */
-  const optionSwitchProposal = useRef<{ formData: T | undefined } | undefined>(undefined);
+  const isOptionSwitched = useRef(false);
   const prevFormDataRef = useRef<T | undefined>(formData);
   const prevFieldIdRef = useRef(id);
 
@@ -94,25 +91,11 @@ function AnyOfField<T = unknown, S extends StrictRJSFSchema = RJSFSchema, F exte
     if (id !== prevFieldId) {
       return;
     }
-    const isFormDataChanged = !deepEquals(formData, prevFormData);
-    const proposal = optionSwitchProposal.current;
-    if (proposal) {
-      optionSwitchProposal.current = undefined;
-      // A switch that proposed the data the form already held has nothing a parent could decline
-      if (isFormDataChanged || deepEquals(formData, proposal.formData)) {
-        return;
-      }
-      // The option switch was proposed but the data did not follow it, which is what a parent declining the proposal
-      // looks like (RFC, section 5): the chosen option stays while the data still fits it, so a form whose data
-      // matches several options keeps the explicit choice, and one whose data does not is put back on the option that
-      // describes it
-      const chosen = selectedOption >= 0 ? retrievedOptions[selectedOption] : undefined;
-      // The retrieved option is not the schema its own `$id` names, and a validator caches what it compiles under
-      // that `$id`, so it is validated under one derived from its content, as the option scoring does
-      if (chosen && schemaUtils.getValidator().isValid(withVariantId<S>(chosen), formData, registry.rootSchema)) {
-        return;
-      }
-    } else if (!isFormDataChanged) {
+    if (isOptionSwitched.current) {
+      isOptionSwitched.current = false;
+      return;
+    }
+    if (deepEquals(formData, prevFormData)) {
       return;
     }
     const discriminator = getDiscriminatorFieldFromSchema<S>(schema);
@@ -186,10 +169,10 @@ function AnyOfField<T = unknown, S extends StrictRJSFSchema = RJSFSchema, F exte
       });
 
       setSelectedOption(intOption);
-      optionSwitchProposal.current = { formData: newFormData };
+      isOptionSwitched.current = true;
       onChange(newFormData, fieldPath, undefined, fieldId);
     },
-    // setSelectedOption is stable (guaranteed by useState); optionSwitchProposal is a ref
+    // setSelectedOption is stable (guaranteed by useState); isOptionSwitched is a ref
     [
       selectedOption,
       retrievedOptions,
