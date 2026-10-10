@@ -57,7 +57,7 @@ type ErrorState<T> = Pick<
 >;
 
 /** The errors a change leaves: those on display, the validator's, and the fields' own they are built from */
-type OwnedErrorState<T> = ErrorState<T> & Pick<FormState<T>, 'customErrors'>;
+type ChangedErrorState<T> = ErrorState<T> & Pick<FormState<T>, 'customErrors'>;
 
 /** The form data as an event hands it back. The overload is the one trust point for `EventFormData`'s promise that an
  * object or array root is never `undefined`.
@@ -511,7 +511,7 @@ export function applyChangeToErrors<T, S extends StrictRJSFSchema, F extends For
   { fieldPath, newErrorSchema, newIndexOf }: FieldChange<T>,
   extraErrors: ErrorSchema<T> | undefined,
   changed: FieldPathList[] = [],
-): OwnedErrorState<T> {
+): ChangedErrorState<T> {
   const { errors, errorSchema, schemaValidationErrors, schemaValidationErrorSchema } = current;
   const path = fieldPathToList(fieldPath);
   let { customErrors } = current;

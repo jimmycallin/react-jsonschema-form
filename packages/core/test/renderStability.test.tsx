@@ -122,7 +122,7 @@ describe('render stability across sibling fields', () => {
     expect(renderCount('root_nested_inner')).toBe(innerBefore);
   });
 
-  it('a controlled parent accepting each change keeps sibling fields and unchanged subtrees stable', async () => {
+  it('a parent storing each change keeps sibling fields and unchanged subtrees stable', async () => {
     const seen: IChangeEvent<FormValue>[] = [];
     function Parent() {
       const [formData, setFormData] = useState(initialFormData);
@@ -147,10 +147,10 @@ describe('render stability across sibling fields', () => {
 
     await user.type(container.querySelector('#root_first')!, 'abc');
 
-    const proposals = seen.map((event) => event.formData);
-    expect(proposals.map((formData) => formData?.first)).toEqual(['a', 'ab', 'abc']);
-    // Each proposal becomes the next prop, so it must share unchanged subtrees with the value it was applied to
-    const nestedInstances = new Set(proposals.map((formData) => formData?.nested));
+    const reported = seen.map((event) => event.formData);
+    expect(reported.map((formData) => formData?.first)).toEqual(['a', 'ab', 'abc']);
+    // Each reported value becomes the next prop, so it must share unchanged subtrees with the value it was applied to
+    const nestedInstances = new Set(reported.map((formData) => formData?.nested));
     expect(nestedInstances.size).toBe(1);
     expect(renderCount('root_second')).toBe(secondBefore);
     expect(renderCount('root_nested')).toBe(nestedBefore);
@@ -272,10 +272,10 @@ describe('render stability across sibling fields', () => {
     expect(container.querySelector('#root_first')).toHaveAttribute('data-which', 'second');
   });
 
-  /** The cases single ownership makes well defined (RFC, section 6). Each asserts its baseline count first, so a
+  /** The cases one owner makes well defined. Each asserts its baseline count first, so a
    * renamed id cannot pass vacuously.
    */
-  describe('under single ownership', () => {
+  describe('under one owner', () => {
     const templates = { FieldTemplate: CountingFieldTemplate };
 
     it('an edit a parent does not store back re-renders nothing outside its own branch', async () => {
@@ -289,7 +289,7 @@ describe('render stability across sibling fields', () => {
 
       await user.type(container.querySelector('#root_first')!, 'abc');
 
-      expect(log.proposals.map((proposal) => proposal?.first)).toEqual(['a', 'ab', 'abc']);
+      expect(log.reported.map((edit) => edit?.first)).toEqual(['a', 'ab', 'abc']);
       expect(container.querySelector('#root_first')).toHaveValue('abc');
       expect(renderCount('root_second')).toBe(secondBefore);
       expect(renderCount('root_nested_inner')).toBe(innerBefore);
@@ -301,7 +301,7 @@ describe('render stability across sibling fields', () => {
           schema={schema}
           initialValue={initialFormData()}
           templates={templates}
-          transform={(proposal) => proposal && { ...proposal, first: proposal.first.toUpperCase() }}
+          transform={(edit) => edit && { ...edit, first: edit.first.toUpperCase() }}
         />,
       );
       const firstBefore = renderCount('root_first');
@@ -401,7 +401,7 @@ describe('render stability across sibling fields', () => {
       expect(renderCount('root_2')).toBe(thirdBefore);
     });
 
-    it('a controlled reset re-renders only the fields whose errors cleared', async () => {
+    it('a reset under a parent passing formData re-renders only the fields whose errors cleared', async () => {
       const constrained: RJSFSchema = {
         ...schema,
         properties: { ...schema.properties, first: { type: 'string', minLength: 1 } },
