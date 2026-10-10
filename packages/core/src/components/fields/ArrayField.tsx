@@ -1,5 +1,5 @@
-import type { MouseEvent, ReactNode } from 'react';
-import { memo, useCallback, useMemo, useState } from 'react';
+import type { MouseEvent } from 'react';
+import { memo, use, useCallback, useInsertionEffect, useMemo, useRef, useState } from 'react';
 import type {
   ArrayFieldTemplateProps,
   ErrorSchema,
@@ -33,10 +33,9 @@ import {
   TranslatableString,
 } from '@rjsf/utils';
 
-import useFieldView from '../../hooks/useFieldView.ts';
 import { EMPTY_UI_SCHEMA } from '../constants.ts';
+import FormDataContext from '../FormDataContext.ts';
 import type { ItemMove } from '../formState.ts';
-import RawFormDataContext, { useReadsFormData } from './RawFormDataContext.ts';
 
 /** An item of the `formData` paired with its stable React key */
 interface KeyedFormDataType<T> {
@@ -437,7 +436,6 @@ function ArrayFieldItemInner<
   const fieldPath = toFieldPath(index, parentFieldPath);
   const fieldId = fieldPathToId(fieldPath, globalFormOptions);
   const ItemSchemaField = ArraySchemaField || SchemaField;
-  const readsFormData = useReadsFormData(ArrayFieldItem);
   const { ArrayFieldItemTemplate } = getTemplates<T[], S, F>(registry, uiOptions);
   const displayLabel = schemaUtils.getDisplayLabel(itemSchema, itemUiSchema, globalUiOptions);
   const { description } = getUiOptions(itemUiSchema);
@@ -485,29 +483,27 @@ function ArrayFieldItemInner<
 
   const templateProps = {
     children: (
-      <RawFormDataContext value={readsFormData ? ItemSchemaField : undefined}>
-        <ItemSchemaField
-          name={name}
-          title={title}
-          index={index}
-          schema={itemSchema}
-          uiSchema={itemUiSchema}
-          formData={itemData}
-          errorSchema={asItemErrorSchema(itemErrorSchema)}
-          fieldPath={fieldPath}
-          id={fieldId}
-          required={isItemRequired<S>(itemSchema)}
-          onChange={onChange}
-          onBlur={onBlur}
-          onFocus={onFocus}
-          registry={registry}
-          disabled={disabled}
-          readonly={readonly}
-          hideError={hideError}
-          autofocus={autofocus}
-          rawErrors={rawErrors}
-        />
-      </RawFormDataContext>
+      <ItemSchemaField
+        name={name}
+        title={title}
+        index={index}
+        schema={itemSchema}
+        uiSchema={itemUiSchema}
+        formData={itemData}
+        errorSchema={asItemErrorSchema(itemErrorSchema)}
+        fieldPath={fieldPath}
+        id={fieldId}
+        required={isItemRequired<S>(itemSchema)}
+        onChange={onChange}
+        onBlur={onBlur}
+        onFocus={onFocus}
+        registry={registry}
+        disabled={disabled}
+        readonly={readonly}
+        hideError={hideError}
+        autofocus={autofocus}
+        rawErrors={rawErrors}
+      />
     ),
     buttonsProps: {
       id: fieldId,
@@ -813,6 +809,8 @@ function FixedArray<T = unknown, S extends StrictRJSFSchema = RJSFSchema, F exte
 interface KeyedFormDataState<T = unknown> {
   /** The keyed form data elements */
   keyedFormData: KeyedFormDataType<T>[];
+  /** The rows as a handler sees them: those rendered, or sent since by a handler */
+  readSentRows: () => KeyedFormDataType<T>[];
   /** Updates the keyed form data elements to the given value */
   updateKeyedFormData: (newData: KeyedFormDataType<T>[]) => T[];
 }
@@ -820,11 +818,15 @@ interface KeyedFormDataState<T = unknown> {
 const NO_ITEMS: never[] = [];
 
 /** Pairs each item of the `formData` prop with a stable React key. Only the keys live in state: the items are read
- * from props on every render, so the rows always show the value the form actually holds, never a proposal the field
- * made and the form did not commit. The keys are UI metadata, kept so that React reuses row instances (and their DOM
- * focus) across accepted adds, removes and reorders. When the array's length changes outside the handlers, an external
- * replacement or a proposal the form transformed, there is no way to tell which rows survived, so every key is
+ * from props on every render, so the rows always show the value the form holds. The keys are UI metadata, kept so that
+ * React reuses row instances (and their DOM focus) across adds, removes and reorders. When the array's length changes
+ * outside the handlers, an external replacement, there is no way to tell which rows survived, so every key is
  * regenerated.
+ *
+ * A handler reads the rows from a ref rather than closing over the render's: a second handler in the same event has to
+ * start from the rows the first one sent, which React has yet to render, and a handler closing over the rendered rows
+ * would change identity with them and re-render every row on every edit. Each committed render installs its rows from
+ * an insertion Effect, so a layout Effect of the same commit that calls a handler reads the rows that commit rendered.
  */
 function useKeyedFormData<T = unknown>(formData: T[] = NO_ITEMS): KeyedFormDataState<T> {
   const items: T[] = Array.isArray(formData) ? formData : NO_ITEMS;
@@ -838,13 +840,19 @@ function useKeyedFormData<T = unknown>(formData: T[] = NO_ITEMS): KeyedFormDataS
   }
 
   const keyedFormData = useMemo(() => itemKeys.map((key, index) => ({ key, item: items[index] })), [itemKeys, items]);
+  const sentRows = useRef(keyedFormData);
+  useInsertionEffect(() => {
+    sentRows.current = keyedFormData;
+  }, [keyedFormData]);
+  const readSentRows = useCallback(() => sentRows.current, []);
 
   const updateKeyedFormData = useCallback((newData: KeyedFormDataType<T>[]) => {
+    sentRows.current = newData;
     setKeys(newData.map((keyedItem) => keyedItem.key));
     return keyedToPlainFormData(newData);
   }, []);
 
-  return { keyedFormData, updateKeyedFormData };
+  return { keyedFormData, readSentRows, updateKeyedFormData };
 }
 
 /** The `ArrayField` component is used to render a field in the schema that is of type `array`. It supports both normal
@@ -857,30 +865,35 @@ export default function ArrayField<
 >(props: FieldProps<T[], S, F>) {
   const { schema, uiSchema, fieldPath, id: fieldId, registry, formData, onChange } = props;
   const { globalFormOptions, schemaUtils, translateString } = registry;
-  const { keyedFormData, updateKeyedFormData } = useKeyedFormData<T>(formData);
-  const view = useFieldView(fieldPath, keyedFormData, ArrayField);
-  /** Every return renders through this, so a template or widget below never inherits what was said of this field */
-  const vouchForItems = (content: ReactNode) => (
-    <RawFormDataContext value={view.readsFormData ? ArrayFieldItem : undefined}>{content}</RawFormDataContext>
-  );
+  const { keyedFormData, readSentRows, updateKeyedFormData } = useKeyedFormData<T>(formData);
+  const access = use(FormDataContext);
 
+  /** The rows as a handler sees them: the form's current items at this path, edits made since the form last rendered
+   * included, under the keys of the rows rendered or sent since, with a fresh key for an item those do not cover.
+   * Outside a `Form`, the rows rendered or sent since.
+   */
   const readRows = useCallback(() => {
-    const rows = view.read();
-    const current = view.readData<T[] | undefined>(keyedToPlainFormData(rows));
-    if (!Array.isArray(current)) {
+    const rows = readSentRows();
+    const items = access ? access.readField<T[] | undefined>(fieldPath) : keyedToPlainFormData(rows);
+    if (!Array.isArray(items)) {
       return [];
     }
-    return current.map((item, index) => ({ key: rows[index]?.key ?? generateRowId(), item }));
-  }, [view]);
+    return items.map((item, index) => ({ key: rows[index]?.key ?? generateRowId(), item }));
+  }, [access, fieldPath, readSentRows]);
 
-  /** Proposes the rows a handler built, recording them first so a second handler in the same event starts from them,
-   * and saying where the handler put each item, so the form moves the items' errors along
+  /** Sends the rows a handler built, keying them first so a second handler in the same event starts from them, and
+   * saying where the handler put each item, so the form moves the items' errors along
    */
   const commitRows = useCallback(
     (newKeyedFormData: KeyedFormDataType<T>[], newIndexOf: ItemMove) => {
-      view.propose(newKeyedFormData, () => onChange(updateKeyedFormData(newKeyedFormData), fieldPath), newIndexOf);
+      const send = () => onChange(updateKeyedFormData(newKeyedFormData), fieldPath);
+      if (access) {
+        access.sendMove({ fieldPath, newIndexOf }, send);
+      } else {
+        send();
+      }
     },
-    [view, onChange, updateKeyedFormData, fieldPath],
+    [access, onChange, updateKeyedFormData, fieldPath],
   );
 
   /** Callback handler for when the user clicks on the add or add at index buttons. Creates a new row of keyed form data
@@ -1041,14 +1054,14 @@ export default function ArrayField<
     const uiOptions = getUiOptions<T[], S, F>(uiSchema);
     const { UnsupportedFieldTemplate } = getTemplates<T[], S, F>(registry, uiOptions);
 
-    return vouchForItems(
+    return (
       <UnsupportedFieldTemplate
         schema={schema}
         uiSchema={uiSchema}
         id={fieldId}
         reason={translateString(TranslatableString.MissingItems)}
         registry={registry}
-      />,
+      />
     );
   }
   // An items schema with type as undefined triggers FallbackField later on
@@ -1073,16 +1086,16 @@ export default function ArrayField<
   };
   if (schemaUtils.isMultiSelect(arrayAsMultiProps.schema)) {
     // If array has enum or uniqueItems set to true, call renderMultiSelect() to render the default multiselect widget or a custom widget, if specified.
-    return vouchForItems(<ArrayAsMultiSelect<T, S, F> {...arrayAsMultiProps} />);
+    return <ArrayAsMultiSelect<T, S, F> {...arrayAsMultiProps} />;
   }
   if (isCustomWidget<T[], S, F>(uiSchema)) {
-    return vouchForItems(<ArrayAsCustomWidget<T, S, F> {...arrayAsMultiProps} />);
+    return <ArrayAsCustomWidget<T, S, F> {...arrayAsMultiProps} />;
   }
   if (isFixedItems(arrayAsMultiProps.schema)) {
-    return vouchForItems(<FixedArray<T, S, F> {...arrayProps} />);
+    return <FixedArray<T, S, F> {...arrayProps} />;
   }
   if (schemaUtils.isFilesArray(arrayAsMultiProps.schema, uiSchema)) {
-    return vouchForItems(<ArrayAsFiles<T, S, F> {...arrayAsMultiProps} />);
+    return <ArrayAsFiles<T, S, F> {...arrayAsMultiProps} />;
   }
-  return vouchForItems(<NormalArray<T, S, F> {...arrayProps} />);
+  return <NormalArray<T, S, F> {...arrayProps} />;
 }

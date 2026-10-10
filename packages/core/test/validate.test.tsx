@@ -6,11 +6,11 @@ import type { Mock } from 'vitest';
 
 import type { FormProps } from '../src/index.ts';
 import type { NoValFormProps } from './testUtils.tsx';
-import { describeOwnerships, submitForm } from './testUtils.tsx';
+import { createFormComponent, submitForm } from './testUtils.tsx';
 
 const user = userEvent.setup();
 
-describeOwnerships('Validation', (createFormComponent) => {
+describe('Validation', () => {
   describe('Form integration, v8 validator', () => {
     describe('JSONSchema validation', () => {
       it('should block submit when a matched if/then branch resolves to false', async () => {
@@ -187,7 +187,7 @@ describeOwnerships('Validation', (createFormComponent) => {
         );
       });
 
-      it('re-validates a controlled form when the customValidate prop changes', () => {
+      it('re-validates when the customValidate prop changes', () => {
         const schema: RJSFSchema = { type: 'string' };
         function rejectEverything(_: FormProps['formData'], errors: FormValidation) {
           errors.addError('Invalid');

@@ -6,7 +6,7 @@ import { userEvent } from '@testing-library/user-event';
 
 import Form from '../src/index.ts';
 import { buildRegistry } from '../src/Theme.ts';
-import { AcceptingParent, RejectingParent, input } from './testUtils.tsx';
+import { AcceptingParent, ListeningParent, input } from './testUtils.tsx';
 
 // Spied rather than replaced, so the form builds its real registry and every call is counted
 vi.mock('../src/Theme.ts', { spy: true });
@@ -16,7 +16,7 @@ const user = userEvent.setup();
 const schema: RJSFSchema = { type: 'object', properties: { name: { type: 'string', minLength: 3 } } };
 
 describe('render cost of one update', () => {
-  it('commits once for a keystroke in a controlled, live-validated form', async () => {
+  it('commits once for a keystroke in a live-validated form under a parent that stores each edit', async () => {
     const onRender = vi.fn();
     const { container } = render(
       <Profiler id='form' onRender={onRender}>
@@ -30,7 +30,7 @@ describe('render cost of one update', () => {
     expect(onRender).toHaveBeenCalledTimes(1);
   });
 
-  it('commits once for an unrelated prop change on a self-owned form', () => {
+  it('commits once for an unrelated prop change on a form seeded with initialFormData', () => {
     const onRender = vi.fn();
     const element = (idPrefix: string) => (
       <Profiler id='form' onRender={onRender}>
@@ -55,17 +55,17 @@ describe('render cost of one update', () => {
     expect(vi.mocked(buildRegistry).mock.calls.length).toBeLessThanOrEqual(2);
   });
 
-  it('derives nothing in the render for the first edit a parent refuses', async () => {
-    const { container } = render(<RejectingParent schema={schema} initialValue={{ name: '' }} />);
+  it('derives the render state once per keystroke under a parent that stores nothing back', async () => {
+    const { container } = render(<ListeningParent schema={schema} initialValue={{ name: '' }} />);
     vi.mocked(buildRegistry).mockClear();
 
     await user.type(input(container, 'root_name'), 'x');
 
-    // Once for the proposal in `applyChange()`; the parent renders nothing new, so the render has nothing to derive
-    expect(vi.mocked(buildRegistry).mock.calls.length).toBeLessThanOrEqual(1);
+    // Once for the edit in `applyChange()`, once for the render of it; the parent renders nothing new
+    expect(vi.mocked(buildRegistry).mock.calls.length).toBeLessThanOrEqual(2);
   });
 
-  it('derives nothing more for a proposal a widget makes from a layout Effect', () => {
+  it('derives once more for an edit a widget makes from a layout Effect of the render of a record', () => {
     // Normalizes its value as it commits, the way a masked or formatted input does
     function UpperCaseWidget({ id, value, onChange }: WidgetProps) {
       const text = typeof value === 'string' ? value : '';
@@ -80,11 +80,11 @@ describe('render cost of one update', () => {
     const { rerender } = render(<Form {...props} formData={{ name: 'AB' }} />);
     vi.mocked(buildRegistry).mockClear();
 
-    // The parent loads another record and keeps to it, whatever the widget proposes
+    // The parent loads another record and stores nothing back; the widget normalizes it once
     rerender(<Form {...props} formData={{ name: 'cd' }} />);
 
-    // Once for the render of the record, once for the proposal in `applyChange()`
+    // Once for the render of the record, once for the edit in `applyChange()`, once for the render of the edit
     expect(props.onChange).toHaveBeenCalledTimes(1);
-    expect(vi.mocked(buildRegistry).mock.calls.length).toBeLessThanOrEqual(2);
+    expect(vi.mocked(buildRegistry).mock.calls.length).toBeLessThanOrEqual(3);
   });
 });

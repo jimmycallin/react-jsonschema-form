@@ -1053,7 +1053,7 @@ describeRepeated('Form common: rendering', (createFormComponent) => {
 
       rerender({ ...props, formData: { aKey: { nested: 'value' } } });
 
-      // Data replaced by a controlled parent never went through the selector, so the `string` selection gives way
+      // Data a parent replaced never went through the selector, so the `string` selection gives way
       // rather than leaving a text input to render the object as `[object Object]`
       expect(selected()).toHaveTextContent('object');
       expect(node.querySelector<HTMLInputElement>('#root_aKey_nested')).toHaveAttribute('value', 'value');
@@ -2093,15 +2093,14 @@ describeRepeated('Form common: rendering', (createFormComponent) => {
     });
 
     describe('when props.formData does not equal the default values', () => {
-      it('should render the parent value as passed and not call props.onChange', () => {
-        // The parent owns the value, defaults included; seeding them is the parent's job (see the v7 upgrade guide).
-        // A direct `formData` prop, not the suite's creator, whose accepting parent seeds the defaults for this
+      it('should render the defaults added to the value without calling props.onChange', () => {
+        // A plain `formData` prop, without the extra-data props the suite's creator adds
         const formData = {
           foo: 123,
         };
         const { node, onChange } = createDirectFormComponent({ schema, formData });
         expect(onChange).not.toHaveBeenCalled();
-        expect(node.querySelector<HTMLInputElement>('#root_count')).toHaveValue('');
+        expect(node.querySelector<HTMLInputElement>('#root_count')).toHaveValue('789');
       });
     });
 

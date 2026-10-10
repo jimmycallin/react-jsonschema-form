@@ -98,8 +98,7 @@ describeRepeated('Form common: error contextualization', (createFormComponent) =
             required: ['foo', 'bar'],
           };
 
-          // The form has to be controlled, since the errors are cleared by comparing the incoming
-          // `formData` prop against the previous one.
+          // Under a parent that stores each edit back, the setup this clearing was first written for
           const { container } = render(
             <AcceptingParent<Record<string, unknown>>
               schema={altSchema}
@@ -277,10 +276,13 @@ describeRepeated('Form common: error contextualization', (createFormComponent) =
             "must have required property 'qux'",
           ]);
 
-          // Moving the first item down leaves neither item holding a `qux`, so both of those errors are still the
-          // errors of the values sitting at those paths and only the `corge` that moved loses its own
+          // The errors follow the items they describe: the item lacking both moved down, and its two errors with it
           await user.click(node.querySelector<HTMLButtonElement>('.rjsf-array-item-move-down')!);
-          expect(shownErrors()).toEqual(["must have required property 'qux'", "must have required property 'qux'"]);
+          expect(shownErrors()).toEqual([
+            "must have required property 'qux'",
+            "must have required property 'qux'",
+            "must have required property 'corge'",
+          ]);
         });
       });
 

@@ -16,7 +16,7 @@ import type {
 } from '@rjsf/utils';
 import { getVisibleErrors, noop } from '@rjsf/utils';
 import validator from '@rjsf/validator-ajv8';
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { flushSync } from 'react-dom';
 
@@ -26,15 +26,13 @@ import type { IChangeEvent } from '../src/index.ts';
 import Form from '../src/index.ts';
 import {
   AcceptingParent,
-  RejectingParent,
-  aMicrotaskApart,
+  ListeningParent,
   createFormComponent,
   createFormRef,
   createParentLog,
   expectToHaveBeenCalledWithFormData,
   fieldErrorsById,
   handleOf,
-  outsideAct,
   reportedBy,
   submitForm,
 } from './testUtils.tsx';
@@ -4087,50 +4085,6 @@ describe('ArrayField', () => {
       },
     );
 
-    it('should chain two adds a microtask apart, outside an event, under a custom parent that keeps a draft', async () => {
-      // The custom parent keeps the array in its own state and tells the form nothing
-      function DraftField(props: FieldProps<string[]>) {
-        const [draft, setDraft] = useState(props.formData);
-        const { ArrayField: InnerArrayField } = props.registry.fields;
-        return (
-          <InnerArrayField
-            {...props}
-            formData={draft}
-            onChange={(value, fieldPath) => {
-              if (fieldPath === props.fieldPath) {
-                setDraft(value);
-              }
-            }}
-          />
-        );
-      }
-      let onAddClick: ArrayFieldTemplateProps['onAddClick'] | undefined;
-      function RetainingTemplate(props: ArrayFieldTemplateProps) {
-        useEffect(() => {
-          onAddClick = props.onAddClick;
-        }, [props.onAddClick]);
-        return <div className='array'>{props.items}</div>;
-      }
-      const add = () => {
-        if (!onAddClick) {
-          throw new Error('The array template did not render');
-        }
-        onAddClick();
-      };
-      const { node } = createFormComponent({
-        schema,
-        initialFormData: ['a'],
-        uiSchema: { 'ui:field': DraftField },
-        templates: { ArrayFieldTemplate: RetainingTemplate },
-      });
-      // React schedules the custom parent's update as it would in a browser
-      await outsideAct(async () => {
-        // Two adds from a timer, as a toolbar outside React's event handling makes them: no event ends between them
-        await aMicrotaskApart(add, add);
-        await waitFor(() => expect(node.querySelectorAll('.rjsf-array-item')).toHaveLength(3));
-      });
-    });
-
     it('should drop an add a custom parent refused from the rows a later event starts from', async () => {
       // A custom field that keeps the array to one item, refusing an add without the form committing anything
       function OneItemField(props: FieldProps<string[]>) {
@@ -4191,11 +4145,11 @@ describe('ArrayField', () => {
       expect(getFormData()).toEqual(['a', undefined]);
     });
 
-    it('should chain an add made as a commit cleans up with one made as it sets up, under a custom parent that refuses both', () => {
-      const proposals: unknown[] = [];
+    it('should make an add as a commit cleans up and one as it sets up, each from the form’s data, under a custom parent that keeps both to itself', () => {
+      const reported: unknown[] = [];
       function RefusingField(props: FieldProps<string[]>) {
         const { ArrayField: InnerArrayField } = props.registry.fields;
-        return <InnerArrayField {...props} onChange={(value) => proposals.push(value)} />;
+        return <InnerArrayField {...props} onChange={(value) => reported.push(value)} />;
       }
       let onAddClick: ArrayFieldTemplateProps['onAddClick'] | undefined;
       function RetainingTemplate(props: ArrayFieldTemplateProps) {
@@ -4232,56 +4186,20 @@ describe('ArrayField', () => {
       });
 
       isArmed = true;
-      // A commit the form's own store asks for, so it is the latest render when the cleanup proposes
+      // A commit the form's own store asks for, so it is the latest render when the cleanup adds
       act(() => handleOf(ref).setFieldValue('other', 'c'));
 
-      expect(proposals).toEqual([
+      // Each add starts from the form's data, which the custom parent kept the first one from
+      expect(reported).toEqual([
         ['a', undefined],
-        ['a', undefined, undefined],
+        ['a', undefined],
       ]);
     });
 
-    it("should add to the rows a custom parent just rendered when its template adds from that commit's layout Effect", async () => {
-      const proposals: unknown[] = [];
-      // Shows the array field a view of its own, which the button replaces
-      function ClearableField(props: FieldProps<string[]>) {
-        const [view, setView] = useState(['a', 'b']);
-        const { ArrayField: InnerArrayField } = props.registry.fields;
-        return (
-          <>
-            <button type='button' onClick={() => setView([])}>
-              Clear
-            </button>
-            <InnerArrayField {...props} formData={view} onChange={(value) => proposals.push(value)} />
-          </>
-        );
-      }
-      function AtLeastOneRowTemplate({ items, onAddClick }: ArrayFieldTemplateProps) {
-        const isEmpty = items.length === 0;
-        useLayoutEffect(() => {
-          if (isEmpty) {
-            onAddClick();
-          }
-        }, [isEmpty, onAddClick]);
-        return <div className='array'>{items}</div>;
-      }
-      createFormComponent({
-        schema,
-        initialFormData: ['a', 'b'],
-        uiSchema: { 'ui:field': ClearableField },
-        templates: { ArrayFieldTemplate: AtLeastOneRowTemplate },
-      });
-
-      await user.click(screen.getByRole('button', { name: 'Clear' }));
-
-      // The row is added to the emptied view, not to the ['a', 'b'] of the render before it
-      expect(proposals).toEqual([[undefined]]);
-    });
-
-    it('should start a later event from the rendered rows when a controlled parent refused the earlier one', async () => {
+    it('should start a later event from the rows an earlier removal left when the parent stores nothing back', async () => {
       const log = createParentLog<string[]>();
       const { container } = render(
-        <RejectingParent<string[]>
+        <ListeningParent<string[]>
           schema={{ type: 'array', items: { type: 'string', minLength: 2 } }}
           initialValue={['aa', 'bb', 'c']}
           log={log}
@@ -4293,17 +4211,14 @@ describe('ArrayField', () => {
       await user.click(container.querySelectorAll('.rjsf-array-item-remove')[0]);
       await user.click(container.querySelectorAll('.rjsf-array-item-remove')[0]);
 
-      // The refused removal is gone once React renders, so the second one starts again from ['aa', 'bb', 'c'], and
-      // moves the error on 'c' from the rendered errors, not from the refused proposal's
-      expect(log.proposals).toEqual([
-        ['bb', 'c'],
-        ['bb', 'c'],
-      ]);
+      // The form owns the first removal, so the second one starts from the rows it left, and the error on 'c' moves
+      // up with the item each time
+      expect(log.reported).toEqual([['bb', 'c'], ['c']]);
       const error = { __errors: ['must NOT have fewer than 2 characters'] };
-      expect(log.events.map((event) => event.errorSchema)).toEqual([{ 1: error }, { 1: error }]);
+      expect(log.events.map((event) => event.errorSchema)).toEqual([{ 1: error }, { 0: error }]);
     });
 
-    it('should key the rows of an accepted edit from the rendered rows after a refused one', async () => {
+    it('should key the rows of a stored edit from the rendered rows after one the parent did not store', async () => {
       let refuse = true;
       function RefuseOnceParent() {
         const [data, setData] = useState(['a', 'b', 'c']);
@@ -4327,11 +4242,11 @@ describe('ArrayField', () => {
 
       await user.click(container.querySelectorAll('.rjsf-array-item-remove')[0]);
       const afterRefusal = rowKeys(container);
-      await user.click(container.querySelectorAll('.rjsf-array-item-remove')[2]);
+      await user.click(container.querySelectorAll('.rjsf-array-item-remove')[1]);
 
-      // The refused removal's keys are dropped with its proposal, so the accepted one removes from the rendered rows
-      expect(afterRefusal).toHaveLength(3);
-      expect(rowKeys(container)).toEqual(afterRefusal.slice(0, 2));
+      // The form owns the removal the parent did not store, so the one it stores removes from the rows that left
+      expect(afterRefusal).toHaveLength(2);
+      expect(rowKeys(container)).toEqual(afterRefusal.slice(0, 1));
     });
 
     it.each([
@@ -4447,7 +4362,7 @@ describe('ArrayField', () => {
       expect(getFormData()).toEqual(['aa', 'b']);
       expect(fieldErrorsById(node)).toEqual({ root_1: ['must NOT have fewer than 2 characters'] });
     });
-    it('should chain every command on the previous proposal when a controlled parent owns the array', async () => {
+    it('should chain every command on the previous one under a parent that stores each edit', async () => {
       function KeyedRemoveThenMoveUpItemTemplate(props: ArrayFieldItemTemplateProps) {
         return (
           <div data-rjsf-itemkey={props.itemKey}>
@@ -4470,13 +4385,13 @@ describe('ArrayField', () => {
 
       await user.click(container.querySelectorAll('.remove-then-move-up')[1]);
 
-      // The move builds on the removal's proposal, which React has not rendered yet, as in a self-owned form
-      expect(log.proposals.slice(-2)).toEqual([
+      // The move builds on the removal, which React has not rendered yet
+      expect(log.reported.slice(-2)).toEqual([
         ['aa', 'c'],
         ['c', 'aa'],
       ]);
       expect(log.value).toEqual(['c', 'aa']);
-      // Each row keeps its key and its error: rows, keys and errors all come from the same proposal
+      // Each row keeps its key and its error: rows, keys and errors all come from the same edit
       expect(rowKeys(container)).toEqual([keysBefore[2], keysBefore[0]]);
       expect(log.events.at(-1)?.errorSchema).toEqual({ 0: { __errors: ['must NOT have fewer than 2 characters'] } });
     });
