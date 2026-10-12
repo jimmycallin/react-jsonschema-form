@@ -1,7 +1,8 @@
 import type { MockInstance } from 'vitest';
 
 import type { Registry, RJSFSchema, TemplatesType } from '../src/index.ts';
-import { createSchemaUtils, englishStringTranslator, isRootSchema } from '../src/index.ts';
+import { createSchemaUtils, englishStringTranslator } from '../src/index.ts';
+import isRootSchema from '../src/isRootSchema.ts';
 import getTestValidator from './testUtils/getTestValidator.ts';
 import { GLOBAL_FORM_OPTIONS } from './testUtils/testData.ts';
 

@@ -1,4 +1,4 @@
-import { mergeDefaultsWithFormData } from '../src/index.ts';
+import mergeDefaultsWithFormData from '../src/mergeDefaultsWithFormData.ts';
 
 describe('mergeDefaultsWithFormData()', () => {
   it('shouldn`t mutate the provided objects', () => {
