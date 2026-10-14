@@ -40,6 +40,12 @@ export const RJSF_REF_CYCLE_KEY = Symbol('__rjsf_ref_cycle');
  * `$ref` alike, and only this tells them apart.
  */
 export const RJSF_REF_SIBLING_BRANCHES_KEY = Symbol('__rjsf_ref_sibling_branches');
+/** Marks a subschema `retrieveSchema()` reached inside a definition it expanded, and that it left holding keywords it
+ * resolves only when the subschema itself is retrieved, with the references expanded on the way to it. A retrieve of the
+ * subschema starts its path from them, so a `$ref` back to an enclosing definition under one of those keywords is a
+ * recursion there too.
+ */
+export const RJSF_REF_PATH_KEY = Symbol('__rjsf_ref_path');
 export const SCHEMA_KEY = '$schema';
 export const DEFAULT_ID_PREFIX = 'root';
 export const DEFAULT_ID_SEPARATOR = '_';

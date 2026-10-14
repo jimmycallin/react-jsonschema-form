@@ -2196,7 +2196,7 @@ Two schemas sharing a key must validate the same way, so a schema derived from a
 
 Parses `rootSchema` and returns every schema and sub-schema that validation will be asked about, keyed by the `$id` of the schema, or by its hash when it has none.
 It resolves the schema as rendering does, following `$ref`s, `dependencies` and `allOf`, taking every `anyOf`/`oneOf` branch, and recursing through the sub-schemas a form renders a value with: `properties`, the `patternProperties` and `additionalProperties` a form renders the keys they describe with, and `items`, including every position of a tuple `items` and the `additionalItems` beyond it.
-It stops at a schema it has already collected, so that a `$ref` back to a schema already being resolved cannot loop; two schemas referencing each other through a key their own `patternProperties` match still can, and overflow the stack.
+It stops at a schema it has already collected, so that a `$ref` back to a schema already being resolved cannot loop.
 A key a form's data brings is rendered with the merge of every `patternProperties` entry matching it, so each combination of them is parsed as the `allOf` that merge is made from, which a `customMergeAllOf` sees exactly as the form's does.
 A schema may have at most 16 `patternProperties` for every combination to be parsed, since there are `2 ** n - 1` of them; for one with more, each pattern alone and all of them together are parsed and a warning says so, leaving a key that matches some other subset of them without a compiled validator.
 An `allOf` is parsed both merged and as it stands, because a form reads it both ways: `getObjectDefaults()` reads a nested object's unmerged `properties`, and `omitExtraData()` reads the entries a merge leaves in place.

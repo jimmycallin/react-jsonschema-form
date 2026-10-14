@@ -707,6 +707,54 @@ describe('schemaParser()', () => {
     const schemas = Object.values(schemaParser(rootSchema));
     expect(schemas).toContainEqual(expect.objectContaining({ const: 'p' }));
   });
+  it.each<[string, RJSFSchema]>([
+    [
+      'two definitions referring to each other through keys their own patternProperties match',
+      {
+        $ref: '#/definitions/x',
+        definitions: {
+          x: {
+            type: 'object',
+            properties: { y: { $ref: '#/definitions/y' } },
+            patternProperties: { '^y': { title: 'Y' } },
+          },
+          y: {
+            type: 'object',
+            properties: { x: { $ref: '#/definitions/x' } },
+            patternProperties: { '^x': { title: 'X' } },
+          },
+        },
+      },
+    ],
+    [
+      'a recursive key whose properties and matching patternProperties share an allOf entry',
+      {
+        $ref: '#/definitions/node',
+        definitions: {
+          node: {
+            type: 'object',
+            allOf: [
+              {
+                properties: { child: { $ref: '#/definitions/node' }, name: { type: 'string' } },
+                patternProperties: { '^child': { title: 'Child' } },
+              },
+            ],
+          },
+        },
+      },
+    ],
+    [
+      'an option that is a $ref back to the root beside dependencies',
+      {
+        type: 'object',
+        properties: { a: { type: 'string' }, b: { type: 'string' } },
+        dependencies: { a: ['b'] },
+        oneOf: [{ $ref: '#' }, { properties: { c: { type: 'string' } } }],
+      },
+    ],
+  ])('parses %s', (_, rootSchema) => {
+    expect(Object.keys(schemaParser(rootSchema)).length).toBeGreaterThan(0);
+  });
   it('parses an option with its dependency left unapplied, as a form scores it before the key is filled in', () => {
     const rootSchema: RJSFSchema = {
       oneOf: [

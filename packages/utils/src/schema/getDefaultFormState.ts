@@ -10,6 +10,7 @@ import {
   IF_KEY,
   ONE_OF_KEY,
   REF_KEY,
+  RJSF_REF_CYCLE_KEY,
   UI_DEFINITIONS_KEY,
 } from '../constants.ts';
 import constIsAjvDataReference from '../constIsAjvDataReference.ts';
@@ -35,7 +36,7 @@ import mergeObjects from '../mergeObjects.ts';
 import mergeSchemas from '../mergeSchemas.ts';
 import optionsList from '../optionsList.ts';
 import { getByPath } from '../pathUtils.ts';
-import { enclosingRefPath, resolvedFromRef } from '../refOf.ts';
+import { declaredRef, enclosingRefPath, resolvedFromRef } from '../refOf.ts';
 import resolveUiSchema from '../resolveUiSchema.ts';
 import toConstant from '../toConstant.ts';
 import type {
@@ -249,7 +250,7 @@ interface ComputeDefaultsProps<
   F extends FormContextType = FormContextType,
 > extends Omit<GetDefaultFormStateProps<T, S, F>, 'schema' | 'formData'> {
   /** Any defaults provided by the parent field in the schema */
-  parentDefaults?: T;
+  parentDefaults?: T | T[];
   /** The current formData, if any, onto which to provide any missing defaults */
   rawFormData?: T;
   /** The list of ref names currently being recursed, used to prevent infinite recursion */
@@ -630,7 +631,10 @@ export function getObjectDefaults<
 >(
   context: SchemaContext<S, F>,
   rawSchema: S,
-  {
+  computeDefaultsProps: ComputeDefaultsProps<T, S, F> = {},
+  defaults?: T | T[],
+): T | T[] | undefined {
+  const {
     rawFormData,
     rootSchema = {} as S,
     includeUndefinedValues = false,
@@ -640,9 +644,7 @@ export function getObjectDefaults<
     initialDefaultsGenerated,
     uiSchema,
     uiSchemaDefinitions,
-  }: ComputeDefaultsProps<T, S, F> = {},
-  defaults?: T | T[],
-): T {
+  } = computeDefaultsProps;
   const { defaultFormStateBehavior } = context;
   {
     const formData: T = (isObject(rawFormData) ? rawFormData : {}) as T;
@@ -666,6 +668,11 @@ export function getObjectDefaults<
           enclosingRefPath<S>(schema, _recurseList),
         )
       : [schema];
+    // An `allOf` or `then`/`else` that is the `$ref` back to a definition the schema is inside of comes back collapsed,
+    // flagged as the cycle it is, and takes the defaults a property holding that `$ref` takes
+    if (retrievedSchema !== schema && RJSF_REF_CYCLE_KEY in retrievedSchema && declaredRef<S>(retrievedSchema)) {
+      return computeDefaults<T, S, F>(context, retrievedSchema, { ...computeDefaultsProps, parentDefaults: defaults });
+    }
     // A `$ref` the retrieve expanded out of an `allOf` or a `then`/`else` of a schema that was not itself resolved from
     // one joins the path of everything below, the way one the `$ref` branch of `computeDefaults()` expands does. The
     // ref `schema` was itself resolved from does not: it seeds the retrieve above, but one more `$ref` back to it is

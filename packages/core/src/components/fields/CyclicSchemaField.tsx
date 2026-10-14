@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { FieldProps, FormContextType, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
-import { getTemplates, getUiOptions, RJSF_REF_CYCLE_KEY } from '@rjsf/utils';
+import { getTemplates, getUiOptions, RJSF_REF_CYCLE_KEY, RJSF_REF_PATH_KEY } from '@rjsf/utils';
 
 import RawFormDataContext, { useReadsFormData } from './RawFormDataContext.ts';
 
@@ -35,9 +35,13 @@ export default function CyclicSchemaField<
   }
   const { fields } = registry;
   const { SchemaField } = fields;
+  // Expanding resolves the schema on its own, one level further than the path it was reached on allowed, so that path
+  // is left behind with the flag
+  const expandedSchema: S = { ...schema, [RJSF_REF_CYCLE_KEY]: false };
+  Reflect.deleteProperty(expandedSchema, RJSF_REF_PATH_KEY);
   return (
     <RawFormDataContext value={readsFormData ? SchemaField : undefined}>
-      <SchemaField {...props} schema={{ ...schema, [RJSF_REF_CYCLE_KEY]: false }} />
+      <SchemaField {...props} schema={expandedSchema} />
     </RawFormDataContext>
   );
 }
