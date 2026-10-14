@@ -1647,6 +1647,58 @@ export default function getDefaultFormStateTest(testValidator: TestValidatorType
             };
             expect(defaults(schema, 'populateDefaults')).toEqual({ name: 'n', extra: { name: 'n' } });
           });
+
+          describe('holding the $ref further in, in what the keyword declares', () => {
+            // Resolving the keyword expands the `$ref` inside the property or items it declares, so what the defaults
+            // descend into next is the definition itself, with no `$ref` left to check
+            const declaringX: RJSFSchema = { properties: { x: recursion } };
+            const xWithDefault: RJSFSchema = { type: 'string', default: 'x' };
+
+            test.each<[string, RJSFSchema, 'populateDefaults' | undefined, unknown]>([
+              [
+                'an allOf declaring a property',
+                { type: 'object', allOf: [declaringX] },
+                'populateDefaults',
+                { x: { name: 'n' } },
+              ],
+              [
+                'an allOf declaring the items',
+                { type: 'array', minItems: 1, allOf: [{ items: recursion }] },
+                'populateDefaults',
+                [{ name: 'n', child: [undefined] }],
+              ],
+              [
+                'a then declaring a property',
+                { type: 'object', if: {}, then: declaringX },
+                undefined,
+                { x: { name: 'n' } },
+              ],
+              [
+                'the then of the items declaring a property',
+                { type: 'array', minItems: 1, items: { type: 'object', if: {}, then: declaringX } },
+                undefined,
+                [{ x: { name: 'n', child: [{}] } }],
+              ],
+              [
+                'a dependency that is the $ref',
+                { type: 'object', properties: { x: xWithDefault }, dependencies: { x: recursion } },
+                undefined,
+                { name: 'n', child: { x: 'x' } },
+              ],
+              [
+                'a dependency declaring a property',
+                {
+                  type: 'object',
+                  properties: { x: xWithDefault },
+                  dependencies: { x: { properties: { y: recursion } } },
+                },
+                undefined,
+                { x: 'x', y: { name: 'n', child: { x: 'x' } } },
+              ],
+            ])('stops at a recursion %s holds', (_, child, allOf, expected) => {
+              expect(defaults(withChild(child), allOf)).toEqual({ name: 'n', child: expected });
+            });
+          });
         });
 
         describe('a recursive allof schema', () => {

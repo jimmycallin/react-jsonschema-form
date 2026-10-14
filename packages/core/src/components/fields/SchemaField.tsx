@@ -8,7 +8,6 @@ import type {
   FormContextType,
   ONE_OF_KEY,
   Registry,
-  RJSFMarkedSchema,
   RJSFSchema,
   StrictRJSFSchema,
   UIOptionsType,
@@ -41,6 +40,7 @@ import {
   logOnce,
   omitConsumedStyling,
   resolveUiSchema,
+  REF_KEY,
   RJSF_REF_CYCLE_KEY,
   shouldRenderOptionalField,
   isObject,
@@ -455,11 +455,17 @@ function SchemaFieldRender<
   );
   // A schema tagged as a `$ref` cycle returns below before either value is read, so it is left unretrieved. Retrieving
   // is kept apart from inferring the select type so that a `uiSchema` rebuilt on every render doesn't retrieve again
-  const isRefCycle = Boolean((_schema as RJSFMarkedSchema)[RJSF_REF_CYCLE_KEY]);
+  // A boolean subschema reaches here as it is, and has no flag to read
+  const taggedAsRefCycle = isObject(_schema) && Boolean(Reflect.get(_schema, RJSF_REF_CYCLE_KEY));
   const retrievedSchema = useMemo(
-    () => (isRefCycle ? _schema : schemaUtils.retrieveSchema(_schema, formData)),
-    [isRefCycle, _schema, formData, schemaUtils],
+    () => (taggedAsRefCycle ? _schema : schemaUtils.retrieveSchema(_schema, formData)),
+    [taggedAsRefCycle, _schema, formData, schemaUtils],
   );
+  // A schema whose `allOf` or `then`/`else` is the `$ref` back to a definition it is inside of is the cycle itself,
+  // which only retrieving it shows: it comes back still holding the `$ref`, flagged. One that was expanded can carry the
+  // flag of the `$ref` it was expanded from, so the flag alone doesn't say it
+  const isRefCycle =
+    taggedAsRefCycle || (Boolean(Reflect.get(retrievedSchema, RJSF_REF_CYCLE_KEY)) && REF_KEY in retrievedSchema);
   // Kept apart from the widget below, which alone reads the `uiSchema`, so a `uiSchema` rebuilt on every render doesn't
   // hand a typeless select a new `schema` each time
   const selectSchemaInfo = useMemo(() => getSelectSchemaInfo<S>(retrievedSchema), [retrievedSchema]);
@@ -555,9 +561,9 @@ function SchemaFieldRender<
     [retrievesOptions, xxxOfKey, schema, schemaUtils, formData],
   );
 
-  // Stop $ref cycles: when resolveAllReferences detects a repeated property $ref it tags the schema with this flag,
-  // which is when the field is left unresolved above. The check must come after all hook calls to satisfy React's
-  // rules of hooks.
+  // Stop $ref cycles: a schema resolveAllReferences tagged as a repeated property $ref, which is left unresolved above,
+  // or one whose own retrieve came back collapsed onto the recursion. The check must come after all hook calls to
+  // satisfy React's rules of hooks.
   if (!uiField || !fieldToRender) {
     return (
       <RawFormDataContext value={readsFormData ? CyclicSchemaField : undefined}>

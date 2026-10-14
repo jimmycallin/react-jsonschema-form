@@ -1282,6 +1282,82 @@ describe('SchemaField', () => {
       expect(form.querySelector('#root_child_child-button')).toHaveTextContent('Expand Cycle');
     });
 
+    it.each<[string, RJSFSchema]>([
+      ['an allOf', { allOf: [{ $ref: '#/definitions/node' }] }],
+      ['a then branch', { type: 'object', if: {}, then: { $ref: '#/definitions/node' } }],
+    ])('renders a cycle indicator for a field whose %s is the $ref back to its definition', async (_, child) => {
+      // Resolving the field's own keyword is what expands the `$ref`, so only the field's own retrieve sees the cycle
+      const node: RJSFSchema = { type: 'object', properties: { name: { type: 'string' }, child } };
+      const { node: form } = createFormComponent({ schema: { definitions: { node }, $ref: '#/definitions/node' } });
+
+      expect(form.querySelectorAll('button[id$="-button"]')).toHaveLength(1);
+      expect(form.querySelector('#root_child-button')).toHaveTextContent('Expand Cycle');
+
+      await user.click(screen.getByRole('button', { name: 'Expand Cycle' }));
+
+      expect(form.querySelector('#root_child_name')).toBeInTheDocument();
+      expect(form.querySelectorAll('button[id$="-button"]')).toHaveLength(1);
+      expect(form.querySelector('#root_child_child-button')).toHaveTextContent('Expand Cycle');
+    });
+
+    it('renders a cycle indicator for definitions referring to each other through keys their patterns match', async () => {
+      const schema: RJSFSchema = {
+        $ref: '#/definitions/x',
+        definitions: {
+          x: { type: 'object', properties: { y: { $ref: '#/definitions/y' } }, patternProperties: { '^y': {} } },
+          y: { type: 'object', properties: { x: { $ref: '#/definitions/x' } }, patternProperties: { '^x': {} } },
+        },
+      };
+      const { node: form } = createFormComponent({ schema });
+
+      expect(form.querySelectorAll('button[id$="-button"]')).toHaveLength(1);
+      expect(form.querySelector('#root_y_x-button')).toHaveTextContent('Expand Cycle');
+
+      await user.click(screen.getByRole('button', { name: 'Expand Cycle' }));
+
+      expect(form.querySelectorAll('button[id$="-button"]')).toHaveLength(1);
+      expect(form.querySelector('#root_y_x_y_x-button')).toHaveTextContent('Expand Cycle');
+    });
+
+    it('renders a cycle indicator for a recursive key sharing an allOf entry with the patterns matching it', () => {
+      const node: RJSFSchema = {
+        type: 'object',
+        allOf: [
+          {
+            properties: { child: { $ref: '#/definitions/node' }, name: { type: 'string' } },
+            patternProperties: { '^child': { title: 'Child' } },
+          },
+        ],
+      };
+      const { node: form } = createFormComponent({ schema: { definitions: { node }, $ref: '#/definitions/node' } });
+
+      expect(form.querySelector('#root_name')).toBeInTheDocument();
+      expect(form.querySelector('#root_child-button')).toHaveTextContent('Expand Cycle');
+    });
+
+    describe('an option that is a $ref back to the root beside dependencies', () => {
+      const consoleWarnSuppression = setupConsoleWarnSuppression();
+
+      it('renders the form', () => {
+        const schema: RJSFSchema = {
+          type: 'object',
+          properties: { a: { type: 'string' }, b: { type: 'string' } },
+          dependencies: { a: ['b'] },
+          oneOf: [{ $ref: '#' }, { properties: { c: { type: 'string' } } }],
+        };
+        const { node: form } = createFormComponent({ schema });
+
+        expect(form.querySelector('#root_a')).toBeInTheDocument();
+        expect(form.querySelector('#root_b')).toBeInTheDocument();
+        // The option asks for the value to be valid against the whole schema, options included, which no validator
+        // can finish deciding, so the validator reports that rather than the form failing to render
+        expect(consoleWarnSuppression.consoleSpy).toHaveBeenCalledWith(
+          expect.stringContaining('Error encountered validating form data against schema'),
+          expect.any(RangeError),
+        );
+      });
+    });
+
     it.each<[string, (b: RJSFSchema) => RJSFSchema, string]>([
       ['in a property', (b) => ({ type: 'object', properties: { b } }), '#root_b_friend_name'],
       ['at the root', (b) => b, '#root_friend_name'],

@@ -1,10 +1,16 @@
 import {
+  ADDITIONAL_PROPERTIES_KEY,
   ALL_OF_KEY,
+  ANY_OF_KEY,
   DEPENDENCIES_KEY,
   ELSE_KEY,
+  IF_KEY,
+  ONE_OF_KEY,
+  PATTERN_PROPERTIES_KEY,
   REF_KEY,
   RJSF_REF_SIBLING_BRANCHES_KEY,
   RJSF_REF_KEY,
+  RJSF_REF_PATH_KEY,
   THEN_KEY,
 } from './constants.ts';
 import mergeSchemas from './mergeSchemas.ts';
@@ -137,4 +143,98 @@ export function enclosingRefPath<S extends StrictRJSFSchema = RJSFSchema>(
     return recurseList;
   }
   return refSiblingBranches(schema)?.includes(keyword) ? recurseList : [...recurseList, sourceRef];
+}
+
+/** The keywords whose subschemas `resolveAllReferences()` leaves alone, to be resolved when the schema holding them is
+ * retrieved on its own.
+ */
+const DEFERRED_KEYWORDS: string[] = [
+  ADDITIONAL_PROPERTIES_KEY,
+  ALL_OF_KEY,
+  ANY_OF_KEY,
+  DEPENDENCIES_KEY,
+  IF_KEY,
+  ONE_OF_KEY,
+  PATTERN_PROPERTIES_KEY,
+];
+
+/** One frozen list per path, so that marking the same subschema on the same path again gives it the same value and
+ * `replaceEqualDeep()` can keep the earlier resolution.
+ */
+const refPaths = new Map<string, readonly string[]>();
+
+function internedPath(path: readonly string[]): readonly string[] {
+  // A `$ref` can hold any character, so the entries are joined with one no JSON pointer or URI carries unescaped
+  const key = path.join('\n');
+  let interned = refPaths.get(key);
+  if (interned === undefined) {
+    interned = Object.freeze([...path]);
+    refPaths.set(key, interned);
+  }
+  return interned;
+}
+
+/** Returns the references `resolveAllReferences()` expanded on the way to the given subschema, as `withRefPath()`
+ * marked it with.
+ *
+ * @param schema - The schema to read the marker off, if it is one that can carry it at all
+ * @returns - The references expanded on the way to the subschema, or undefined when it was not marked
+ */
+export function refPathOf(schema: unknown): readonly string[] | undefined {
+  if (typeof schema !== 'object' || schema === null || !(RJSF_REF_PATH_KEY in schema)) {
+    return undefined;
+  }
+  const path = schema[RJSF_REF_PATH_KEY];
+  return Array.isArray(path) ? path : undefined;
+}
+
+/** Returns `recurseList` with the references the `schema` was marked as reached through added, so that a retrieve of a
+ * subschema starts on the path the walk that left it unresolved was on.
+ *
+ * @param schema - The schema about to be resolved
+ * @param recurseList - The list of refs already expanded on the current resolution path
+ * @returns - `recurseList`, with any of the marked references it lacks added
+ */
+export function withRefPathOf(schema: unknown, recurseList: string[]): string[] {
+  const path = refPathOf(schema);
+  if (path === undefined) {
+    return recurseList;
+  }
+  const missing = path.filter((ref) => !recurseList.includes(ref));
+  return missing.length === 0 ? recurseList : [...recurseList, ...missing];
+}
+
+/** Returns the `schema` marked with the `path` of references expanded on the way to it, when it holds keywords that are
+ * resolved only once it is retrieved on its own, which is when the path would otherwise be lost. A schema holding a
+ * `$ref` is left alone, since resolving the reference is what decides whether it is a recursion.
+ *
+ * @param schema - A subschema `resolveAllReferences()` walked past without resolving all of it
+ * @param path - The references expanded on the way to it
+ * @returns - The schema, marked with the path when it needs it, or the schema itself when it is already marked so
+ */
+export function withRefPath<S>(schema: S, path: string[]): S {
+  if (
+    path.length === 0 ||
+    typeof schema !== 'object' ||
+    schema === null ||
+    REF_KEY in schema ||
+    !DEFERRED_KEYWORDS.some((keyword) => keyword in schema)
+  ) {
+    return schema;
+  }
+  const interned = internedPath(path);
+  return refPathOf(schema) === interned ? schema : { ...schema, [RJSF_REF_PATH_KEY]: interned };
+}
+
+/** Returns whether a branch came back from its resolution still holding a `$ref` already expanded on the path it was
+ * resolved on, which is a recursion its resolution left collapsed. Merged into the schema the branch belongs to, it
+ * makes that schema the recursion, the way a property holding the same `$ref` is.
+ *
+ * @param branch - The branch as its resolution returned it
+ * @param path - The path the branch was resolved on
+ * @returns - Whether the branch is a recursion left collapsed
+ */
+export function isCollapsedRecursion<S extends StrictRJSFSchema = RJSFSchema>(branch: S, path: string[]): boolean {
+  const ref = declaredRef<S>(branch);
+  return ref !== undefined && path.includes(ref);
 }
