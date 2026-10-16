@@ -1354,6 +1354,7 @@ function deriveDataState<T, S extends StrictRJSFSchema, F extends FormContextTyp
     isDataPassed,
     ...errors,
     initialDefaultsGenerated: true,
+    isTouched: current?.isTouched ?? false,
   };
 }
 
@@ -1833,6 +1834,8 @@ export function applyReset<T, S extends StrictRJSFSchema, F extends FormContextT
     // will not resurrect a `ui:initialValue` the user has since cleared
     initialDefaultsGenerated: true,
     customErrors: undefined,
+    seed: seedOf(props),
+    isTouched: false,
   };
 }
 
@@ -1935,15 +1938,18 @@ export function initialState<T, S extends StrictRJSFSchema, F extends FormContex
   if (!props.validator) {
     throw new Error('A validator is required for Form functionality to work');
   }
-  return deriveDataState(undefined, seedOf(props), props);
+  const seed = seedOf(props);
+  return { ...deriveDataState(undefined, seed, props), seed };
 }
 
 /** Derives the state to render from the props and the committed `state`. Nothing is remembered about the previous
  * props: every derived member is shared against the committed state, so an unchanged input hands back the reference
  * the fields already hold and a changed one is recognized by the new reference; when nothing changed, `state` itself
- * is handed back. The data is the form's own after mount, so a `formData` or `initialFormData` passed later changes
- * nothing; it is re-derived only for a schema, `ui:emptyValue` or `defaultFormStateBehavior` change, and any other
- * prop change re-derives the render context alone, since an unrelated re-render must not rerun value initialization.
+ * is handed back. A seed prop (`formData`, else `initialFormData`) that changes while the form is untouched seeds it
+ * again, as a reset does but without a report; once an edit touched it, the data is the form's own, so a later seed
+ * changes nothing until `reset()`. The data is otherwise re-derived only for a schema, `ui:emptyValue` or
+ * `defaultFormStateBehavior` change, and any other prop change re-derives the render context alone, since an unrelated
+ * re-render must not rerun value initialization.
  *
  * @param props - The current props
  * @param state - The committed state
@@ -1953,6 +1959,19 @@ export function deriveState<T, S extends StrictRJSFSchema, F extends FormContext
   props: FormProps<T, S, F>,
   state: FormState<T, S, F>,
 ): FormState<T, S, F> {
+  const seed = seedOf(props);
+  // A seed that goes away is no new seed: a parent whose query refetches passes `undefined` until the record is back,
+  // and seeding the defaults then would drop the record the form shows
+  if (seed !== undefined && !state.isTouched && !Object.is(seed, state.seed)) {
+    // The data the form holds, passed back from `onChange`, and a copy of the last seed, which a parent that writes its
+    // record inline passes on every render, are the seed already: seeding again would clear the errors on display
+    if (Object.is(seed, state.formData) || deepEquals(seed, state.seed)) {
+      return deriveState(props, { ...state, seed });
+    }
+    // Seeded as on mount, without a report. The seed is set after the sharing, which could hand back the previous
+    // seed's subtrees and so lose the identity the next render compares
+    return { ...replaceEqualDeep(state, applyReset(state, props)), isDataPassed: true, seed };
+  }
   const context = deriveRenderContext(props, state.retrievedSchema, state, resolveSchemaUtils(props, state));
   const { isSchemaChanged, isValidationPropChanged } = detectContextChanges(state, context);
   // Rebuilt schema utilities are not on their own a reason to rerun value initialization: they are rebuilt for a

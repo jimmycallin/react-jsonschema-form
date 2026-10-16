@@ -134,7 +134,7 @@ describe('form data ownership', () => {
     });
   });
 
-  describe('a formData passed after mount is ignored', () => {
+  describe('a formData passed after an edit is ignored', () => {
     /** Records the value the `a` widget has at every commit, so a stale value committed before the parent's value
      * would show up in the sequence and not just be overwritten by the final DOM
      */
@@ -148,7 +148,7 @@ describe('form data ownership', () => {
       };
     }
 
-    it('keeps the data, calls no onChange and warns once, naming a key and setFieldValue', () => {
+    it('keeps the data, calls no onChange and warns once, naming a key and setFieldValue', async () => {
       const seen: unknown[] = [];
       const uiSchema = { a: { 'ui:widget': recordingWidget(seen) } };
       const onChange = vi.fn();
@@ -156,12 +156,15 @@ describe('form data ownership', () => {
         return <Form schema={schema} uiSchema={uiSchema} validator={validator} formData={value} onChange={onChange} />;
       }
       const { rerender, container } = render(<Parent value={{ a: 'old' }} />);
+      await user.type(input(container, 'root_a'), '!');
+      seen.length = 0;
+      onChange.mockClear();
 
       rerender(<Parent value={{ a: 'new' }} />);
       rerender(<Parent value={{ a: 'newer' }} />);
 
-      expect(new Set(seen)).toEqual(new Set(['old']));
-      expect(input(container, 'root_a')).toHaveValue('old');
+      expect(seen.filter((value) => value !== 'old!')).toEqual([]);
+      expect(input(container, 'root_a')).toHaveValue('old!');
       expect(onChange).not.toHaveBeenCalled();
       const ignored = ignoredFormDataWarnings();
       expect(ignored).toHaveLength(1);
@@ -337,7 +340,7 @@ describe('form data ownership', () => {
       expect(input(container, 'root_a')).toHaveValue('record');
     });
 
-    it('a formData that becomes undefined, or another value, leaves the data as it is', () => {
+    it('a formData that becomes undefined leaves the data as it is, and another value seeds the untouched form', () => {
       const onChange = vi.fn();
       function Parent({ value }: { value: Data | undefined }) {
         return <Form schema={withDefaults} validator={validator} formData={value} onChange={onChange} />;
@@ -351,7 +354,7 @@ describe('form data ownership', () => {
 
       rerender(<Parent value={{ a: 'y' }} />);
 
-      expect(input(container, 'root_a')).toHaveValue('x');
+      expect(input(container, 'root_a')).toHaveValue('y');
       expect(onChange).not.toHaveBeenCalled();
     });
 
@@ -1102,6 +1105,162 @@ describe('form data ownership', () => {
       expect(onChange).toHaveBeenCalledTimes(2);
       expect(onChange.mock.calls[0][0].formData).toEqual({ a: 'x' });
       expect(onChange.mock.calls[1][0].formData).toEqual({ a: 'x', b: 'y' });
+    });
+  });
+
+  describe('a seed that changes while the form is untouched', () => {
+    const minLength: RJSFSchema = {
+      type: 'object',
+      properties: { a: { type: 'string', minLength: 3 }, b: { type: 'string', default: 'B' } },
+    };
+
+    it('shows a record loaded after mount, with its defaults, without calling onChange or a stale commit', () => {
+      const seen: unknown[] = [];
+      function Recording(props: WidgetProps) {
+        const { BaseInputTemplate } = getTemplates(props.registry, getUiOptions(props.uiSchema));
+        useLayoutEffect(() => {
+          seen.push(props.value);
+        });
+        return <BaseInputTemplate {...props} />;
+      }
+      const uiSchema = { b: { 'ui:widget': Recording } };
+      const ref = createFormRef<Data>();
+      const { node, onChange, rerender } = createFormComponent({ ref, schema: withDefaults, uiSchema });
+      seen.length = 0;
+
+      rerender({ ref, schema: withDefaults, uiSchema, formData: { b: 'loaded' } });
+
+      expect(seen).toEqual(['loaded']);
+      expect(input(node, 'root_a')).toHaveValue('A');
+      expect(input(node, 'root_b')).toHaveValue('loaded');
+      expect(handleOf(ref).getFormData()).toEqual({ a: 'A', b: 'loaded' });
+      expect(onChange).not.toHaveBeenCalled();
+      expect(ignoredFormDataWarnings()).toHaveLength(0);
+    });
+
+    it('re-seeds again for a second record that arrives before any edit', () => {
+      const { node, onChange, rerender } = createFormComponent({ schema: withDefaults });
+
+      rerender({ schema: withDefaults, formData: { a: 'one' } });
+      rerender({ schema: withDefaults, formData: { a: 'two' } });
+
+      expect(input(node, 'root_a')).toHaveValue('two');
+      expect(input(node, 'root_b')).toHaveValue('B');
+      expect(onChange).not.toHaveBeenCalled();
+      expect(ignoredFormDataWarnings()).toHaveLength(0);
+    });
+
+    it('re-seeds for a new initialFormData too', () => {
+      const { node, rerender } = createFormComponent({ schema, initialFormData: { a: 'one' } });
+
+      rerender({ schema, initialFormData: { a: 'two' } });
+
+      expect(input(node, 'root_a')).toHaveValue('two');
+    });
+
+    it('ignores a record that arrives after the user typed, and warns once', async () => {
+      const { node, rerender } = createFormComponent({ schema, formData: { a: 'one' } });
+      await user.type(input(node, 'root_a'), 'x');
+
+      rerender({ schema, formData: { a: 'two' } });
+      rerender({ schema, formData: { a: 'three' } });
+
+      expect(input(node, 'root_a')).toHaveValue('onex');
+      expect(ignoredFormDataWarnings()).toHaveLength(1);
+    });
+
+    it('is touched by setFieldValue()', () => {
+      const ref = createFormRef<Data>();
+      const { node, rerender } = createFormComponent({ ref, schema, formData: { a: 'one' } });
+      act(() => handleOf(ref).setFieldValue('b', 'set'));
+
+      rerender({ ref, schema, formData: { a: 'two' } });
+
+      expect(input(node, 'root_a')).toHaveValue('one');
+      expect(input(node, 'root_b')).toHaveValue('set');
+      expect(ignoredFormDataWarnings()).toHaveLength(1);
+    });
+
+    it('is not touched by an edit transformChange refuses', async () => {
+      const refuse = (_next: unknown, previous: unknown) => previous;
+      const { node, rerender } = createFormComponent({ schema, formData: { a: 'one' }, transformChange: refuse });
+      await user.type(input(node, 'root_a'), 'x');
+      expect(input(node, 'root_a')).toHaveValue('one');
+
+      rerender({ schema, formData: { a: 'two' }, transformChange: refuse });
+
+      expect(input(node, 'root_a')).toHaveValue('two');
+      expect(ignoredFormDataWarnings()).toHaveLength(0);
+    });
+
+    it('is untouched again after reset(), which re-seeds from the latest record', async () => {
+      const ref = createFormRef<Data>();
+      const { node, rerender } = createFormComponent({ ref, schema, formData: { a: 'one' } });
+      await user.type(input(node, 'root_a'), 'x');
+      rerender({ ref, schema, formData: { a: 'two' } });
+      expect(input(node, 'root_a')).toHaveValue('onex');
+
+      act(() => handleOf(ref).reset());
+      expect(input(node, 'root_a')).toHaveValue('two');
+      rerender({ ref, schema, formData: { a: 'three' } });
+
+      expect(input(node, 'root_a')).toHaveValue('three');
+    });
+
+    it('takes back what reset() reported as its own and stays untouched', () => {
+      const ref = createFormRef<Data>();
+      const reported: unknown[] = [];
+      function Parent({ record }: { record?: Data }) {
+        const [data, setData] = useState<Data | undefined>(undefined);
+        const [loaded, setLoaded] = useState<Data | undefined>(undefined);
+        if (record !== loaded) {
+          setLoaded(record);
+          setData(record);
+        }
+        return (
+          <Form<Data>
+            ref={ref}
+            schema={withDefaults}
+            validator={validator}
+            formData={data}
+            onChange={(event) => {
+              reported.push(event.formData);
+              setData(event.formData);
+            }}
+          />
+        );
+      }
+      const { container, rerender } = render(<Parent />);
+
+      act(() => handleOf(ref).reset());
+
+      expect(reported).toEqual([{ a: 'A', b: 'B' }]);
+      expect(handleOf(ref).getFormData()).toBe(reported[0]);
+      rerender(<Parent record={{ a: 'loaded' }} />);
+      expect(input(container, 'root_a')).toHaveValue('loaded');
+      expect(reported).toHaveLength(1);
+      expect(ignoredFormDataWarnings()).toHaveLength(0);
+    });
+
+    it('clears the errors a submit raised against the previous record, and the submit does not touch it', async () => {
+      const { node, onError, rerender } = createFormComponent({ schema: minLength, formData: { a: 'x' } });
+      await submitForm(node, user);
+      expect(onError).toHaveBeenCalledTimes(1);
+      expect(fieldErrorsById(node)).toEqual({ root_a: ['must NOT have fewer than 3 characters'] });
+
+      rerender({ schema: minLength, formData: { a: 'long enough' } });
+
+      expect(input(node, 'root_a')).toHaveValue('long enough');
+      expect(fieldErrorsById(node)).toEqual({});
+    });
+
+    it('keeps its errors when a parent re-renders with an equal record in a new object', async () => {
+      const { node, rerender } = createFormComponent({ schema: minLength, formData: { a: 'x' } });
+      await submitForm(node, user);
+
+      rerender({ schema: minLength, formData: { a: 'x' } });
+
+      expect(fieldErrorsById(node)).toEqual({ root_a: ['must NOT have fewer than 3 characters'] });
     });
   });
 

@@ -480,7 +480,7 @@ const [data, setData] = useState(record);
 <Form schema={schema} validator={validator} formData={data} onChange={(event) => setData(event.formData)} />;
 ```
 
-Any other value passed after mount is ignored, with a warning in development. To show other data, a record that loads after mount or the next record, remount the form under a `key`, which also clears its errors and gives the record the values the form fills in on mount only, such as a [`ui:initialValue`](./uiSchema.md#initialvalue):
+Until the form is touched, a new value seeds it again, as on mount: the schema's defaults are filled in, the errors are cleared and `onChange` is not called, so a record that loads after mount is shown. An edit touches the form: a field's change or a `setFieldValue()`, unless [`transformChange`](#transformchange) refuses it, and `reset()` makes it untouched again. `undefined`, and a copy equal to the last seed, are not new values. Once the form is touched, any other value is ignored, with a warning in development. To show another record after an edit, remount the form under a `key`, which also clears its errors and gives the record the values the form fills in on mount only, such as a [`ui:initialValue`](./uiSchema.md#initialvalue):
 
 ```tsx
 <Form key={record.id} schema={schema} validator={validator} initialFormData={record} onChange={save} />
@@ -538,7 +538,7 @@ id="root_first">` when rendering `first`.
 
 ## initialFormData
 
-The seed of the form's data, the way `defaultValue` works on an `<input>`. It is read, and filled in with the schema's defaults, when the form mounts and when `reset()` is called, and ignored otherwise, so a value written inline does not replace the data the form holds on a re-render. Every edit is reported through [`onChange`](#onchange); read the current value with [`getFormData()`](../advanced-customization/internals.md#read-form-data-programmatically). When both props are passed, [`formData`](#formdata), another name for this prop, is the seed and `initialFormData` is ignored. To show other data after mount, remount the form under a `key`, or call `setFieldValue('', data)` on its ref.
+The seed of the form's data, the way `defaultValue` works on an `<input>`. It is read, and filled in with the schema's defaults, when the form mounts, when `reset()` is called, and when it changes before the user's first edit (see [`formData`](#formdata)), and ignored otherwise, so a value written inline does not replace the data the form holds on a re-render. Every edit is reported through [`onChange`](#onchange); read the current value with [`getFormData()`](../advanced-customization/internals.md#read-form-data-programmatically). When both props are passed, [`formData`](#formdata), another name for this prop, is the seed and `initialFormData` is ignored. To show other data after mount, remount the form under a `key`, or call `setFieldValue('', data)` on its ref.
 
 ## nameGenerator
 

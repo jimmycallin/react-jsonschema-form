@@ -220,7 +220,8 @@ export function createFormModel<T, S extends StrictRJSFSchema, F extends FormCon
 
   /** `change` applied to `base`, then, when the consumer's `transformChange` returns other data than the change left,
    * that data written over the whole form with no key move, so its errors, live validation and row pairing describe
-   * the data the form keeps. Pure, as `settled()` asks: it may run again on a newer base.
+   * the data the form keeps. The edit touches the form, so a new seed prop no longer replaces its data, unless
+   * `transformChange` refused it by returning `previous`. Pure, as `settled()` asks: it may run again on a newer base.
    */
   const applyEdit = (
     base: FormState<T, S, F>,
@@ -230,12 +231,14 @@ export function createFormModel<T, S extends StrictRJSFSchema, F extends FormCon
     const next = applyChange(base, change, props);
     const { transformChange } = props;
     if (!transformChange) {
-      return next;
+      return { ...next, isTouched: true };
     }
     const transformed = transformChange(next.formData, base.formData);
-    return Object.is(transformed, next.formData)
-      ? next
-      : applyChange(next, { newValue: transformed, fieldPath: ROOT_FIELD_PATH }, props);
+    if (Object.is(transformed, next.formData)) {
+      return { ...next, isTouched: true };
+    }
+    const written = applyChange(next, { newValue: transformed, fieldPath: ROOT_FIELD_PATH }, props);
+    return { ...written, isTouched: base.isTouched || !Object.is(transformed, base.formData) };
   };
 
   /** Applies a change to the field at `fieldPath` with `applyChange()`, commits the result and reports it through
@@ -432,14 +435,19 @@ export function createFormModel<T, S extends StrictRJSFSchema, F extends FormCon
       derivedCache = undefined;
       hold(derived.formData);
     },
-    /** Warns, once, that the `formData` prop changed after mount to a value the form ignores: neither data it has held
-     * nor a copy of the data it holds. Called after the commit that passed it, in development only
+    /** Warns, once, that the `formData` prop changed, after an edit touched the form, to a value the form ignores:
+     * neither data it has held nor a copy of the data it holds. Called after the commit that passed it, in development
+     * only
      */
     warnIfFormDataIgnored: (formData: T | undefined) => {
       if (Object.is(formData, lastFormDataProp)) {
         return;
       }
       lastFormDataProp = formData;
+      // An untouched form took the value as its seed
+      if (!current().isTouched) {
+        return;
+      }
       const isHeld = typeof formData === 'object' && formData !== null && heldData.has(formData);
       if (isIgnoredFormDataWarned || formData === undefined || isHeld || deepEquals(formData, current().formData)) {
         return;

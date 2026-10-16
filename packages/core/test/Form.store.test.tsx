@@ -440,7 +440,7 @@ it('a form shown again after Activity hid it takes and shows an edit, with no re
 describe('a formData passed to a form hidden by Activity', () => {
   const warnings = setupConsoleWarnSuppression();
 
-  it('is ignored, and data set through the handle is taken once the form is shown', () => {
+  it('seeds an untouched form once it is shown, and data set through the handle is dropped while hidden', () => {
     interface Record {
       name?: string;
       other?: string;
@@ -462,20 +462,19 @@ describe('a formData passed to a form hidden by Activity', () => {
     const handle = handleOf(ref);
     hide({ name: 'a', other: 'x' });
 
-    // The parent passes another record while the form is hidden, which the form ignores as it would when shown
+    // The parent passes another record while the form is hidden; the form, untouched, takes it as its seed when shown
     hide({ name: 'b', other: 'y' });
     expect(handle.getFormData()).toEqual({ name: 'a', other: 'x' });
 
     // So is the handle, while the form is hidden, as for an unmounted form
     act(() => handle.setFieldValue('name', 'hidden'));
     show({ name: 'b', other: 'y' });
-    act(() => handle.setFieldValue('', { name: 'b', other: 'y' }));
+    expect(handle.getFormData()).toEqual({ name: 'b', other: 'y' });
     act(() => handle.setFieldValue('name', 'edited'));
 
     expect(handle.getFormData()).toEqual({ name: 'edited', other: 'y' });
     expectToHaveBeenCalledWithFormData(onChange, { name: 'edited', other: 'y' }, 'root_name');
-    // The warning is an Effect's, which waits for the form to be shown
-    expect(warnings.consoleSpy).toHaveBeenCalledTimes(1);
+    expect(warnings.consoleSpy).not.toHaveBeenCalled();
   });
 });
 

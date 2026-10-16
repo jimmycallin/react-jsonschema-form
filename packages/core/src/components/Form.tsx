@@ -246,6 +246,15 @@ export interface FormState<
    * leaving it to the schema's defaults
    */
   isDataPassed: boolean;
+  /** The seed prop, `formData ?? initialFormData`, the data was last seeded from, on mount, by `reset()` or by a
+   * re-seed: while the form is untouched, a seed prop other than this one seeds the form again
+   */
+  seed?: T;
+  /** Whether the form has accepted an edit since it was last seeded: a field's change or a `setFieldValue()` that
+   * `transformChange` did not refuse. Tracked by those events, since the defaults make the data differ from the seed
+   * anyway. A touched form ignores a new seed prop until `reset()`
+   */
+  isTouched: boolean;
   /** The current list of errors for the form, includes `extraErrors` */
   errors: RJSFValidationError[];
   /** The current errors, in `ErrorSchema` format, for the form, includes `extraErrors` */
