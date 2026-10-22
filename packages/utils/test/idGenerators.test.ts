@@ -1,3 +1,4 @@
+import { optionLabelId } from '../src/idGenerators.ts';
 import {
   ariaDescribedByIds,
   buttonId,
@@ -11,7 +12,6 @@ import {
   optionalControlsId,
   optionDescriptionId,
   optionHelpId,
-  optionLabelId,
   optionId,
   selectedOptionDescriptionId,
   titleId,

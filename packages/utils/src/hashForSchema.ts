@@ -8,6 +8,7 @@ import type { RJSFSchema, StrictRJSFSchema } from './types.ts';
  *
  * @param string - The string for which to get the hash
  * @returns - The resulting hash of the string in hex format
+ * @internal
  */
 export function hashString(string: string): string {
   let hash = 0;

@@ -1,5 +1,6 @@
 import type { RJSFSchema } from '../../src/index.ts';
-import { getValidationSchemas, ID_KEY, noop, resetLogOnce, schemaKey, schemaParser } from '../../src/index.ts';
+import { getValidationSchemas, ID_KEY, noop, resetLogOnce, schemaKey } from '../../src/index.ts';
+import { schemaParser } from '../../src/parser/schemaParser.ts';
 import {
   PROPERTY_DEPENDENCIES,
   RECURSIVE_REF,

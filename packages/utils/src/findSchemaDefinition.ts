@@ -34,6 +34,7 @@ function emptySchema(): StrictRJSFSchema {
  *        reference` for a chain of `$ref`s that loops back on itself
  * @deprecated Resolve a `$ref` as the form does with `schemaUtils.retrieveSchema({ $ref })`, which this wraps for
  *        callers written against 6.x
+ * @internal
  */
 export default function findSchemaDefinition<S extends StrictRJSFSchema = RJSFSchema>(
   $ref?: string,
