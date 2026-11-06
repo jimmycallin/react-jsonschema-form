@@ -1,14 +1,12 @@
 import type { FormContextType, RJSFSchema, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
 import {
   fieldShowsOwnErrors,
-  getControlAttributes,
   getTemplates,
   getUiOptions,
   getWidgetDescription,
   hasWidgetErrors,
   labelValue,
-  schemaRequiresTrueValue,
-  widgetDrawsLabel,
+  useCheckboxWidgetProps,
 } from '@rjsf/utils';
 
 import { Checkbox } from '../components/ui/checkbox.tsx';
@@ -25,42 +23,17 @@ export default function CheckboxWidget<
   S extends StrictRJSFSchema = RJSFSchema,
   F extends FormContextType = FormContextType,
 >(props: WidgetProps<T, S, F>) {
-  const {
-    id,
-    htmlName,
-    value,
-    disabled,
-    readonly,
-    label,
-    schema,
-    autofocus,
-    options,
-    onChange,
-    onBlur,
-    onFocus,
-    registry,
-    presentation,
-    uiSchema,
-    className,
-    required,
-  } = props;
-  const hideLabel = !widgetDrawsLabel<T, S, F>(props);
-  // Because an unchecked checkbox will cause html5 validation to fail, only add
-  // the "required" attribute if the field value must be "true", due to the
-  // "const" or "enum" keywords
-  const trueValueRequired = schemaRequiresTrueValue<S>(schema) && required;
+  const { label, schema, options, registry, presentation, uiSchema, className } = props;
+  const checkbox = useCheckboxWidgetProps<T, S, F>(props);
+  const hideLabel = !checkbox.drawsLabel;
   const { DescriptionFieldTemplate } = getTemplates<T, S, F>(registry, options);
   const hasErrors = fieldShowsOwnErrors<T, S, F>(props);
-
-  const handleChange = (checked: boolean) => onChange(checked);
-  const handleBlur = () => onBlur(id, value);
-  const handleFocus = () => onFocus(id, value);
 
   // Without a plan, core's `FieldTemplate` draws the description of a field whose `ui:widget` is the `checkbox` alias
   const description =
     presentation || getUiOptions(uiSchema).widget !== 'checkbox' ? getWidgetDescription<T, S, F>(props) : undefined;
   return (
-    <div className={`relative ${disabled || readonly ? 'cursor-not-allowed opacity-50' : ''}`}>
+    <div className={`relative ${checkbox.disabled ? 'cursor-not-allowed opacity-50' : ''}`}>
       {description && (
         <DescriptionFieldTemplate
           id={description.id}
@@ -73,25 +46,25 @@ export default function CheckboxWidget<
       )}
       <div className='flex items-center gap-2 my-2'>
         <Checkbox
-          id={id}
-          name={htmlName || id}
-          checked={typeof value === 'undefined' ? false : Boolean(value)}
-          required={trueValueRequired || undefined}
-          disabled={disabled || readonly}
-          autoFocus={autofocus}
-          onCheckedChange={handleChange}
-          onBlur={handleBlur}
-          onFocus={handleFocus}
-          {...getControlAttributes<T, S, F>({ id, presentation })}
+          id={checkbox.id}
+          name={checkbox.name}
+          checked={checkbox.checked}
+          required={checkbox.required || undefined}
+          disabled={checkbox.disabled}
+          autoFocus={checkbox.autoFocus}
+          onCheckedChange={(checked) => checkbox.onChange(checked === true)}
+          onBlur={checkbox.onBlur}
+          onFocus={checkbox.onFocus}
+          {...checkbox.ariaProps}
           className={cn({ 'border-destructive': hasWidgetErrors<T, S, F>(props) }, className)}
         />
         <Label
           className='leading-tight data-invalid:text-destructive'
-          htmlFor={id}
+          htmlFor={checkbox.id}
           data-invalid={hasErrors || undefined}
         >
           {labelValue(label, hideLabel || !label)}
-          {!hideLabel && label && trueValueRequired && <span className='text-destructive ml-1'>*</span>}
+          {!hideLabel && label && checkbox.required && <span className='text-destructive ml-1'>*</span>}
         </Label>
       </div>
     </div>

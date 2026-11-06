@@ -1,15 +1,7 @@
-import type { ReactElement, ChangeEvent, FocusEvent } from 'react';
-import { useCallback } from 'react';
+import type { ReactElement } from 'react';
 import { Checkbox } from '@mantine/core';
 import type { StrictRJSFSchema, RJSFSchema, FormContextType, WidgetProps } from '@rjsf/utils';
-import {
-  getControlAttributes,
-  getErrorsToDraw,
-  hasWidgetErrors,
-  labelValue,
-  schemaRequiresTrueValue,
-  widgetDrawsLabel,
-} from '@rjsf/utils';
+import { getErrorsToDraw, hasWidgetErrors, labelValue, useCheckboxWidgetProps } from '@rjsf/utils';
 
 import { getDescriptionProps, renderErrors } from '../utils.tsx';
 
@@ -23,49 +15,9 @@ export default function CheckboxWidget<
   S extends StrictRJSFSchema = RJSFSchema,
   F extends FormContextType = FormContextType,
 >(props: WidgetProps<T, S, F>): ReactElement {
-  const {
-    id,
-    htmlName,
-    value = false,
-    required,
-    disabled,
-    readonly,
-    autofocus,
-    label,
-    schema,
-    onChange,
-    onBlur,
-    onFocus,
-  } = props;
-  const hideLabel = !widgetDrawsLabel<T, S, F>(props);
-
-  const trueValueRequired = schemaRequiresTrueValue(schema) && required;
-  const handleCheckboxChange = useCallback(
-    (e: ChangeEvent<HTMLInputElement>) => {
-      if (!disabled && !readonly && onChange) {
-        onChange(e.currentTarget.checked);
-      }
-    },
-    [onChange, disabled, readonly],
-  );
-
-  const handleBlur = useCallback(
-    ({ target }: FocusEvent<HTMLInputElement>) => {
-      if (onBlur) {
-        onBlur(id, target.checked);
-      }
-    },
-    [onBlur, id],
-  );
-
-  const handleFocus = useCallback(
-    ({ target }: FocusEvent<HTMLInputElement>) => {
-      if (onFocus) {
-        onFocus(id, target.checked);
-      }
-    },
-    [onFocus, id],
-  );
+  const { id, label } = props;
+  const checkbox = useCheckboxWidgetProps<T, S, F>(props);
+  const hideLabel = !checkbox.drawsLabel;
 
   const { description } = getDescriptionProps(props);
   const errors = getErrorsToDraw<T, S, F>(props);
@@ -74,30 +26,30 @@ export default function CheckboxWidget<
     <>
       {description}
       <Checkbox
-        id={id}
-        name={htmlName || id}
+        id={checkbox.id}
+        name={checkbox.name}
         label={
           !hideLabel && label ? (
             <>
               {label}
-              {trueValueRequired && <span className='required'>*</span>}
+              {checkbox.required && <span className='required'>*</span>}
             </>
           ) : (
             labelValue(label || undefined, hideLabel, false)
           )
         }
-        disabled={disabled || readonly}
-        required={trueValueRequired}
-        autoFocus={autofocus}
-        checked={Boolean(value)}
-        onChange={handleCheckboxChange}
-        onBlur={handleBlur}
-        onFocus={handleFocus}
+        disabled={checkbox.disabled}
+        required={checkbox.required}
+        autoFocus={checkbox.autoFocus}
+        checked={checkbox.checked}
+        onChange={(event) => checkbox.onChange(event.currentTarget.checked)}
+        onBlur={checkbox.onBlur}
+        onFocus={checkbox.onFocus}
         // Mantine's `Checkbox` would render a message as its own error, with an id derived from the input's rather than
         // `errorId(id)`, so it only gets a boolean, for the error styling, and the errors are rendered below it. It
         // doesn't set `aria-invalid` either.
         error={invalid}
-        {...getControlAttributes<T, S, F>(props)}
+        {...checkbox.ariaProps}
         aria-invalid={invalid || undefined}
       />
       {renderErrors(id, errors, { mt: 'calc(var(--mantine-spacing-xs) / 2)' })}

@@ -1,12 +1,10 @@
-import type { ChangeEvent, FocusEvent } from 'react';
 import { Checkbox } from '@fluentui/react-components';
 import type { FormContextType, RJSFSchema, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
 import {
-  getControlAttributes,
   getTemplates,
   getWidgetDescription,
   labelValue,
-  schemaRequiresTrueValue,
+  useCheckboxWidgetProps,
   widgetDrawsLabelText,
 } from '@rjsf/utils';
 
@@ -20,30 +18,10 @@ export default function CheckboxWidget<
   S extends StrictRJSFSchema = RJSFSchema,
   F extends FormContextType = FormContextType,
 >(props: WidgetProps<T, S, F>) {
-  const {
-    schema,
-    id,
-    htmlName,
-    value,
-    disabled,
-    readonly,
-    label,
-    autofocus,
-    onChange,
-    onBlur,
-    onFocus,
-    registry,
-    presentation,
-    options,
-    uiSchema,
-    required,
-  } = props;
+  const { schema, label, registry, options, uiSchema } = props;
+  const checkbox = useCheckboxWidgetProps<T, S, F>(props);
   const { DescriptionFieldTemplate } = getTemplates<T, S, F>(registry, options);
-  const handleChange = ({ target: { checked } }: ChangeEvent<HTMLInputElement>) => onChange(checked);
-  const handleBlur = ({ target }: FocusEvent<HTMLInputElement>) => onBlur(id, target?.checked);
-  const handleFocus = ({ target }: FocusEvent<HTMLInputElement>) => onFocus(id, target?.checked);
   const description = getWidgetDescription<T, S, F>(props);
-  const trueValueRequired = schemaRequiresTrueValue(schema) && required;
   const hideLabel = !widgetDrawsLabelText<T, S, F>(props);
 
   return (
@@ -58,17 +36,17 @@ export default function CheckboxWidget<
         />
       )}
       <Checkbox
-        id={id}
-        name={htmlName || id}
+        id={checkbox.id}
+        name={checkbox.name}
         label={labelValue(label, hideLabel)}
-        checked={typeof value === 'undefined' ? false : Boolean(value)}
-        required={trueValueRequired}
-        disabled={disabled || readonly}
-        autoFocus={autofocus}
-        onChange={handleChange}
-        onBlur={handleBlur}
-        onFocus={handleFocus}
-        {...getControlAttributes<T, S, F>({ id, presentation })}
+        checked={checkbox.checked}
+        required={checkbox.required}
+        disabled={checkbox.disabled}
+        autoFocus={checkbox.autoFocus}
+        onChange={(event) => checkbox.onChange(event.target.checked)}
+        onBlur={checkbox.onBlur}
+        onFocus={checkbox.onFocus}
+        {...checkbox.ariaProps}
       />
     </>
   );

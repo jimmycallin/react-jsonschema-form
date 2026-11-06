@@ -1,13 +1,5 @@
-import type { FocusEvent } from 'react';
 import type { WidgetProps, StrictRJSFSchema, RJSFSchema, FormContextType } from '@rjsf/utils';
-import {
-  getControlAttributes,
-  getTemplates,
-  getWidgetDescription,
-  hasWidgetErrors,
-  schemaRequiresTrueValue,
-  widgetDrawsLabel,
-} from '@rjsf/utils';
+import { getTemplates, getWidgetDescription, hasWidgetErrors, useCheckboxWidgetProps } from '@rjsf/utils';
 import { Form } from 'react-bootstrap';
 
 export default function CheckboxWidget<
@@ -15,38 +7,12 @@ export default function CheckboxWidget<
   S extends StrictRJSFSchema = RJSFSchema,
   F extends FormContextType = FormContextType,
 >(props: WidgetProps<T, S, F>) {
-  const {
-    id,
-    htmlName,
-    value,
-    disabled,
-    readonly,
-    label,
-    schema,
-    autofocus,
-    options,
-    onChange,
-    onBlur,
-    onFocus,
-    registry,
-    presentation,
-    uiSchema,
-    required,
-  } = props;
-  const hideLabel = !widgetDrawsLabel<T, S, F>(props);
-  // Because an unchecked checkbox will cause html5 validation to fail, only add
-  // the "required" attribute if the field value must be "true", due to the
-  // "const" or "enum" keywords
-  const trueValueRequired = schemaRequiresTrueValue<S>(schema) && required;
+  const { label, schema, options, registry, uiSchema } = props;
+  const checkbox = useCheckboxWidgetProps<T, S, F>(props);
   const { DescriptionFieldTemplate } = getTemplates<T, S, F>(registry, options);
-
-  const handleChange = ({ target: { checked } }: FocusEvent<HTMLInputElement>) => onChange(checked);
-  const handleBlur = ({ target }: FocusEvent<HTMLInputElement>) => onBlur(id, target?.checked);
-  const handleFocus = ({ target }: FocusEvent<HTMLInputElement>) => onFocus(id, target?.checked);
-
   const description = getWidgetDescription<T, S, F>(props);
   return (
-    <Form.Group className={disabled || readonly ? 'disabled' : ''}>
+    <Form.Group className={checkbox.disabled ? 'disabled' : ''}>
       {description && (
         <DescriptionFieldTemplate
           id={description.id}
@@ -57,26 +23,26 @@ export default function CheckboxWidget<
         />
       )}
       <Form.Check
-        id={id}
-        name={htmlName || id}
+        id={checkbox.id}
+        name={checkbox.name}
         label={
-          !hideLabel && label ? (
+          checkbox.drawsLabel && label ? (
             <>
               {label}
-              {trueValueRequired && <span className='required'>*</span>}
+              {checkbox.required && <span className='required'>*</span>}
             </>
           ) : undefined
         }
-        checked={Boolean(value)}
-        required={trueValueRequired}
+        checked={checkbox.checked}
+        required={checkbox.required}
         isInvalid={hasWidgetErrors<T, S, F>(props)}
-        disabled={disabled || readonly}
-        autoFocus={autofocus}
-        onChange={handleChange}
+        disabled={checkbox.disabled}
+        autoFocus={checkbox.autoFocus}
+        onChange={(event) => checkbox.onChange(event.target.checked)}
         type='checkbox'
-        onBlur={handleBlur}
-        onFocus={handleFocus}
-        {...getControlAttributes<T, S, F>({ id, presentation })}
+        onBlur={checkbox.onBlur}
+        onFocus={checkbox.onFocus}
+        {...checkbox.ariaProps}
       />
     </Form.Group>
   );

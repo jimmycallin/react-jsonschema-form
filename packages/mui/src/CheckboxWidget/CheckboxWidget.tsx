@@ -3,14 +3,7 @@ import Checkbox from '@mui/material/Checkbox';
 import type { FormControlLabelProps } from '@mui/material/FormControlLabel';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import type { FormContextType, GenericObjectType, RJSFSchema, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
-import {
-  getControlAttributes,
-  getTemplates,
-  getWidgetDescription,
-  labelValue,
-  schemaRequiresTrueValue,
-  widgetDrawsLabel,
-} from '@rjsf/utils';
+import { getTemplates, getWidgetDescription, labelValue, useCheckboxWidgetProps } from '@rjsf/utils';
 
 import { getMuiProps, withInputSlot } from '../util.ts';
 
@@ -35,34 +28,10 @@ export default function CheckboxWidget<
   S extends StrictRJSFSchema = RJSFSchema,
   F extends FormContextType = FormContextType,
 >(props: WidgetProps<T, S, F>) {
-  const {
-    schema,
-    id,
-    htmlName,
-    value,
-    disabled,
-    readonly,
-    label,
-    autofocus,
-    onChange,
-    onBlur,
-    onFocus,
-    registry,
-    presentation,
-    options,
-    uiSchema,
-    required,
-  } = props;
-  const hideLabel = !widgetDrawsLabel<T, S, F>(props);
+  const { schema, label, registry, options, uiSchema } = props;
+  const checkbox = useCheckboxWidgetProps<T, S, F>(props);
+  const hideLabel = !checkbox.drawsLabel;
   const { DescriptionFieldTemplate } = getTemplates<T, S, F>(registry, options);
-  // Because an unchecked checkbox will cause html5 validation to fail, only add
-  // the "required" attribute if the field value must be "true", due to the
-  // "const" or "enum" keywords
-  const trueValueRequired = schemaRequiresTrueValue<S>(schema) && required;
-
-  const handleChange: NonNullable<CheckboxProps['onChange']> = (_, checked) => onChange(checked);
-  const handleBlur: React.FocusEventHandler<HTMLButtonElement> = () => onBlur(id, value);
-  const handleFocus: React.FocusEventHandler<HTMLButtonElement> = () => onFocus(id, value);
   const description = getWidgetDescription<T, S, F>(props);
 
   const { rjsfSlotProps: muiSlotProps, ...otherMuiProps } = getMuiProps<T, S, F, CheckboxWidgetMuiProps>(options);
@@ -81,24 +50,21 @@ export default function CheckboxWidget<
       <FormControlLabel
         {...otherMuiProps}
         {...muiSlotProps?.formControlLabel}
-        required={trueValueRequired}
+        required={checkbox.required}
         control={
           <Checkbox
-            id={id}
-            name={htmlName || id}
-            checked={typeof value === 'undefined' ? false : Boolean(value)}
-            required={trueValueRequired}
-            disabled={disabled || readonly}
-            autoFocus={autofocus}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            onFocus={handleFocus}
+            id={checkbox.id}
+            name={checkbox.name}
+            checked={checkbox.checked}
+            required={checkbox.required}
+            disabled={checkbox.disabled}
+            autoFocus={checkbox.autoFocus}
+            onChange={(_, checked) => checkbox.onChange(checked)}
+            onBlur={checkbox.onBlur}
+            onFocus={checkbox.onFocus}
             {...muiSlotProps?.checkbox}
             // The `<input>` carrying the field's id takes its plan, rather than the `<span>` around it
-            slotProps={withInputSlot(
-              getControlAttributes<T, S, F>({ id, presentation }),
-              muiSlotProps?.checkbox?.slotProps,
-            )}
+            slotProps={withInputSlot(checkbox.ariaProps, muiSlotProps?.checkbox?.slotProps)}
           />
         }
         label={labelValue(label, hideLabel, false)}
