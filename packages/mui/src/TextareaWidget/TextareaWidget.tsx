@@ -1,5 +1,5 @@
 import type { FormContextType, RJSFSchema, SlotComponent, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
-import { getTemplates } from '@rjsf/utils';
+import { getTemplates, useTextareaWidgetProps } from '@rjsf/utils';
 
 import type { MuiBaseInputTemplateProps } from '../BaseInputTemplate/BaseInputTemplate.tsx';
 
@@ -18,10 +18,7 @@ export default function TextareaWidget<
     options,
   ).BaseInputTemplate;
 
-  let rows: string | number = 5;
-  if (typeof options.rows === 'string' || typeof options.rows === 'number') {
-    rows = options.rows;
-  }
+  const { rows } = useTextareaWidgetProps<T, S, F>(props);
 
-  return <BaseInputTemplate {...props} multiline rows={rows} />;
+  return <BaseInputTemplate {...props} multiline rows={rows ?? 5} />;
 }
