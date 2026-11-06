@@ -3626,6 +3626,39 @@ disabled or read-only, so those buttons can be rendered disabled.
 
 - UseAltDateWidgetResult: The `UseAltDateWidgetResult` to be used within a `AltDateWidget` implementation
 
+### useBaseInputProps&lt;T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = FormContextType>()
+
+Hook which holds what every `BaseInputTemplate` does whatever its UI library: it shows the form data as the input's
+string, derives the input's `type` and attributes from the schema and `ui:options`, reports an emptied input as
+`ui:emptyValue`, decides whether a clear button is drawn, lists the schema's `examples` for a datalist, and supplies the
+input's id, name and `aria-*` attributes. The change and clear handlers report nothing while the field is disabled or
+read-only. To be used by theme specific `BaseInputTemplate` implementations, and by an app's own.
+
+#### Parameters
+
+- props: BaseInputTemplateProps&lt;T, S, F> - The `BaseInputTemplateProps` for the `BaseInputTemplate`
+- [plainNativeInput=true]: boolean - Whether the input is a plain native one, which takes a `step` of `'any'`, rather
+  than a library's numeric input
+
+#### Returns
+
+- UseBaseInputPropsResult: Everything the input needs:
+  - `id`, `name`, `required`, `disabled`, `readOnly`, `autoFocus` and `placeholder`
+  - `value`: the form data as the string an input shows, `''` where it holds none
+  - `inputProps`: the input's `type`, `step`, `min`, `max`, `accept`, `autoComplete` and the other attributes the
+    schema and `ui:options` give it, with `multiple` for a file input
+  - `title`: the input's `title`, which says what a numeric input accepts
+  - `listId` and `exampleSuggestions`: the id of the `<datalist>` of the schema's `examples` for the input's `list`, or
+    `undefined` where it has none, and the suggestions to hand to `SchemaExamples`
+  - `ariaProps`: the input's `aria-*` attributes, describing it by the datalist too where it has one
+  - `showClearButton`: whether to draw a clear button, which `ui:options.allowClearTextInputs` asks for, for an
+    enabled, changeable field whose input shows a value
+  - `onChange(value)`: reports the value, an empty one (`''`, `null` or `undefined`) as `ui:emptyValue`
+  - `onClear(event?)`: empties the field to `ui:emptyValue`, stopping the clear button's click from submitting the form
+    or reaching a label around it
+  - `onFocus()` and `onBlur()`: report the form data. They take no argument, so they can be handed to any control's
+    focus and blur events. A read-only input still reports its focus, a disabled one reports none
+
 ### useCheckboxesWidgetProps&lt;T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = FormContextType>()
 
 Hook which holds what every `CheckboxesWidget` does whatever its UI library: it encodes each option's value as
@@ -3755,6 +3788,25 @@ an app's own select. See [Custom widgets](../advanced-customization/custom-widge
   - `onFocus()` and `onBlur()`: report the form data. They take no argument, so they can be handed to any control's
     focus and blur events
   - `descriptionProps`: the props of the `SelectedOptionDescription` that describes the selected `oneOf`/`anyOf` option
+
+### useTextareaWidgetProps&lt;T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = FormContextType>()
+
+Hook which holds what every `TextareaWidget` does whatever its UI library: it shows the form data as the textarea's
+string, reports an emptied textarea as `ui:emptyValue`, reads `ui:options.rows`, and supplies the textarea's id, name
+and `aria-*` attributes. The change handler reports nothing while the field is disabled or read-only. To be used by
+theme specific `TextareaWidget` implementations, and by an app's own.
+
+#### Parameters
+
+- props: WidgetProps&lt;T, S, F> - The `WidgetProps` for the `TextareaWidget`
+
+#### Returns
+
+- UseTextareaWidgetPropsResult: Everything the textarea needs:
+  - `id`, `name`, `required`, `disabled`, `readOnly`, `autoFocus`, `placeholder`, `value`, `ariaProps`, `onChange`,
+    `onFocus` and `onBlur`, as [`useBaseInputProps()`](#usebaseinputpropst--unknown-s-extends-strictrjsfschema--rjsfschema-f-extends-formcontexttype--formcontexttype)
+    returns them, with no datalist
+  - `rows`: `ui:options.rows` where it is a whole number of rows, otherwise `undefined`
 
 ### useTimeWidgetProps&lt;T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = FormContextType>()
 

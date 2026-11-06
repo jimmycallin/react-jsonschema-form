@@ -524,6 +524,7 @@ https://github.com/rjsf-team/react-jsonschema-form/blob/main/packages/docs/docs/
 - Change `SelectWidget` to report its form data on focus and blur, as every theme's does, rather than the option the browser shows ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
 - Change `CheckboxesWidget` to leave out form data that no option holds when a box is checked or unchecked, as the multiple `SelectWidget` does ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
 - Change `RadioWidget` to log an error when the schema's `default` is none of its options, as `SelectWidget` does ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
+- **BREAKING CHANGE:** Change `BaseInputTemplate` and `TextareaWidget` to report the field's form data on focus and blur, a number for a number field and `ui:emptyValue` for an emptied one, rather than the text the input shows. See [the upgrade guide](https://rjsf-team.github.io/react-jsonschema-form/docs/migration-guides/v7.x%20upgrade%20guide#text-inputs-report-their-form-data-on-focus-and-blur-breaking-change) ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
 
 ## @rjsf/daisyui
 
@@ -1431,6 +1432,7 @@ https://github.com/rjsf-team/react-jsonschema-form/blob/main/packages/docs/docs/
 - Add the `useSelectWidgetProps()` hook, which gives a select control its encoded value, its grouped options, its `aria-*` attributes and handlers that decode a change into form data, for a theme's or an app's own `SelectWidget` ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
 - Add the `useRadioWidgetProps()` and `useCheckboxesWidgetProps()` hooks, which give a radio group or a group of checkboxes its options' encoded values, checked state, ids and focus handlers, its `aria-*` attributes and a decoding `onChange`, for a theme's or an app's own widget ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
 - Add the `useRangeWidgetProps()` hook, which gives a slider its number, its `min`, `max` and `step`, its `aria-*` attributes and an `onChange` that writes the number back as the schema stores it, for a theme's or an app's own `RangeWidget` ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
+- Add the `useBaseInputProps()` and `useTextareaWidgetProps()` hooks, which give a text input or a textarea its value as a string, its attributes, its `aria-*` attributes, its examples list and clear button, and handlers that report `ui:emptyValue` for an emptied input, for a theme's or an app's own `BaseInputTemplate` and `TextareaWidget` ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
 
 ## @rjsf/validator-ajv8
 
