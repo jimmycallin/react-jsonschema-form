@@ -20,13 +20,15 @@ exports[`Complex grid > renders person and address and employment in a complex g
             <div
               class="form-group rjsf-field rjsf-field-object"
             >
-              <legend>
+              <div
+                class="rjsf-title"
+              >
                 <span
                   id="root_person__title"
                 >
                   Person Info
                 </span>
-              </legend>
+              </div>
             </div>
           </div>
         </div>
@@ -1248,13 +1250,15 @@ exports[`Complex grid > renders person and address and employment in a complex g
             <div
               class="form-group rjsf-field rjsf-field-object"
             >
-              <legend>
+              <div
+                class="rjsf-title"
+              >
                 <span
                   id="root_person__title"
                 >
                   Person Info
                 </span>
-              </legend>
+              </div>
             </div>
           </div>
         </div>
@@ -2502,13 +2506,15 @@ exports[`Complex grid > renders person and address and employment in a complex g
             <div
               class="form-group rjsf-field rjsf-field-object"
             >
-              <legend>
+              <div
+                class="rjsf-title"
+              >
                 <span
                   id="root_person__title"
                 >
                   Person Info
                 </span>
-              </legend>
+              </div>
             </div>
           </div>
         </div>
@@ -3358,13 +3364,15 @@ exports[`Complex grid > renders person and address and employment in a complex g
             <div
               class="form-group rjsf-field rjsf-field-object"
             >
-              <legend>
+              <div
+                class="rjsf-title"
+              >
                 <span
                   id="root_person__title"
                 >
                   Person Info
                 </span>
-              </legend>
+              </div>
             </div>
           </div>
         </div>
@@ -4583,13 +4591,15 @@ exports[`Three even column grid > renders person and address in three columns, n
           <div
             class="form-group rjsf-field rjsf-field-object"
           >
-            <legend>
+            <div
+              class="rjsf-title"
+            >
               <span
                 id="root_person__title"
               >
                 Person Info
               </span>
-            </legend>
+            </div>
           </div>
         </div>
         <div
@@ -5276,13 +5286,15 @@ exports[`Two even column grid > renders person and address in two columns, no em
           <div
             class="form-group rjsf-field rjsf-field-object"
           >
-            <legend>
+            <div
+              class="rjsf-title"
+            >
               <span
                 id="root_person__title"
               >
                 Person Info
               </span>
-            </legend>
+            </div>
           </div>
         </div>
         <div

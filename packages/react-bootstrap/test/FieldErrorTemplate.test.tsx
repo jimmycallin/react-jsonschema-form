@@ -16,4 +16,13 @@ describe('FieldErrorTemplate', () => {
     expect(container.querySelectorAll('#root__error')).toHaveLength(count);
     expect(container.querySelectorAll('[id]')).toHaveLength(count);
   });
+
+  it('renders no entry for an empty error', () => {
+    const { container } = render(
+      <FieldErrorTemplate errors={['', 'too short']} id='root' schema={{}} registry={getTestRegistry({})} />,
+    );
+
+    expect(container.querySelectorAll('#root__error > li')).toHaveLength(1);
+    expect(container.querySelector('#root__error')).toHaveTextContent('too short');
+  });
 });

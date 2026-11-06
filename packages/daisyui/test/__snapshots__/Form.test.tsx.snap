@@ -115,9 +115,7 @@ exports[`nameGenerator > bracketNameGenerator > array of objects 1`] = `
           <div
             class="grid grid-cols-1 gap-4 "
           >
-            <div
-              class="mt-2"
-            >
+            <div>
               <div
                 class="flex-grow rjsf-field rjsf-field-array"
               >
@@ -178,9 +176,7 @@ exports[`nameGenerator > bracketNameGenerator > array of objects 1`] = `
                                 <div
                                   class="grid grid-cols-1 gap-4 mb-4"
                                 >
-                                  <div
-                                    class=""
-                                  >
+                                  <div>
                                     <div
                                       class="flex-grow rjsf-field rjsf-field-string"
                                     >
@@ -212,9 +208,7 @@ exports[`nameGenerator > bracketNameGenerator > array of objects 1`] = `
                                       </div>
                                     </div>
                                   </div>
-                                  <div
-                                    class=""
-                                  >
+                                  <div>
                                     <div
                                       class="flex-grow rjsf-field rjsf-field-boolean"
                                     >
@@ -362,9 +356,7 @@ exports[`nameGenerator > bracketNameGenerator > array of objects 1`] = `
                                 <div
                                   class="grid grid-cols-1 gap-4 mb-4"
                                 >
-                                  <div
-                                    class=""
-                                  >
+                                  <div>
                                     <div
                                       class="flex-grow rjsf-field rjsf-field-string"
                                     >
@@ -396,9 +388,7 @@ exports[`nameGenerator > bracketNameGenerator > array of objects 1`] = `
                                       </div>
                                     </div>
                                   </div>
-                                  <div
-                                    class=""
-                                  >
+                                  <div>
                                     <div
                                       class="flex-grow rjsf-field rjsf-field-boolean"
                                     >
@@ -577,9 +567,7 @@ exports[`nameGenerator > bracketNameGenerator > array of strings 1`] = `
           <div
             class="grid grid-cols-1 gap-4 "
           >
-            <div
-              class=""
-            >
+            <div>
               <div
                 class="flex-grow rjsf-field rjsf-field-array"
               >
@@ -908,9 +896,7 @@ exports[`nameGenerator > bracketNameGenerator > checkboxes field 1`] = `
           <div
             class="grid grid-cols-1 gap-4 "
           >
-            <div
-              class=""
-            >
+            <div>
               <div
                 class="flex-grow rjsf-field rjsf-field-array"
               >
@@ -1027,9 +1013,7 @@ exports[`nameGenerator > bracketNameGenerator > nested object 1`] = `
           <div
             class="grid grid-cols-1 gap-4 "
           >
-            <div
-              class=""
-            >
+            <div>
               <div
                 class="flex-grow rjsf-field rjsf-field-object"
               >
@@ -1058,9 +1042,7 @@ exports[`nameGenerator > bracketNameGenerator > nested object 1`] = `
                     <div
                       class="grid grid-cols-1 gap-4 mb-4"
                     >
-                      <div
-                        class=""
-                      >
+                      <div>
                         <div
                           class="flex-grow rjsf-field rjsf-field-string"
                         >
@@ -1092,9 +1074,7 @@ exports[`nameGenerator > bracketNameGenerator > nested object 1`] = `
                           </div>
                         </div>
                       </div>
-                      <div
-                        class=""
-                      >
+                      <div>
                         <div
                           class="flex-grow rjsf-field rjsf-field-string"
                         >
@@ -1126,9 +1106,7 @@ exports[`nameGenerator > bracketNameGenerator > nested object 1`] = `
                           </div>
                         </div>
                       </div>
-                      <div
-                        class=""
-                      >
+                      <div>
                         <div
                           class="flex-grow rjsf-field rjsf-field-object"
                         >
@@ -1157,9 +1135,7 @@ exports[`nameGenerator > bracketNameGenerator > nested object 1`] = `
                               <div
                                 class="grid grid-cols-1 gap-4 mb-4"
                               >
-                                <div
-                                  class=""
-                                >
+                                <div>
                                   <div
                                     class="flex-grow rjsf-field rjsf-field-string"
                                   >
@@ -1191,9 +1167,7 @@ exports[`nameGenerator > bracketNameGenerator > nested object 1`] = `
                                     </div>
                                   </div>
                                 </div>
-                                <div
-                                  class=""
-                                >
+                                <div>
                                   <div
                                     class="flex-grow rjsf-field rjsf-field-string"
                                   >
@@ -1268,9 +1242,7 @@ exports[`nameGenerator > bracketNameGenerator > radio field 1`] = `
           <div
             class="grid grid-cols-1 gap-4 "
           >
-            <div
-              class=""
-            >
+            <div>
               <div
                 class="flex-grow rjsf-field rjsf-field-string"
               >
@@ -1369,9 +1341,7 @@ exports[`nameGenerator > bracketNameGenerator > select field with enum 1`] = `
           <div
             class="grid grid-cols-1 gap-4 "
           >
-            <div
-              class=""
-            >
+            <div>
               <div
                 class="flex-grow rjsf-field rjsf-field-string"
               >
@@ -1510,9 +1480,7 @@ exports[`nameGenerator > bracketNameGenerator > simple fields 1`] = `
           <div
             class="grid grid-cols-1 gap-4 "
           >
-            <div
-              class=""
-            >
+            <div>
               <div
                 class="flex-grow rjsf-field rjsf-field-string"
               >
@@ -1544,9 +1512,7 @@ exports[`nameGenerator > bracketNameGenerator > simple fields 1`] = `
                 </div>
               </div>
             </div>
-            <div
-              class=""
-            >
+            <div>
               <div
                 class="flex-grow rjsf-field rjsf-field-number"
               >
@@ -1581,9 +1547,7 @@ exports[`nameGenerator > bracketNameGenerator > simple fields 1`] = `
                 </div>
               </div>
             </div>
-            <div
-              class=""
-            >
+            <div>
               <div
                 class="flex-grow rjsf-field rjsf-field-boolean"
               >
@@ -1645,9 +1609,7 @@ exports[`nameGenerator > bracketNameGenerator > textarea field 1`] = `
           <div
             class="grid grid-cols-1 gap-4 "
           >
-            <div
-              class=""
-            >
+            <div>
               <div
                 class="flex-grow rjsf-field rjsf-field-string"
               >
@@ -1710,9 +1672,7 @@ exports[`nameGenerator > dotNotationNameGenerator > array of objects 1`] = `
           <div
             class="grid grid-cols-1 gap-4 "
           >
-            <div
-              class="mt-2"
-            >
+            <div>
               <div
                 class="flex-grow rjsf-field rjsf-field-array"
               >
@@ -1773,9 +1733,7 @@ exports[`nameGenerator > dotNotationNameGenerator > array of objects 1`] = `
                                 <div
                                   class="grid grid-cols-1 gap-4 mb-4"
                                 >
-                                  <div
-                                    class=""
-                                  >
+                                  <div>
                                     <div
                                       class="flex-grow rjsf-field rjsf-field-string"
                                     >
@@ -1807,9 +1765,7 @@ exports[`nameGenerator > dotNotationNameGenerator > array of objects 1`] = `
                                       </div>
                                     </div>
                                   </div>
-                                  <div
-                                    class=""
-                                  >
+                                  <div>
                                     <div
                                       class="flex-grow rjsf-field rjsf-field-boolean"
                                     >
@@ -1957,9 +1913,7 @@ exports[`nameGenerator > dotNotationNameGenerator > array of objects 1`] = `
                                 <div
                                   class="grid grid-cols-1 gap-4 mb-4"
                                 >
-                                  <div
-                                    class=""
-                                  >
+                                  <div>
                                     <div
                                       class="flex-grow rjsf-field rjsf-field-string"
                                     >
@@ -1991,9 +1945,7 @@ exports[`nameGenerator > dotNotationNameGenerator > array of objects 1`] = `
                                       </div>
                                     </div>
                                   </div>
-                                  <div
-                                    class=""
-                                  >
+                                  <div>
                                     <div
                                       class="flex-grow rjsf-field rjsf-field-boolean"
                                     >
@@ -2172,9 +2124,7 @@ exports[`nameGenerator > dotNotationNameGenerator > array of strings 1`] = `
           <div
             class="grid grid-cols-1 gap-4 "
           >
-            <div
-              class=""
-            >
+            <div>
               <div
                 class="flex-grow rjsf-field rjsf-field-array"
               >
@@ -2503,9 +2453,7 @@ exports[`nameGenerator > dotNotationNameGenerator > nested object 1`] = `
           <div
             class="grid grid-cols-1 gap-4 "
           >
-            <div
-              class=""
-            >
+            <div>
               <div
                 class="flex-grow rjsf-field rjsf-field-object"
               >
@@ -2534,9 +2482,7 @@ exports[`nameGenerator > dotNotationNameGenerator > nested object 1`] = `
                     <div
                       class="grid grid-cols-1 gap-4 mb-4"
                     >
-                      <div
-                        class=""
-                      >
+                      <div>
                         <div
                           class="flex-grow rjsf-field rjsf-field-string"
                         >
@@ -2568,9 +2514,7 @@ exports[`nameGenerator > dotNotationNameGenerator > nested object 1`] = `
                           </div>
                         </div>
                       </div>
-                      <div
-                        class=""
-                      >
+                      <div>
                         <div
                           class="flex-grow rjsf-field rjsf-field-string"
                         >
@@ -2602,9 +2546,7 @@ exports[`nameGenerator > dotNotationNameGenerator > nested object 1`] = `
                           </div>
                         </div>
                       </div>
-                      <div
-                        class=""
-                      >
+                      <div>
                         <div
                           class="flex-grow rjsf-field rjsf-field-object"
                         >
@@ -2633,9 +2575,7 @@ exports[`nameGenerator > dotNotationNameGenerator > nested object 1`] = `
                               <div
                                 class="grid grid-cols-1 gap-4 mb-4"
                               >
-                                <div
-                                  class=""
-                                >
+                                <div>
                                   <div
                                     class="flex-grow rjsf-field rjsf-field-string"
                                   >
@@ -2667,9 +2607,7 @@ exports[`nameGenerator > dotNotationNameGenerator > nested object 1`] = `
                                     </div>
                                   </div>
                                 </div>
-                                <div
-                                  class=""
-                                >
+                                <div>
                                   <div
                                     class="flex-grow rjsf-field rjsf-field-string"
                                   >
@@ -2744,9 +2682,7 @@ exports[`nameGenerator > dotNotationNameGenerator > select field with enum 1`] =
           <div
             class="grid grid-cols-1 gap-4 "
           >
-            <div
-              class=""
-            >
+            <div>
               <div
                 class="flex-grow rjsf-field rjsf-field-string"
               >
@@ -2885,9 +2821,7 @@ exports[`nameGenerator > dotNotationNameGenerator > simple fields 1`] = `
           <div
             class="grid grid-cols-1 gap-4 "
           >
-            <div
-              class=""
-            >
+            <div>
               <div
                 class="flex-grow rjsf-field rjsf-field-string"
               >
@@ -2919,9 +2853,7 @@ exports[`nameGenerator > dotNotationNameGenerator > simple fields 1`] = `
                 </div>
               </div>
             </div>
-            <div
-              class=""
-            >
+            <div>
               <div
                 class="flex-grow rjsf-field rjsf-field-number"
               >
@@ -2956,9 +2888,7 @@ exports[`nameGenerator > dotNotationNameGenerator > simple fields 1`] = `
                 </div>
               </div>
             </div>
-            <div
-              class=""
-            >
+            <div>
               <div
                 class="flex-grow rjsf-field rjsf-field-boolean"
               >
@@ -3089,9 +3019,7 @@ exports[`select widget from a nested oneOf of constants without a type 1`] = `
           <div
             class="grid grid-cols-1 gap-4 "
           >
-            <div
-              class=""
-            >
+            <div>
               <div
                 class="flex-grow rjsf-field rjsf-field-undefined"
               >
@@ -3886,9 +3814,7 @@ exports[`single fields > Cyclic schema 1`] = `
           <div
             class="grid grid-cols-1 gap-3 "
           >
-            <div
-              class=""
-            >
+            <div>
               <div
                 class="flex-grow rjsf-field rjsf-field-object"
               >
@@ -3923,9 +3849,7 @@ exports[`single fields > Cyclic schema 1`] = `
                     <div
                       class="grid grid-cols-1 gap-3 mb-4"
                     >
-                      <div
-                        class=""
-                      >
+                      <div>
                         <div
                           class="rjsf-cyclic-schema"
                         >
@@ -4558,9 +4482,7 @@ exports[`single fields > field with description 1`] = `
           <div
             class="grid grid-cols-1 gap-4 "
           >
-            <div
-              class=""
-            >
+            <div>
               <div
                 class="flex-grow rjsf-field rjsf-field-string"
               >
@@ -4632,9 +4554,7 @@ exports[`single fields > field with description in uiSchema 1`] = `
           <div
             class="grid grid-cols-1 gap-4 "
           >
-            <div
-              class=""
-            >
+            <div>
               <div
                 class="flex-grow rjsf-field rjsf-field-string"
               >
@@ -4706,9 +4626,7 @@ exports[`single fields > field with markdown description 1`] = `
           <div
             class="grid grid-cols-1 gap-4 "
           >
-            <div
-              class=""
-            >
+            <div>
               <div
                 class="flex-grow rjsf-field rjsf-field-string"
               >
@@ -4786,9 +4704,7 @@ exports[`single fields > field with markdown description in uiSchema 1`] = `
           <div
             class="grid grid-cols-1 gap-4 "
           >
-            <div
-              class=""
-            >
+            <div>
               <div
                 class="flex-grow rjsf-field rjsf-field-string"
               >
@@ -5313,9 +5229,7 @@ exports[`single fields > optional data controls > does not show optional control
           <div
             class="grid grid-cols-1 gap-4 "
           >
-            <div
-              class=""
-            >
+            <div>
               <div
                 class="flex-grow rjsf-field rjsf-field-object"
               >
@@ -5344,9 +5258,7 @@ exports[`single fields > optional data controls > does not show optional control
                     <div
                       class="grid grid-cols-1 gap-4 mb-4"
                     >
-                      <div
-                        class=""
-                      >
+                      <div>
                         <div
                           class="flex-grow rjsf-field rjsf-field-string"
                         >
@@ -5378,9 +5290,7 @@ exports[`single fields > optional data controls > does not show optional control
                           </div>
                         </div>
                       </div>
-                      <div
-                        class=""
-                      >
+                      <div>
                         <div
                           class="flex-grow rjsf-field rjsf-field-object"
                         >
@@ -5409,9 +5319,7 @@ exports[`single fields > optional data controls > does not show optional control
                               <div
                                 class="grid grid-cols-1 gap-4 mb-4"
                               >
-                                <div
-                                  class=""
-                                >
+                                <div>
                                   <div
                                     class="flex-grow rjsf-field rjsf-field-string"
                                   >
@@ -5448,9 +5356,7 @@ exports[`single fields > optional data controls > does not show optional control
                           </div>
                         </div>
                       </div>
-                      <div
-                        class=""
-                      >
+                      <div>
                         <div
                           class="flex-grow rjsf-field rjsf-field-object"
                         >
@@ -5484,9 +5390,7 @@ exports[`single fields > optional data controls > does not show optional control
                               <div
                                 class="grid grid-cols-1 gap-4 mb-4"
                               >
-                                <div
-                                  class=""
-                                >
+                                <div>
                                   <div
                                     class="flex-grow rjsf-field rjsf-field-string"
                                   >
@@ -5523,9 +5427,7 @@ exports[`single fields > optional data controls > does not show optional control
                           </div>
                         </div>
                       </div>
-                      <div
-                        class=""
-                      >
+                      <div>
                         <div
                           class="flex-grow rjsf-field rjsf-field-array"
                         >
@@ -5588,9 +5490,7 @@ exports[`single fields > optional data controls > does not show optional control
                           </div>
                         </div>
                       </div>
-                      <div
-                        class=""
-                      >
+                      <div>
                         <div
                           class="flex-grow rjsf-field rjsf-field-array"
                         >
@@ -5653,9 +5553,7 @@ exports[`single fields > optional data controls > does not show optional control
                           </div>
                         </div>
                       </div>
-                      <div
-                        class=""
-                      >
+                      <div>
                         <div
                           class="flex-grow rjsf-field rjsf-field-array"
                         >
@@ -5728,9 +5626,7 @@ exports[`single fields > optional data controls > does not show optional control
                 </div>
               </div>
             </div>
-            <div
-              class=""
-            >
+            <div>
               <div
                 class="flex-grow rjsf-field rjsf-field-array"
               >
@@ -5793,9 +5689,7 @@ exports[`single fields > optional data controls > does not show optional control
                 </div>
               </div>
             </div>
-            <div
-              class=""
-            >
+            <div>
               <div
                 class="flex-grow rjsf-field rjsf-field-object"
               >
@@ -5829,9 +5723,7 @@ exports[`single fields > optional data controls > does not show optional control
                     <div
                       class="grid grid-cols-1 gap-4 mb-4"
                     >
-                      <div
-                        class=""
-                      >
+                      <div>
                         <div
                           class="flex-grow rjsf-field rjsf-field-string"
                         >
@@ -5868,9 +5760,7 @@ exports[`single fields > optional data controls > does not show optional control
                 </div>
               </div>
             </div>
-            <div
-              class=""
-            >
+            <div>
               <div
                 class="flex-grow rjsf-field rjsf-field-array"
               >
@@ -5938,9 +5828,7 @@ exports[`single fields > optional data controls > does not show optional control
                 </div>
               </div>
             </div>
-            <div
-              class=""
-            >
+            <div>
               <div
                 class="flex-grow rjsf-field rjsf-field-undefined"
               >
@@ -6061,9 +5949,7 @@ exports[`single fields > optional data controls > does not show optional control
                           <div
                             class="grid grid-cols-1 gap-4 mb-4"
                           >
-                            <div
-                              class=""
-                            >
+                            <div>
                               <div
                                 class="flex-grow rjsf-field rjsf-field-string"
                               >
@@ -6104,9 +5990,7 @@ exports[`single fields > optional data controls > does not show optional control
                 </div>
               </div>
             </div>
-            <div
-              class=""
-            >
+            <div>
               <div
                 class="flex-grow rjsf-field rjsf-field-undefined"
               >
@@ -6320,9 +6204,7 @@ exports[`single fields > optional data controls > does not show optional control
           <div
             class="grid grid-cols-1 gap-4 "
           >
-            <div
-              class=""
-            >
+            <div>
               <div
                 class="flex-grow rjsf-field rjsf-field-object"
               >
@@ -6351,9 +6233,7 @@ exports[`single fields > optional data controls > does not show optional control
                     <div
                       class="grid grid-cols-1 gap-4 mb-4"
                     >
-                      <div
-                        class=""
-                      >
+                      <div>
                         <div
                           class="flex-grow rjsf-field rjsf-field-string"
                         >
@@ -6386,9 +6266,7 @@ exports[`single fields > optional data controls > does not show optional control
                           </div>
                         </div>
                       </div>
-                      <div
-                        class=""
-                      >
+                      <div>
                         <div
                           class="flex-grow rjsf-field rjsf-field-object"
                         >
@@ -6417,9 +6295,7 @@ exports[`single fields > optional data controls > does not show optional control
                               <div
                                 class="grid grid-cols-1 gap-4 mb-4"
                               >
-                                <div
-                                  class=""
-                                >
+                                <div>
                                   <div
                                     class="flex-grow rjsf-field rjsf-field-string"
                                   >
@@ -6457,9 +6333,7 @@ exports[`single fields > optional data controls > does not show optional control
                           </div>
                         </div>
                       </div>
-                      <div
-                        class=""
-                      >
+                      <div>
                         <div
                           class="flex-grow rjsf-field rjsf-field-object"
                         >
@@ -6493,9 +6367,7 @@ exports[`single fields > optional data controls > does not show optional control
                               <div
                                 class="grid grid-cols-1 gap-4 mb-4"
                               >
-                                <div
-                                  class=""
-                                >
+                                <div>
                                   <div
                                     class="flex-grow rjsf-field rjsf-field-string"
                                   >
@@ -6533,9 +6405,7 @@ exports[`single fields > optional data controls > does not show optional control
                           </div>
                         </div>
                       </div>
-                      <div
-                        class=""
-                      >
+                      <div>
                         <div
                           class="flex-grow rjsf-field rjsf-field-array"
                         >
@@ -6599,9 +6469,7 @@ exports[`single fields > optional data controls > does not show optional control
                           </div>
                         </div>
                       </div>
-                      <div
-                        class=""
-                      >
+                      <div>
                         <div
                           class="flex-grow rjsf-field rjsf-field-array"
                         >
@@ -6665,9 +6533,7 @@ exports[`single fields > optional data controls > does not show optional control
                           </div>
                         </div>
                       </div>
-                      <div
-                        class=""
-                      >
+                      <div>
                         <div
                           class="flex-grow rjsf-field rjsf-field-array"
                         >
@@ -6741,9 +6607,7 @@ exports[`single fields > optional data controls > does not show optional control
                 </div>
               </div>
             </div>
-            <div
-              class=""
-            >
+            <div>
               <div
                 class="flex-grow rjsf-field rjsf-field-array"
               >
@@ -6807,9 +6671,7 @@ exports[`single fields > optional data controls > does not show optional control
                 </div>
               </div>
             </div>
-            <div
-              class=""
-            >
+            <div>
               <div
                 class="flex-grow rjsf-field rjsf-field-object"
               >
@@ -6843,9 +6705,7 @@ exports[`single fields > optional data controls > does not show optional control
                     <div
                       class="grid grid-cols-1 gap-4 mb-4"
                     >
-                      <div
-                        class=""
-                      >
+                      <div>
                         <div
                           class="flex-grow rjsf-field rjsf-field-string"
                         >
@@ -6883,9 +6743,7 @@ exports[`single fields > optional data controls > does not show optional control
                 </div>
               </div>
             </div>
-            <div
-              class=""
-            >
+            <div>
               <div
                 class="flex-grow rjsf-field rjsf-field-array"
               >
@@ -6954,9 +6812,7 @@ exports[`single fields > optional data controls > does not show optional control
                 </div>
               </div>
             </div>
-            <div
-              class=""
-            >
+            <div>
               <div
                 class="flex-grow rjsf-field rjsf-field-undefined"
               >
@@ -7081,9 +6937,7 @@ exports[`single fields > optional data controls > does not show optional control
                           <div
                             class="grid grid-cols-1 gap-4 mb-4"
                           >
-                            <div
-                              class=""
-                            >
+                            <div>
                               <div
                                 class="flex-grow rjsf-field rjsf-field-string"
                               >
@@ -7124,9 +6978,7 @@ exports[`single fields > optional data controls > does not show optional control
                 </div>
               </div>
             </div>
-            <div
-              class=""
-            >
+            <div>
               <div
                 class="flex-grow rjsf-field rjsf-field-undefined"
               >
@@ -7345,9 +7197,7 @@ exports[`single fields > optional data controls > shows "add" and "remove" optio
           <div
             class="grid grid-cols-1 gap-4 "
           >
-            <div
-              class=""
-            >
+            <div>
               <div
                 class="flex-grow rjsf-field rjsf-field-object"
               >
@@ -7411,9 +7261,7 @@ exports[`single fields > optional data controls > shows "add" and "remove" optio
                     <div
                       class="grid grid-cols-1 gap-4 mb-4"
                     >
-                      <div
-                        class=""
-                      >
+                      <div>
                         <div
                           class="flex-grow rjsf-field rjsf-field-string"
                         >
@@ -7445,9 +7293,7 @@ exports[`single fields > optional data controls > shows "add" and "remove" optio
                           </div>
                         </div>
                       </div>
-                      <div
-                        class=""
-                      >
+                      <div>
                         <div
                           class="flex-grow rjsf-field rjsf-field-object"
                         >
@@ -7515,9 +7361,7 @@ exports[`single fields > optional data controls > shows "add" and "remove" optio
                           </div>
                         </div>
                       </div>
-                      <div
-                        class=""
-                      >
+                      <div>
                         <div
                           class="flex-grow rjsf-field rjsf-field-object"
                         >
@@ -7551,9 +7395,7 @@ exports[`single fields > optional data controls > shows "add" and "remove" optio
                               <div
                                 class="grid grid-cols-1 gap-4 mb-4"
                               >
-                                <div
-                                  class=""
-                                >
+                                <div>
                                   <div
                                     class="flex-grow rjsf-field rjsf-field-string"
                                   >
@@ -7590,9 +7432,7 @@ exports[`single fields > optional data controls > shows "add" and "remove" optio
                           </div>
                         </div>
                       </div>
-                      <div
-                        class=""
-                      >
+                      <div>
                         <div
                           class="flex-grow rjsf-field rjsf-field-array"
                         >
@@ -7655,9 +7495,7 @@ exports[`single fields > optional data controls > shows "add" and "remove" optio
                           </div>
                         </div>
                       </div>
-                      <div
-                        class=""
-                      >
+                      <div>
                         <div
                           class="flex-grow rjsf-field rjsf-field-array"
                         >
@@ -7718,9 +7556,7 @@ exports[`single fields > optional data controls > shows "add" and "remove" optio
                           </div>
                         </div>
                       </div>
-                      <div
-                        class=""
-                      >
+                      <div>
                         <div
                           class="flex-grow rjsf-field rjsf-field-array"
                         >
@@ -7793,9 +7629,7 @@ exports[`single fields > optional data controls > shows "add" and "remove" optio
                 </div>
               </div>
             </div>
-            <div
-              class=""
-            >
+            <div>
               <div
                 class="flex-grow rjsf-field rjsf-field-array"
               >
@@ -7952,9 +7786,7 @@ exports[`single fields > optional data controls > shows "add" and "remove" optio
                 </div>
               </div>
             </div>
-            <div
-              class=""
-            >
+            <div>
               <div
                 class="flex-grow rjsf-field rjsf-field-object"
               >
@@ -7988,9 +7820,7 @@ exports[`single fields > optional data controls > shows "add" and "remove" optio
                     <div
                       class="grid grid-cols-1 gap-4 mb-4"
                     >
-                      <div
-                        class=""
-                      >
+                      <div>
                         <div
                           class="flex-grow rjsf-field rjsf-field-string"
                         >
@@ -8027,9 +7857,7 @@ exports[`single fields > optional data controls > shows "add" and "remove" optio
                 </div>
               </div>
             </div>
-            <div
-              class=""
-            >
+            <div>
               <div
                 class="flex-grow rjsf-field rjsf-field-array"
               >
@@ -8097,9 +7925,7 @@ exports[`single fields > optional data controls > shows "add" and "remove" optio
                 </div>
               </div>
             </div>
-            <div
-              class=""
-            >
+            <div>
               <div
                 class="flex-grow rjsf-field rjsf-field-undefined"
               >
@@ -8179,9 +8005,7 @@ exports[`single fields > optional data controls > shows "add" and "remove" optio
                 </div>
               </div>
             </div>
-            <div
-              class=""
-            >
+            <div>
               <div
                 class="flex-grow rjsf-field rjsf-field-undefined"
               >
@@ -8303,9 +8127,7 @@ exports[`single fields > optional data controls > shows "add" and "remove" optio
           <div
             class="grid grid-cols-1 gap-4 "
           >
-            <div
-              class=""
-            >
+            <div>
               <div
                 class="flex-grow rjsf-field rjsf-field-object"
               >
@@ -8334,9 +8156,7 @@ exports[`single fields > optional data controls > shows "add" and "remove" optio
                     <div
                       class="grid grid-cols-1 gap-4 mb-4"
                     >
-                      <div
-                        class=""
-                      >
+                      <div>
                         <div
                           class="flex-grow rjsf-field rjsf-field-string"
                         >
@@ -8369,9 +8189,7 @@ exports[`single fields > optional data controls > shows "add" and "remove" optio
                           </div>
                         </div>
                       </div>
-                      <div
-                        class=""
-                      >
+                      <div>
                         <div
                           class="flex-grow rjsf-field rjsf-field-object"
                         >
@@ -8410,9 +8228,7 @@ exports[`single fields > optional data controls > shows "add" and "remove" optio
                           </div>
                         </div>
                       </div>
-                      <div
-                        class=""
-                      >
+                      <div>
                         <div
                           class="flex-grow rjsf-field rjsf-field-object"
                         >
@@ -8446,9 +8262,7 @@ exports[`single fields > optional data controls > shows "add" and "remove" optio
                               <div
                                 class="grid grid-cols-1 gap-4 mb-4"
                               >
-                                <div
-                                  class=""
-                                >
+                                <div>
                                   <div
                                     class="flex-grow rjsf-field rjsf-field-string"
                                   >
@@ -8486,9 +8300,7 @@ exports[`single fields > optional data controls > shows "add" and "remove" optio
                           </div>
                         </div>
                       </div>
-                      <div
-                        class=""
-                      >
+                      <div>
                         <div
                           class="flex-grow rjsf-field rjsf-field-array"
                         >
@@ -8552,9 +8364,7 @@ exports[`single fields > optional data controls > shows "add" and "remove" optio
                           </div>
                         </div>
                       </div>
-                      <div
-                        class=""
-                      >
+                      <div>
                         <div
                           class="flex-grow rjsf-field rjsf-field-array"
                         >
@@ -8589,9 +8399,7 @@ exports[`single fields > optional data controls > shows "add" and "remove" optio
                           </div>
                         </div>
                       </div>
-                      <div
-                        class=""
-                      >
+                      <div>
                         <div
                           class="flex-grow rjsf-field rjsf-field-array"
                         >
@@ -8665,9 +8473,7 @@ exports[`single fields > optional data controls > shows "add" and "remove" optio
                 </div>
               </div>
             </div>
-            <div
-              class=""
-            >
+            <div>
               <div
                 class="flex-grow rjsf-field rjsf-field-array"
               >
@@ -8796,9 +8602,7 @@ exports[`single fields > optional data controls > shows "add" and "remove" optio
                 </div>
               </div>
             </div>
-            <div
-              class=""
-            >
+            <div>
               <div
                 class="flex-grow rjsf-field rjsf-field-object"
               >
@@ -8832,9 +8636,7 @@ exports[`single fields > optional data controls > shows "add" and "remove" optio
                     <div
                       class="grid grid-cols-1 gap-4 mb-4"
                     >
-                      <div
-                        class=""
-                      >
+                      <div>
                         <div
                           class="flex-grow rjsf-field rjsf-field-string"
                         >
@@ -8872,9 +8674,7 @@ exports[`single fields > optional data controls > shows "add" and "remove" optio
                 </div>
               </div>
             </div>
-            <div
-              class=""
-            >
+            <div>
               <div
                 class="flex-grow rjsf-field rjsf-field-array"
               >
@@ -8943,9 +8743,7 @@ exports[`single fields > optional data controls > shows "add" and "remove" optio
                 </div>
               </div>
             </div>
-            <div
-              class=""
-            >
+            <div>
               <div
                 class="flex-grow rjsf-field rjsf-field-undefined"
               >
@@ -8996,9 +8794,7 @@ exports[`single fields > optional data controls > shows "add" and "remove" optio
                 </div>
               </div>
             </div>
-            <div
-              class=""
-            >
+            <div>
               <div
                 class="flex-grow rjsf-field rjsf-field-undefined"
               >
@@ -9094,9 +8890,7 @@ exports[`single fields > optional data controls > shows "add" optional controls 
           <div
             class="grid grid-cols-1 gap-4 "
           >
-            <div
-              class=""
-            >
+            <div>
               <div
                 class="flex-grow rjsf-field rjsf-field-object"
               >
@@ -9164,9 +8958,7 @@ exports[`single fields > optional data controls > shows "add" optional controls 
                 </div>
               </div>
             </div>
-            <div
-              class=""
-            >
+            <div>
               <div
                 class="flex-grow rjsf-field rjsf-field-array"
               >
@@ -9227,9 +9019,7 @@ exports[`single fields > optional data controls > shows "add" optional controls 
                 </div>
               </div>
             </div>
-            <div
-              class=""
-            >
+            <div>
               <div
                 class="flex-grow rjsf-field rjsf-field-object"
               >
@@ -9263,9 +9053,7 @@ exports[`single fields > optional data controls > shows "add" optional controls 
                     <div
                       class="grid grid-cols-1 gap-4 mb-4"
                     >
-                      <div
-                        class=""
-                      >
+                      <div>
                         <div
                           class="flex-grow rjsf-field rjsf-field-string"
                         >
@@ -9302,9 +9090,7 @@ exports[`single fields > optional data controls > shows "add" optional controls 
                 </div>
               </div>
             </div>
-            <div
-              class=""
-            >
+            <div>
               <div
                 class="flex-grow rjsf-field rjsf-field-array"
               >
@@ -9372,9 +9158,7 @@ exports[`single fields > optional data controls > shows "add" optional controls 
                 </div>
               </div>
             </div>
-            <div
-              class=""
-            >
+            <div>
               <div
                 class="flex-grow rjsf-field rjsf-field-undefined"
               >
@@ -9454,9 +9238,7 @@ exports[`single fields > optional data controls > shows "add" optional controls 
                 </div>
               </div>
             </div>
-            <div
-              class=""
-            >
+            <div>
               <div
                 class="flex-grow rjsf-field rjsf-field-undefined"
               >
@@ -9579,9 +9361,7 @@ exports[`single fields > optional data controls > shows "add" optional controls 
           <div
             class="grid grid-cols-1 gap-4 "
           >
-            <div
-              class=""
-            >
+            <div>
               <div
                 class="flex-grow rjsf-field rjsf-field-object"
               >
@@ -9621,9 +9401,7 @@ exports[`single fields > optional data controls > shows "add" optional controls 
                 </div>
               </div>
             </div>
-            <div
-              class=""
-            >
+            <div>
               <div
                 class="flex-grow rjsf-field rjsf-field-array"
               >
@@ -9659,9 +9437,7 @@ exports[`single fields > optional data controls > shows "add" optional controls 
                 </div>
               </div>
             </div>
-            <div
-              class=""
-            >
+            <div>
               <div
                 class="flex-grow rjsf-field rjsf-field-object"
               >
@@ -9696,9 +9472,7 @@ exports[`single fields > optional data controls > shows "add" optional controls 
                     <div
                       class="grid grid-cols-1 gap-4 mb-4"
                     >
-                      <div
-                        class=""
-                      >
+                      <div>
                         <div
                           class="flex-grow rjsf-field rjsf-field-string"
                         >
@@ -9737,9 +9511,7 @@ exports[`single fields > optional data controls > shows "add" optional controls 
                 </div>
               </div>
             </div>
-            <div
-              class=""
-            >
+            <div>
               <div
                 class="flex-grow rjsf-field rjsf-field-array"
               >
@@ -9809,9 +9581,7 @@ exports[`single fields > optional data controls > shows "add" optional controls 
                 </div>
               </div>
             </div>
-            <div
-              class=""
-            >
+            <div>
               <div
                 class="flex-grow rjsf-field rjsf-field-undefined"
               >
@@ -9864,9 +9634,7 @@ exports[`single fields > optional data controls > shows "add" optional controls 
                 </div>
               </div>
             </div>
-            <div
-              class=""
-            >
+            <div>
               <div
                 class="flex-grow rjsf-field rjsf-field-undefined"
               >
@@ -10139,9 +9907,7 @@ exports[`single fields > required checkbox field 1`] = `
           <div
             class="grid grid-cols-1 gap-4 "
           >
-            <div
-              class=""
-            >
+            <div>
               <div
                 class="flex-grow rjsf-field rjsf-field-boolean"
               >
@@ -10203,9 +9969,7 @@ exports[`single fields > required checkbox field, default true 1`] = `
           <div
             class="grid grid-cols-1 gap-4 "
           >
-            <div
-              class=""
-            >
+            <div>
               <div
                 class="flex-grow rjsf-field rjsf-field-boolean"
               >
@@ -12905,9 +12669,7 @@ exports[`single fields > title field 1`] = `
           <div
             class="grid grid-cols-1 gap-4 "
           >
-            <div
-              class=""
-            >
+            <div>
               <div
                 class="flex-grow rjsf-field rjsf-field-string"
               >
@@ -13108,9 +12870,7 @@ exports[`titled select widget from oneOf boolean constants without a type 1`] = 
           <div
             class="grid grid-cols-1 gap-4 "
           >
-            <div
-              class=""
-            >
+            <div>
               <div
                 class="flex-grow rjsf-field rjsf-field-boolean"
               >
