@@ -119,14 +119,16 @@ const strippedOptionNames = new Set<string>([
  */
 export function errorLines(errors: readonly ReactNode[]): ReactNode {
   return errors.length
-    ? errors.map((error, index) => (
-        // oxlint-disable-next-line react/no-array-index-key
-        <Fragment key={index}>
-          {index > 0 && ' '}
-          {index > 0 && <br />}
-          {error}
-        </Fragment>
-      ))
+    ? errors
+        .filter((error) => !!error)
+        .map((error, index) => (
+          // oxlint-disable-next-line react/no-array-index-key
+          <Fragment key={index}>
+            {index > 0 && ' '}
+            {index > 0 && <br />}
+            {error}
+          </Fragment>
+        ))
     : undefined;
 }
 

@@ -78,6 +78,7 @@ https://github.com/rjsf-team/react-jsonschema-form/blob/main/packages/docs/docs/
 - Add the `AntdFormContext` type, the `formContext` options the antd theme reads ([#5686](https://github.com/rjsf-team/react-jsonschema-form/pull/5686))
 - Fix `RangeWidget` for an Ajv `$data` reference in `minimum`, `maximum` or `multipleOf`, which set the range's bound or step to the object and now leaves it at its default, and read a numeric-string bound such as `minimum: '5'` as its number ([#5688](https://github.com/rjsf-team/react-jsonschema-form/pull/5688))
 - **BREAKING CHANGE:** Change `WrapIfAdditionalTemplate` to read `ADDITIONAL_PROPERTY_FLAG` by its truth rather than its presence, so a schema with it set to `undefined` or `false` renders as a plain field, with no key input or remove button. See [the upgrade guide](https://rjsf-team.github.io/react-jsonschema-form/docs/migration-guides/v7.x%20upgrade%20guide#additional_property_flag-counts-only-when-set-to-a-truthy-value-breaking-change) ([#5689](https://github.com/rjsf-team/react-jsonschema-form/pull/5689))
+- Fix `FieldErrorTemplate` rendering an empty entry for an empty error, which `@rjsf/core`'s leaves out ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
 
 ## @rjsf/bootstrap3
 
@@ -165,6 +166,7 @@ https://github.com/rjsf-team/react-jsonschema-form/blob/main/packages/docs/docs/
 - **BREAKING CHANGE:** Change `AltDateWidget` to show the default years for a `yearsRange` reaching before 100, such as `[50, 2030]`, where it offered that range and wrote a year before 100 as 19xx. See [the upgrade guide](https://rjsf-team.github.io/react-jsonschema-form/docs/migration-guides/v7.x%20upgrade%20guide#altdatewidget-uses-the-default-years-for-a-yearsrange-reaching-before-100-breaking-change) ([#5685](https://github.com/rjsf-team/react-jsonschema-form/pull/5685))
 - Fix `RangeWidget` for an Ajv `$data` reference in `minimum`, `maximum` or `multipleOf`, which set the range's bound or step to the object and now leaves it at its default, and read a numeric-string bound such as `minimum: '5'` as its number ([#5688](https://github.com/rjsf-team/react-jsonschema-form/pull/5688))
 - **BREAKING CHANGE:** Change `WrapIfAdditionalTemplate` to read `ADDITIONAL_PROPERTY_FLAG` by its truth rather than its presence, so a schema with it set to `undefined` or `false` renders as a plain field, with no key input or remove button. See [the upgrade guide](https://rjsf-team.github.io/react-jsonschema-form/docs/migration-guides/v7.x%20upgrade%20guide#additional_property_flag-counts-only-when-set-to-a-truthy-value-breaking-change) ([#5689](https://github.com/rjsf-team/react-jsonschema-form/pull/5689))
+- Fix `FieldErrorTemplate` rendering an empty entry for an empty error, which `@rjsf/core`'s leaves out ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
 
 ## @rjsf/core
 
@@ -710,6 +712,7 @@ https://github.com/rjsf-team/react-jsonschema-form/blob/main/packages/docs/docs/
 - Fix `WrapIfAdditionalTemplate` leaving the key input and the remove button enabled for a property it is handed no rename or remove callback for, such as the root ([#5684](https://github.com/rjsf-team/react-jsonschema-form/pull/5684))
 - Fix `RangeWidget` for an Ajv `$data` reference in `minimum`, `maximum` or `multipleOf`, which set the range's bound or step to the object and now leaves it at its default, and read a numeric-string bound such as `minimum: '5'` as its number ([#5688](https://github.com/rjsf-team/react-jsonschema-form/pull/5688))
 - **BREAKING CHANGE:** Change `WrapIfAdditionalTemplate` to read `ADDITIONAL_PROPERTY_FLAG` by its truth rather than its presence, so a schema with it set to `undefined` or `false` renders as a plain field, with no key input or remove button. See [the upgrade guide](https://rjsf-team.github.io/react-jsonschema-form/docs/migration-guides/v7.x%20upgrade%20guide#additional_property_flag-counts-only-when-set-to-a-truthy-value-breaking-change) ([#5689](https://github.com/rjsf-team/react-jsonschema-form/pull/5689))
+- Fix `FieldErrorTemplate` rendering an empty entry for an empty error, which `@rjsf/core`'s leaves out ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
 
 ## @rjsf/mantine
 
@@ -806,6 +809,7 @@ https://github.com/rjsf-team/react-jsonschema-form/blob/main/packages/docs/docs/
 - Fix `RangeWidget` for an Ajv `$data` reference in `minimum`, `maximum` or `multipleOf`, which set the range's bound or step to the object and now leaves it at its default, and read a numeric-string bound such as `minimum: '5'` as its number ([#5688](https://github.com/rjsf-team/react-jsonschema-form/pull/5688))
 - **BREAKING CHANGE:** Change `WrapIfAdditionalTemplate` to read `ADDITIONAL_PROPERTY_FLAG` by its truth rather than its presence, so a schema with it set to `undefined` or `false` renders as a plain field, with no key input or remove button. See [the upgrade guide](https://rjsf-team.github.io/react-jsonschema-form/docs/migration-guides/v7.x%20upgrade%20guide#additional_property_flag-counts-only-when-set-to-a-truthy-value-breaking-change) ([#5689](https://github.com/rjsf-team/react-jsonschema-form/pull/5689))
 - Fix a `ui:options` value of the wrong shape reaching Mantine, which now leaves it out: a `thumbProps` that isn't an object and a `thumbLabel` that isn't a string, at the top level or in `thumbProps`, on `RangeWidget`, and, on every widget, an `inputContainer` that isn't a function and an `inputWrapperOrder` that isn't an array, at the top level or in `wrapperProps`, which threw ([#5696](https://github.com/rjsf-team/react-jsonschema-form/pull/5696))
+- Fix `FieldErrorTemplate` and the errors a widget draws rendering an empty line for an empty error, which `@rjsf/core`'s leave out ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
 
 ## @rjsf/mui
 
@@ -873,6 +877,7 @@ https://github.com/rjsf-team/react-jsonschema-form/blob/main/packages/docs/docs/
 - Fix a `mui` option that isn't an object landing on the control as attributes named `0`, `1`, `2` ([#5696](https://github.com/rjsf-team/react-jsonschema-form/pull/5696))
 - Fix `FieldTemplate` dropping the `sx` and `className` of `rjsfSlotProps.fieldFormControl`: when the root option sets them too, the two `sx` are now merged, the root's winning a clash, and the two class names joined, where the root's replaced the slot's ([#5696](https://github.com/rjsf-team/react-jsonschema-form/pull/5696))
 - Fix `BaseInputTemplate` passing a `rjsfSlotProps` option to the `TextField`, whose DOM logged a React warning for it ([#5696](https://github.com/rjsf-team/react-jsonschema-form/pull/5696))
+- Fix `FieldErrorTemplate` rendering an empty entry for an empty error, which `@rjsf/core`'s leaves out ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
 
 ## @rjsf/react-bootstrap
 
@@ -933,6 +938,7 @@ https://github.com/rjsf-team/react-jsonschema-form/blob/main/packages/docs/docs/
 - Fix `BaseInputTemplate` putting `Form.Control`'s own props in `extraProps`, such as `isValid` or `htmlSize`, on the `<input>` of a range ([#5684](https://github.com/rjsf-team/react-jsonschema-form/pull/5684))
 - Fix `RangeWidget` for an Ajv `$data` reference in `minimum`, `maximum` or `multipleOf`, which set the range's bound or step to the object and now leaves it at its default, and read a numeric-string bound such as `minimum: '5'` as its number ([#5688](https://github.com/rjsf-team/react-jsonschema-form/pull/5688))
 - **BREAKING CHANGE:** Change `WrapIfAdditionalTemplate` to read `ADDITIONAL_PROPERTY_FLAG` by its truth rather than its presence, so a schema with it set to `undefined` or `false` renders as a plain field, with no key input or remove button. See [the upgrade guide](https://rjsf-team.github.io/react-jsonschema-form/docs/migration-guides/v7.x%20upgrade%20guide#additional_property_flag-counts-only-when-set-to-a-truthy-value-breaking-change) ([#5689](https://github.com/rjsf-team/react-jsonschema-form/pull/5689))
+- Fix `FieldErrorTemplate` rendering an empty entry for an empty error, which `@rjsf/core`'s leaves out ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
 
 ## @rjsf/shadcn
 

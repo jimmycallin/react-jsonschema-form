@@ -33,7 +33,9 @@ describe('FieldErrorTemplate', () => {
       <FieldErrorTemplate errors={errors} id='root' schema={{}} registry={getTestRegistry({})} />,
     );
 
-    expect(container.querySelectorAll('#root__error > div')).toHaveLength(errors.length);
+    // The `null` entry renders nothing, as an empty error does
+    expect(container.querySelectorAll('#root__error > div')).toHaveLength(2);
+    expect(container.querySelector('#root__error')).toHaveTextContent('a3');
   });
 
   // A control is described by the id only while the errors show, so the element must exist then and only then
@@ -47,5 +49,14 @@ describe('FieldErrorTemplate', () => {
 
     expect(container.querySelectorAll('#root__error')).toHaveLength(count);
     expect(container.childElementCount).toBe(count);
+  });
+
+  it('renders no entry for an empty error', () => {
+    const { container } = render(
+      <FieldErrorTemplate errors={['', 'too short']} id='root' schema={{}} registry={getTestRegistry({})} />,
+    );
+
+    expect(container.querySelectorAll('#root__error > div')).toHaveLength(1);
+    expect(container.querySelector('#root__error')).toHaveTextContent('too short');
   });
 });
