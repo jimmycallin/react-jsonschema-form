@@ -515,8 +515,8 @@ describe('SelectWidget', () => {
     };
 
     // 'C' and 'D' are grouped, so they lead the flattened option list while 'A' and 'B' trail it. Selecting across
-    // that boundary must still report the values in the order they were picked: `optgroups` is presentational and
-    // must not reach the array written to formData.
+    // that boundary must still report the values in enum order: `optgroups` is presentational and must not reach the
+    // array written to formData.
     const { unmount } = render(<Controlled optgroups={{ G: ['c', 'd'] }} />);
     await pick('A');
     await pick('C');
@@ -531,7 +531,7 @@ describe('SelectWidget', () => {
     await pick('B');
     const ungrouped = seen.at(-1);
 
-    expect(ungrouped).toEqual(['a', 'c', 'b']);
+    expect(ungrouped).toEqual(['a', 'b', 'c']);
     expect(grouped).toEqual(ungrouped);
   });
 });

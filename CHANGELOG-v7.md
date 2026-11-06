@@ -78,6 +78,7 @@ https://github.com/rjsf-team/react-jsonschema-form/blob/main/packages/docs/docs/
 - Add the `AntdFormContext` type, the `formContext` options the antd theme reads ([#5686](https://github.com/rjsf-team/react-jsonschema-form/pull/5686))
 - Fix `RangeWidget` for an Ajv `$data` reference in `minimum`, `maximum` or `multipleOf`, which set the range's bound or step to the object and now leaves it at its default, and read a numeric-string bound such as `minimum: '5'` as its number ([#5688](https://github.com/rjsf-team/react-jsonschema-form/pull/5688))
 - **BREAKING CHANGE:** Change `WrapIfAdditionalTemplate` to read `ADDITIONAL_PROPERTY_FLAG` by its truth rather than its presence, so a schema with it set to `undefined` or `false` renders as a plain field, with no key input or remove button. See [the upgrade guide](https://rjsf-team.github.io/react-jsonschema-form/docs/migration-guides/v7.x%20upgrade%20guide#additional_property_flag-counts-only-when-set-to-a-truthy-value-breaking-change) ([#5689](https://github.com/rjsf-team/react-jsonschema-form/pull/5689))
+- Fix `SelectWidget` showing form data that no option holds, or a `ui:emptyValue`, as raw text instead of its placeholder ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
 
 ## @rjsf/bootstrap3
 
@@ -514,6 +515,7 @@ https://github.com/rjsf-team/react-jsonschema-form/blob/main/packages/docs/docs/
 - Fix a `LayoutGridField` cell or `ui:condition` crashing the form on a value the types don't allow, such as a `null`, `''`, `undefined`, `false` or number cell, or a `field` that isn't a string or number ([#5696](https://github.com/rjsf-team/react-jsonschema-form/pull/5696))
 - **BREAKING CHANGE:** Change the values of the exported `GridProps` and of an object `LayoutGridSchemaType` from `any` to `unknown`. See [the upgrade guide](https://rjsf-team.github.io/react-jsonschema-form/docs/migration-guides/v7.x%20upgrade%20guide#any-members-of-the-public-types-are-specific-types-breaking-change) ([#5696](https://github.com/rjsf-team/react-jsonschema-form/pull/5696))
 - **BREAKING CHANGE:** Change a `LayoutGridField` with no `ui:layoutGrid` object, such as one missing or misspelled, a cell that names no field and whose `render` doesn't resolve, such as `{ name: '' }`, and a `ui:condition` with no `field` to render nothing and log a warning, where they rendered every field of the schema again, or a `none` condition's children. See [the upgrade guide](https://rjsf-team.github.io/react-jsonschema-form/docs/migration-guides/v7.x%20upgrade%20guide#a-layoutgridfield-with-no-layout-or-a-cell-or-condition-naming-no-field-renders-nothing-breaking-change) ([#5696](https://github.com/rjsf-team/react-jsonschema-form/pull/5696))
+- Change `SelectWidget` to report its form data on focus and blur, as every theme's does, rather than the option the browser shows ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
 
 ## @rjsf/daisyui
 
@@ -1032,6 +1034,7 @@ https://github.com/rjsf-team/react-jsonschema-form/blob/main/packages/docs/docs/
 - Fix `BaseInputTemplate` replacing its `className` and error border with a `className` in `extraProps`: it now keeps all three ([#5684](https://github.com/rjsf-team/react-jsonschema-form/pull/5684))
 - Fix `RangeWidget` for an Ajv `$data` reference in `minimum`, `maximum` or `multipleOf`, which set the range's bound or step to the object and now leaves it at its default, and read a numeric-string bound such as `minimum: '5'` as its number ([#5688](https://github.com/rjsf-team/react-jsonschema-form/pull/5688))
 - **BREAKING CHANGE:** Change `WrapIfAdditionalTemplate` to read `ADDITIONAL_PROPERTY_FLAG` by its truth rather than its presence, so a schema with it set to `undefined` or `false` renders as a plain field, with no key input or remove button. See [the upgrade guide](https://rjsf-team.github.io/react-jsonschema-form/docs/migration-guides/v7.x%20upgrade%20guide#additional_property_flag-counts-only-when-set-to-a-truthy-value-breaking-change) ([#5689](https://github.com/rjsf-team/react-jsonschema-form/pull/5689))
+- **BREAKING CHANGE:** Change the multiple `SelectWidget` to report its selection in the order the options are listed, as `@rjsf/core`'s does, rather than in the order they were picked. See [the upgrade guide](https://rjsf-team.github.io/react-jsonschema-form/docs/migration-guides/v7.x%20upgrade%20guide#rjsfshadcns-multiple-selectwidget-reports-its-selection-in-enum-order-breaking-change) ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
 
 ## @rjsf/snapshot-tests
 
@@ -1402,6 +1405,7 @@ https://github.com/rjsf-team/react-jsonschema-form/blob/main/packages/docs/docs/
 - **BREAKING CHANGE:** Change `GenericObjectType` from `Record<string, any>` to `Record<string, unknown>`, so a value read from one, such as one `isObject()` narrows, needs narrowing. See [the upgrade guide](https://rjsf-team.github.io/react-jsonschema-form/docs/migration-guides/v7.x%20upgrade%20guide#any-members-of-the-public-types-are-specific-types-breaking-change) ([#5696](https://github.com/rjsf-team/react-jsonschema-form/pull/5696))
 - **BREAKING CHANGE:** Change `mergeObjects()` and `mergeSchemas()` to take any objects and return `GenericObjectType`. See [the upgrade guide](https://rjsf-team.github.io/react-jsonschema-form/docs/migration-guides/v7.x%20upgrade%20guide#any-members-of-the-public-types-are-specific-types-breaking-change) ([#5696](https://github.com/rjsf-team/react-jsonschema-form/pull/5696))
 - **BREAKING CHANGE:** Remove `GenericSymbolObjectType`, which nothing uses. See [the upgrade guide](https://rjsf-team.github.io/react-jsonschema-form/docs/migration-guides/v7.x%20upgrade%20guide#any-members-of-the-public-types-are-specific-types-breaking-change) ([#5696](https://github.com/rjsf-team/react-jsonschema-form/pull/5696))
+- Add the `useSelectWidgetProps()` hook, which gives a select control its encoded value, its grouped options, its `aria-*` attributes and handlers that decode a change into form data, for a theme's or an app's own `SelectWidget` ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
 
 ## @rjsf/validator-ajv8
 

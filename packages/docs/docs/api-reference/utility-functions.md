@@ -3733,6 +3733,35 @@ decoded empty selection. To be used by theme specific `SelectWidget` implementat
 
 - UseSelectFocusHandlersResult: The `handleFocus` and `handleBlur` callbacks that report the widget's form data value
 
+### useSelectWidgetProps&lt;T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = FormContextType>()
+
+Hook which holds what every `SelectWidget` does whatever its UI library: it encodes the value as `ui:optionValueFormat`
+asks, groups the options by `ui:options.optgroups` and disables the `ui:enumDisabled` ones, decodes a change back into
+form data with `ui:emptyValue`, and supplies the control's id, name and `aria-*` attributes. The handlers report
+nothing while the field is disabled or read-only. To be used by theme specific `SelectWidget` implementations, and by
+an app's own select. See [Custom widgets](../advanced-customization/custom-widgets-fields.md#building-a-select-on-useselectwidgetprops).
+
+#### Parameters
+
+- props: WidgetProps&lt;T, S, F> - The `WidgetProps` for the `SelectWidget`
+
+#### Returns
+
+- UseSelectWidgetPropsResult&lt;T, S, F>: Everything the select control needs:
+  - `id`, `name`, `required`, `disabled` (`true` for a disabled or read-only field), `autoFocus` and `placeholder`
+  - `showPlaceholderOption`: whether a single select offers an empty choice, which it does when the schema has no
+    `default`
+  - `multiple` and `value`: the encoded value of the selected option, or `''`, or with `multiple`, the encoded values
+    of the selected options in enum order. `value` only ever holds values the options carry
+  - `options`: every option in enum order, as `{ value, label, disabled, index }`, `value` being its encoded value
+  - `groupedOptions`: the options as drawn, a group being `{ label, options }`
+  - `ariaProps`: the control's `aria-*` attributes
+  - `onChange(value)`: decodes the encoded value or values the control selected into form data, putting a multiple
+    selection into enum order. `null` or `undefined` is an empty selection
+  - `onFocus()` and `onBlur()`: report the form data. They take no argument, so they can be handed to any control's
+    focus and blur events
+  - `descriptionProps`: the props of the `SelectedOptionDescription` that describes the selected `oneOf`/`anyOf` option
+
 ### useTimeWidgetProps&lt;T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = FormContextType>()
 
 Hook which encapsulates the logic needed to compute the local (offset-free) display value of a `time` widget, and to

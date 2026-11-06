@@ -225,6 +225,13 @@ import type { UseOptionFocusHandlersResult } from './useOptionFocusHandlers.ts';
 import useOptionFocusHandlers from './useOptionFocusHandlers.ts';
 import type { UseSelectFocusHandlersResult } from './useSelectFocusHandlers.ts';
 import useSelectFocusHandlers from './useSelectFocusHandlers.ts';
+import type {
+  SelectWidgetOption,
+  SelectWidgetOptionGroup,
+  SelectWidgetValue,
+  UseSelectWidgetPropsResult,
+} from './useSelectWidgetProps.ts';
+import useSelectWidgetProps from './useSelectWidgetProps.ts';
 import type { UseTimeWidgetPropsResult } from './useTimeWidgetProps.ts';
 import useTimeWidgetProps from './useTimeWidgetProps.ts';
 import utcToLocal from './utcToLocal.ts';
@@ -259,10 +266,14 @@ export type {
   PresentationSubject,
   SchemaFlagMarker,
   SelectedOptionDescriptionProps,
+  SelectWidgetOption,
+  SelectWidgetOptionGroup,
+  SelectWidgetValue,
   UseAltDateWidgetResult,
   UseFileWidgetPropsResult,
   UseOptionFocusHandlersResult,
   UseSelectFocusHandlersResult,
+  UseSelectWidgetPropsResult,
   UseTimeWidgetPropsResult,
   // oxlint-disable-next-line typescript/no-deprecated -- deprecated, and kept exported through v7
   VisibleErrorsProps,
@@ -493,6 +504,7 @@ export {
   useFileWidgetProps,
   useOptionFocusHandlers,
   useSelectFocusHandlers,
+  useSelectWidgetProps,
   useTimeWidgetProps,
   utcToLocal,
   validationDataMerge,

@@ -1,21 +1,7 @@
-import { useCallback, useMemo } from 'react';
 import type { ComboboxParsedItem, OptionsFilter } from '@mantine/core';
 import { defaultOptionsFilter, MultiSelect, Select } from '@mantine/core';
-import type { FormContextType, IndexedEnumOptionType, RJSFSchema, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
-import {
-  enumOptionSelectedValue,
-  enumOptionValueDecoder,
-  enumOptionsDomValues,
-  getOptionValueFormat,
-  groupEnumOptions,
-  isEnumOptionsGroup,
-  labelValue,
-  logUnsupportedDefaultForEnum,
-  SelectedOptionDescription,
-  useSelectFocusHandlers,
-  widgetAriaProps,
-  widgetDrawsLabel,
-} from '@rjsf/utils';
+import type { FormContextType, RJSFSchema, SelectWidgetOption, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
+import { labelValue, SelectedOptionDescription, useSelectWidgetProps, widgetAriaProps } from '@rjsf/utils';
 
 import { cleanupOptions, getDescriptionProps, getWidgetError, useInputAriaProps } from '../utils.tsx';
 
@@ -35,81 +21,42 @@ export default function SelectWidget<
   S extends StrictRJSFSchema = RJSFSchema,
   F extends FormContextType = FormContextType,
 >(props: WidgetProps<T, S, F>) {
-  const {
-    id,
-    htmlName,
-    value,
-    placeholder,
-    required,
-    disabled,
-    readonly,
-    autofocus,
-    label,
-    multiple,
-    schema,
-    options,
-    onChange,
-  } = props;
-  const hideLabel = !widgetDrawsLabel<T, S, F>(props);
-
-  const { enumOptions, enumDisabled, emptyValue, optgroups } = options;
-  const optionValueFormat = getOptionValueFormat(options);
-  const domValues = useMemo(
-    () => enumOptionsDomValues<S>(enumOptions, optionValueFormat),
-    [enumOptions, optionValueFormat],
-  );
+  const { label, options } = props;
+  const select = useSelectWidgetProps<T, S, F>(props);
   const themeProps = cleanupOptions(options, props);
-  logUnsupportedDefaultForEnum<S>(id, schema, enumOptions, multiple);
 
-  const handleChange = useCallback(
-    (nextValue: string | string[] | null) => {
-      if (!disabled && !readonly && onChange) {
-        // `Select` reports a cleared value as `null`, which decodes as the empty string does
-        onChange(enumOptionValueDecoder<S>(nextValue ?? '', enumOptions, optionValueFormat, emptyValue));
-      }
-    },
-    [onChange, disabled, readonly, enumOptions, emptyValue, optionValueFormat],
+  const toComboboxItem = ({ index, value, label: itemLabel, disabled }: SelectWidgetOption) => ({
+    key: String(index),
+    value,
+    label: itemLabel,
+    disabled,
+  });
+  const data = select.groupedOptions.map((item) =>
+    'options' in item ? { group: item.label, items: item.options.map(toComboboxItem) } : toComboboxItem(item),
   );
-
-  // The focused element is the search input, whose value is the selected option's label rather than an encoded option
-  // value
-  const { handleFocus, handleBlur } = useSelectFocusHandlers<T, S, F>(props);
-
-  const selectOptions = useMemo(() => {
-    const toComboboxItem = (option: IndexedEnumOptionType<S>) => ({
-      key: String(option.index),
-      value: domValues[option.index],
-      label: option.label,
-      disabled: option.disabled,
-    });
-    return groupEnumOptions<S>(enumOptions, optgroups, enumDisabled).map((item) =>
-      isEnumOptionsGroup<S>(item)
-        ? { group: item.label, items: item.options.map(toComboboxItem) }
-        : toComboboxItem(item),
-    );
-  }, [enumDisabled, enumOptions, optgroups, domValues]);
 
   // Mantine describes the input through its `InputWrapper` context rather than by an `aria-describedby` prop. An
   // `aria-label` in the options, spread onto the select as Mantine's own prop, names it as its caller's would
   const optionsAriaLabel = typeof options['aria-label'] === 'string' ? options['aria-label'] : undefined;
   const ariaDescribedByProps = useInputAriaProps<T, S, F>(
-    multiple ? 'MultiSelect' : 'Select',
+    select.multiple ? 'MultiSelect' : 'Select',
     props,
     widgetAriaProps<T, S, F>({ ...props, 'aria-label': props['aria-label'] || optionsAriaLabel }),
   );
 
+  // The focused element is the search input, whose value is the selected option's label rather than an encoded option
+  // value, so the focus handlers report the form data
   const sharedProps = {
-    id,
-    name: htmlName || id,
-    label: labelValue(label || undefined, hideLabel, false),
-    data: selectOptions,
-    onChange: !readonly ? handleChange : undefined,
-    onBlur: !readonly ? handleBlur : undefined,
-    onFocus: !readonly ? handleFocus : undefined,
-    autoFocus: autofocus,
-    placeholder,
-    disabled: disabled || readonly,
-    required,
+    id: select.id,
+    name: select.name,
+    label: labelValue(label || undefined, select.descriptionProps.hideLabel, false),
+    data,
+    onBlur: select.onBlur,
+    onFocus: select.onFocus,
+    autoFocus: select.autoFocus,
+    placeholder: select.placeholder,
+    disabled: select.disabled,
+    required: select.required,
     error: getWidgetError<T, S, F>(props),
     searchable: true,
     filter: optionsFilter,
@@ -121,23 +68,26 @@ export default function SelectWidget<
 
   return (
     <>
-      <SelectedOptionDescription {...props} />
-      {multiple ? (
+      <SelectedOptionDescription {...select.descriptionProps} />
+      {select.multiple ? (
         <MultiSelect
           {...sharedProps}
           // Its search input, the element a user focuses, takes no `required`, which goes to the hidden input holding
           // the values, so it says it as a native select's attribute would
-          aria-required={required || undefined}
-          value={enumOptionSelectedValue(value, enumOptions, true, optionValueFormat, [])}
+          aria-required={select.required || undefined}
+          value={select.value}
+          onChange={select.onChange}
         />
       ) : (
         <Select
           // A select whose schema has a default offers no empty choice, as the other themes' leave out their placeholder
           // option, so the option selector of an `anyOf`/`oneOf` field holds an option unless the field's `ui:options`
           // set `allowDeselect` or `clearable`
-          allowDeselect={schema.default === undefined}
+          allowDeselect={select.showPlaceholderOption}
           {...sharedProps}
-          value={enumOptionSelectedValue(value, enumOptions, false, optionValueFormat, null)}
+          // Mantine holds no selection as `null`, and reports a cleared one as `null` too
+          value={select.value || null}
+          onChange={select.onChange}
         />
       )}
     </>
