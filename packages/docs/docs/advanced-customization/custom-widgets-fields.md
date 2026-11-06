@@ -314,6 +314,48 @@ function MySelectWidget(props: WidgetProps) {
 }
 ```
 
+### Building a select on `useSelectWidgetProps`
+
+To render selects with your own design system's component, build the widget on [`useSelectWidgetProps()`](../api-reference/utility-functions.md#useselectwidgetpropst--unknown-s-extends-strictrjsfschema--rjsfschema-f-extends-formcontexttype--formcontexttype) from `@rjsf/utils`.
+The hook does everything that doesn't depend on the component, as every theme's `SelectWidget` does: it encodes the value for `ui:optionValueFormat`, groups the options by `ui:options.optgroups`, disables the `ui:enumDisabled` ones, and decodes a change back into form data with `ui:emptyValue`.
+What is left is passing its result to your component:
+
+```tsx
+import type { WidgetProps } from '@rjsf/utils';
+import { SelectedOptionDescription, useSelectWidgetProps } from '@rjsf/utils';
+
+import { Select } from './my-design-system';
+
+function MySelectWidget(props: WidgetProps) {
+  const select = useSelectWidgetProps(props);
+  return (
+    <>
+      <SelectedOptionDescription {...select.descriptionProps} />
+      <Select
+        id={select.id}
+        name={select.name}
+        multiple={select.multiple}
+        value={select.value}
+        options={select.options}
+        required={select.required}
+        disabled={select.disabled}
+        autoFocus={select.autoFocus}
+        placeholder={select.placeholder}
+        onValueChange={select.onChange}
+        onFocus={select.onFocus}
+        onBlur={select.onBlur}
+        {...select.ariaProps}
+      />
+    </>
+  );
+}
+```
+
+Each option's `value` is its encoded value: a string that no other option shares, which your component selects it by.
+`value` holds the selected option's encoded value, `''` when none is selected, or with `multiple`, an array of them, and `onChange` takes the same.
+To draw `ui:options.optgroups`, render `select.groupedOptions` instead of `select.options`, where an item with `options` is a group.
+Register the widget as `SelectWidget` in the `widgets` prop to use it for every select.
+
 ## Custom field components
 
 You can provide your own field components to a uiSchema for basically any json schema data type, by specifying a `ui:field` property.
