@@ -228,6 +228,8 @@ import type { UseOptionFocusHandlersResult } from './useOptionFocusHandlers.ts';
 import useOptionFocusHandlers from './useOptionFocusHandlers.ts';
 import type { UseRadioWidgetPropsResult } from './useRadioWidgetProps.ts';
 import useRadioWidgetProps from './useRadioWidgetProps.ts';
+import type { UseRangeWidgetPropsResult } from './useRangeWidgetProps.ts';
+import useRangeWidgetProps from './useRangeWidgetProps.ts';
 import type { UseSelectFocusHandlersResult } from './useSelectFocusHandlers.ts';
 import useSelectFocusHandlers from './useSelectFocusHandlers.ts';
 import type {
@@ -283,6 +285,7 @@ export type {
   UseFileWidgetPropsResult,
   UseOptionFocusHandlersResult,
   UseRadioWidgetPropsResult,
+  UseRangeWidgetPropsResult,
   UseSelectFocusHandlersResult,
   UseSelectWidgetPropsResult,
   UseTimeWidgetPropsResult,
@@ -516,6 +519,7 @@ export {
   useFileWidgetProps,
   useOptionFocusHandlers,
   useRadioWidgetProps,
+  useRangeWidgetProps,
   useSelectFocusHandlers,
   useSelectWidgetProps,
   useTimeWidgetProps,
