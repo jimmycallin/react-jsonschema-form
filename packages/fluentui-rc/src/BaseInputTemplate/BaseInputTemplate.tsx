@@ -1,19 +1,8 @@
-import type { ChangeEvent, FocusEvent, MouseEvent } from 'react';
-import { useCallback } from 'react';
 import type { InputProps } from '@fluentui/react-components';
 import { Input, Label, makeStyles } from '@fluentui/react-components';
 import { SchemaExamples } from '@rjsf/core';
 import type { BaseInputTemplateProps, FormContextType, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
-import {
-  examplesId,
-  getControlAttributes,
-  getExampleSuggestions,
-  getBaseInputProps,
-  labelValue,
-  offersClearButton,
-  toInputValue,
-  widgetDrawsLabelText,
-} from '@rjsf/utils';
+import { labelValue, useBaseInputProps, widgetDrawsLabelText } from '@rjsf/utils';
 
 const useStyles = makeStyles({
   input: {
@@ -37,78 +26,42 @@ export default function BaseInputTemplate<
   S extends StrictRJSFSchema = RJSFSchema,
   F extends FormContextType = FormContextType,
 >(props: BaseInputTemplateProps<T, S, F>) {
-  const {
-    id,
-    htmlName,
-    placeholder,
-    required,
-    readonly,
-    disabled,
-    value,
-    label,
-    onChange,
-    onChangeOverride,
-    onBlur,
-    onFocus,
-    autofocus,
-    options,
-    schema,
-    registry,
-    presentation,
-  } = props;
+  const { label, onChangeOverride, schema, registry } = props;
   // A label holding only a required field's `*` would name the input "star", so one is drawn only with text
   const hideLabel = !widgetDrawsLabelText<T, S, F>(props);
   const { ClearButton } = registry.templates.ButtonTemplates;
   const classes = useStyles();
-  const { title, ...inputProps } = getBaseInputProps<T, S, F>(props);
-  // Now we need to pull out the step, min, max into an inner `inputProps` for fluentui-rc
-  const handleChange = ({ target: { value: newValue } }: ChangeEvent<HTMLInputElement>) =>
-    onChange(newValue === '' ? options.emptyValue : newValue);
-  const handleBlur = ({ target }: FocusEvent<HTMLInputElement>) => onBlur(id, target?.value);
-  const handleFocus = ({ target }: FocusEvent<HTMLInputElement>) => onFocus(id, target?.value);
-  const handleClear = useCallback(
-    (e: MouseEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      onChange(options.emptyValue);
-    },
-    [onChange, options.emptyValue],
-  );
-  const inputValue = toInputValue(value);
-  const exampleSuggestions = getExampleSuggestions<S>(schema);
-  const hasExamples = exampleSuggestions.length > 0;
+  const input = useBaseInputProps<T, S, F>(props);
   return (
     <>
       {labelValue(
-        <Label htmlFor={id} required={required} disabled={disabled} className={classes.label}>
+        <Label htmlFor={input.id} required={input.required} disabled={input.disabled} className={classes.label}>
           {label}
         </Label>,
         hideLabel,
       )}
       <Input
-        id={id}
-        name={htmlName || id}
-        placeholder={placeholder}
-        autoFocus={autofocus}
-        required={required}
-        disabled={disabled || readonly}
-        title={title}
-        {...(inputProps as InputProps)}
+        id={input.id}
+        name={input.name}
+        placeholder={input.placeholder}
+        autoFocus={input.autoFocus}
+        required={input.required}
+        disabled={input.disabled || input.readOnly}
+        title={input.title}
+        {...(input.inputProps as InputProps)}
         input={{
           className: classes.input,
           // Due to Fluent UI this does not work correctly
-          list: hasExamples ? examplesId(id) : undefined,
+          list: input.listId,
         }}
-        value={String(inputValue)}
-        onChange={onChangeOverride ?? handleChange}
-        onFocus={handleFocus}
-        onBlur={handleBlur}
-        {...getControlAttributes<T, S, F>({ id, presentation }, hasExamples ? [examplesId(id)] : [])}
+        value={String(input.value)}
+        onChange={onChangeOverride ?? ((event) => input.onChange(event.target.value))}
+        onFocus={input.onFocus}
+        onBlur={input.onBlur}
+        {...input.ariaProps}
       />
-      {options.allowClearTextInputs && !readonly && !disabled && offersClearButton(inputValue, inputProps.type) && (
-        <ClearButton registry={registry} onClick={handleClear} />
-      )}
-      <SchemaExamples id={id} schema={schema} suggestions={exampleSuggestions} />
+      {input.showClearButton && <ClearButton registry={registry} onClick={input.onClear} />}
+      <SchemaExamples id={input.id} schema={schema} suggestions={input.exampleSuggestions} />
     </>
   );
 }

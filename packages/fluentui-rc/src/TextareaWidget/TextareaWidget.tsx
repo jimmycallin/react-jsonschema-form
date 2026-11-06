@@ -1,7 +1,7 @@
-import type { ChangeEvent, FocusEvent } from 'react';
+import type { ChangeEvent } from 'react';
 import { Label, Textarea, makeStyles } from '@fluentui/react-components';
 import type { FormContextType, RJSFSchema, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
-import { getControlAttributes, labelValue, toInputValue, widgetDrawsLabelText } from '@rjsf/utils';
+import { labelValue, useTextareaWidgetProps, widgetDrawsLabelText } from '@rjsf/utils';
 
 const useStyles = makeStyles({
   label: {
@@ -25,57 +25,38 @@ export default function TextareaWidget<
     onChangeOverride?: (event: ChangeEvent<HTMLTextAreaElement>) => void;
   },
 ) {
-  const {
-    id,
-    htmlName,
-    placeholder,
-    required,
-    readonly,
-    disabled,
-    value,
-    label,
-    onChange,
-    onChangeOverride,
-    onBlur,
-    onFocus,
-    autofocus,
-    options,
-    presentation,
-  } = props;
+  const { label, onChangeOverride } = props;
   // A label holding only a required field's `*` would name the textarea "star", so one is drawn only with text
   const hideLabel = !widgetDrawsLabelText<T, S, F>(props);
   const classes = useStyles();
-  const handleChange = ({ target: { value: newValue } }: ChangeEvent<HTMLTextAreaElement>) =>
-    onChange(newValue === '' ? options.emptyValue : newValue);
-  const handleBlur = ({ target }: FocusEvent<HTMLTextAreaElement>) => onBlur(id, target?.value);
-  const handleFocus = ({ target }: FocusEvent<HTMLTextAreaElement>) => onFocus(id, target?.value);
-
-  let rows: string | number = 5;
-  if (typeof options.rows === 'string' || typeof options.rows === 'number') {
-    rows = options.rows;
-  }
+  const textarea = useTextareaWidgetProps<T, S, F>(props);
 
   return (
     <>
       {labelValue(
-        <Label htmlFor={id} required={required} disabled={disabled} className={classes.label}>
+        <Label
+          htmlFor={textarea.id}
+          required={textarea.required}
+          disabled={textarea.disabled}
+          className={classes.label}
+        >
           {label}
         </Label>,
         hideLabel,
       )}
       <Textarea
-        id={id}
-        name={htmlName || id}
-        placeholder={placeholder}
-        autoFocus={autofocus}
-        required={required}
-        disabled={disabled || readonly}
-        value={String(toInputValue(value))}
-        onChange={onChangeOverride ?? handleChange}
-        onFocus={handleFocus}
-        onBlur={handleBlur}
-        {...getControlAttributes<T, S, F>({ id, presentation })}
-        rows={rows}
+        id={textarea.id}
+        name={textarea.name}
+        placeholder={textarea.placeholder}
+        autoFocus={textarea.autoFocus}
+        required={textarea.required}
+        disabled={textarea.disabled || textarea.readOnly}
+        value={textarea.value}
+        onChange={onChangeOverride ?? ((event) => textarea.onChange(event.target.value))}
+        onFocus={textarea.onFocus}
+        onBlur={textarea.onBlur}
+        {...textarea.ariaProps}
+        rows={textarea.rows ?? 5}
       />
     </>
   );
