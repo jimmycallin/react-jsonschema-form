@@ -176,7 +176,7 @@ describe('useSelectWidgetProps()', () => {
       const { onChange, onFocus, onBlur } = render(props);
       onChange('1');
       onFocus();
-      onBlur('1');
+      onBlur();
       expect(props.onChange).not.toHaveBeenCalled();
       expect(props.onFocus).not.toHaveBeenCalled();
       expect(props.onBlur).not.toHaveBeenCalled();
@@ -184,16 +184,7 @@ describe('useSelectWidgetProps()', () => {
   });
 
   describe('onFocus and onBlur', () => {
-    it('report the given encoded value, decoded', () => {
-      const props = makeProps({ value: 'r' });
-      const { onFocus, onBlur } = render(props);
-      onFocus('2');
-      onBlur('1');
-      expect(props.onFocus).toHaveBeenCalledWith('root', 'b');
-      expect(props.onBlur).toHaveBeenCalledWith('root', 'g');
-    });
-
-    it('report the form data when given no value', () => {
+    it('report the form data', () => {
       const props = makeProps({ value: 'r' });
       const { onFocus, onBlur } = render(props);
       onFocus();
@@ -202,7 +193,7 @@ describe('useSelectWidgetProps()', () => {
       expect(props.onBlur).toHaveBeenCalledWith('root', 'r');
     });
 
-    it('report ui:emptyValue when given no value and nothing is selected', () => {
+    it('report ui:emptyValue when nothing is selected', () => {
       const props = makeProps({ options: { enumOptions, emptyValue: 'none' } });
       const { onFocus, onBlur } = render(props);
       onFocus();

@@ -83,12 +83,10 @@ export type UseSelectWidgetPropsResult<
    * value is an empty selection
    */
   onChange: (value: string | string[] | null | undefined) => void;
-  /** Reports the field's value to `onFocus`: the encoded value or values given, decoded, or with none given, the form
-   * data, for a control whose focused element holds no option value of its own
-   */
-  onFocus: (value?: string | string[]) => void;
-  /** Reports the field's value to `onBlur`, as `onFocus` does */
-  onBlur: (value?: string | string[]) => void;
+  /** Reports the form data to `onFocus`. It takes no argument, so it can be handed to any control's focus event */
+  onFocus: () => void;
+  /** Reports the form data to `onBlur`. It takes no argument, so it can be handed to any control's blur event */
+  onBlur: () => void;
   /** The props of the `SelectedOptionDescription` that describes the selected `oneOf`/`anyOf` option */
   descriptionProps: SelectedOptionDescriptionProps<T, S, F>;
 };
@@ -151,46 +149,34 @@ export default function useSelectWidgetProps<
     };
   }, [enumOptions, optgroups, enumDisabled, optionValueFormat]);
 
-  const decode = useCallback(
+  const handleChange = useCallback(
     (selected: string | string[] | null | undefined) => {
+      if (inactive) {
+        return;
+      }
       const encoded = selected ?? (multiple ? [] : '');
       // A control may report a multiple selection in the order its options are drawn, or picked, while `optgroups` is
       // presentational, so the selection is put back into enum order: grouping options must not reorder the array a
       // form submits. A value no option holds goes last
       const position = (item: string) => indexByValue.get(item) ?? indexByValue.size;
       const ordered = Array.isArray(encoded) ? [...encoded].sort((a, b) => position(a) - position(b)) : encoded;
-      return enumOptionValueDecoder<S>(ordered, enumOptions, optionValueFormat, emptyValue);
+      onChange(enumOptionValueDecoder<S>(ordered, enumOptions, optionValueFormat, emptyValue));
     },
-    [multiple, enumOptions, optionValueFormat, emptyValue, indexByValue],
-  );
-
-  const handleChange = useCallback(
-    (selected: string | string[] | null | undefined) => {
-      if (!inactive) {
-        onChange(decode(selected));
-      }
-    },
-    [inactive, onChange, decode],
+    [inactive, multiple, indexByValue, onChange, enumOptions, optionValueFormat, emptyValue],
   );
 
   const formValue = value === undefined ? emptyValue : value;
   // Guarded although `WidgetProps` requires both, since a custom field composing a theme's widget may leave them out
-  const handleFocus = useCallback(
-    (selected?: string | string[]) => {
-      if (!inactive) {
-        onFocus?.(id, selected === undefined ? formValue : decode(selected));
-      }
-    },
-    [inactive, onFocus, id, formValue, decode],
-  );
-  const handleBlur = useCallback(
-    (selected?: string | string[]) => {
-      if (!inactive) {
-        onBlur?.(id, selected === undefined ? formValue : decode(selected));
-      }
-    },
-    [inactive, onBlur, id, formValue, decode],
-  );
+  const handleFocus = useCallback(() => {
+    if (!inactive) {
+      onFocus?.(id, formValue);
+    }
+  }, [inactive, onFocus, id, formValue]);
+  const handleBlur = useCallback(() => {
+    if (!inactive) {
+      onBlur?.(id, formValue);
+    }
+  }, [inactive, onBlur, id, formValue]);
 
   logUnsupportedDefaultForEnum<S>(id, schema, enumOptions, multiple);
 

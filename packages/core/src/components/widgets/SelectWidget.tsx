@@ -1,8 +1,8 @@
-import type { SyntheticEvent } from 'react';
+import type { ChangeEvent } from 'react';
 import type { FormContextType, RJSFSchema, SelectWidgetOption, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
 import { SelectedOptionDescription, useSelectWidgetProps } from '@rjsf/utils';
 
-function getValue(event: SyntheticEvent<HTMLSelectElement>, multiple: boolean) {
+function getValue(event: ChangeEvent<HTMLSelectElement>, multiple: boolean) {
   const select = event.currentTarget;
   return multiple ? Array.from(select.selectedOptions, (option) => option.value) : select.value;
 }
@@ -40,8 +40,8 @@ function SelectWidget<
         required={select.required}
         disabled={select.disabled}
         autoFocus={select.autoFocus}
-        onBlur={(event) => select.onBlur(getValue(event, multiple))}
-        onFocus={(event) => select.onFocus(getValue(event, multiple))}
+        onBlur={select.onBlur}
+        onFocus={select.onFocus}
         onChange={(event) => select.onChange(getValue(event, multiple))}
         {...select.ariaProps}
       >
