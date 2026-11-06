@@ -23,9 +23,12 @@ const wrapper = MantineProvider;
 
 describe('OptionalDataControlsTemplate', () => {
   it("renders the registry's AddButton", () => {
-    render(<OptionalDataControlsTemplate id='root' label='Add data' registry={registry} onAddClick={() => {}} />, {
-      wrapper,
-    });
+    render(
+      <OptionalDataControlsTemplate id='root' schema={{}} label='Add data' registry={registry} onAddClick={() => {}} />,
+      {
+        wrapper,
+      },
+    );
 
     expect(screen.getByRole('button')).toHaveTextContent('custom add: Add data');
     expect(screen.getByRole('button')).toHaveClass('rjsf-add-optional-data');
@@ -33,7 +36,13 @@ describe('OptionalDataControlsTemplate', () => {
 
   it("renders the registry's RemoveButton", () => {
     render(
-      <OptionalDataControlsTemplate id='root' label='Remove data' registry={registry} onRemoveClick={() => {}} />,
+      <OptionalDataControlsTemplate
+        id='root'
+        schema={{}}
+        label='Remove data'
+        registry={registry}
+        onRemoveClick={() => {}}
+      />,
       { wrapper },
     );
 

@@ -12,7 +12,15 @@ describe('OptionalDataControlsTemplate', () => {
   it("renders the registry's RemoveButton", () => {
     const registry = getTestRegistry({}, {}, { ButtonTemplates: { RemoveButton: CustomRemoveButton } });
 
-    render(<OptionalDataControlsTemplate id='root' label='Remove data' registry={registry} onRemoveClick={() => {}} />);
+    render(
+      <OptionalDataControlsTemplate
+        id='root'
+        schema={{}}
+        label='Remove data'
+        registry={registry}
+        onRemoveClick={() => {}}
+      />,
+    );
 
     expect(screen.getByRole('button')).toHaveTextContent('custom remove: Remove data');
     expect(screen.getByRole('button')).toHaveClass('rjsf-remove-optional-data');
