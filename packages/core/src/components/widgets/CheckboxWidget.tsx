@@ -1,16 +1,12 @@
-import type { ChangeEvent, FocusEvent } from 'react';
-import { useCallback } from 'react';
 import type { FormContextType, RJSFSchema, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
 import {
   fieldShowsOwnErrors,
-  getControlAttributes,
   getTemplates,
-  labelValue,
-  schemaRequiresTrueValue,
   getUiOptions,
   getWidgetDescription,
   joinClassNames,
-  widgetDrawsLabel,
+  labelValue,
+  useCheckboxWidgetProps,
 } from '@rjsf/utils';
 
 /** The `CheckBoxWidget` is a widget for rendering boolean properties.
@@ -23,58 +19,21 @@ function CheckboxWidget<
   S extends StrictRJSFSchema = RJSFSchema,
   F extends FormContextType = FormContextType,
 >(props: WidgetProps<T, S, F>) {
-  const {
-    schema,
-    uiSchema,
-    options,
-    id,
-    value,
-    disabled,
-    readonly,
-    label,
-    autofocus = false,
-    onBlur,
-    onFocus,
-    onChange,
-    registry,
-    htmlName,
-    required,
-    presentation,
-  } = props;
+  const { schema, uiSchema, options, label, registry, presentation } = props;
+  const checkbox = useCheckboxWidgetProps<T, S, F>(props);
   const { DescriptionFieldTemplate } = getTemplates<T, S, F>(registry, options);
   const { classMap } = registry;
   // The field's own error state, as its wrapper has it, rather than its control's, which is invalid while a field above
   // shows its errors even where this one hides them
   const hasErrors = fieldShowsOwnErrors<T, S, F>(props);
-  // Because an unchecked checkbox will cause html5 validation to fail, only add
-  // the "required" attribute if the field value must be "true", due to the
-  // "const" or "enum" keywords
-  const trueValueRequired = schemaRequiresTrueValue<S>(schema) && required;
-
-  const handleChange = useCallback(
-    (event: ChangeEvent<HTMLInputElement>) => onChange(event.target.checked),
-    [onChange],
-  );
-
-  const handleBlur = useCallback(
-    (event: FocusEvent<HTMLInputElement>) => onBlur(id, event.target.checked),
-    [onBlur, id],
-  );
-
-  const handleFocus = useCallback(
-    (event: FocusEvent<HTMLInputElement>) => onFocus(id, event.target.checked),
-    [onFocus, id],
-  );
-
-  // The plan says whether the label and description are this widget's to draw, so a checkbox under a label above names
-  // none of its own; without a plan, a template rendering the `checkbox` alias draws the description itself
-  const showsLabel = widgetDrawsLabel<T, S, F>(props);
+  // The plan says whether the description is this widget's to draw; without a plan, a template rendering the
+  // `checkbox` alias draws it itself
   const description =
     presentation || getUiOptions(uiSchema).widget !== 'checkbox' ? getWidgetDescription<T, S, F>(props) : undefined;
   return (
     <div
-      className={joinClassNames('rjsf-checkbox', classMap.checkboxWrapper, (disabled || readonly) && classMap.disabled)}
-      data-disabled={disabled || readonly || undefined}
+      className={joinClassNames('rjsf-checkbox', classMap.checkboxWrapper, checkbox.disabled && classMap.disabled)}
+      data-disabled={checkbox.disabled || undefined}
     >
       {description && (
         <DescriptionFieldTemplate
@@ -90,23 +49,23 @@ function CheckboxWidget<
         <input
           type='checkbox'
           className={classMap.checkboxInput}
-          id={id}
-          name={htmlName || id}
-          checked={Boolean(value)}
-          required={trueValueRequired}
-          disabled={disabled || readonly}
-          autoFocus={autofocus}
-          onChange={handleChange}
-          onBlur={handleBlur}
-          onFocus={handleFocus}
-          {...getControlAttributes<T, S, F>({ id, presentation })}
+          id={checkbox.id}
+          name={checkbox.name}
+          checked={checkbox.checked}
+          required={checkbox.required}
+          disabled={checkbox.disabled}
+          autoFocus={checkbox.autoFocus}
+          onChange={(event) => checkbox.onChange(event.target.checked)}
+          onBlur={checkbox.onBlur}
+          onFocus={checkbox.onFocus}
+          {...checkbox.ariaProps}
         />
         {labelValue(
           <span>
             {label}
-            {trueValueRequired && <span className='rjsf-required'>*</span>}
+            {checkbox.required && <span className='rjsf-required'>*</span>}
           </span>,
-          !showsLabel,
+          !checkbox.drawsLabel,
         )}
       </label>
     </div>

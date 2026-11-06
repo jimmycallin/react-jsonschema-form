@@ -220,6 +220,8 @@ import type { ClearEvent, UseBaseInputPropsResult } from './useBaseInputProps.ts
 import useBaseInputProps from './useBaseInputProps.ts';
 import type { CheckboxesWidgetOption, UseCheckboxesWidgetPropsResult } from './useCheckboxesWidgetProps.ts';
 import useCheckboxesWidgetProps from './useCheckboxesWidgetProps.ts';
+import type { UseCheckboxWidgetPropsResult } from './useCheckboxWidgetProps.ts';
+import useCheckboxWidgetProps from './useCheckboxWidgetProps.ts';
 import type { ChoiceWidgetLabelOptions, ChoiceWidgetOption, ChoiceWidgetProps } from './useChoiceWidgetProps.ts';
 import type { FileInfoType, UseFileWidgetPropsResult } from './useFileWidgetProps.ts';
 import useFileWidgetProps from './useFileWidgetProps.ts';
@@ -280,6 +282,7 @@ export type {
   SelectWidgetValue,
   UseAltDateWidgetResult,
   UseBaseInputPropsResult,
+  UseCheckboxWidgetPropsResult,
   UseCheckboxesWidgetPropsResult,
   UseFileWidgetPropsResult,
   UseRadioWidgetPropsResult,
@@ -511,6 +514,7 @@ export {
   unwrapErrorHandler,
   useAltDateWidgetProps,
   useBaseInputProps,
+  useCheckboxWidgetProps,
   useCheckboxesWidgetProps,
   useFileWidgetProps,
   useRadioWidgetProps,
