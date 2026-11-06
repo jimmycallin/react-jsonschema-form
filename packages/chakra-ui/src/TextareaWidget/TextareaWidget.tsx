@@ -1,7 +1,6 @@
-import type { ChangeEvent, FocusEvent } from 'react';
 import { Textarea } from '@chakra-ui/react';
 import type { FormContextType, RJSFSchema, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
-import { getControlAttributes, hasWidgetErrors, labelValue, toInputValue, widgetDrawsLabelText } from '@rjsf/utils';
+import { hasWidgetErrors, labelValue, useTextareaWidgetProps, widgetDrawsLabelText } from '@rjsf/utils';
 
 import { Field } from '../components/ui/field.tsx';
 import { getChakra } from '../utils.ts';
@@ -11,52 +10,34 @@ export default function TextareaWidget<
   S extends StrictRJSFSchema = RJSFSchema,
   F extends FormContextType = FormContextType,
 >(props: WidgetProps<T, S, F>) {
-  const {
-    id,
-    htmlName,
-    placeholder,
-    value,
-    label,
-    disabled,
-    autofocus,
-    readonly,
-    onBlur,
-    onFocus,
-    onChange,
-    options,
-    required,
-    presentation,
-  } = props;
+  const { label, options } = props;
   const drawsLabel = widgetDrawsLabelText<T, S, F>(props);
-  const handleChange = ({ target: { value: newValue } }: ChangeEvent<HTMLTextAreaElement>) =>
-    onChange(newValue === '' ? options.emptyValue : newValue);
-  const handleBlur = ({ target }: FocusEvent<HTMLTextAreaElement>) => onBlur(id, target?.value);
-  const handleFocus = ({ target }: FocusEvent<HTMLTextAreaElement>) => onFocus(id, target?.value);
+  const textarea = useTextareaWidgetProps<T, S, F>(props);
 
   const chakraProps = getChakra(options);
 
   return (
     <Field
       mb={1}
-      disabled={disabled || readonly}
-      required={required}
-      readOnly={readonly}
+      disabled={textarea.disabled || textarea.readOnly}
+      required={textarea.required}
+      readOnly={textarea.readOnly}
       invalid={hasWidgetErrors<T, S, F>(props)}
       label={labelValue(label, !drawsLabel)}
-      id={id}
+      id={textarea.id}
       {...chakraProps}
     >
       <Textarea
-        id={id}
-        name={htmlName || id}
-        value={toInputValue(value)}
-        placeholder={placeholder}
-        autoFocus={autofocus}
-        onChange={handleChange}
-        onBlur={handleBlur}
-        onFocus={handleFocus}
-        rows={options.rows}
-        {...getControlAttributes<T, S, F>({ id, presentation })}
+        id={textarea.id}
+        name={textarea.name}
+        value={textarea.value}
+        placeholder={textarea.placeholder}
+        autoFocus={textarea.autoFocus}
+        onChange={(event) => textarea.onChange(event.target.value)}
+        onBlur={textarea.onBlur}
+        onFocus={textarea.onFocus}
+        rows={textarea.rows}
+        {...textarea.ariaProps}
       />
     </Field>
   );

@@ -28,17 +28,18 @@ describe('UpDownWidget focus handlers', () => {
     return { onFocus, onBlur };
   }
 
-  it("reports the input's value on focus and blur", async () => {
+  it('reports the form data on focus and blur', async () => {
     const { onFocus, onBlur } = renderForm();
 
     await user.click(screen.getByRole('spinbutton'));
     await user.tab();
 
-    expect(onFocus).toHaveBeenCalledWith('root', '5');
-    expect(onBlur).toHaveBeenCalledWith('root', '5');
+    // The number the form holds, as every widget reports, where it reported the input's text '5'
+    expect(onFocus).toHaveBeenCalledWith('root', 5);
+    expect(onBlur).toHaveBeenCalledWith('root', 5);
   });
 
-  it('reports no value for a focus that lands on an increment or decrement trigger', () => {
+  it('reports the form data for a focus that lands on an increment or decrement trigger', () => {
     const { onFocus } = renderForm();
     const trigger = screen.getByRole('button', { name: 'increment value' });
 
@@ -46,7 +47,8 @@ describe('UpDownWidget focus handlers', () => {
     // out of the tab order; a script or assistive technology can still focus it
     trigger.focus();
 
-    expect(onFocus).toHaveBeenCalledWith('root', undefined);
+    // The form data, which a trigger reports as the input does, where it reported no value, having no text of its own
+    expect(onFocus).toHaveBeenCalledWith('root', 5);
   });
 });
 
@@ -172,5 +174,63 @@ describe('UpDownWidget value', () => {
     await user.type(input, '42');
 
     expect(input).toHaveValue('42');
+  });
+});
+
+describe('UpDownWidget schema', () => {
+  it('writes the ui:emptyValue for an emptied input', async () => {
+    const onChange = vi.fn();
+    render(
+      <Form
+        schema={{ type: 'integer' }}
+        uiSchema={{ 'ui:widget': 'updown', 'ui:emptyValue': 0 }}
+        initialFormData={5}
+        validator={validator}
+        onChange={onChange}
+      />,
+    );
+
+    await user.clear(screen.getByRole('spinbutton'));
+
+    expect(onChange).toHaveBeenLastCalledWith(expect.objectContaining({ formData: 0 }), 'root');
+  });
+
+  it("steps by the schema's multipleOf", async () => {
+    const ref = createRef<FormRef>();
+    render(
+      <Form
+        ref={ref}
+        schema={{ type: 'integer', multipleOf: 5 }}
+        uiSchema={{ 'ui:widget': 'updown' }}
+        initialFormData={5}
+        validator={validator}
+      />,
+    );
+
+    await user.click(screen.getByRole('spinbutton'));
+    await user.keyboard('{ArrowUp}');
+
+    expect(ref.current?.getFormData()).toBe(10);
+  });
+
+  it("stops stepping at the schema's minimum and maximum", async () => {
+    const ref = createRef<FormRef>();
+    render(
+      <Form
+        ref={ref}
+        schema={{ type: 'integer', minimum: 1, maximum: 3 }}
+        uiSchema={{ 'ui:widget': 'updown' }}
+        initialFormData={3}
+        validator={validator}
+      />,
+    );
+    const input = screen.getByRole('spinbutton');
+
+    await user.click(input);
+    await user.keyboard('{ArrowUp}');
+
+    expect(ref.current?.getFormData()).toBe(3);
+    expect(input).toHaveAttribute('aria-valuemin', '1');
+    expect(input).toHaveAttribute('aria-valuemax', '3');
   });
 });

@@ -1,19 +1,7 @@
-import type { ChangeEvent, FocusEvent, MouseEvent } from 'react';
-import { useCallback } from 'react';
 import { Input } from '@chakra-ui/react';
 import { SchemaExamples } from '@rjsf/core';
 import type { BaseInputTemplateProps, FormContextType, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
-import {
-  examplesId,
-  getControlAttributes,
-  getExampleSuggestions,
-  getBaseInputProps,
-  hasWidgetErrors,
-  labelValue,
-  offersClearButton,
-  toInputValue,
-  widgetDrawsLabelText,
-} from '@rjsf/utils';
+import { hasWidgetErrors, labelValue, useBaseInputProps, widgetDrawsLabelText } from '@rjsf/utils';
 
 import { Field } from '../components/ui/field.tsx';
 import { getChakra } from '../utils.ts';
@@ -23,76 +11,40 @@ export default function BaseInputTemplate<
   S extends StrictRJSFSchema = RJSFSchema,
   F extends FormContextType = FormContextType,
 >(props: BaseInputTemplateProps<T, S, F>) {
-  const {
-    id,
-    htmlName,
-    value,
-    label,
-    schema,
-    onChange,
-    onChangeOverride,
-    onBlur,
-    onFocus,
-    options,
-    required,
-    readonly,
-    autofocus,
-    placeholder,
-    disabled,
-    registry,
-    presentation,
-  } = props;
+  const { label, schema, onChangeOverride, options, registry } = props;
   const drawsLabel = widgetDrawsLabelText<T, S, F>(props);
-  const { title, ...inputProps } = getBaseInputProps<T, S, F>(props);
+  const input = useBaseInputProps<T, S, F>(props);
   const { ClearButton } = registry.templates.ButtonTemplates;
-
-  const handleChange = ({ target: { value: newValue } }: ChangeEvent<HTMLInputElement>) =>
-    onChange(newValue === '' ? options.emptyValue : newValue);
-  const handleBlur = ({ target }: FocusEvent<HTMLInputElement>) => onBlur(id, target?.value);
-  const handleFocus = ({ target }: FocusEvent<HTMLInputElement>) => onFocus(id, target?.value);
-  const onClear = useCallback(
-    (e: MouseEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      onChange(options.emptyValue);
-    },
-    [onChange, options.emptyValue],
-  );
 
   const chakraProps = getChakra(options);
 
-  const inputValue = toInputValue(value);
-  const exampleSuggestions = getExampleSuggestions<S>(schema);
-  const hasExamples = exampleSuggestions.length > 0;
   return (
     <Field
       mb={1}
-      disabled={disabled || readonly}
-      required={required}
-      readOnly={readonly}
+      disabled={input.disabled || input.readOnly}
+      required={input.required}
+      readOnly={input.readOnly}
       invalid={hasWidgetErrors<T, S, F>(props)}
       label={labelValue(label, !drawsLabel)}
-      id={id}
+      id={input.id}
       {...chakraProps}
     >
       <Input
-        id={id}
-        name={htmlName || id}
-        value={inputValue}
-        onChange={onChangeOverride ?? handleChange}
-        onBlur={handleBlur}
-        onFocus={handleFocus}
-        autoFocus={autofocus}
-        placeholder={placeholder}
-        title={title}
-        {...inputProps}
-        list={hasExamples ? examplesId(id) : undefined}
-        {...getControlAttributes<T, S, F>({ id, presentation }, hasExamples ? [examplesId(id)] : [])}
+        id={input.id}
+        name={input.name}
+        value={input.value}
+        onChange={onChangeOverride ?? ((event) => input.onChange(event.target.value))}
+        onBlur={input.onBlur}
+        onFocus={input.onFocus}
+        autoFocus={input.autoFocus}
+        placeholder={input.placeholder}
+        title={input.title}
+        {...input.inputProps}
+        list={input.listId}
+        {...input.ariaProps}
       />
-      {options.allowClearTextInputs && !readonly && !disabled && offersClearButton(inputValue, inputProps.type) && (
-        <ClearButton registry={registry} onClick={onClear} />
-      )}
-      <SchemaExamples id={id} schema={schema} suggestions={exampleSuggestions} />
+      {input.showClearButton && <ClearButton registry={registry} onClick={input.onClear} />}
+      <SchemaExamples id={input.id} schema={schema} suggestions={input.exampleSuggestions} />
     </Field>
   );
 }
