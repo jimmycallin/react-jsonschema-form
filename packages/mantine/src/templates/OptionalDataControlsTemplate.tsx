@@ -1,8 +1,5 @@
 import type { FormContextType, OptionalDataControlsTemplateProps, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
 
-import AddButton from './ButtonTemplates/AddButton.tsx';
-import { RemoveButton } from './ButtonTemplates/IconButton.tsx';
-
 /** The OptionalDataControlsTemplate renders one of three different states. If
  * there is an `onAddClick()` function, it renders the "Add" button. If there is
  * an `onRemoveClick()` function, it renders the "Remove" button. Otherwise it
@@ -17,6 +14,7 @@ export default function OptionalDataControlsTemplate<
   F extends FormContextType = FormContextType,
 >(props: OptionalDataControlsTemplateProps<T, S, F>) {
   const { id, registry, label, onAddClick, onRemoveClick } = props;
+  const { AddButton, RemoveButton } = registry.templates.ButtonTemplates;
   if (onAddClick) {
     return (
       <AddButton
