@@ -18,6 +18,7 @@ import type {
   StrictRJSFSchema,
   WidgetProps,
 } from './types.ts';
+import useSelectFocusHandlers from './useSelectFocusHandlers.ts';
 import widgetAriaProps from './widgetAriaProps.ts';
 import widgetDrawsLabel from './widgetDrawsLabel.ts';
 
@@ -176,18 +177,13 @@ export default function useSelectWidgetProps<
     [inactive, multiple, inEnumOrder, onChange, enumOptions, optionValueFormat, emptyValue],
   );
 
-  const formValue = value === undefined ? emptyValue : value;
-  // Guarded although `WidgetProps` requires both, since a custom field composing a theme's widget may leave them out
-  const handleFocus = useCallback(() => {
-    if (!inactive) {
-      onFocus?.(id, formValue);
-    }
-  }, [inactive, onFocus, id, formValue]);
-  const handleBlur = useCallback(() => {
-    if (!inactive) {
-      onBlur?.(id, formValue);
-    }
-  }, [inactive, onBlur, id, formValue]);
+  const { handleFocus, handleBlur } = useSelectFocusHandlers<T, S, F>({
+    id,
+    value,
+    options,
+    onFocus: inactive ? undefined : onFocus,
+    onBlur: inactive ? undefined : onBlur,
+  });
 
   logUnsupportedDefaultForEnum<S>(id, schema, enumOptions, multiple);
 
