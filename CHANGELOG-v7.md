@@ -873,6 +873,7 @@ https://github.com/rjsf-team/react-jsonschema-form/blob/main/packages/docs/docs/
 - Fix a `mui` option that isn't an object landing on the control as attributes named `0`, `1`, `2` ([#5696](https://github.com/rjsf-team/react-jsonschema-form/pull/5696))
 - Fix `FieldTemplate` dropping the `sx` and `className` of `rjsfSlotProps.fieldFormControl`: when the root option sets them too, the two `sx` are now merged, the root's winning a clash, and the two class names joined, where the root's replaced the slot's ([#5696](https://github.com/rjsf-team/react-jsonschema-form/pull/5696))
 - Fix `BaseInputTemplate` passing a `rjsfSlotProps` option to the `TextField`, whose DOM logged a React warning for it ([#5696](https://github.com/rjsf-team/react-jsonschema-form/pull/5696))
+- Fix `IconButton` and its `CopyButton`, `MoveDownButton`, `MoveUpButton`, `RemoveButton` and `ClearButton` ignoring a `size` in the uiSchema's `mui` options, as `AddButton` already honors ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
 
 ## @rjsf/react-bootstrap
 

@@ -29,7 +29,7 @@ function MuiIconButtonFn<
   ]);
 
   return (
-    <IconButton {...muiProps} {...otherProps} size='small' color={color as MuiIconButtonProps['color']}>
+    <IconButton size='small' {...muiProps} {...otherProps} color={color as MuiIconButtonProps['color']}>
       {icon}
     </IconButton>
   );
