@@ -51,7 +51,7 @@ export default function TextareaWidget<
         autoFocus={textarea.autoFocus}
         required={textarea.required}
         disabled={textarea.disabled || textarea.readOnly}
-        value={textarea.value}
+        value={String(textarea.value)}
         onChange={onChangeOverride ?? ((event) => textarea.onChange(event.target.value))}
         onFocus={textarea.onFocus}
         onBlur={textarea.onBlur}
