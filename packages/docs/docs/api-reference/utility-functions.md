@@ -577,21 +577,6 @@ Otherwise the index of an option whose value is the whole `value` is returned, s
 
 - string | string[] | undefined: A single string index for the first `value` in `allEnumOptions`, if not `multiple`. Otherwise, the list of indexes for (each of) the value(s) in `value`.
 
-### enumOptionsAutofocusIndex&lt;S extends StrictRJSFSchema = RJSFSchema>()
-
-Gets the index of the option a `RadioWidget` or `CheckboxesWidget` focuses under `ui:autofocus`. A radio group passes its value, so focus lands on its checked option, where Tab into the group lands, rather than on an unchecked one that Space would check. Otherwise, or where `ui:enumDisabled` disables the checked option, it is the first option that list leaves enabled, since a disabled option can't take focus.
-
-#### Parameters
-
-- enumOptions: EnumOptionsType&lt;S>[] | undefined - The widget's options
-- [enumDisabled]: EnumValue[] | undefined - The `ui:enumDisabled` list of enum values that should be rendered disabled
-- [autofocus=false]: boolean - Whether the widget is to take focus as it mounts
-- [checkedValue]: EnumOptionsType&lt;S>['value'] - A radio group's value, whose option takes focus where it is enabled
-
-#### Returns
-
-- number: The index of the option to focus, or -1 where the widget takes no focus or every option is disabled
-
 ### enumOptionsIsDisabled()
 
 Determines whether the option with the given `value` is one the `ui:enumDisabled` list disables.
@@ -923,19 +908,6 @@ Throws `Could not find a definition for …` for a `$ref` that names nothing, an
 #### Returns
 
 - S: The definition the `$ref` names
-
-### flattenGroupedOptions&lt;S extends StrictRJSFSchema = RJSFSchema>()
-
-Flattens the list returned by `groupEnumOptions()` back into a single list of options, in the same order they appear in that list: each group's options in place of the group, followed by any standalone options.
-This is the order a widget's UI library needs when it manages its own selection or keyboard-navigation state over a flat list of items that has to stay in sync with what is actually rendered.
-
-#### Parameters
-
-- groupedOptions: GroupedEnumOptionsType&lt;S>[] - The list returned by `groupEnumOptions()`
-
-#### Returns
-
-- IndexedEnumOptionType&lt;S>[]: The options in `groupedOptions`, flattened to a single list
 
 ### getAdditionalKeyAttributes&lt;T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = FormContextType>() {#getadditionalkeyattributes}
 
@@ -1425,38 +1397,7 @@ return (
 );
 ```
 
-A widget that draws its own label for the group draws it with no `for`, which can't name the group's wrapper, under the id it passes; [getGroupLabelling()](#getgrouplabelling) builds both.
-
-### getGroupLabelling&lt;T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = FormContextType>() {#getgrouplabelling}
-
-Gets what a widget rendering a group of controls, such as radios or checkboxes, needs to draw its own label for the group and to label the group by it: whether it draws one, the id of the field's label from [getLabelId()](#getlabelid), which it draws it under, and the attributes [getGroupAttributes()](#getgroupattributes) gives the group and each control in it, given that label's id where the widget draws one.
-The label is drawn with no `for`, which can't name the group's wrapper, so the group points `aria-labelledby` at it instead, where its field's plan names the group by no other label.
-A widget draws the label where [widgetDrawsLabel()](#widgetdrawslabel) says it does and it has text, so a group whose label is hidden is named by its text through the `aria-label` the plan gives it, and a `radiogroup` with no label by the `aria-label` [getGroupAttributes()](#getgroupattributes) gives it, given the `registry`, rather than either being named by a label that isn't drawn.
-
-#### Parameters
-
-- props: Pick&lt;WidgetProps&lt;T, S, F>, 'id' | 'label' | 'hideLabel' | 'presentation'> & Partial&lt;Pick&lt;WidgetProps&lt;T, S, F>, 'placeholder' | 'registry'>> - The widget's `id`, `label`, `hideLabel` and `presentation`, and for a group of radios its `placeholder` and `registry`
-- role: GroupRole - The role of the group's wrapper, `'radiogroup'` for radios and `'group'` for anything else
-
-#### Returns
-
-- \{ drawsLabel: boolean, labelId: string, group, option }: whether the widget draws the label and the id of the field's label, which a widget leaving the label to its template can still hand its own label slot, and the `group` and `option` attributes [getGroupAttributes()](#getgroupattributes) returns
-
-#### Example
-
-```tsx
-const { drawsLabel, labelId, group, option } = getGroupLabelling(props, 'radiogroup');
-return (
-  <>
-    {drawsLabel && <label id={labelId}>{label}</label>}
-    <div id={id} {...group}>
-      {enumOptions.map((opt, i) => (
-        <input key={i} type='radio' id={optionId(id, i)} {...option} />
-      ))}
-    </div>
-  </>
-);
-```
+A widget that draws its own label for the group draws it with no `for`, which can't name the group's wrapper, under the id it passes; [`useRadioWidgetProps()`](#useradiowidgetpropst--unknown-s-extends-strictrjsfschema--rjsfschema-f-extends-formcontexttype--formcontexttype) and [`useCheckboxesWidgetProps()`](#usecheckboxeswidgetpropst--unknown-s-extends-strictrjsfschema--rjsfschema-f-extends-formcontexttype--formcontexttype) build both, given `{ drawsLabel: true }`.
 
 ### getInputProps&lt;T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = FormContextType>()
 
@@ -2800,7 +2741,7 @@ Each further level showing a description of its own beneath those is numbered, s
 
 Return a consistent `id` for the label a selected `anyOf`/`oneOf` option or the fallback UI's value field draws of its own, beneath a field whose own component already draws a label under the id it would take, such as the option selector drawing an `anyOf` field's label beside an option whose widget draws its own.
 Each further level drawing a label beneath those is numbered, so an option of an option that draws its own takes `optionLabel2`.
-It is the id [resolveFieldPresentation()](#resolvefieldpresentation) plans for it, which [getGroupLabelling()](#getgrouplabelling) draws a group's label under.
+It is the id [resolveFieldPresentation()](#resolvefieldpresentation) plans for it, which [`useRadioWidgetProps()`](#useradiowidgetpropst--unknown-s-extends-strictrjsfschema--rjsfschema-f-extends-formcontexttype--formcontexttype) and [`useCheckboxesWidgetProps()`](#usecheckboxeswidgetpropst--unknown-s-extends-strictrjsfschema--rjsfschema-f-extends-formcontexttype--formcontexttype) give a group that draws its own label as its `labelId`.
 
 #### Parameters
 
@@ -3685,6 +3626,37 @@ disabled or read-only, so those buttons can be rendered disabled.
 
 - UseAltDateWidgetResult: The `UseAltDateWidgetResult` to be used within a `AltDateWidget` implementation
 
+### useCheckboxesWidgetProps&lt;T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = FormContextType>()
+
+Hook which holds what every `CheckboxesWidget` does whatever its UI library: it encodes each option's value as
+`ui:optionValueFormat` asks, marks the checked options and the `ui:enumDisabled` ones, picks the option `ui:autofocus`
+focuses, decodes a selection back into form data in enum order, and supplies the group's and its checkboxes' ids, name
+and `aria-*` attributes. The handlers report nothing while the field is disabled or read-only. To be used by theme
+specific `CheckboxesWidget` implementations, and by an app's own.
+
+#### Parameters
+
+- props: WidgetProps&lt;T, S, F> - The `WidgetProps` for the `CheckboxesWidget`
+- [labelOptions]: ChoiceWidgetLabelOptions - `{ drawsLabel: true }` for a widget that draws the field's label for its
+  group itself, rather than leaving it to its template
+
+#### Returns
+
+- UseCheckboxesWidgetPropsResult: Everything the group of checkboxes needs:
+  - `id`, `name`, `required`, `disabled` (`true` for a disabled or read-only field) and `inline`, from
+    `ui:options.inline`
+  - `groupProps`: the `role` and `aria-*` attributes of the element wrapping the options
+  - `optionProps`: the `aria-*` attributes of each option's control
+  - `drawsLabel` and `labelId`: whether the widget is to draw the field's label, which it is only where it asked to and
+    the field shows one, and the id to draw it under
+  - `value`: the encoded values of the checked options, in enum order. It only ever holds values the options carry
+  - `options`: every checkbox in enum order, as `{ id, value, label, disabled, checked, autoFocus, index, onFocus, onBlur }`, `value` being its encoded value
+    and `disabled` whether `ui:enumDisabled` disables it, apart from the group. `onFocus()` and `onBlur()` report the
+    option's own value and take no argument, so they can be handed to any control's focus and blur events. Its `onCheckedChange(checked)` checks or unchecks it
+    and reports the group's new selection
+  - `onChange(value)`: decodes the encoded values the group checked into form data, in enum order, for a library whose
+    group reports its whole selection. `null` or `undefined` is no selection
+
 ### useFileWidgetProps()
 
 Hook which encapsulates the logic needed to read and convert a `value` of `File` or `File[]` into the
@@ -3701,37 +3673,59 @@ Hook which encapsulates the logic needed to read and convert a `value` of `File`
 
 - UseFileWidgetPropsResult: The `UseFileWidgetPropsResult` to be used within a `FileWidget` implementation, whose `handleRemove` takes the index of a file in its `filesInfo`
 
-### useOptionFocusHandlers&lt;T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = FormContextType>()
+### useRadioWidgetProps&lt;T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = FormContextType>()
 
-Hook which builds the focus and blur handlers of the options of a widget that renders one focusable element per option,
-such as a `CheckboxesWidget`. Each handler reports its option's value from `enumOptions`, rather than decoding the
-focused element's DOM `value`, so it holds whether or not a theme's component forwards that attribute. To be used by
-theme specific `CheckboxesWidget` implementations.
-
-#### Parameters
-
-- props: Pick&lt;WidgetProps&lt;T, S, F>, 'id' | 'options' | 'onFocus' | 'onBlur'> - The `id`, `options`, `onFocus` and
-  `onBlur` from the `WidgetProps` of the widget
-
-#### Returns
-
-- UseOptionFocusHandlersResult: The `focusHandlers` and `blurHandlers` arrays, holding the `onFocus` and `onBlur` handler of each option by its position
-
-### useSelectFocusHandlers&lt;T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = FormContextType>()
-
-Hook which builds the focus and blur handlers of a select widget whose focused element carries no option value of its
-own, such as a trigger button or a custom combobox. The widget's `value` is already form data rather than a DOM value,
-so it's reported as it is, with no selection read as the `emptyValue` option the way a native select reports its
-decoded empty selection. To be used by theme specific `SelectWidget` implementations.
+Hook which holds what every `RadioWidget` does whatever its UI library: it encodes each option's value as
+`ui:optionValueFormat` asks, marks the checked option and the `ui:enumDisabled` ones, picks the option `ui:autofocus`
+focuses, decodes a choice back into form data with `ui:emptyValue`, and supplies the group's and its radios' ids, name
+and `aria-*` attributes. The handlers report nothing while the field is disabled or read-only. To be used by theme
+specific `RadioWidget` implementations, and by an app's own.
 
 #### Parameters
 
-- props: Pick&lt;WidgetProps&lt;T, S, F>, 'id' | 'value' | 'options' | 'onFocus' | 'onBlur'> - The `id`, `value`,
-  `options`, `onFocus` and `onBlur` from the `WidgetProps` of the `SelectWidget`
+- props: WidgetProps&lt;T, S, F> - The `WidgetProps` for the `RadioWidget`
+- [labelOptions]: ChoiceWidgetLabelOptions - `{ drawsLabel: true }` for a widget that draws the field's label for its
+  group itself, rather than leaving it to its template
 
 #### Returns
 
-- UseSelectFocusHandlersResult: The `handleFocus` and `handleBlur` callbacks that report the widget's form data value
+- UseRadioWidgetPropsResult: Everything the radio group needs:
+  - `id`, `name`, `required`, `disabled` (`true` for a disabled or read-only field) and `inline`, from
+    `ui:options.inline`
+  - `groupProps`: the `role` and `aria-*` attributes of the element wrapping the options
+  - `optionProps`: the `aria-*` attributes of each option's control
+  - `drawsLabel` and `labelId`: whether the widget is to draw the field's label, which it is only where it asked to and
+    the field shows one, and the id to draw it under
+  - `value`: the encoded value of the checked option, or `''`
+  - `options`: every radio in enum order, as `{ id, value, label, disabled, checked, autoFocus, index, onFocus, onBlur }`, `value` being its encoded value
+    and `disabled` whether `ui:enumDisabled` disables it, apart from the group. `onFocus()` and `onBlur()` report the
+    option's own value and take no argument, so they can be handed to any control's focus and blur events
+  - `onChange(value)`: decodes the encoded value of the checked option into form data. `null` or `undefined` is no
+    choice, which reports `ui:emptyValue`
+
+### useRangeWidgetProps&lt;T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = FormContextType>()
+
+Hook which holds what every `RangeWidget` does whatever its UI library: it reads the form data as a number, takes the
+slider's `min`, `max` and `step` from the schema's `minimum`, `maximum` and `multipleOf`, writes a moved value back as
+the number or string the schema stores, and supplies the control's id, name and `aria-*` attributes. The handlers
+report nothing while the field is disabled or read-only. To be used by theme specific `RangeWidget` implementations,
+and by an app's own.
+
+#### Parameters
+
+- props: WidgetProps&lt;T, S, F> - The `WidgetProps` for the `RangeWidget`
+
+#### Returns
+
+- UseRangeWidgetPropsResult: Everything the slider needs:
+  - `id`, `name`, `required`, `disabled` (`true` for a disabled or read-only field) and `autoFocus`
+  - `value`: the form data as a number, or `undefined` where it holds none
+  - `spec`: the `min`, `max` and `step` the schema sets, holding only those it sets, to spread onto the slider
+  - `ariaProps`: the control's `aria-*` attributes
+  - `onChange(value)`: writes the number as form data, a string where the schema stores the number as one, and
+    `ui:emptyValue` for `undefined`
+  - `onFocus()` and `onBlur()`: report the form data. They take no argument, so they can be handed to any control's
+    focus and blur events
 
 ### useSelectWidgetProps&lt;T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = FormContextType>()
 

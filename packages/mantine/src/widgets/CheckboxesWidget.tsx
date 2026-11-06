@@ -1,16 +1,6 @@
-import { useCallback } from 'react';
 import { Checkbox, Flex } from '@mantine/core';
 import type { FormContextType, WidgetProps, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
-import {
-  enumOptionSelectedValue,
-  enumOptionsAutofocusIndex,
-  enumOptionsIsDisabled,
-  enumOptionValueDecoder,
-  enumOptionsDomValues,
-  getOptionValueFormat,
-  optionId,
-  useOptionFocusHandlers,
-} from '@rjsf/utils';
+import { useCheckboxesWidgetProps } from '@rjsf/utils';
 
 import { cleanupOptions, getDescriptionProps, GroupOptions, groupExcludedKeys, useGroupAriaProps } from '../utils.tsx';
 
@@ -24,59 +14,37 @@ export default function CheckboxesWidget<
   S extends StrictRJSFSchema = RJSFSchema,
   F extends FormContextType = FormContextType,
 >(props: WidgetProps<T, S, F>) {
-  const { id, htmlName, value, required, disabled, readonly, autofocus, options, onChange, onBlur, onFocus } = props;
-
-  const { enumOptions, enumDisabled, inline, emptyValue } = options;
-  const optionValueFormat = getOptionValueFormat(options);
-  const domValues = enumOptionsDomValues<S>(enumOptions, optionValueFormat);
-  const themeProps = cleanupOptions(options, props, groupExcludedKeys);
-  const fieldDisabled = disabled || readonly;
-
-  const handleChange = useCallback(
-    (nextValue: string[]) => {
-      if (!fieldDisabled && onChange) {
-        onChange(enumOptionValueDecoder<S>(nextValue, enumOptions, optionValueFormat, emptyValue));
-      }
-    },
-    [onChange, fieldDisabled, enumOptions, emptyValue, optionValueFormat],
-  );
-
-  const { focusHandlers, blurHandlers } = useOptionFocusHandlers<T, S, F>({ id, options, onFocus, onBlur });
-
-  // Compared against the options' own values, which are encoded in the `optionValueFormat` rather than always indexes
-  const selectedValues: string[] = enumOptionSelectedValue(value, enumOptions, true, optionValueFormat, []);
-
+  const checkboxes = useCheckboxesWidgetProps<T, S, F>(props);
+  const themeProps = cleanupOptions(props.options, props, groupExcludedKeys);
   const { groupProps, optionProps } = useGroupAriaProps('CheckboxGroup', props);
 
-  const autofocusIndex = enumOptionsAutofocusIndex<S>(enumOptions, enumDisabled, autofocus);
   // A group with no options is still drawn, so its errors keep the label and description that say which field they
   // belong to
   return (
     <Checkbox.Group
-      id={id}
-      value={selectedValues}
-      onChange={handleChange}
-      required={required}
-      readOnly={fieldDisabled}
+      id={checkboxes.id}
+      value={checkboxes.value}
+      onChange={checkboxes.onChange}
+      required={checkboxes.required}
+      readOnly={checkboxes.disabled}
       {...themeProps}
       {...groupProps}
       {...getDescriptionProps(props)}
     >
-      <Flex mt='xs' direction={inline ? 'row' : 'column'} gap='xs' wrap='wrap'>
+      <Flex mt='xs' direction={checkboxes.inline ? 'row' : 'column'} gap='xs' wrap='wrap'>
         <GroupOptions optionProps={optionProps}>
           {(describedOptionProps) =>
-            enumOptions?.map((option, i) => (
+            checkboxes.options.map((option) => (
               <Checkbox
-                // oxlint-disable-next-line react/no-array-index-key
-                key={i}
-                id={optionId(id, i)}
-                name={htmlName || id}
-                value={domValues[i]}
+                key={option.index}
+                id={option.id}
+                name={checkboxes.name}
+                value={option.value}
                 label={option.label}
-                disabled={fieldDisabled || enumOptionsIsDisabled(option.value, enumDisabled)}
-                autoFocus={i === autofocusIndex}
-                onBlur={blurHandlers[i]}
-                onFocus={focusHandlers[i]}
+                disabled={checkboxes.disabled || option.disabled}
+                autoFocus={option.autoFocus}
+                onBlur={option.onBlur}
+                onFocus={option.onFocus}
                 {...describedOptionProps}
               />
             ))

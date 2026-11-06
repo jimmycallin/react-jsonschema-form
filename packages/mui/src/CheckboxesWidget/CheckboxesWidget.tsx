@@ -1,4 +1,3 @@
-import type { ChangeEvent } from 'react';
 import type { CheckboxProps } from '@mui/material/Checkbox';
 import Checkbox from '@mui/material/Checkbox';
 import type { FormControlLabelProps } from '@mui/material/FormControlLabel';
@@ -7,18 +6,7 @@ import type { FormGroupProps } from '@mui/material/FormGroup';
 import FormGroup from '@mui/material/FormGroup';
 import FormLabel from '@mui/material/FormLabel';
 import type { FormContextType, GenericObjectType, WidgetProps, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
-import {
-  enumOptionsAutofocusIndex,
-  enumOptionsDeselectValue,
-  enumOptionsDomValues,
-  enumOptionsIsDisabled,
-  enumOptionsIsSelected,
-  enumOptionsSelectValue,
-  getGroupLabelling,
-  getOptionValueFormat,
-  optionId,
-  useOptionFocusHandlers,
-} from '@rjsf/utils';
+import { useCheckboxesWidgetProps } from '@rjsf/utils';
 
 import { getMuiProps, withInputSlot } from '../util.ts';
 
@@ -45,78 +33,56 @@ export default function CheckboxesWidget<
   S extends StrictRJSFSchema = RJSFSchema,
   F extends FormContextType = FormContextType,
 >(props: WidgetProps<T, S, F>) {
-  const { label, id, htmlName, disabled, options, value, autofocus, readonly, required, onChange, onBlur, onFocus } =
-    props;
-  const { enumOptions, enumDisabled, inline } = options;
-  const optionValueFormat = getOptionValueFormat(options);
-  const domValues = enumOptionsDomValues<S>(enumOptions, optionValueFormat);
-  const checkboxesValues = Array.isArray(value) ? value : [value];
-
-  const handleChange =
-    (index: number) =>
-    ({ target: { checked } }: ChangeEvent<HTMLInputElement>) => {
-      if (checked) {
-        onChange(enumOptionsSelectValue(index, checkboxesValues, enumOptions));
-      } else {
-        onChange(enumOptionsDeselectValue(index, checkboxesValues, enumOptions));
-      }
-    };
-
-  const { focusHandlers, blurHandlers } = useOptionFocusHandlers<T, S, F>({ id, options, onFocus, onBlur });
-
-  const {
-    drawsLabel,
-    labelId,
-    group: groupAttributes,
-    option: optionAttributes,
-  } = getGroupLabelling<T, S, F>(props, 'group');
+  const { label, options } = props;
+  const checkboxes = useCheckboxesWidgetProps<T, S, F>(props, { drawsLabel: true });
 
   const { rjsfSlotProps: muiSlotProps, ...otherMuiProps } = getMuiProps<T, S, F, CheckboxesWidgetMuiProps>(options);
   // A `required` the form author gives the `Checkbox` goes on its `<input>`, as `RadioWidget`'s does, rather than on the
   // `Checkbox`, whose `FormControlLabel` would mark each option's label `*`
   const { required: authorRequired, ...checkboxProps } = muiSlotProps?.checkbox ?? {};
-  const checkboxSlotProps = withInputSlot({ ...optionAttributes, required: authorRequired }, checkboxProps.slotProps);
+  const checkboxSlotProps = withInputSlot(
+    { ...checkboxes.optionProps, required: authorRequired },
+    checkboxProps.slotProps,
+  );
 
-  const autofocusIndex = enumOptionsAutofocusIndex<S>(enumOptions, enumDisabled, autofocus);
   return (
     <>
       {/* No `for`, which can't name the group's wrapper: the group points its `aria-labelledby` at the label instead */}
-      {drawsLabel && (
-        <FormLabel id={labelId} required={required}>
+      {checkboxes.drawsLabel && (
+        <FormLabel id={checkboxes.labelId} required={checkboxes.required}>
           {label}
         </FormLabel>
       )}
       {/* The plan's group attributes go beneath the form author's, as the plan's control attributes do on each checkbox */}
-      <FormGroup {...groupAttributes} {...otherMuiProps} {...muiSlotProps?.formGroup} id={id} row={!!inline}>
-        {Array.isArray(enumOptions) &&
-          enumOptions.map((option, index: number) => {
-            const checked = enumOptionsIsSelected<S>(option.value, checkboxesValues);
-            const itemDisabled = enumOptionsIsDisabled(option.value, enumDisabled);
-            const checkbox = (
+      <FormGroup
+        {...checkboxes.groupProps}
+        {...otherMuiProps}
+        {...muiSlotProps?.formGroup}
+        id={checkboxes.id}
+        row={checkboxes.inline}
+      >
+        {checkboxes.options.map((option) => (
+          <FormControlLabel
+            {...muiSlotProps?.formControlLabel}
+            control={
               <Checkbox
                 {...checkboxProps}
-                id={optionId(id, index)}
-                name={htmlName || id}
-                checked={checked}
-                value={domValues[index]}
-                disabled={disabled || itemDisabled || readonly}
-                autoFocus={checkboxProps.autoFocus ?? index === autofocusIndex}
-                onChange={handleChange(index)}
-                onBlur={blurHandlers[index]}
-                onFocus={focusHandlers[index]}
+                id={option.id}
+                name={checkboxes.name}
+                checked={option.checked}
+                value={option.value}
+                disabled={checkboxes.disabled || option.disabled}
+                autoFocus={checkboxProps.autoFocus ?? option.autoFocus}
+                onChange={(event) => option.onCheckedChange(event.target.checked)}
+                onBlur={option.onBlur}
+                onFocus={option.onFocus}
                 slotProps={checkboxSlotProps}
               />
-            );
-            return (
-              <FormControlLabel
-                {...muiSlotProps?.formControlLabel}
-                control={checkbox}
-                // oxlint-disable-next-line react/no-array-index-key
-                key={index}
-                label={option.label}
-              />
-            );
-          })}
+            }
+            key={option.index}
+            label={option.label}
+          />
+        ))}
       </FormGroup>
     </>
   );

@@ -1,15 +1,6 @@
-import type { FocusEvent } from 'react';
-import type { SliderProps } from '@fluentui/react-components';
 import { Label, makeStyles, Slider } from '@fluentui/react-components';
 import type { FormContextType, RJSFSchema, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
-import {
-  getControlAttributes,
-  labelValue,
-  numericWidgetStoresString,
-  rangeSpec,
-  toNumericValue,
-  widgetDrawsLabelText,
-} from '@rjsf/utils';
+import { labelValue, useRangeWidgetProps, widgetDrawsLabelText } from '@rjsf/utils';
 
 const useStyles = makeStyles({
   // Fluent's `Slider` keeps a 120px minimum width, which would push it out of a narrower layout grid column
@@ -26,56 +17,33 @@ export default function RangeWidget<
   S extends StrictRJSFSchema = RJSFSchema,
   F extends FormContextType = FormContextType,
 >(props: WidgetProps<T, S, F>) {
-  const {
-    value,
-    readonly,
-    disabled,
-    autofocus,
-    onBlur,
-    onFocus,
-    schema,
-    onChange,
-    required,
-    label,
-    id,
-    htmlName,
-    presentation,
-  } = props;
+  const { label } = props;
   const classes = useStyles();
+  const range = useRangeWidgetProps<T, S, F>(props);
   // A label holding only a required field's `*` would name the slider "star", so one is drawn only with text
   const hideLabel = !widgetDrawsLabelText<T, S, F>(props);
-  const sliderProps = {
-    value: toNumericValue(value),
-    label,
-    id,
-    name: htmlName || id,
-    required,
-    autoFocus: autofocus,
-    ...rangeSpec<S>(schema),
-  };
-
-  const storesString = numericWidgetStoresString<S>(schema, value);
-  const handleChange: NonNullable<SliderProps['onChange']> = (_, data) =>
-    onChange(storesString ? String(data.value) : data.value);
-  const handleBlur = ({ target }: FocusEvent<HTMLInputElement>) => onBlur(id, target?.value);
-  const handleFocus = ({ target }: FocusEvent<HTMLInputElement>) => onFocus(id, target?.value);
 
   return (
     <>
       {labelValue(
-        <Label required={required} htmlFor={id}>
+        <Label required={range.required} htmlFor={range.id}>
           {label}
         </Label>,
         hideLabel,
       )}
       <Slider
         className={classes.slider}
-        disabled={disabled || readonly}
-        onChange={handleChange}
-        onBlur={handleBlur}
-        onFocus={handleFocus}
-        {...sliderProps}
-        {...getControlAttributes<T, S, F>({ id, presentation })}
+        disabled={range.disabled}
+        onChange={(_, data) => range.onChange(data.value)}
+        onBlur={range.onBlur}
+        onFocus={range.onFocus}
+        value={range.value}
+        id={range.id}
+        name={range.name}
+        required={range.required}
+        autoFocus={range.autoFocus}
+        {...range.spec}
+        {...range.ariaProps}
       />
     </>
   );

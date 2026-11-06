@@ -1,4 +1,3 @@
-import { useCallback } from 'react';
 import type {
   __BaseInputProps,
   BoxProps,
@@ -12,14 +11,7 @@ import type {
 } from '@mantine/core';
 import { Slider, Input, useProps } from '@mantine/core';
 import type { FormContextType, RJSFSchema, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
-import {
-  getControlAttributes,
-  numericWidgetStoresString,
-  rangeSpec,
-  titleId,
-  toNumericValue,
-  widgetDrawsLabel,
-} from '@rjsf/utils';
+import { titleId, useRangeWidgetProps, widgetDrawsLabel } from '@rjsf/utils';
 
 import type { OwnKeys } from '../utils.tsx';
 import {
@@ -150,17 +142,17 @@ export default function RangeWidget<
   S extends StrictRJSFSchema = RJSFSchema,
   F extends FormContextType = FormContextType,
 >(props: WidgetProps<T, S, F>) {
-  const { id, htmlName, value, disabled, readonly, autofocus, options, onChange, onBlur, onFocus, schema } = props;
+  const { id, options } = props;
+  const range = useRangeWidgetProps<T, S, F>(props);
   const hideLabel = !widgetDrawsLabel<T, S, F>(props);
   const label = getOwnLabel<T, S, F>(props);
 
   const themeProps = cleanupOptions(options, props, sliderExcludedKeys);
-  const { min, max, step } = rangeSpec(schema);
   const { wrapperProps, inputWrapperOrder, size, invalid, successId, slotlessErrors } = useFieldWrapperProps(
     props,
     'Slider',
   );
-  const { 'aria-labelledby': labelledBy, 'aria-describedby': describedBy } = getControlAttributes<T, S, F>(props);
+  const { 'aria-labelledby': labelledBy, 'aria-describedby': describedBy } = range.ariaProps;
   // The slider is named by `titleId(id)`, so the title is kept, hidden, when Mantine doesn't render it
   const hiddenTitle = useHiddenTitle(id, label, hideLabel, inputWrapperOrder);
   const { thumbProps, thumbLabel } = useProps<Pick<FieldSliderProps, 'thumbProps' | 'thumbLabel'>>(
@@ -172,28 +164,6 @@ export default function RangeWidget<
     },
   );
 
-  const storesString = numericWidgetStoresString<S>(schema, value);
-  const handleChange = useCallback(
-    (nextValue: number) => {
-      if (!disabled && !readonly && onChange) {
-        onChange(storesString ? String(nextValue) : nextValue);
-      }
-    },
-    [onChange, disabled, readonly, storesString],
-  );
-
-  const handleBlur = useCallback(() => {
-    if (onBlur) {
-      onBlur(id, value);
-    }
-  }, [onBlur, id, value]);
-
-  const handleFocus = useCallback(() => {
-    if (onFocus) {
-      onFocus(id, value);
-    }
-  }, [onFocus, id, value]);
-
   return (
     <>
       {hiddenTitle}
@@ -202,16 +172,14 @@ export default function RangeWidget<
           id={id}
           describedBy={describedBy}
           labelledBy={labelledBy ?? (label ? titleId(id) : undefined)}
-          name={htmlName || id}
-          value={toNumericValue(value)}
-          max={max}
-          min={min}
-          step={step}
-          disabled={disabled || readonly}
-          autoFocus={autofocus}
-          onChange={handleChange}
-          onBlur={handleBlur}
-          onFocus={handleFocus}
+          name={range.name}
+          value={range.value}
+          {...range.spec}
+          disabled={range.disabled}
+          autoFocus={range.autoFocus}
+          onChange={range.onChange}
+          onBlur={range.onBlur}
+          onFocus={range.onFocus}
           {...themeProps}
           size={size}
           successId={successId}

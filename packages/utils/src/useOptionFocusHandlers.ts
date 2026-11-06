@@ -17,14 +17,21 @@ export interface UseOptionFocusHandlersResult {
  * To be used by theme specific `CheckboxesWidget` implementations.
  *
  * @param props - The `id`, `options`, `onFocus` and `onBlur` from the `WidgetProps` of the widget
+ * @param inactive - Whether the widget is disabled or read-only, which leaves its handlers reporting nothing
  * @returns - The `UseOptionFocusHandlersResult` to be used within the widget implementation
  */
 export default function useOptionFocusHandlers<
   T = unknown,
   S extends StrictRJSFSchema = RJSFSchema,
   F extends FormContextType = FormContextType,
->(props: Pick<WidgetProps<T, S, F>, 'id' | 'options' | 'onFocus' | 'onBlur'>): UseOptionFocusHandlersResult {
-  const { id, options, onFocus, onBlur } = props;
+>(
+  props: Pick<WidgetProps<T, S, F>, 'id' | 'options' | 'onFocus' | 'onBlur'>,
+  inactive: boolean,
+): UseOptionFocusHandlersResult {
+  const { id, options } = props;
+  // A disabled or read-only widget reports nothing
+  const onFocus = inactive ? undefined : props.onFocus;
+  const onBlur = inactive ? undefined : props.onBlur;
   const { enumOptions } = options;
   return useMemo(() => {
     const optionList = Array.isArray(enumOptions) ? enumOptions : [];

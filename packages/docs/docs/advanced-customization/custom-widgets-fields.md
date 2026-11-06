@@ -356,6 +356,42 @@ Each option's `value` is its encoded value: a string that no other option shares
 To draw `ui:options.optgroups`, render `select.groupedOptions` instead of `select.options`, where an item with `options` is a group.
 Register the widget as `SelectWidget` in the `widgets` prop to use it for every select.
 
+Radio groups and checkboxes have hooks of the same kind, [`useRadioWidgetProps()`](../api-reference/utility-functions.md#useradiowidgetpropst--unknown-s-extends-strictrjsfschema--rjsfschema-f-extends-formcontexttype--formcontexttype) and [`useCheckboxesWidgetProps()`](../api-reference/utility-functions.md#usecheckboxeswidgetpropst--unknown-s-extends-strictrjsfschema--rjsfschema-f-extends-formcontexttype--formcontexttype).
+They give each option the id, encoded value, checked state and focus handlers of its control, and the group the attributes that name it:
+
+```tsx
+import type { WidgetProps } from '@rjsf/utils';
+import { useRadioWidgetProps } from '@rjsf/utils';
+
+import { Radio, RadioGroup } from './my-design-system';
+
+function MyRadioWidget(props: WidgetProps) {
+  const radio = useRadioWidgetProps(props);
+  return (
+    <RadioGroup id={radio.id} value={radio.value} onValueChange={radio.onChange} {...radio.groupProps}>
+      {radio.options.map((option) => (
+        <Radio
+          key={option.index}
+          id={option.id}
+          name={radio.name}
+          value={option.value}
+          label={option.label}
+          disabled={radio.disabled || option.disabled}
+          autoFocus={option.autoFocus}
+          onFocus={option.onFocus}
+          onBlur={option.onBlur}
+          {...radio.optionProps}
+        />
+      ))}
+    </RadioGroup>
+  );
+}
+```
+
+An option's `disabled` is `ui:enumDisabled`'s alone, so it is combined with the group's.
+A checkbox's `onCheckedChange(checked)` checks or unchecks it, for a component that reports each box on its own, and the hook's `onChange` takes the whole selection, for one that reports the group's.
+A slider is built the same way on [`useRangeWidgetProps()`](../api-reference/utility-functions.md#userangewidgetpropst--unknown-s-extends-strictrjsfschema--rjsfschema-f-extends-formcontexttype--formcontexttype), whose `value` is the form data as a number and whose `onChange` takes the number the slider moved to.
+
 ## Custom field components
 
 You can provide your own field components to a uiSchema for basically any json schema data type, by specifying a `ui:field` property.

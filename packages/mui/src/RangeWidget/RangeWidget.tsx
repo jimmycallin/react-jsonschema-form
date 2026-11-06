@@ -1,4 +1,3 @@
-import type { FocusEvent } from 'react';
 import { useEffect, useRef } from 'react';
 import FormLabel from '@mui/material/FormLabel';
 import type { SliderProps } from '@mui/material/Slider';
@@ -6,13 +5,13 @@ import Slider from '@mui/material/Slider';
 import type { FormContextType, GenericObjectType, RJSFSchema, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
 import {
   TranslatableString,
-  getControlAttributes,
   getLabelId,
   isSchemaObject,
   labelValue,
   numericWidgetStoresString,
   rangeSpec,
   toNumericValue,
+  useRangeWidgetProps,
   widgetDrawsLabel,
   widgetDrawsLabelText,
 } from '@rjsf/utils';
@@ -38,23 +37,9 @@ export default function RangeWidget<
   S extends StrictRJSFSchema = RJSFSchema,
   F extends FormContextType = FormContextType,
 >(props: WidgetProps<T, S, F>) {
-  const {
-    value,
-    readonly,
-    disabled,
-    onBlur,
-    onFocus,
-    options,
-    schema,
-    onChange,
-    required,
-    label,
-    id,
-    htmlName,
-    autofocus,
-    presentation,
-    registry,
-  } = props;
+  const { value, options, schema, onChange, label, autofocus, registry } = props;
+  const range = useRangeWidgetProps<T, S, F>(props);
+  const { id, required, spec } = range;
   const hideLabel = !widgetDrawsLabel<T, S, F>(props);
   const rootRef = useRef<HTMLSpanElement>(null);
   const isRangeOfValues = Array.isArray(value);
@@ -66,7 +51,6 @@ export default function RangeWidget<
       rootRef.current?.querySelector('input')?.focus();
     }
   }, []);
-  const spec = rangeSpec<S>(schema);
   const { items } = schema;
   const itemSchemaAt = (index: number) => (Array.isArray(items) ? items[index] : items);
   // An unset part is drawn at its item's minimum, as an empty one-value range is at its own, so the range keeps a thumb
@@ -77,10 +61,9 @@ export default function RangeWidget<
   };
   const sliderValue = isRangeOfValues
     ? value.map((part, index) => toNumericValue(part) ?? unsetPartAt(index))
-    : toNumericValue(value);
-  const sliderProps = { value: sliderValue, name: htmlName || id, ...spec };
+    : range.value;
+  const sliderProps = { value: sliderValue, name: range.name, ...spec };
 
-  const storesString = numericWidgetStoresString<S>(schema, value);
   const writePart = (part: number, index: number) => {
     const itemSchema = itemSchemaAt(index);
     const original: unknown = isRangeOfValues ? value[index] : undefined;
@@ -90,14 +73,12 @@ export default function RangeWidget<
     return partStoresString ? String(part) : part;
   };
   const handleChange: NonNullable<SliderProps['onChange']> = (_, newValue) => {
-    if (Array.isArray(newValue)) {
+    if (!Array.isArray(newValue)) {
+      range.onChange(newValue);
+    } else if (!range.disabled) {
       onChange(newValue.map(writePart));
-    } else {
-      onChange(storesString ? String(newValue) : newValue);
     }
   };
-  const handleBlur = ({ target }: FocusEvent<HTMLInputElement>) => onBlur(id, target?.value);
-  const handleFocus = ({ target }: FocusEvent<HTMLInputElement>) => onFocus(id, target?.value);
 
   const { rjsfSlotProps: muiSlotProps, ...otherMuiProps } = getMuiProps<T, S, F, RangeWidgetMuiProps>(options);
   // The `Slider` puts a name the form author gives it on the `<input>`, where the `input` slot would replace it, so the
@@ -108,11 +89,7 @@ export default function RangeWidget<
     authorSlider['aria-labelledby'],
     authorSlider.getAriaLabel,
   ].some((name) => name !== undefined);
-  const {
-    'aria-label': plannedLabel,
-    'aria-labelledby': plannedLabelledBy,
-    ...controlAttributes
-  } = getControlAttributes<T, S, F>({ id, presentation });
+  const { 'aria-label': plannedLabel, 'aria-labelledby': plannedLabelledBy, ...controlAttributes } = range.ariaProps;
   // The `Slider` gives its `input` slot to every thumb, so a range of several values keeps the field's id, which only
   // one element may carry, on the slider's root, which a label's `for` can't name. Its label names a lone thumb through
   // `aria-labelledby` instead, while several thumbs each take that label's text and their number, to be told apart
@@ -126,7 +103,7 @@ export default function RangeWidget<
       : { 'aria-label': plannedLabel, 'aria-labelledby': plannedLabelledBy ?? labelledByLabel };
   const labelProps = isRangeOfValues ? { id: labelId } : { htmlFor: id };
   const rootProps = isRangeOfValues ? { id } : {};
-  const thumbProps = isRangeOfValues ? {} : { id, autoFocus: autofocus };
+  const thumbProps = isRangeOfValues ? {} : { id, autoFocus: range.autoFocus };
 
   return (
     <>
@@ -137,10 +114,10 @@ export default function RangeWidget<
         hideLabel,
       )}
       <Slider
-        disabled={disabled || readonly}
+        disabled={range.disabled}
         onChange={handleChange}
-        onBlur={handleBlur}
-        onFocus={handleFocus}
+        onBlur={range.onBlur}
+        onFocus={range.onFocus}
         valueLabelDisplay='auto'
         {...authorSlider}
         {...sliderProps}

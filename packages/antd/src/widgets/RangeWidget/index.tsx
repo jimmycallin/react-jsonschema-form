@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef } from 'react';
 import type { FormContextType, RJSFSchema, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
-import { getControlAttributes, numericWidgetStoresString, rangeSpec, toNumericValue } from '@rjsf/utils';
+import { useRangeWidgetProps } from '@rjsf/utils';
 import { Slider } from 'antd';
 
 import useControlState from '../../controlState.ts';
@@ -38,34 +38,19 @@ export default function RangeWidget<
   S extends StrictRJSFSchema = RJSFSchema,
   F extends FormContextType = FormContextType,
 >(props: WidgetProps<T, S, F>) {
-  const {
-    autofocus,
-    disabled,
-    registry,
-    id,
-    htmlName,
-    onBlur,
-    onChange,
-    onFocus,
-    placeholder,
-    readonly,
-    schema,
-    value,
-    presentation,
-  } = props;
+  const { disabled, readonly, registry, placeholder } = props;
   const control = useControlState<T, S, F>({ disabled, readonly, registry });
-
-  const { min, max, step } = rangeSpec(schema);
+  const range = useRangeWidgetProps<T, S, F>(props);
+  const { min, max, step } = range.spec;
   // An empty value is drawn at `min`, where antd's `Slider` draws an empty one, rather than at a native input's midpoint
-  const numericValue = toNumericValue(value);
-  const drawnValue = numericValue === undefined ? (min ?? 0) : nativeRangeValue(numericValue, min, max, step);
+  const drawnValue = range.value === undefined ? (min ?? 0) : nativeRangeValue(range.value, min, max, step);
 
   const {
     'aria-labelledby': ariaLabelledBy,
     'aria-label': ariaLabel,
     'aria-describedby': ariaDescribedBy,
     'aria-invalid': ariaInvalid,
-  } = getControlAttributes<T, S, F>({ id, presentation });
+  } = range.ariaProps;
 
   // antd's `Slider` drops `aria-describedby` and `aria-invalid` and takes no handle props for them, so they're written
   // onto its handle; the hidden input after the slider's root finds the handle in this widget alone. The handle's
@@ -104,30 +89,19 @@ export default function RangeWidget<
     return () => observer.disconnect();
   }, [ariaDescribedBy, ariaInvalid]);
 
-  const storesString = numericWidgetStoresString<S>(schema, value);
-  const handleChange = (nextValue: number) => onChange(storesString ? String(nextValue) : nextValue);
-
-  const handleBlur = () => onBlur(id, value);
-
-  const handleFocus = () => onFocus(id, value);
-
   // Antd's typescript definitions do not contain the following props that are actually necessary and, if provided,
   // they are used, so hacking them in via by spreading `extraProps` on the component to avoid typescript errors
-  const extraProps = {
-    placeholder,
-    onBlur: !readonly ? handleBlur : undefined,
-    onFocus: !readonly ? handleFocus : undefined,
-  };
+  const extraProps = { placeholder, onBlur: range.onBlur, onFocus: range.onFocus };
 
   return (
     <>
       <Slider
-        autoFocus={autofocus}
+        autoFocus={range.autoFocus}
         disabled={control.disabled}
-        id={id}
+        id={range.id}
         max={max}
         min={min}
-        onChange={!readonly ? handleChange : undefined}
+        onChange={range.onChange}
         range={false}
         step={step}
         value={drawnValue}
@@ -141,7 +115,7 @@ export default function RangeWidget<
       {/* antd's `Slider` renders no native control, so the value a native submit or `FormData` reads is carried by a
       hidden input. It posts the value the slider is drawn at, as a native range input posts the value its thumb is drawn
       at, and it posts nothing when the slider is drawn disabled */}
-      <input ref={hiddenInputRef} type='hidden' name={htmlName || id} value={drawnValue} disabled={control.disabled} />
+      <input ref={hiddenInputRef} type='hidden' name={range.name} value={drawnValue} disabled={control.disabled} />
     </>
   );
 }

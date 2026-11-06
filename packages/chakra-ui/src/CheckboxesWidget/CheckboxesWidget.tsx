@@ -1,18 +1,6 @@
 import { chakra, CheckboxGroup, FieldsetRoot, Stack, Text, useSlotRecipe } from '@chakra-ui/react';
 import type { FormContextType, RJSFSchema, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
-import {
-  enumOptionSelectedValue,
-  enumOptionsAutofocusIndex,
-  enumOptionsIsDisabled,
-  enumOptionValueDecoder,
-  enumOptionsDomValues,
-  getGroupLabelling,
-  getOptionValueFormat,
-  hasWidgetErrors,
-  labelValue,
-  optionId,
-  useOptionFocusHandlers,
-} from '@rjsf/utils';
+import { hasWidgetErrors, labelValue, useCheckboxesWidgetProps } from '@rjsf/utils';
 
 import { Checkbox } from '../components/ui/checkbox.tsx';
 import { RequiredMarker } from '../components/ui/field.tsx';
@@ -23,33 +11,18 @@ export default function CheckboxesWidget<
   S extends StrictRJSFSchema = RJSFSchema,
   F extends FormContextType = FormContextType,
 >(props: WidgetProps<T, S, F>) {
-  const { id, htmlName, disabled, options, value, readonly, required, autofocus, onChange, onBlur, onFocus, label } =
-    props;
-  const { enumOptions, enumDisabled, emptyValue } = options;
-  const optionValueFormat = getOptionValueFormat(options);
-  const domValues = enumOptionsDomValues<S>(enumOptions, optionValueFormat);
-
-  const { focusHandlers, blurHandlers } = useOptionFocusHandlers<T, S, F>({ id, options, onFocus, onBlur });
-
-  const row = options ? options.inline : false;
-  const selectValue: string[] = enumOptionSelectedValue(value, enumOptions, true, optionValueFormat, []);
-
+  const { options, readonly, label } = props;
+  const checkboxes = useCheckboxesWidgetProps<T, S, F>(props, { drawsLabel: true });
+  const { drawsLabel, labelId, disabled } = checkboxes;
   const chakraProps = getChakra(options);
   const hasError = hasWidgetErrors<T, S, F>(props);
-  const {
-    drawsLabel,
-    labelId,
-    group: groupAttributes,
-    option: optionAttributes,
-  } = getGroupLabelling<T, S, F>(props, 'group');
 
   const legendStyles = useSlotRecipe({ key: 'fieldset' })().legend;
 
-  const autofocusIndex = enumOptionsAutofocusIndex<S>(enumOptions, enumDisabled, autofocus);
   return (
     <FieldsetRoot
       mb={1}
-      disabled={disabled || readonly}
+      disabled={disabled}
       invalid={hasError}
       // Ark points the fieldset at a legend id of its own, which never renders, so it is pointed at nothing: only the
       // group inside it, which carries the field's id, is named by the label
@@ -63,45 +36,37 @@ export default function CheckboxesWidget<
           id={labelId}
           className='fieldset__legend'
           css={legendStyles}
-          data-disabled={disabled || readonly ? '' : undefined}
+          data-disabled={disabled ? '' : undefined}
         >
           {labelValue(label)}
-          {required && <RequiredMarker ms={1} />}
+          {checkboxes.required && <RequiredMarker ms={1} />}
         </chakra.div>
       )}
       <CheckboxGroup
         // The group carries the field's id and each checkbox's `<input>` its option's, as core's do
-        id={id}
-        onValueChange={(option) =>
-          onChange(enumOptionValueDecoder<S>(option, enumOptions, optionValueFormat, emptyValue))
-        }
-        value={selectValue}
-        {...groupAttributes}
+        id={checkboxes.id}
+        onValueChange={checkboxes.onChange}
+        value={checkboxes.value}
+        {...checkboxes.groupProps}
         readOnly={readonly}
         invalid={hasError}
       >
-        <Stack direction={row ? 'row' : 'column'}>
-          {Array.isArray(enumOptions) &&
-            enumOptions.map((option, index) => {
-              const itemDisabled = enumOptionsIsDisabled(option.value, enumDisabled);
-              const inputId = optionId(id, index);
-              return (
-                <Checkbox
-                  // oxlint-disable-next-line react/no-array-index-key
-                  key={index}
-                  id={inputId}
-                  ids={{ hiddenInput: inputId }}
-                  name={htmlName || id}
-                  value={domValues[index]}
-                  disabled={disabled || itemDisabled || readonly}
-                  onBlur={blurHandlers[index]}
-                  onFocus={focusHandlers[index]}
-                  inputProps={{ ...optionAttributes, autoFocus: index === autofocusIndex }}
-                >
-                  {option.label && <Text>{option.label}</Text>}
-                </Checkbox>
-              );
-            })}
+        <Stack direction={checkboxes.inline ? 'row' : 'column'}>
+          {checkboxes.options.map((option) => (
+            <Checkbox
+              key={option.index}
+              id={option.id}
+              ids={{ hiddenInput: option.id }}
+              name={checkboxes.name}
+              value={option.value}
+              disabled={disabled || option.disabled}
+              onBlur={option.onBlur}
+              onFocus={option.onFocus}
+              inputProps={{ ...checkboxes.optionProps, autoFocus: option.autoFocus }}
+            >
+              {option.label && <Text>{option.label}</Text>}
+            </Checkbox>
+          ))}
         </Stack>
       </CheckboxGroup>
     </FieldsetRoot>
