@@ -94,7 +94,13 @@ describe('useSelectWidgetProps()', () => {
       expect(render(makeProps()).value).toBe('');
     });
 
-    it('encodes a multiple value as an array', () => {
+    it('holds no value that no option carries', () => {
+      const options = { enumOptions, optionValueFormat: 'realValue' as const };
+      expect(render(makeProps({ value: 'zzz', options })).value).toBe('');
+      expect(render(makeProps({ multiple: true, value: ['zzz', 'g'], options })).value).toEqual(['g']);
+    });
+
+    it('encodes a multiple value as an array, in enum order', () => {
       const result = render(makeProps({ multiple: true, value: ['b', 'r'] }));
       expect(result.multiple).toBe(true);
       expect(result.value).toEqual(['0', '2']);

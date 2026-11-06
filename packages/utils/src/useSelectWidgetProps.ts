@@ -45,7 +45,7 @@ export interface SelectWidgetOptionGroup {
 export type SelectWidgetValue =
   | {
       multiple: false;
-      /** The encoded value of the selected option, or `''` when none is selected */
+      /** The encoded value of the selected option, or `''` when no option is selected */
       value: string;
     }
   | {
@@ -180,9 +180,19 @@ export default function useSelectWidgetProps<
 
   logUnsupportedDefaultForEnum<S>(id, schema, enumOptions, multiple);
 
-  const selectValue: SelectWidgetValue = multiple
-    ? { multiple, value: enumOptionSelectedValue<S, string[]>(value, enumOptions, true, optionValueFormat, []) }
-    : { multiple, value: enumOptionSelectedValue<S, string>(value, enumOptions, false, optionValueFormat, '') };
+  // Under `realValue` a string no option holds is encoded as itself, which a control can't show as selected, so the
+  // value only ever holds encoded values the options carry
+  let selectValue: SelectWidgetValue;
+  if (multiple) {
+    const selected = new Set(enumOptionSelectedValue<S, string[]>(value, enumOptions, true, optionValueFormat, []));
+    selectValue = {
+      multiple,
+      value: selectOptions.filter((option) => selected.has(option.value)).map((option) => option.value),
+    };
+  } else {
+    const selected = enumOptionSelectedValue<S, string>(value, enumOptions, false, optionValueFormat, '');
+    selectValue = { multiple, value: indexByValue.has(selected) ? selected : '' };
+  }
 
   return {
     ...selectValue,
