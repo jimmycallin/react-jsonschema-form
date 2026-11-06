@@ -1,28 +1,18 @@
-import type { FocusEvent, KeyboardEvent, SyntheticEvent } from 'react';
+import type { FocusEvent, KeyboardEvent } from 'react';
 import { useCallback, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type {
   EnumOptionsType,
   FormContextType,
-  IndexedEnumOptionType,
   RJSFSchema,
+  SelectWidgetOption,
   StrictRJSFSchema,
   WidgetProps,
 } from '@rjsf/utils';
 import {
-  enumOptionsDeselectValue,
   enumOptionValueLabel,
-  enumOptionsIndexForValue,
-  enumOptionsIsSelected,
-  enumOptionsSelectValue,
-  enumOptionsValueForIndex,
   getControlFallbackName,
-  groupEnumOptions,
-  isEnumOptionsGroup,
-  logUnsupportedDefaultForEnum,
   SelectedOptionDescription,
-  useSelectFocusHandlers,
-  widgetAriaProps,
-  widgetDrawsLabel,
+  useSelectWidgetProps,
 } from '@rjsf/utils';
 
 /** The options a user moves between with the arrow keys or by typing: every one but those `ui:enumDisabled` disables,
@@ -135,71 +125,32 @@ export default function SelectWidget<
   S extends StrictRJSFSchema = RJSFSchema,
   F extends FormContextType = FormContextType,
 >(props: WidgetProps<T, S, F>) {
-  const {
-    schema,
-    id,
-    options,
-    label,
-    presentation,
-    disabled,
-    placeholder,
-    readonly,
-    required,
-    autofocus,
-    value,
-    multiple,
-    onChange,
-    onBlur,
-    onFocus,
-    registry,
-    uiSchema,
-  } = props;
-  const hideLabel = !widgetDrawsLabel<T, S, F>(props);
-  const { enumOptions, enumDisabled, emptyValue: optEmptyVal, optgroups } = options;
-  const isMultiple = typeof multiple === 'undefined' ? false : multiple;
+  const { schema, options, label, placeholder, registry } = props;
+  const { enumOptions } = options;
 
   // Without an `enum` the dropdown lists the schema's `examples`, so clicks and the selection are resolved against the
   // same list the dropdown renders
-  const optionsList: EnumOptionsType<S>[] = useMemo(
+  const optionsList: EnumOptionsType<S>[] | undefined = useMemo(
     () =>
       enumOptions ??
       (Array.isArray(schema.examples)
         ? schema.examples.map((example) => ({ value: example, label: getDisplayValue(example) }))
-        : []),
+        : undefined),
     [enumOptions, schema.examples],
   );
+  const select = useSelectWidgetProps<T, S, F>({ ...props, options: { ...options, enumOptions: optionsList } });
+  const { id, multiple, disabled, onChange, onFocus: reportFocus, onBlur: reportBlur } = select;
+  const selectedValues = [select.value].flat();
 
-  const handleOptionClick = useCallback(
-    (event: SyntheticEvent<HTMLLIElement>) => {
-      const index = Number(event.currentTarget.dataset.value);
-      if (Number.isNaN(index)) {
-        return;
-      }
-
-      // `data-value` is the option's index whatever the `optionValueFormat`, so it's resolved as one rather than
-      // decoded as a DOM value
-      const optionValue = enumOptionsValueForIndex<S>(String(index), optionsList, optEmptyVal);
-      if (isMultiple) {
-        const currentValue = Array.isArray(value) ? value : [];
-        // Compared by value, since an object option in form data is rarely the same instance as the option's constant
-        const newValue = enumOptionsIsSelected<S>(optionValue, currentValue, true)
-          ? enumOptionsDeselectValue<S>(index, currentValue, optionsList)
-          : enumOptionsSelectValue<S>(index, currentValue, optionsList);
-        onChange(newValue);
-      } else {
-        onChange(optionValue);
-      }
-    },
-    [value, isMultiple, optionsList, optEmptyVal, onChange],
-  );
-
-  const { handleFocus: reportFocus, handleBlur: reportBlur } = useSelectFocusHandlers<T, S, F>({
-    id,
-    value,
-    options,
-    onFocus,
-    onBlur,
-  });
+  const chooseOption = (option: SelectWidgetOption) => {
+    if (!multiple) {
+      onChange(option.value);
+    } else if (selectedValues.includes(option.value)) {
+      onChange(selectedValues.filter((selected) => selected !== option.value));
+    } else {
+      onChange([...selectedValues, option.value]);
+    }
+  };
 
   // The dropdown opens while focus is inside it, so its trigger is expanded exactly then, unless Escape dismissed it,
   // which leaves focus on the trigger and so closes the dropdown through `dropdown-close` rather than by moving focus
@@ -319,11 +270,10 @@ export default function SelectWidget<
     [expanded, dismissed],
   );
 
-  logUnsupportedDefaultForEnum<S>(id, schema, enumOptions, isMultiple);
-  const selectedIndexes = [enumOptionsIndexForValue<S>(value, optionsList, isMultiple) ?? []].flat();
-  const selectedLabels = selectedIndexes.map((index) => optionsList[Number(index)].label);
+  const selectedLabels = select.options
+    .filter((option) => selectedValues.includes(option.value))
+    .map((option) => option.label);
   const hasValue = selectedLabels.length > 0;
-  const ariaProps = widgetAriaProps(props);
   // Generated rather than built from the field's id, which no suffix keeps clear of another field's: a property named
   // `_listbox` beside a root select would share it
   const listboxId = useId();
@@ -334,19 +284,19 @@ export default function SelectWidget<
   // `isNamedByTemplateLabel()` already reports one
   const fallbackName = getControlFallbackName<T, S, F>({ label, placeholder, registry });
 
-  function renderOption(option: IndexedEnumOptionType<S>) {
-    const isSelected = selectedIndexes.includes(String(option.index));
+  function renderOption(option: SelectWidgetOption) {
+    const isSelected = selectedValues.includes(option.value);
     // A disabled or readonly field's options can't be chosen, though they stay reachable, so its value stays readable
-    const optionDisabled = disabled || readonly || option.disabled;
-    const choose = (e: SyntheticEvent<HTMLLIElement>) => {
+    const optionDisabled = disabled || option.disabled;
+    const choose = () => {
       if (optionDisabled) {
         return;
       }
-      handleOptionClick(e);
+      chooseOption(option);
       typeAhead.current.typed = '';
       // A choice in a single select, by key or by a click, which is how VoiceOver activates an option too, closes the
       // listbox and returns focus to the combobox, which announces it, as Escape does
-      if (!isMultiple) {
+      if (!multiple) {
         setDismissed(true);
         triggerRef.current?.focus();
       }
@@ -372,18 +322,17 @@ export default function SelectWidget<
           // Space would scroll the listbox too
           e.preventDefault();
           if (e.key === 'Enter') {
-            choose(e);
+            choose();
           }
         }}
         // Space chooses on its release, as it presses a button: chosen on its press, the focus it returns to the
         // combobox would take the release, which Firefox turns into a click that reopens the listbox
-        onKeyUp={(e) => e.key === ' ' && spacePressedOn.current === e.currentTarget && choose(e)}
-        data-value={option.index}
+        onKeyUp={(e) => e.key === ' ' && spacePressedOn.current === e.currentTarget && choose()}
       >
         <div className='flex items-center gap-2'>
           {/* Drawn only: the option is what takes focus, keys and clicks, and says it is selected, so the checkbox would
               be a second tab stop whose own click on Space undoes the option's */}
-          {isMultiple && (
+          {multiple && (
             <input
               type='checkbox'
               className='checkbox checkbox-sm pointer-events-none'
@@ -416,7 +365,7 @@ export default function SelectWidget<
           tabIndex={0}
           // Disabled only through `aria-disabled`, so it would still take focus and open its listbox on mount, which a
           // disabled native control can't
-          autoFocus={autofocus && !disabled}
+          autoFocus={select.autoFocus && !disabled}
           onMouseDown={(event) => {
             event.preventDefault();
             event.currentTarget.focus();
@@ -424,7 +373,7 @@ export default function SelectWidget<
           onClick={() => setDismissed(false)}
           onKeyDown={handleKeyDown}
           className={`btn btn-outline w-full text-left flex justify-between items-center ${
-            disabled || readonly ? 'btn-disabled' : ''
+            disabled ? 'btn-disabled' : ''
           }`}
           /* A combobox, as a native select is, so it can be `aria-invalid` while its errors show, which a button can't,
              and announces the option it displays as its value */
@@ -432,10 +381,10 @@ export default function SelectWidget<
           aria-haspopup='listbox'
           aria-expanded={expanded && !dismissed}
           aria-controls={listboxId}
-          {...ariaProps}
-          aria-disabled={disabled || readonly || undefined}
+          {...select.ariaProps}
+          aria-disabled={disabled || undefined}
           // A button takes no `required`, so the combobox says it as a native select's attribute would
-          aria-required={required || undefined}
+          aria-required={select.required || undefined}
         >
           {/* With no option selected and no placeholder the text is the field's label, or the translated prompt, which on
               screen stands in for a value but is no value, so it is hidden from the one the combobox holds, leaving
@@ -456,11 +405,11 @@ export default function SelectWidget<
           onKeyDown={handleKeyDown}
           // oxlint-disable-next-line jsx-a11y/no-noninteractive-element-to-interactive-role
           role='listbox'
-          aria-multiselectable={isMultiple || undefined}
+          aria-multiselectable={multiple || undefined}
           className='dropdown-content z-[1] bg-base-100 w-full max-h-60 overflow-auto rounded-box shadow-lg'
         >
-          {groupEnumOptions<S>(optionsList, optgroups, enumDisabled).map((item) =>
-            isEnumOptionsGroup<S>(item) ? (
+          {select.groupedOptions.map((item) =>
+            'options' in item ? (
               <li key={`optgroup-${item.label}`} role='presentation'>
                 <ul role='group' aria-label={item.label}>
                   <li aria-hidden className='px-4 py-1 text-xs font-semibold uppercase opacity-60'>
@@ -475,16 +424,7 @@ export default function SelectWidget<
           )}
         </ul>
       </div>
-      <SelectedOptionDescription
-        id={id}
-        multiple={multiple}
-        options={options}
-        registry={registry}
-        uiSchema={uiSchema}
-        value={value}
-        hideLabel={hideLabel}
-        presentation={presentation}
-      />
+      <SelectedOptionDescription {...select.descriptionProps} />
     </div>
   );
 }

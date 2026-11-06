@@ -1967,7 +1967,6 @@ exports[`object fields > additionalProperties with a description, propertyNames 
                           <li
                             aria-selected="true"
                             class="px-4 py-2 hover:bg-base-200 cursor-pointer bg-primary/10"
-                            data-value="0"
                             role="option"
                             tabindex="-1"
                           >
@@ -1982,7 +1981,6 @@ exports[`object fields > additionalProperties with a description, propertyNames 
                           <li
                             aria-selected="false"
                             class="px-4 py-2 hover:bg-base-200 cursor-pointer "
-                            data-value="1"
                             role="option"
                             tabindex="-1"
                           >
@@ -1997,7 +1995,6 @@ exports[`object fields > additionalProperties with a description, propertyNames 
                           <li
                             aria-selected="false"
                             class="px-4 py-2 hover:bg-base-200 cursor-pointer "
-                            data-value="2"
                             role="option"
                             tabindex="-1"
                           >
@@ -2868,7 +2865,6 @@ exports[`object fields > additionalProperties, propertyNames enum 1`] = `
                           <li
                             aria-selected="true"
                             class="px-4 py-2 hover:bg-base-200 cursor-pointer bg-primary/10"
-                            data-value="0"
                             role="option"
                             tabindex="-1"
                           >
@@ -2883,7 +2879,6 @@ exports[`object fields > additionalProperties, propertyNames enum 1`] = `
                           <li
                             aria-selected="false"
                             class="px-4 py-2 hover:bg-base-200 cursor-pointer "
-                            data-value="1"
                             role="option"
                             tabindex="-1"
                           >
@@ -2898,7 +2893,6 @@ exports[`object fields > additionalProperties, propertyNames enum 1`] = `
                           <li
                             aria-selected="false"
                             class="px-4 py-2 hover:bg-base-200 cursor-pointer "
-                            data-value="2"
                             role="option"
                             tabindex="-1"
                           >
@@ -3092,7 +3086,6 @@ exports[`object fields > deprecated additionalProperties, propertyNames enum 1`]
                           <li
                             aria-selected="true"
                             class="px-4 py-2 hover:bg-base-200 cursor-pointer bg-primary/10"
-                            data-value="0"
                             role="option"
                             tabindex="-1"
                           >
@@ -3107,7 +3100,6 @@ exports[`object fields > deprecated additionalProperties, propertyNames enum 1`]
                           <li
                             aria-selected="false"
                             class="px-4 py-2 hover:bg-base-200 cursor-pointer "
-                            data-value="1"
                             role="option"
                             tabindex="-1"
                           >
@@ -3122,7 +3114,6 @@ exports[`object fields > deprecated additionalProperties, propertyNames enum 1`]
                           <li
                             aria-selected="false"
                             class="px-4 py-2 hover:bg-base-200 cursor-pointer "
-                            data-value="2"
                             role="option"
                             tabindex="-1"
                           >
@@ -3664,7 +3655,6 @@ exports[`object fields > pure anyOf union, with no frame of its own beside the o
                   <li
                     aria-selected="true"
                     class="px-4 py-2 hover:bg-base-200 cursor-pointer bg-primary/10"
-                    data-value="0"
                     role="option"
                     tabindex="-1"
                   >
@@ -3679,7 +3669,6 @@ exports[`object fields > pure anyOf union, with no frame of its own beside the o
                   <li
                     aria-selected="false"
                     class="px-4 py-2 hover:bg-base-200 cursor-pointer "
-                    data-value="1"
                     role="option"
                     tabindex="-1"
                   >
