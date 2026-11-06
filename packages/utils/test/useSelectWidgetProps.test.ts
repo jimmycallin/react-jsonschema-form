@@ -168,13 +168,13 @@ describe('useSelectWidgetProps()', () => {
       expect(props.onChange).toHaveBeenCalledWith([]);
     });
 
-    it('puts a multiple selection back into enum order, with values no option holds last', () => {
+    it('puts a multiple selection back into enum order, leaving out values no option holds', () => {
       const props = makeProps({
         multiple: true,
         options: { enumOptions, optionValueFormat: 'realValue', optgroups: { Cool: ['b', 'g'] }, emptyValue: 'x' },
       });
       render(props).onChange(['b', 'unknown', 'r', 'g']);
-      expect(props.onChange).toHaveBeenCalledWith(['r', 'g', 'b', 'x']);
+      expect(props.onChange).toHaveBeenCalledWith(['r', 'g', 'b']);
     });
 
     it.each([{ disabled: true }, { readonly: true }])('reports nothing while %o', (state) => {

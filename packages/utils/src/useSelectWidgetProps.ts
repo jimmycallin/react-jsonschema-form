@@ -128,7 +128,7 @@ export default function useSelectWidgetProps<
   const optionValueFormat = getOptionValueFormat(options);
   const inactive = disabled || readonly;
 
-  const { selectOptions, groupedOptions, indexByValue } = useMemo(() => {
+  const { selectOptions, groupedOptions, optionValues } = useMemo(() => {
     const domValues = enumOptionsDomValues<S>(enumOptions, optionValueFormat);
     const toOption = (option: IndexedEnumOptionType<S>): SelectWidgetOption => ({
       value: domValues[option.index],
@@ -145,9 +145,18 @@ export default function useSelectWidgetProps<
     return {
       selectOptions: flat,
       groupedOptions: grouped,
-      indexByValue: new Map(flat.map((option) => [option.value, option.index])),
+      optionValues: flat.map((option) => option.value),
     };
   }, [enumOptions, optgroups, enumDisabled, optionValueFormat]);
+
+  // A control may report a multiple selection in the order its options are drawn, or picked, while `optgroups` is
+  // presentational, so a selection is put back into enum order: grouping options must not reorder the array a form
+  // submits. Under `realValue` a string no option holds is encoded as itself, which no control can show as selected, so
+  // such a value is left out
+  const inEnumOrder = useCallback(
+    (encoded: string[]) => optionValues.filter((optionValue) => encoded.includes(optionValue)),
+    [optionValues],
+  );
 
   const handleChange = useCallback(
     (selected: string | string[] | null | undefined) => {
@@ -155,14 +164,16 @@ export default function useSelectWidgetProps<
         return;
       }
       const encoded = selected ?? (multiple ? [] : '');
-      // A control may report a multiple selection in the order its options are drawn, or picked, while `optgroups` is
-      // presentational, so the selection is put back into enum order: grouping options must not reorder the array a
-      // form submits. A value no option holds goes last
-      const position = (item: string) => indexByValue.get(item) ?? indexByValue.size;
-      const ordered = Array.isArray(encoded) ? [...encoded].sort((a, b) => position(a) - position(b)) : encoded;
-      onChange(enumOptionValueDecoder<S>(ordered, enumOptions, optionValueFormat, emptyValue));
+      onChange(
+        enumOptionValueDecoder<S>(
+          Array.isArray(encoded) ? inEnumOrder(encoded) : encoded,
+          enumOptions,
+          optionValueFormat,
+          emptyValue,
+        ),
+      );
     },
-    [inactive, multiple, indexByValue, onChange, enumOptions, optionValueFormat, emptyValue],
+    [inactive, multiple, inEnumOrder, onChange, enumOptions, optionValueFormat, emptyValue],
   );
 
   const formValue = value === undefined ? emptyValue : value;
@@ -180,19 +191,10 @@ export default function useSelectWidgetProps<
 
   logUnsupportedDefaultForEnum<S>(id, schema, enumOptions, multiple);
 
-  // Under `realValue` a string no option holds is encoded as itself, which a control can't show as selected, so the
-  // value only ever holds encoded values the options carry
-  let selectValue: SelectWidgetValue;
-  if (multiple) {
-    const selected = new Set(enumOptionSelectedValue<S, string[]>(value, enumOptions, true, optionValueFormat, []));
-    selectValue = {
-      multiple,
-      value: selectOptions.filter((option) => selected.has(option.value)).map((option) => option.value),
-    };
-  } else {
-    const selected = enumOptionSelectedValue<S, string>(value, enumOptions, false, optionValueFormat, '');
-    selectValue = { multiple, value: indexByValue.has(selected) ? selected : '' };
-  }
+  const held = inEnumOrder(
+    [enumOptionSelectedValue<S, string | string[]>(value, enumOptions, multiple, optionValueFormat, [])].flat(),
+  );
+  const selectValue: SelectWidgetValue = multiple ? { multiple, value: held } : { multiple, value: held[0] ?? '' };
 
   return {
     ...selectValue,
