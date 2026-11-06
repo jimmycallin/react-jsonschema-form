@@ -1,118 +1,61 @@
-import type { FocusEvent } from 'react';
-import { useCallback } from 'react';
 import type { FormContextType, RJSFSchema, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
-import {
-  enumOptionsAutofocusIndex,
-  enumOptionsIsDisabled,
-  enumOptionValueDecoder,
-  enumOptionsDomValues,
-  enumOptionsIsSelected,
-  getGroupAttributes,
-  getOptionValueFormat,
-  joinClassNames,
-  optionId,
-} from '@rjsf/utils';
+import { joinClassNames, useRadioWidgetProps } from '@rjsf/utils';
 
 /** The `RadioWidget` is a widget for rendering a radio group.
  *  It is typically used with a string property constrained with enum options.
  *
  * @param props - The `WidgetProps` for this component
  */
-function RadioWidget<
-  T = unknown,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = FormContextType,
->({
-  options,
-  value,
-  required,
-  disabled,
-  readonly,
-  autofocus = false,
-  onBlur,
-  onFocus,
-  onChange,
-  id,
-  htmlName,
-  registry,
-  presentation,
-  label,
-  placeholder,
-}: WidgetProps<T, S, F>) {
-  const { enumOptions, enumDisabled, inline, emptyValue } = options;
-  const { classMap } = registry;
-  const optionValueFormat = getOptionValueFormat(options);
-  const domValues = enumOptionsDomValues<S>(enumOptions, optionValueFormat);
+function RadioWidget<T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = FormContextType>(
+  props: WidgetProps<T, S, F>,
+) {
+  const { classMap } = props.registry;
+  const radio = useRadioWidgetProps<T, S, F>(props);
 
-  const handleBlur = useCallback(
-    ({ target }: FocusEvent<HTMLInputElement>) =>
-      onBlur(id, enumOptionValueDecoder<S>(target?.value, enumOptions, optionValueFormat, emptyValue)),
-    [onBlur, enumOptions, emptyValue, id, optionValueFormat],
-  );
-
-  const handleFocus = useCallback(
-    ({ target }: FocusEvent<HTMLInputElement>) =>
-      onFocus(id, enumOptionValueDecoder<S>(target?.value, enumOptions, optionValueFormat, emptyValue)),
-    [onFocus, enumOptions, emptyValue, id, optionValueFormat],
-  );
-
-  const { group: groupAttributes, option: optionAttributes } = getGroupAttributes<T, S, F>(
-    { id, presentation, label, placeholder, registry },
-    'radiogroup',
-  );
-  const autofocusIndex = enumOptionsAutofocusIndex<S>(enumOptions, enumDisabled, autofocus, value);
   return (
-    <div className='rjsf-field-radio-group' id={id} {...groupAttributes}>
-      {Array.isArray(enumOptions) &&
-        enumOptions.map((option, i) => {
-          const checked = enumOptionsIsSelected<S>(option.value, value, false);
-          const itemDisabled = enumOptionsIsDisabled(option.value, enumDisabled);
-          const optionDisabled = disabled || itemDisabled || readonly;
-          const disabledCls = optionDisabled && classMap.disabled;
+    <div className='rjsf-field-radio-group' id={radio.id} {...radio.groupProps}>
+      {radio.options.map((option) => {
+        const optionDisabled = radio.disabled || option.disabled;
+        const disabledCls = optionDisabled && classMap.disabled;
+        const control = (
+          <span>
+            <input
+              type='radio'
+              className={classMap.radioInput}
+              id={option.id}
+              checked={option.checked}
+              name={radio.name}
+              required={radio.required}
+              value={option.value}
+              disabled={optionDisabled}
+              autoFocus={option.autoFocus}
+              onChange={() => radio.onChange(option.value)}
+              onBlur={option.onBlur}
+              onFocus={option.onFocus}
+              {...radio.optionProps}
+            />
+            <span>{option.label}</span>
+          </span>
+        );
 
-          const handleChange = () => onChange(option.value);
-
-          const radio = (
-            <span>
-              <input
-                type='radio'
-                className={classMap.radioInput}
-                id={optionId(id, i)}
-                checked={checked}
-                name={htmlName || id}
-                required={required}
-                value={domValues[i]}
-                disabled={disabled || itemDisabled || readonly}
-                autoFocus={i === autofocusIndex}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                onFocus={handleFocus}
-                {...optionAttributes}
-              />
-              <span>{option.label}</span>
-            </span>
-          );
-
-          return inline ? (
-            <label
-              // oxlint-disable-next-line react/no-array-index-key
-              key={i}
-              className={joinClassNames('rjsf-radio-inline', classMap.radioInlineLabel, disabledCls)}
-              data-disabled={optionDisabled || undefined}
-            >
-              {radio}
-            </label>
-          ) : (
-            <div
-              // oxlint-disable-next-line react/no-array-index-key
-              key={i}
-              className={joinClassNames('rjsf-radio', classMap.radioWrapper, disabledCls)}
-              data-disabled={optionDisabled || undefined}
-            >
-              <label className={classMap.radioLabel}>{radio}</label>
-            </div>
-          );
-        })}
+        return radio.inline ? (
+          <label
+            key={option.index}
+            className={joinClassNames('rjsf-radio-inline', classMap.radioInlineLabel, disabledCls)}
+            data-disabled={optionDisabled || undefined}
+          >
+            {control}
+          </label>
+        ) : (
+          <div
+            key={option.index}
+            className={joinClassNames('rjsf-radio', classMap.radioWrapper, disabledCls)}
+            data-disabled={optionDisabled || undefined}
+          >
+            <label className={classMap.radioLabel}>{control}</label>
+          </div>
+        );
+      })}
     </div>
   );
 }
