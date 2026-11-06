@@ -971,6 +971,7 @@ https://github.com/rjsf-team/react-jsonschema-form/blob/main/packages/docs/docs/
 - Change `SelectWidget` to report its form data on focus and blur, as every theme's does, rather than the option the browser shows ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
 - Change `CheckboxesWidget` to leave out form data that no option holds when a box is checked or unchecked, as the multiple `SelectWidget` does ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
 - Change `RadioWidget` to log an error when the schema's `default` is none of its options, as `SelectWidget` does ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
+- **BREAKING CHANGE:** Change `BaseInputTemplate` and `TextareaWidget` to report the field's form data on focus and blur, a number for a number field and `ui:emptyValue` for an emptied one, rather than the text the input shows. See [the upgrade guide](https://rjsf-team.github.io/react-jsonschema-form/docs/migration-guides/v7.x%20upgrade%20guide#text-inputs-report-their-form-data-on-focus-and-blur-breaking-change) ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
 
 ## @rjsf/shadcn
 
