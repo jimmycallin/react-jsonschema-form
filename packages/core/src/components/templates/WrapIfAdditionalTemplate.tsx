@@ -1,17 +1,5 @@
 import type { FormContextType, RJSFSchema, StrictRJSFSchema, WrapIfAdditionalTemplateProps } from '@rjsf/utils';
-import {
-  ADDITIONAL_PROPERTY_FLAG,
-  additionalKeyId,
-  AdditionalPropertyKeySelect,
-  buttonId,
-  getAdditionalKeyAttributes,
-  hasAdditionalKeyLabel,
-  hasSchemaMarker,
-  isAdditionalKeyDisabled,
-  isAdditionalRemoveDisabled,
-  joinClassNames,
-  TranslatableString,
-} from '@rjsf/utils';
+import { AdditionalPropertyKeySelect, joinClassNames, useWrapIfAdditionalProps } from '@rjsf/utils';
 
 import Label from './FieldTemplate/Label.tsx';
 
@@ -26,34 +14,20 @@ export default function WrapIfAdditionalTemplate<
   S extends StrictRJSFSchema = RJSFSchema,
   F extends FormContextType = FormContextType,
 >(props: WrapIfAdditionalTemplateProps<T, S, F>) {
+  const { classNames, style, hasErrors, keyName, required, children, registry } = props;
   const {
-    id,
-    classNames,
-    style,
-    disabled,
-    hasErrors,
-    label,
-    keyName,
-    onKeyRename,
-    onKeyRenameBlur,
-    onRemoveProperty,
-    propertyNamesEnum,
-    readonly,
-    required,
-    schema,
-    children,
-    uiSchema,
-    registry,
-  } = props;
-  // The key is labelled wherever the value's label is drawn, by the template or the value's own component
-  const hasKeyLabel = hasAdditionalKeyLabel<T, S, F>(props);
-  const keyAttributes = getAdditionalKeyAttributes<T, S, F>(props);
-  const { templates, translateString, classMap } = registry;
+    additional,
+    keyId,
+    keyLabel,
+    hasKeyLabel,
+    keyErrorAttributes,
+    keyInputProps,
+    keySelectProps,
+    removeButtonProps,
+  } = useWrapIfAdditionalProps<T, S, F>(props);
+  const { templates, classMap } = registry;
   // Button templates are not overridden in the uiSchema
   const { RemoveButton } = templates.ButtonTemplates;
-  const keyLabel = translateString(TranslatableString.KeyLabel, [label]);
-  const keyId = additionalKeyId(id);
-  const additional = hasSchemaMarker(schema, ADDITIONAL_PROPERTY_FLAG);
 
   if (!additional) {
     return (
@@ -72,47 +46,17 @@ export default function WrapIfAdditionalTemplate<
               required={required}
               id={keyId}
               className={joinClassNames('rjsf-field-label', classMap.fieldLabel)}
-              invalid={keyAttributes['aria-invalid']}
+              invalid={keyErrorAttributes['aria-invalid']}
             />
           )}
-          {propertyNamesEnum ? (
-            <AdditionalPropertyKeySelect<T, S, F>
-              errorAttributes={keyAttributes}
-              id={keyId}
-              label={keyLabel}
-              hideLabel
-              labelledByTemplate={hasKeyLabel}
-              value={keyName}
-              propertyNamesEnum={propertyNamesEnum}
-              onKeyRename={onKeyRename}
-              disabled={disabled}
-              readonly={readonly}
-              required={required}
-              registry={registry}
-            />
+          {keySelectProps ? (
+            <AdditionalPropertyKeySelect<T, S, F> {...keySelectProps} />
           ) : (
-            <input
-              key={keyName}
-              className={classMap.input}
-              type='text'
-              id={keyId}
-              aria-label={hasKeyLabel ? undefined : keyLabel}
-              {...keyAttributes}
-              disabled={isAdditionalKeyDisabled(props)}
-              onBlur={onKeyRenameBlur}
-              defaultValue={keyName}
-            />
+            <input key={keyName} className={classMap.input} {...keyInputProps} />
           )}
         </div>
         <div className='rjsf-additional-property-value'>{children}</div>
-        <RemoveButton
-          id={buttonId(id, 'remove')}
-          className='rjsf-object-property-remove'
-          disabled={isAdditionalRemoveDisabled(props)}
-          onClick={onRemoveProperty}
-          uiSchema={uiSchema}
-          registry={registry}
-        />
+        <RemoveButton {...removeButtonProps} />
       </div>
     </div>
   );

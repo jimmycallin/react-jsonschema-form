@@ -223,6 +223,12 @@ import useCheckboxesWidgetProps from './useCheckboxesWidgetProps.ts';
 import type { UseCheckboxWidgetPropsResult } from './useCheckboxWidgetProps.ts';
 import useCheckboxWidgetProps from './useCheckboxWidgetProps.ts';
 import type { ChoiceWidgetLabelOptions, ChoiceWidgetOption, ChoiceWidgetProps } from './useChoiceWidgetProps.ts';
+import type {
+  FieldTemplateLabelProps,
+  UseFieldTemplatePropsOptions,
+  UseFieldTemplatePropsResult,
+} from './useFieldTemplateProps.ts';
+import useFieldTemplateProps from './useFieldTemplateProps.ts';
 import type { FileInfoType, UseFileWidgetPropsResult } from './useFileWidgetProps.ts';
 import useFileWidgetProps from './useFileWidgetProps.ts';
 import type { UseRadioWidgetPropsResult } from './useRadioWidgetProps.ts';
@@ -240,6 +246,13 @@ import type { UseTextareaWidgetPropsResult } from './useTextareaWidgetProps.ts';
 import useTextareaWidgetProps from './useTextareaWidgetProps.ts';
 import type { UseTimeWidgetPropsResult } from './useTimeWidgetProps.ts';
 import useTimeWidgetProps from './useTimeWidgetProps.ts';
+import type {
+  AdditionalKeyInputProps,
+  AdditionalRemoveButtonProps,
+  UseWrapIfAdditionalPropsOptions,
+  UseWrapIfAdditionalPropsResult,
+} from './useWrapIfAdditionalProps.ts';
+import useWrapIfAdditionalProps from './useWrapIfAdditionalProps.ts';
 import utcToLocal from './utcToLocal.ts';
 import validationDataMerge from './validationDataMerge.ts';
 import type { WidgetAriaPropsInput } from './widgetAriaProps.ts';
@@ -257,7 +270,9 @@ export * from './parser/index.ts';
 export * from './schema/index.ts';
 
 export type {
+  AdditionalKeyInputProps,
   AdditionalPropertyKeySelectProps,
+  AdditionalRemoveButtonProps,
   CheckboxesWidgetOption,
   ClearEvent,
   ChoiceWidgetLabelOptions,
@@ -269,6 +284,7 @@ export type {
   DateTimeLocalValueResult,
   FieldLabelSources,
   FieldPresentationInputs,
+  FieldTemplateLabelProps,
   FileInfoType,
   GroupRole,
   LogOnceLevel,
@@ -284,12 +300,16 @@ export type {
   UseBaseInputPropsResult,
   UseCheckboxWidgetPropsResult,
   UseCheckboxesWidgetPropsResult,
+  UseFieldTemplatePropsOptions,
+  UseFieldTemplatePropsResult,
   UseFileWidgetPropsResult,
   UseRadioWidgetPropsResult,
   UseRangeWidgetPropsResult,
   UseSelectWidgetPropsResult,
   UseTextareaWidgetPropsResult,
   UseTimeWidgetPropsResult,
+  UseWrapIfAdditionalPropsOptions,
+  UseWrapIfAdditionalPropsResult,
   // oxlint-disable-next-line typescript/no-deprecated -- deprecated, and kept exported through v7
   VisibleErrorsProps,
   WidgetAliasFor,
@@ -516,12 +536,14 @@ export {
   useBaseInputProps,
   useCheckboxWidgetProps,
   useCheckboxesWidgetProps,
+  useFieldTemplateProps,
   useFileWidgetProps,
   useRadioWidgetProps,
   useRangeWidgetProps,
   useSelectWidgetProps,
   useTextareaWidgetProps,
   useTimeWidgetProps,
+  useWrapIfAdditionalProps,
   utcToLocal,
   validationDataMerge,
   WIDGET_FIELD_PRESENTATION,

@@ -1315,6 +1315,17 @@ describe('ObjectField', () => {
       expect(node.querySelector('#root_first__key')).toHaveValue('first');
     });
 
+    it('names the key input, and requires the key of a required property', () => {
+      const { node } = createFormComponent({
+        schema: { type: 'object', required: ['first'], additionalProperties: { type: 'string' } },
+        initialFormData: { first: 'a', second: 'b' },
+      });
+
+      expect(node.querySelector('#root_first__key')).toHaveAttribute('name', 'root_first__key');
+      expect(node.querySelector('#root_first__key')).toBeRequired();
+      expect(node.querySelector('#root_second__key')).not.toBeRequired();
+    });
+
     it('should render a label for the additional property value', () => {
       const { node } = createFormComponent({
         schema,

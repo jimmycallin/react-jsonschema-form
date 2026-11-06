@@ -1,13 +1,5 @@
 import type { FieldTemplateProps, FormContextType, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
-import {
-  getTemplates,
-  getUiOptions,
-  joinClassNames,
-  templateDrawsDescription,
-  templateDrawsLabel,
-  templateLabelFor,
-  templateMarksRequired,
-} from '@rjsf/utils';
+import { joinClassNames, templateDrawsDescription, useFieldTemplateProps } from '@rjsf/utils';
 
 import Label from './Label.tsx';
 
@@ -21,25 +13,20 @@ export default function FieldTemplate<
   S extends StrictRJSFSchema = RJSFSchema,
   F extends FormContextType = FormContextType,
 >(props: FieldTemplateProps<T, S, F>) {
-  const { label, children, errors, help, description, hidden, hasErrors, registry, uiSchema, presentation } = props;
-  const { classMap } = registry;
-  const uiOptions = getUiOptions(uiSchema);
-  const { WrapIfAdditionalTemplate } = getTemplates<T, S, F>(registry, uiOptions);
+  const { children, errors, help, description, hasErrors, registry } = props;
+  const { hidden, WrapIfAdditionalTemplate, wrapProps, drawsLabel, labelProps } = useFieldTemplateProps<T, S, F>(props);
   if (hidden) {
     return <div hidden>{children}</div>;
   }
-  // The plan's label already says whether a checkbox draws its own; the guess by the `checkbox` alias is left for a
-  // template rendered without one, which `getDisplayLabel()` still tells to draw it, as the themes' templates do
-  const leavesLabelToCheckbox = !presentation && uiOptions.widget === 'checkbox';
   return (
-    <WrapIfAdditionalTemplate {...props}>
-      {templateDrawsLabel<T, S, F>(props) && !leavesLabelToCheckbox && (
+    <WrapIfAdditionalTemplate {...wrapProps}>
+      {drawsLabel && (
         <Label
-          label={label}
-          required={templateMarksRequired<T, S, F>(props)}
-          id={templateLabelFor<T, S, F>(props)}
-          labelId={presentation?.label.id}
-          className={joinClassNames('rjsf-field-label', classMap.fieldLabel)}
+          label={labelProps.label}
+          required={labelProps.required}
+          id={labelProps.htmlFor}
+          labelId={labelProps.id}
+          className={joinClassNames('rjsf-field-label', registry.classMap.fieldLabel)}
           invalid={hasErrors}
         />
       )}
