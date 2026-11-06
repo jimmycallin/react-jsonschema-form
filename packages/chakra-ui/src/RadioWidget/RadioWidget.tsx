@@ -1,19 +1,8 @@
-import type { ChangeEvent, FocusEvent } from 'react';
+import type { ChangeEvent } from 'react';
 import { useRef } from 'react';
 import { Stack } from '@chakra-ui/react';
 import type { FormContextType, RJSFSchema, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
-import {
-  enumOptionSelectedValue,
-  enumOptionsAutofocusIndex,
-  enumOptionsIsDisabled,
-  enumOptionValueDecoder,
-  enumOptionsDomValues,
-  getGroupLabelling,
-  getOptionValueFormat,
-  hasWidgetErrors,
-  labelValue,
-  optionId,
-} from '@rjsf/utils';
+import { hasWidgetErrors, labelValue, optionId, useRadioWidgetProps } from '@rjsf/utils';
 
 import { Field } from '../components/ui/field.tsx';
 import { Radio, RadioGroup } from '../components/ui/radio.tsx';
@@ -24,50 +13,30 @@ export default function RadioWidget<
   S extends StrictRJSFSchema = RJSFSchema,
   F extends FormContextType = FormContextType,
 >(props: WidgetProps<T, S, F>) {
-  const { id, htmlName, options, value, required, disabled, readonly, autofocus, label, onChange, onBlur, onFocus } =
-    props;
-  const { enumOptions, enumDisabled, emptyValue } = options;
-  const optionValueFormat = getOptionValueFormat(options);
-  const domValues = enumOptionsDomValues<S>(enumOptions, optionValueFormat);
-
-  const handleChange = ({ target: { value: enumValue } }: ChangeEvent<HTMLInputElement>) =>
-    onChange(enumOptionValueDecoder<S>(enumValue, enumOptions, optionValueFormat, emptyValue));
-  const handleBlur = ({ target: { value: enumValue } }: FocusEvent<HTMLInputElement>) =>
-    onBlur(id, enumOptionValueDecoder<S>(enumValue, enumOptions, optionValueFormat, emptyValue));
-  const handleFocus = ({ target: { value: enumValue } }: FocusEvent<HTMLInputElement>) =>
-    onFocus(id, enumOptionValueDecoder<S>(enumValue, enumOptions, optionValueFormat, emptyValue));
-
-  const row = options ? options.inline : false;
-  const selectValue = enumOptionSelectedValue(value, enumOptions, false, optionValueFormat, null);
-
+  const { options, readonly, label } = props;
+  const radio = useRadioWidgetProps<T, S, F>(props, { drawsLabel: true });
+  const { id, groupProps } = radio;
   const chakraProps = getChakra(options);
-  const {
-    drawsLabel,
-    labelId,
-    group: groupAttributes,
-    option: optionAttributes,
-  } = getGroupLabelling<T, S, F>(props, 'radiogroup');
-  const optionIndexes = new Map(domValues.map((domValue, index) => [domValue, index]));
+  const optionIds = new Map(radio.options.map((option) => [option.value, option.id]));
 
-  const autofocusIndex = enumOptionsAutofocusIndex<S>(enumOptions, enumDisabled, autofocus, value);
   const groupRef = useRef<HTMLDivElement>(null);
   // The label has no `for`, which can't name the group, so a click on it moves focus as zag's own radio group label
   // does: to the checked radio, else the first one a user can choose
   const focusRadio = () => {
     const group = groupRef.current;
-    const radio =
+    const input =
       group?.querySelector<HTMLInputElement>('input:checked:not(:disabled)') ??
       group?.querySelector<HTMLInputElement>('input:not(:disabled)');
-    radio?.focus();
+    input?.focus();
   };
   return (
     <Field
       mb={1}
-      disabled={disabled || readonly}
-      required={required}
+      disabled={radio.disabled}
+      required={radio.required}
       readOnly={readonly}
-      label={labelValue(label, !drawsLabel)}
-      ids={{ label: labelId }}
+      label={labelValue(label, !radio.drawsLabel)}
+      ids={{ label: radio.labelId }}
       labelNamesNoControl
       onLabelClick={focusRadio}
       {...chakraProps}
@@ -75,36 +44,33 @@ export default function RadioWidget<
       <RadioGroup
         ref={groupRef}
         // The group carries the field's id and each radio its option's, as core's do
-        ids={{ root: id, itemHiddenInput: (domValue) => optionId(id, optionIndexes.get(domValue) ?? -1) }}
-        onChange={handleChange}
-        onBlur={handleBlur}
-        onFocus={handleFocus}
-        value={selectValue}
-        name={htmlName || id}
-        required={required}
+        ids={{ root: id, itemHiddenInput: (domValue) => optionIds.get(domValue) ?? optionId(id, -1) }}
+        onChange={(event: ChangeEvent<HTMLInputElement>) => radio.onChange(event.target.value)}
+        value={radio.value || null}
+        name={radio.name}
+        required={radio.required}
         invalid={hasWidgetErrors<T, S, F>(props)}
-        {...groupAttributes}
+        {...groupProps}
         // Named by the label this widget draws, where the plan names it by no other, or by nothing where none is drawn:
         // Ark ignores an undefined override and would point the group at a label that isn't rendered
-        aria-labelledby={labelledByOrNone(groupAttributes['aria-labelledby'], false)}
+        aria-labelledby={labelledByOrNone(groupProps['aria-labelledby'], false)}
       >
-        <Stack direction={row ? 'row' : 'column'}>
-          {Array.isArray(enumOptions) &&
-            enumOptions.map((option, index) => {
-              const itemDisabled = enumOptionsIsDisabled(option.value, enumDisabled);
-
-              return (
-                <Radio
-                  value={domValues[index]}
-                  // oxlint-disable-next-line react/no-array-index-key
-                  key={index}
-                  disabled={disabled || itemDisabled || readonly}
-                  inputProps={{ ...optionAttributes, autoFocus: index === autofocusIndex }}
-                >
-                  {option.label}
-                </Radio>
-              );
-            })}
+        <Stack direction={radio.inline ? 'row' : 'column'}>
+          {radio.options.map((option) => (
+            <Radio
+              value={option.value}
+              key={option.index}
+              disabled={radio.disabled || option.disabled}
+              inputProps={{
+                ...radio.optionProps,
+                autoFocus: option.autoFocus,
+                onFocus: option.onFocus,
+                onBlur: option.onBlur,
+              }}
+            >
+              {option.label}
+            </Radio>
+          ))}
         </Stack>
       </RadioGroup>
     </Field>
