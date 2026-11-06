@@ -1,34 +1,18 @@
-import type { ChangeEvent, FocusEvent, SyntheticEvent } from 'react';
-import { useCallback, useMemo } from 'react';
-import type { FormContextType, IndexedEnumOptionType, RJSFSchema, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
-import {
-  enumOptionSelectedValue,
-  enumOptionValueDecoder,
-  enumOptionsDomValues,
-  flattenGroupedOptions,
-  getOptionValueFormat,
-  groupEnumOptions,
-  isEnumOptionsGroup,
-  logUnsupportedDefaultForEnum,
-  SelectedOptionDescription,
-  widgetAriaProps,
-  widgetDrawsLabel,
-} from '@rjsf/utils';
+import type { SyntheticEvent } from 'react';
+import type { FormContextType, RJSFSchema, SelectWidgetOption, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
+import { SelectedOptionDescription, useSelectWidgetProps } from '@rjsf/utils';
 
-/** A multiple select only ever reports its selection in document order, and `optgroups` is presentational, so the
- * options are put back into enum order via `enumIndexByPosition` before they reach form data: turning a group on or
- * off must not reorder the array a form submits.
- */
-function getValue(event: SyntheticEvent<HTMLSelectElement>, multiple: boolean, enumIndexByPosition: number[]) {
-  const select = event.target as HTMLSelectElement;
-  if (multiple) {
-    return Array.from(select.options)
-      .map((option, position) => ({ option, position }))
-      .filter(({ option }) => option.selected)
-      .sort((a, b) => enumIndexByPosition[a.position] - enumIndexByPosition[b.position])
-      .map(({ option }) => option.value);
-  }
-  return select.value;
+function getValue(event: SyntheticEvent<HTMLSelectElement>, multiple: boolean) {
+  const select = event.currentTarget;
+  return multiple ? Array.from(select.selectedOptions, (option) => option.value) : select.value;
+}
+
+function renderOption({ index, value, disabled, label }: SelectWidgetOption) {
+  return (
+    <option key={index} value={value} disabled={disabled}>
+      {label}
+    </option>
+  );
 }
 
 /** The `SelectWidget` is a widget for rendering dropdowns.
@@ -41,105 +25,29 @@ function SelectWidget<
   S extends StrictRJSFSchema = RJSFSchema,
   F extends FormContextType = FormContextType,
 >(props: WidgetProps<T, S, F>) {
-  const {
-    schema,
-    id,
-    options,
-    value,
-    required,
-    disabled,
-    readonly,
-    multiple = false,
-    autofocus = false,
-    onChange,
-    onBlur,
-    onFocus,
-    placeholder,
-    htmlName,
-    registry,
-    uiSchema,
-    presentation,
-  } = props;
-  const { classMap } = registry;
-  const { enumOptions, enumDisabled, emptyValue: optEmptyVal, optgroups } = options;
-  const emptyValue = multiple ? [] : '';
-  const optionValueFormat = getOptionValueFormat(options);
-  const domValues = enumOptionsDomValues<S>(enumOptions, optionValueFormat);
-
-  const groupedOptions = useMemo(
-    () => groupEnumOptions<S>(enumOptions, optgroups, enumDisabled),
-    [enumOptions, optgroups, enumDisabled],
-  );
-  const enumIndexByPosition = useMemo(
-    () => flattenGroupedOptions<S>(groupedOptions).map((option) => option.index),
-    [groupedOptions],
-  );
-
-  const handleFocus = useCallback(
-    (event: FocusEvent<HTMLSelectElement>) => {
-      const newValue = getValue(event, multiple, enumIndexByPosition);
-      onFocus(id, enumOptionValueDecoder<S>(newValue, enumOptions, optionValueFormat, optEmptyVal));
-    },
-    [onFocus, id, multiple, enumOptions, optEmptyVal, optionValueFormat, enumIndexByPosition],
-  );
-
-  const handleBlur = useCallback(
-    (event: FocusEvent<HTMLSelectElement>) => {
-      const newValue = getValue(event, multiple, enumIndexByPosition);
-      onBlur(id, enumOptionValueDecoder<S>(newValue, enumOptions, optionValueFormat, optEmptyVal));
-    },
-    [onBlur, id, multiple, enumOptions, optEmptyVal, optionValueFormat, enumIndexByPosition],
-  );
-
-  const handleChange = useCallback(
-    (event: ChangeEvent<HTMLSelectElement>) => {
-      const newValue = getValue(event, multiple, enumIndexByPosition);
-      onChange(enumOptionValueDecoder<S>(newValue, enumOptions, optionValueFormat, optEmptyVal));
-    },
-    [onChange, multiple, enumOptions, optEmptyVal, optionValueFormat, enumIndexByPosition],
-  );
-
-  const selectValue = enumOptionSelectedValue(value, enumOptions, multiple, optionValueFormat, emptyValue);
-  const showPlaceholderOption = !multiple && schema.default === undefined;
-  logUnsupportedDefaultForEnum<S>(id, schema, enumOptions, multiple);
-
-  function renderOption(option: IndexedEnumOptionType<S>) {
-    return (
-      <option key={option.index} value={domValues[option.index]} disabled={option.disabled}>
-        {option.label}
-      </option>
-    );
-  }
+  const select = useSelectWidgetProps<T, S, F>(props);
+  const { multiple } = select;
 
   return (
     <>
-      <SelectedOptionDescription
-        id={id}
-        multiple={multiple}
-        options={options}
-        registry={registry}
-        uiSchema={uiSchema}
-        value={value}
-        hideLabel={!widgetDrawsLabel<T, S, F>(props)}
-        presentation={presentation}
-      />
+      <SelectedOptionDescription {...select.descriptionProps} />
       <select
-        id={id}
-        name={htmlName || id}
+        id={select.id}
+        name={select.name}
         multiple={multiple}
-        className={classMap.select}
-        value={selectValue}
-        required={required}
-        disabled={disabled || readonly}
-        autoFocus={autofocus}
-        onBlur={handleBlur}
-        onFocus={handleFocus}
-        onChange={handleChange}
-        {...widgetAriaProps(props)}
+        className={props.registry.classMap.select}
+        value={select.value}
+        required={select.required}
+        disabled={select.disabled}
+        autoFocus={select.autoFocus}
+        onBlur={(event) => select.onBlur(getValue(event, multiple))}
+        onFocus={(event) => select.onFocus(getValue(event, multiple))}
+        onChange={(event) => select.onChange(getValue(event, multiple))}
+        {...select.ariaProps}
       >
-        {showPlaceholderOption && <option value=''>{placeholder}</option>}
-        {groupedOptions.map((item) =>
-          isEnumOptionsGroup<S>(item) ? (
+        {select.showPlaceholderOption && <option value=''>{select.placeholder}</option>}
+        {select.groupedOptions.map((item) =>
+          'options' in item ? (
             <optgroup key={`optgroup-${item.label}`} label={item.label}>
               {item.options.map(renderOption)}
             </optgroup>
