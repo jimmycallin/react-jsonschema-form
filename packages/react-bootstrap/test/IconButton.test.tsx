@@ -12,7 +12,7 @@ describe('IconButton', () => {
     const uiSchema: UiSchema = { 'ui:options': { copyable: true } };
 
     const { container } = render(
-      <Form schema={schema} uiSchema={uiSchema} formData={['a', 'b']} validator={validator} />,
+      <Form schema={schema} uiSchema={uiSchema} initialFormData={['a', 'b']} validator={validator} />,
     );
 
     for (const className of [
