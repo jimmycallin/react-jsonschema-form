@@ -1,7 +1,7 @@
 import AddIcon from '@mui/icons-material/Add';
 import type { FormContextType, OptionalDataControlsTemplateProps, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
 
-import IconButton, { RemoveButton } from '../IconButton/index.ts';
+import IconButton from '../IconButton/index.ts';
 
 /** The OptionalDataControlsTemplate renders one of three different states. If
  * there is an `onAddClick()` function, it renders the "Add" button. If there is
@@ -17,6 +17,7 @@ export default function OptionalDataControlsTemplate<
   F extends FormContextType = FormContextType,
 >(props: OptionalDataControlsTemplateProps<T, S, F>) {
   const { id, registry, label, onAddClick, onRemoveClick, uiSchema } = props;
+  const { RemoveButton } = registry.templates.ButtonTemplates;
   if (onAddClick) {
     return (
       <IconButton
