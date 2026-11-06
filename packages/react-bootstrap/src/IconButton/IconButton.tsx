@@ -20,7 +20,7 @@ function IconButtonFn<
   S extends StrictRJSFSchema = RJSFSchema,
   F extends FormContextType = FormContextType,
 >(props: BootstrapIconButtonProps<T, S, F>) {
-  const { icon, iconType, className, uiSchema, registry, ...otherProps } = props;
+  const { icon, iconType, uiSchema, registry, ...otherProps } = props;
   return (
     <Button {...otherProps} variant={props.variant || 'light'} size='sm'>
       {icon}

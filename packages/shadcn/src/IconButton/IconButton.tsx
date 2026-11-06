@@ -6,6 +6,7 @@ import { ChevronDown, ChevronUp, Copy, Trash2, X } from 'lucide-react';
 
 import type { buttonVariants } from '../components/ui/button.tsx';
 import { Button } from '../components/ui/button.tsx';
+import { cn } from '../lib/utils.ts';
 
 export type ShadIconButtonProps<
   T = unknown,
@@ -122,7 +123,7 @@ function RemoveButtonFn<
     <IconButton
       title={translateString(TranslatableString.RemoveButton)}
       {...props}
-      className='border-destructive'
+      className={cn(props.className, 'border-destructive')}
       icon={<Trash2 className='h-4 w-4 stroke-destructive' />}
     />
   );

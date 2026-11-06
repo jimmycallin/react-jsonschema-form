@@ -223,7 +223,7 @@ exports[`nameGenerator > bracketNameGenerator > array of objects 1`] = `
                                   class="d-flex flex-row"
                                 >
                                   <button
-                                    class="btn btn-light btn-sm"
+                                    class="rjsf-array-item-move-up btn btn-light btn-sm"
                                     disabled=""
                                     id="root_tasks_0__moveUp"
                                     title="Move up"
@@ -244,7 +244,7 @@ exports[`nameGenerator > bracketNameGenerator > array of objects 1`] = `
                                     </svg>
                                   </button>
                                   <button
-                                    class="btn btn-light btn-sm"
+                                    class="rjsf-array-item-move-down btn btn-light btn-sm"
                                     id="root_tasks_0__moveDown"
                                     title="Move down"
                                     type="button"
@@ -264,7 +264,7 @@ exports[`nameGenerator > bracketNameGenerator > array of objects 1`] = `
                                     </svg>
                                   </button>
                                   <button
-                                    class="btn btn-danger btn-sm"
+                                    class="rjsf-array-item-remove btn btn-danger btn-sm"
                                     id="root_tasks_0__remove"
                                     title="Remove"
                                     type="button"
@@ -400,7 +400,7 @@ exports[`nameGenerator > bracketNameGenerator > array of objects 1`] = `
                                   class="d-flex flex-row"
                                 >
                                   <button
-                                    class="btn btn-light btn-sm"
+                                    class="rjsf-array-item-move-up btn btn-light btn-sm"
                                     id="root_tasks_1__moveUp"
                                     title="Move up"
                                     type="button"
@@ -420,7 +420,7 @@ exports[`nameGenerator > bracketNameGenerator > array of objects 1`] = `
                                     </svg>
                                   </button>
                                   <button
-                                    class="btn btn-light btn-sm"
+                                    class="rjsf-array-item-move-down btn btn-light btn-sm"
                                     disabled=""
                                     id="root_tasks_1__moveDown"
                                     title="Move down"
@@ -441,7 +441,7 @@ exports[`nameGenerator > bracketNameGenerator > array of objects 1`] = `
                                     </svg>
                                   </button>
                                   <button
-                                    class="btn btn-danger btn-sm"
+                                    class="rjsf-array-item-remove btn btn-danger btn-sm"
                                     id="root_tasks_1__remove"
                                     title="Remove"
                                     type="button"
@@ -620,7 +620,7 @@ exports[`nameGenerator > bracketNameGenerator > array of strings 1`] = `
                                   class="d-flex flex-row"
                                 >
                                   <button
-                                    class="btn btn-light btn-sm"
+                                    class="rjsf-array-item-move-up btn btn-light btn-sm"
                                     disabled=""
                                     id="root_tags_0__moveUp"
                                     title="Move up"
@@ -641,7 +641,7 @@ exports[`nameGenerator > bracketNameGenerator > array of strings 1`] = `
                                     </svg>
                                   </button>
                                   <button
-                                    class="btn btn-light btn-sm"
+                                    class="rjsf-array-item-move-down btn btn-light btn-sm"
                                     id="root_tags_0__moveDown"
                                     title="Move down"
                                     type="button"
@@ -661,7 +661,7 @@ exports[`nameGenerator > bracketNameGenerator > array of strings 1`] = `
                                     </svg>
                                   </button>
                                   <button
-                                    class="btn btn-danger btn-sm"
+                                    class="rjsf-array-item-remove btn btn-danger btn-sm"
                                     id="root_tags_0__remove"
                                     title="Remove"
                                     type="button"
@@ -725,7 +725,7 @@ exports[`nameGenerator > bracketNameGenerator > array of strings 1`] = `
                                   class="d-flex flex-row"
                                 >
                                   <button
-                                    class="btn btn-light btn-sm"
+                                    class="rjsf-array-item-move-up btn btn-light btn-sm"
                                     id="root_tags_1__moveUp"
                                     title="Move up"
                                     type="button"
@@ -745,7 +745,7 @@ exports[`nameGenerator > bracketNameGenerator > array of strings 1`] = `
                                     </svg>
                                   </button>
                                   <button
-                                    class="btn btn-light btn-sm"
+                                    class="rjsf-array-item-move-down btn btn-light btn-sm"
                                     disabled=""
                                     id="root_tags_1__moveDown"
                                     title="Move down"
@@ -766,7 +766,7 @@ exports[`nameGenerator > bracketNameGenerator > array of strings 1`] = `
                                     </svg>
                                   </button>
                                   <button
-                                    class="btn btn-danger btn-sm"
+                                    class="rjsf-array-item-remove btn btn-danger btn-sm"
                                     id="root_tags_1__remove"
                                     title="Remove"
                                     type="button"
@@ -1732,7 +1732,7 @@ exports[`nameGenerator > dotNotationNameGenerator > array of objects 1`] = `
                                   class="d-flex flex-row"
                                 >
                                   <button
-                                    class="btn btn-light btn-sm"
+                                    class="rjsf-array-item-move-up btn btn-light btn-sm"
                                     disabled=""
                                     id="root_tasks_0__moveUp"
                                     title="Move up"
@@ -1753,7 +1753,7 @@ exports[`nameGenerator > dotNotationNameGenerator > array of objects 1`] = `
                                     </svg>
                                   </button>
                                   <button
-                                    class="btn btn-light btn-sm"
+                                    class="rjsf-array-item-move-down btn btn-light btn-sm"
                                     id="root_tasks_0__moveDown"
                                     title="Move down"
                                     type="button"
@@ -1773,7 +1773,7 @@ exports[`nameGenerator > dotNotationNameGenerator > array of objects 1`] = `
                                     </svg>
                                   </button>
                                   <button
-                                    class="btn btn-danger btn-sm"
+                                    class="rjsf-array-item-remove btn btn-danger btn-sm"
                                     id="root_tasks_0__remove"
                                     title="Remove"
                                     type="button"
@@ -1909,7 +1909,7 @@ exports[`nameGenerator > dotNotationNameGenerator > array of objects 1`] = `
                                   class="d-flex flex-row"
                                 >
                                   <button
-                                    class="btn btn-light btn-sm"
+                                    class="rjsf-array-item-move-up btn btn-light btn-sm"
                                     id="root_tasks_1__moveUp"
                                     title="Move up"
                                     type="button"
@@ -1929,7 +1929,7 @@ exports[`nameGenerator > dotNotationNameGenerator > array of objects 1`] = `
                                     </svg>
                                   </button>
                                   <button
-                                    class="btn btn-light btn-sm"
+                                    class="rjsf-array-item-move-down btn btn-light btn-sm"
                                     disabled=""
                                     id="root_tasks_1__moveDown"
                                     title="Move down"
@@ -1950,7 +1950,7 @@ exports[`nameGenerator > dotNotationNameGenerator > array of objects 1`] = `
                                     </svg>
                                   </button>
                                   <button
-                                    class="btn btn-danger btn-sm"
+                                    class="rjsf-array-item-remove btn btn-danger btn-sm"
                                     id="root_tasks_1__remove"
                                     title="Remove"
                                     type="button"
@@ -2129,7 +2129,7 @@ exports[`nameGenerator > dotNotationNameGenerator > array of strings 1`] = `
                                   class="d-flex flex-row"
                                 >
                                   <button
-                                    class="btn btn-light btn-sm"
+                                    class="rjsf-array-item-move-up btn btn-light btn-sm"
                                     disabled=""
                                     id="root_tags_0__moveUp"
                                     title="Move up"
@@ -2150,7 +2150,7 @@ exports[`nameGenerator > dotNotationNameGenerator > array of strings 1`] = `
                                     </svg>
                                   </button>
                                   <button
-                                    class="btn btn-light btn-sm"
+                                    class="rjsf-array-item-move-down btn btn-light btn-sm"
                                     id="root_tags_0__moveDown"
                                     title="Move down"
                                     type="button"
@@ -2170,7 +2170,7 @@ exports[`nameGenerator > dotNotationNameGenerator > array of strings 1`] = `
                                     </svg>
                                   </button>
                                   <button
-                                    class="btn btn-danger btn-sm"
+                                    class="rjsf-array-item-remove btn btn-danger btn-sm"
                                     id="root_tags_0__remove"
                                     title="Remove"
                                     type="button"
@@ -2234,7 +2234,7 @@ exports[`nameGenerator > dotNotationNameGenerator > array of strings 1`] = `
                                   class="d-flex flex-row"
                                 >
                                   <button
-                                    class="btn btn-light btn-sm"
+                                    class="rjsf-array-item-move-up btn btn-light btn-sm"
                                     id="root_tags_1__moveUp"
                                     title="Move up"
                                     type="button"
@@ -2254,7 +2254,7 @@ exports[`nameGenerator > dotNotationNameGenerator > array of strings 1`] = `
                                     </svg>
                                   </button>
                                   <button
-                                    class="btn btn-light btn-sm"
+                                    class="rjsf-array-item-move-down btn btn-light btn-sm"
                                     disabled=""
                                     id="root_tags_1__moveDown"
                                     title="Move down"
@@ -2275,7 +2275,7 @@ exports[`nameGenerator > dotNotationNameGenerator > array of strings 1`] = `
                                     </svg>
                                   </button>
                                   <button
-                                    class="btn btn-danger btn-sm"
+                                    class="rjsf-array-item-remove btn btn-danger btn-sm"
                                     id="root_tags_1__remove"
                                     title="Remove"
                                     type="button"
@@ -6673,7 +6673,7 @@ exports[`single fields > optional data controls > shows "add" and "remove" optio
                           style="margin-left: -5px;"
                         >
                           <button
-                            class="btn btn-secondary btn-sm"
+                            class="rjsf-remove-optional-data btn btn-secondary btn-sm"
                             id="root_nestedObjectOptional__optionalRemove"
                             title="Remove data for optional field"
                             type="button"
@@ -6774,7 +6774,7 @@ exports[`single fields > optional data controls > shows "add" and "remove" optio
                                     style="margin-left: -5px;"
                                   >
                                     <button
-                                      class="btn btn-secondary btn-sm"
+                                      class="rjsf-add-optional-data btn btn-secondary btn-sm"
                                       id="root_nestedObjectOptional_deepObjectOptional__optionalAdd"
                                       title="Add data for optional field"
                                       type="button"
@@ -7017,7 +7017,7 @@ exports[`single fields > optional data controls > shows "add" and "remove" optio
                                           style="margin-left: -5px;"
                                         >
                                           <button
-                                            class="btn btn-secondary btn-sm"
+                                            class="rjsf-add-optional-data btn btn-secondary btn-sm"
                                             id="root_nestedObjectOptional_deepArrayOptional2__optionalAdd"
                                             title="Add data for optional field"
                                             type="button"
@@ -7199,7 +7199,7 @@ exports[`single fields > optional data controls > shows "add" and "remove" optio
                                 style="margin-left: -5px;"
                               >
                                 <button
-                                  class="btn btn-secondary btn-sm"
+                                  class="rjsf-remove-optional-data btn btn-secondary btn-sm"
                                   id="root_nestedArrayOptional__optionalRemove"
                                   title="Remove data for optional field"
                                   type="button"
@@ -7270,7 +7270,7 @@ exports[`single fields > optional data controls > shows "add" and "remove" optio
                                   class="d-flex flex-row"
                                 >
                                   <button
-                                    class="btn btn-danger btn-sm"
+                                    class="rjsf-array-item-remove btn btn-danger btn-sm"
                                     id="root_nestedArrayOptional_0__remove"
                                     title="Remove"
                                     type="button"
@@ -7551,7 +7551,7 @@ exports[`single fields > optional data controls > shows "add" and "remove" optio
                                   style="margin-left: -5px;"
                                 >
                                   <button
-                                    class="btn btn-secondary btn-sm"
+                                    class="rjsf-add-optional-data btn btn-secondary btn-sm"
                                     id="root_optionalObjectWithOneofs__optionalAdd"
                                     title="Add data for optional field"
                                     type="button"
@@ -7651,7 +7651,7 @@ exports[`single fields > optional data controls > shows "add" and "remove" optio
                                         style="margin-left: -5px;"
                                       >
                                         <button
-                                          class="btn btn-secondary btn-sm"
+                                          class="rjsf-add-optional-data btn btn-secondary btn-sm"
                                           id="root_optionalArrayWithAnyofs__optionalAdd"
                                           title="Add data for optional field"
                                           type="button"
@@ -8230,7 +8230,7 @@ exports[`single fields > optional data controls > shows "add" and "remove" optio
                                   class="d-flex flex-row"
                                 >
                                   <button
-                                    class="btn btn-danger btn-sm"
+                                    class="rjsf-array-item-remove btn btn-danger btn-sm"
                                     disabled=""
                                     id="root_nestedArrayOptional_0__remove"
                                     title="Remove"
@@ -8666,7 +8666,7 @@ exports[`single fields > optional data controls > shows "add" optional controls 
                           style="margin-left: -5px;"
                         >
                           <button
-                            class="btn btn-secondary btn-sm"
+                            class="rjsf-add-optional-data btn btn-secondary btn-sm"
                             id="root_nestedObjectOptional__optionalAdd"
                             title="Add data for optional field"
                             type="button"
@@ -8751,7 +8751,7 @@ exports[`single fields > optional data controls > shows "add" optional controls 
                                 style="margin-left: -5px;"
                               >
                                 <button
-                                  class="btn btn-secondary btn-sm"
+                                  class="rjsf-add-optional-data btn btn-secondary btn-sm"
                                   id="root_nestedArrayOptional__optionalAdd"
                                   title="Add data for optional field"
                                   type="button"
@@ -9002,7 +9002,7 @@ exports[`single fields > optional data controls > shows "add" optional controls 
                                   style="margin-left: -5px;"
                                 >
                                   <button
-                                    class="btn btn-secondary btn-sm"
+                                    class="rjsf-add-optional-data btn btn-secondary btn-sm"
                                     id="root_optionalObjectWithOneofs__optionalAdd"
                                     title="Add data for optional field"
                                     type="button"
@@ -9102,7 +9102,7 @@ exports[`single fields > optional data controls > shows "add" optional controls 
                                         style="margin-left: -5px;"
                                       >
                                         <button
-                                          class="btn btn-secondary btn-sm"
+                                          class="rjsf-add-optional-data btn btn-secondary btn-sm"
                                           id="root_optionalArrayWithAnyofs__optionalAdd"
                                           title="Add data for optional field"
                                           type="button"
