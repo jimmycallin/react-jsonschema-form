@@ -652,6 +652,9 @@ https://github.com/rjsf-team/react-jsonschema-form/blob/main/packages/docs/docs/
 - **BREAKING CHANGE:** Change `RatingWidget` and `ToggleWidget` to ignore a `size` or `color` option that isn't a string or is blank, so `size: 5` no longer gives `toggle-5`, and to trim one. See [the upgrade guide](https://rjsf-team.github.io/react-jsonschema-form/docs/migration-guides/v7.x%20upgrade%20guide#rjsfdaisyui-ignores-a-size-color-or-colorgradient-of-another-type-breaking-change) ([#5685](https://github.com/rjsf-team/react-jsonschema-form/pull/5685))
 - **BREAKING CHANGE:** Change `RatingWidget` to draw the color gradient only for a `colorGradient` of `true`, where any truthy value, such as `1`, `'true'` or `'false'`, drew it. See [the upgrade guide](https://rjsf-team.github.io/react-jsonschema-form/docs/migration-guides/v7.x%20upgrade%20guide#rjsfdaisyui-ignores-a-size-color-or-colorgradient-of-another-type-breaking-change) ([#5685](https://github.com/rjsf-team/react-jsonschema-form/pull/5685))
 - **BREAKING CHANGE:** Change `WrapIfAdditionalTemplate` to read `ADDITIONAL_PROPERTY_FLAG` by its truth rather than its presence, so a schema with it set to `undefined` or `false` renders as a plain field, with no key input or remove button. See [the upgrade guide](https://rjsf-team.github.io/react-jsonschema-form/docs/migration-guides/v7.x%20upgrade%20guide#additional_property_flag-counts-only-when-set-to-a-truthy-value-breaking-change) ([#5689](https://github.com/rjsf-team/react-jsonschema-form/pull/5689))
+- Change `SelectWidget` to report nothing on focus or blur while the field is disabled or read-only, as every theme's select does ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
+- Change the multiple `SelectWidget` to leave out form data that no option holds when an option is chosen, as every theme's select does ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
+- Change `SelectWidget`'s options to carry no `data-value` attribute, since an option is now chosen by its encoded value ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
 
 ## @rjsf/fluentui-rc
 
@@ -875,6 +878,7 @@ https://github.com/rjsf-team/react-jsonschema-form/blob/main/packages/docs/docs/
 - Fix a `mui` option that isn't an object landing on the control as attributes named `0`, `1`, `2` ([#5696](https://github.com/rjsf-team/react-jsonschema-form/pull/5696))
 - Fix `FieldTemplate` dropping the `sx` and `className` of `rjsfSlotProps.fieldFormControl`: when the root option sets them too, the two `sx` are now merged, the root's winning a clash, and the two class names joined, where the root's replaced the slot's ([#5696](https://github.com/rjsf-team/react-jsonschema-form/pull/5696))
 - Fix `BaseInputTemplate` passing a `rjsfSlotProps` option to the `TextField`, whose DOM logged a React warning for it ([#5696](https://github.com/rjsf-team/react-jsonschema-form/pull/5696))
+- Fix `SelectWidget` shrinking its label over an empty select when the form data matches no option ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
 
 ## @rjsf/react-bootstrap
 
@@ -935,6 +939,7 @@ https://github.com/rjsf-team/react-jsonschema-form/blob/main/packages/docs/docs/
 - Fix `BaseInputTemplate` putting `Form.Control`'s own props in `extraProps`, such as `isValid` or `htmlSize`, on the `<input>` of a range ([#5684](https://github.com/rjsf-team/react-jsonschema-form/pull/5684))
 - Fix `RangeWidget` for an Ajv `$data` reference in `minimum`, `maximum` or `multipleOf`, which set the range's bound or step to the object and now leaves it at its default, and read a numeric-string bound such as `minimum: '5'` as its number ([#5688](https://github.com/rjsf-team/react-jsonschema-form/pull/5688))
 - **BREAKING CHANGE:** Change `WrapIfAdditionalTemplate` to read `ADDITIONAL_PROPERTY_FLAG` by its truth rather than its presence, so a schema with it set to `undefined` or `false` renders as a plain field, with no key input or remove button. See [the upgrade guide](https://rjsf-team.github.io/react-jsonschema-form/docs/migration-guides/v7.x%20upgrade%20guide#additional_property_flag-counts-only-when-set-to-a-truthy-value-breaking-change) ([#5689](https://github.com/rjsf-team/react-jsonschema-form/pull/5689))
+- Change `SelectWidget` to report its form data on focus and blur, as every theme's does, rather than the option the browser shows ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
 
 ## @rjsf/shadcn
 
