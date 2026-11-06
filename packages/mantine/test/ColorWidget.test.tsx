@@ -1,10 +1,15 @@
 import { MantineProvider } from '@mantine/core';
 import { getTestRegistry } from '@rjsf/core/testing';
 import type { RJSFSchema, UiSchema, WidgetProps } from '@rjsf/utils';
-import { render } from '@testing-library/react';
+import validator from '@rjsf/validator-ajv8';
+import { render, screen } from '@testing-library/react';
+import { userEvent } from '@testing-library/user-event';
 
 import Templates from '../src/templates/index.ts';
 import ColorWidget from '../src/widgets/ColorWidget.tsx';
+import WrappedForm from './WrappedForm.tsx';
+
+const user = userEvent.setup();
 
 const schema: RJSFSchema = { type: 'string' };
 const uiSchema: UiSchema = { 'ui:widget': 'ColorWidget' };
@@ -103,5 +108,44 @@ describe('ColorWidget', () => {
       // A format ColorInput doesn't know converts to hex, so this rgba color stays as it is only if none reached it
       expect(renderWithOptions('rgba(255, 0, 0, 1)', { format: 'MDY' })).not.toHaveBeenCalled();
     });
+  });
+});
+
+describe('ColorWidget through a form', () => {
+  test('writes the ui:emptyValue for an emptied color', async () => {
+    const onChange = vi.fn();
+    render(
+      <WrappedForm
+        schema={{ type: 'string' }}
+        uiSchema={{ 'ui:widget': 'color', 'ui:emptyValue': 'none' }}
+        validator={validator}
+        initialFormData='#ff0000'
+        onChange={onChange}
+      />,
+    );
+
+    await user.clear(screen.getByRole('textbox'));
+
+    expect(onChange).toHaveBeenLastCalledWith(expect.objectContaining({ formData: 'none' }), 'root');
+  });
+
+  test('reports the form data on focus and blur', async () => {
+    const onFocus = vi.fn();
+    const onBlur = vi.fn();
+    render(
+      <WrappedForm
+        schema={{ type: 'string' }}
+        uiSchema={{ 'ui:widget': 'color', 'ui:emptyValue': null }}
+        validator={validator}
+        onFocus={onFocus}
+        onBlur={onBlur}
+      />,
+    );
+
+    await user.click(screen.getByRole('textbox'));
+    await user.tab();
+
+    expect(onFocus).toHaveBeenCalledWith('root', null);
+    expect(onBlur).toHaveBeenCalledWith('root', null);
   });
 });

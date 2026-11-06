@@ -2,7 +2,7 @@ import type { ComponentType } from 'react';
 import type { FormProps } from '@rjsf/core';
 import type { RJSFSchema, UiSchema } from '@rjsf/utils';
 import validator from '@rjsf/validator-ajv8';
-import { act, render } from '@testing-library/react';
+import { act, render, waitFor } from '@testing-library/react';
 
 /** Checks that a theme's text inputs and textarea report the field's form data to `onFocus` and `onBlur`, as every
  * other widget does, rather than the text the input shows: a number for a number field and a `ui:emptyValue` of
@@ -39,7 +39,7 @@ export function inputFocusTests(Form: ComponentType<FormProps>) {
         undefined,
         null,
       ],
-    ])('%s', (_, schema, uiSchema, initialFormData, reported) => {
+    ])('%s', async (_, schema, uiSchema, initialFormData, reported) => {
       const onFocus = vi.fn();
       const onBlur = vi.fn();
       const { container } = render(
@@ -55,9 +55,10 @@ export function inputFocusTests(Form: ComponentType<FormProps>) {
       const input = container.querySelector<HTMLElement>('#root');
       // Focused through the DOM, as user-event isn't among this package's peer dependencies
       act(() => input?.focus());
+      // Waited for, as a library's numeric input, such as Mantine's, reports its focus after a timeout
+      await waitFor(() => expect(onFocus).toHaveBeenCalledWith('root', reported));
       act(() => input?.blur());
 
-      expect(onFocus).toHaveBeenCalledWith('root', reported);
       expect(onBlur).toHaveBeenCalledWith('root', reported);
     });
   });

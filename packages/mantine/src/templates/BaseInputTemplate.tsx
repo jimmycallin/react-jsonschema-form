@@ -1,18 +1,11 @@
-import type { ChangeEvent, FocusEvent, MouseEvent } from 'react';
-import { useCallback } from 'react';
 import { TextInput, NumberInput } from '@mantine/core';
 import { SchemaExamples } from '@rjsf/core';
 import type { BaseInputTemplateProps, FormContextType, RJSFSchema } from '@rjsf/utils';
 import {
-  examplesId,
-  getControlAttributes,
-  getExampleSuggestions,
   callerInputProps,
-  getBaseInputProps,
   labelValue,
   numericWidgetStoresString,
-  offersClearButton,
-  toInputValue,
+  useBaseInputProps,
   widgetDrawsLabel,
 } from '@rjsf/utils';
 
@@ -35,25 +28,7 @@ export default function BaseInputTemplate<
   S extends RJSFSchema = RJSFSchema,
   F extends FormContextType = FormContextType,
 >(props: BaseInputTemplateProps<T, S, F>) {
-  const {
-    id,
-    htmlName,
-    schema,
-    value,
-    placeholder,
-    required,
-    disabled,
-    readonly,
-    autofocus,
-    label,
-    onChange,
-    onChangeOverride,
-    onBlur,
-    onFocus,
-    options,
-    children,
-    registry,
-  } = props;
+  const { schema, value, label, onChangeOverride, options, children, registry } = props;
   const hideLabel = !widgetDrawsLabel<T, S, F>(props);
   const { ClearButton } = registry.templates.ButtonTemplates;
 
@@ -61,8 +36,8 @@ export default function BaseInputTemplate<
   // to receive, and sets an `inputMode` of its own over any it is given, so a widget that names either gets the plain
   // input every other theme renders for a numeric field.
   const plainInput = Boolean(onChangeOverride) || 'inputMode' in props;
-  const inputProps = getBaseInputProps<T, S, F>(props, plainInput);
-  const isNumeric = !plainInput && (inputProps.type === 'number' || inputProps.type === 'integer');
+  const input = useBaseInputProps<T, S, F>(props, plainInput);
+  const isNumeric = !plainInput && (input.inputProps.type === 'number' || input.inputProps.type === 'integer');
   // `NumberInput`'s own options would land on a `TextInput` as unknown attributes
   const optionProps = cleanupOptions(options, props, isNumeric ? undefined : numberInputOwnKeys);
   // `ui:options` spreads onto the input as Mantine props, so the props a widget passes go after it to win. A `pattern`
@@ -77,112 +52,72 @@ export default function BaseInputTemplate<
   // `NumberInput` reports a number once its text parses as one, and on blur trims leading zeroes by parsing the text,
   // which rounds the digits past a number's precision, so a string field turns that trim off and gets a string back
   const storesString = numericWidgetStoresString<S>(schema, value);
-  const handleNumberChange = useCallback(
-    (newValue: number | string) => {
-      if (newValue === '') {
-        onChange(options.emptyValue);
-      } else {
-        onChange(storesString ? String(newValue) : newValue);
-      }
-    },
-    [onChange, storesString, options.emptyValue],
-  );
 
-  const handleChange = useCallback(
-    (e: ChangeEvent<HTMLInputElement>) => {
-      onChange(e.target.value === '' ? options.emptyValue : e.target.value);
-    },
-    [onChange, options.emptyValue],
-  );
-
-  const handleBlur = useCallback(
-    (e: FocusEvent<HTMLInputElement>) => {
-      onBlur(id, e.target?.value);
-    },
-    [onBlur, id],
-  );
-
-  const handleFocus = useCallback(
-    (e: FocusEvent<HTMLInputElement>) => {
-      onFocus(id, e.target?.value);
-    },
-    [onFocus, id],
-  );
-
-  const handleClear = useCallback(
-    (e: MouseEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      onChange(options.emptyValue);
-    },
-    [onChange, options.emptyValue],
-  );
-
-  const inputValue = toInputValue(value);
-  const exampleSuggestions = getExampleSuggestions<S>(schema);
-  const hasExamples = exampleSuggestions.length > 0;
   const componentProps = {
-    id,
-    name: htmlName || id,
+    id: input.id,
+    name: input.name,
     label: labelValue(label || undefined, hideLabel, false),
-    required,
-    autoFocus: autofocus,
-    disabled: disabled || readonly,
-    onBlur: !readonly ? handleBlur : undefined,
-    onFocus: !readonly ? handleFocus : undefined,
-    placeholder,
+    required: input.required,
+    autoFocus: input.autoFocus,
+    disabled: input.disabled || input.readOnly,
+    onBlur: input.onBlur,
+    onFocus: input.onFocus,
+    placeholder: input.placeholder,
     error: getWidgetError<T, S, F>(props),
-    list: hasExamples ? examplesId(id) : undefined,
+    list: input.listId,
+    title: input.title,
   };
 
-  const { min, max, ...restInputProps } = inputProps;
+  const { min, max, ...restInputProps } = input.inputProps;
 
   const ariaDescribedByProps = useInputAriaProps<T, S, F>(
     isNumeric ? 'NumberInput' : 'TextInput',
     props,
-    getControlAttributes<T, S, F>(props, hasExamples ? [examplesId(id)] : []),
+    input.ariaProps,
   );
 
-  const input = isNumeric ? (
+  const field = isNumeric ? (
     <NumberInput
-      onChange={!readonly ? handleNumberChange : undefined}
+      onChange={(next) => input.onChange(storesString && next !== '' ? String(next) : next)}
       {...componentProps}
       {...restInputProps}
       {...themeProps}
-      step={typeof inputProps.step === 'number' ? inputProps.step : 1}
+      step={typeof input.inputProps.step === 'number' ? input.inputProps.step : 1}
       {...(storesString && { trimLeadingZeroesOnBlur: false })}
       type='text'
       {...ariaDescribedByProps}
       {...descriptionProps}
-      value={inputValue}
+      value={input.value}
       min={typeof min === 'number' ? min : undefined}
       max={typeof max === 'number' ? max : undefined}
     />
   ) : (
     <TextInput
-      onChange={!readonly ? (onChangeOverride ?? handleChange) : undefined}
+      onChange={onChangeOverride ?? ((event) => input.onChange(event.target.value))}
       {...componentProps}
-      {...inputProps}
+      {...input.inputProps}
       {...themeProps}
       {...ariaDescribedByProps}
       {...descriptionProps}
-      value={inputValue}
+      value={input.value}
     />
   );
 
   // `NumberInput` is a text input that shows a partial number such as `5.` or `-`, which a native number input blanks
-  const showsValue = isNumeric
-    ? (typeof value === 'number' || typeof value === 'string') && Boolean(inputValue)
-    : offersClearButton(inputValue, inputProps.type);
+  const showClearButton = isNumeric
+    ? Boolean(options.allowClearTextInputs) &&
+      !input.disabled &&
+      !input.readOnly &&
+      (typeof value === 'number' || typeof value === 'string') &&
+      Boolean(input.value)
+    : input.showClearButton;
 
   return (
     <>
-      {input}
-      {options.allowClearTextInputs && !readonly && !disabled && showsValue && (
-        <ClearButton registry={registry} onClick={handleClear} />
-      )}
+      {field}
+      {showClearButton && <ClearButton registry={registry} onClick={input.onClear} />}
       {children}
-      <SchemaExamples id={id} schema={schema} suggestions={exampleSuggestions} />
+      <SchemaExamples id={input.id} schema={schema} suggestions={input.exampleSuggestions} />
     </>
   );
 }

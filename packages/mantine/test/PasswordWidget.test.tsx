@@ -1,10 +1,15 @@
 import { MantineProvider } from '@mantine/core';
 import { getTestRegistry } from '@rjsf/core/testing';
 import type { RJSFSchema, UiSchema, WidgetProps } from '@rjsf/utils';
-import { render } from '@testing-library/react';
+import validator from '@rjsf/validator-ajv8';
+import { render, screen } from '@testing-library/react';
+import { userEvent } from '@testing-library/user-event';
 
 import Templates from '../src/templates/index.ts';
 import PasswordWidget from '../src/widgets/PasswordWidget.tsx';
+import WrappedForm from './WrappedForm.tsx';
+
+const user = userEvent.setup();
 
 const schema: RJSFSchema = { type: 'string' };
 const uiSchema: UiSchema = { 'ui:widget': 'PasswordWidget' };
@@ -85,5 +90,48 @@ describe('PasswordWidget', () => {
     } else {
       expect(input).not.toHaveAttribute('aria-invalid');
     }
+  });
+});
+
+describe('PasswordWidget through a form', () => {
+  test('lists the schema examples', () => {
+    const { container } = render(
+      <WrappedForm
+        schema={{ type: 'string', examples: ['hunter2'] }}
+        uiSchema={{ 'ui:widget': 'password' }}
+        validator={validator}
+      />,
+    );
+
+    expect(container.querySelector('#root')).toHaveAttribute('list', 'root__examples');
+    expect(container.querySelector('datalist#root__examples option')).toHaveAttribute('value', 'hunter2');
+  });
+
+  test('offers a clear button that empties the password', async () => {
+    const onChange = vi.fn();
+    render(
+      <WrappedForm
+        schema={{ type: 'string' }}
+        uiSchema={{ 'ui:widget': 'password', 'ui:allowClearTextInputs': true }}
+        validator={validator}
+        initialFormData='a'
+        onChange={onChange}
+      />,
+    );
+    await user.click(screen.getByRole('button', { name: /clear input/i }));
+
+    expect(onChange).toHaveBeenLastCalledWith(expect.objectContaining({ formData: undefined }), 'root');
+  });
+
+  test('puts ui:autocomplete on the input', () => {
+    const { container } = render(
+      <WrappedForm
+        schema={{ type: 'string' }}
+        uiSchema={{ 'ui:widget': 'password', 'ui:autocomplete': 'new-password' }}
+        validator={validator}
+      />,
+    );
+
+    expect(container.querySelector('#root')).toHaveAttribute('autocomplete', 'new-password');
   });
 });

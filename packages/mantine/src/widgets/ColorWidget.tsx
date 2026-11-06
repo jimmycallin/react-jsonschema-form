@@ -1,9 +1,7 @@
-import type { FocusEvent } from 'react';
-import { useCallback } from 'react';
 import type { ColorInputProps } from '@mantine/core';
 import { ColorInput } from '@mantine/core';
 import type { FormContextType, RJSFSchema, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
-import { labelValue, toInputValue, widgetDrawsLabel } from '@rjsf/utils';
+import { labelValue, useBaseInputProps, widgetDrawsLabel } from '@rjsf/utils';
 
 import { cleanupOptions, getDescriptionProps, getWidgetError, useInputAriaProps } from '../utils.tsx';
 
@@ -25,67 +23,29 @@ export default function ColorWidget<
   S extends StrictRJSFSchema = RJSFSchema,
   F extends FormContextType = FormContextType,
 >(props: WidgetProps<T, S, F>) {
-  const {
-    id,
-    htmlName,
-    value,
-    placeholder,
-    required,
-    disabled,
-    readonly,
-    autofocus,
-    label,
-    options,
-    onChange,
-    onBlur,
-    onFocus,
-  } = props;
+  const { label, options } = props;
   const hideLabel = !widgetDrawsLabel<T, S, F>(props);
+  const input = useBaseInputProps<T, S, F>({ ...props, type: 'color' });
 
   const themeProps = cleanupOptions(options, props);
-
-  const handleChange = useCallback(
-    (nextValue: string) => {
-      onChange(nextValue);
-    },
-    [onChange],
-  );
-
-  const handleBlur = useCallback(
-    ({ target }: FocusEvent<HTMLInputElement>) => {
-      if (onBlur) {
-        onBlur(id, target?.value);
-      }
-    },
-    [onBlur, id],
-  );
-
-  const handleFocus = useCallback(
-    ({ target }: FocusEvent<HTMLInputElement>) => {
-      if (onFocus) {
-        onFocus(id, target?.value);
-      }
-    },
-    [onFocus, id],
-  );
 
   const ariaDescribedByProps = useInputAriaProps('ColorInput', props);
   const error = getWidgetError<T, S, F>(props);
 
   return (
     <ColorInput
-      id={id}
-      name={htmlName || id}
-      value={String(toInputValue(value))}
-      placeholder={placeholder || undefined}
+      id={input.id}
+      name={input.name}
+      value={String(input.value)}
+      placeholder={input.placeholder || undefined}
       format={isColorFormat(options.colorFormat) ? options.colorFormat : undefined}
-      required={required}
-      disabled={disabled || readonly}
-      autoFocus={autofocus}
+      required={input.required}
+      disabled={input.disabled || input.readOnly}
+      autoFocus={input.autoFocus}
       label={labelValue(label || undefined, hideLabel, false)}
-      onChange={handleChange}
-      onBlur={handleBlur}
-      onFocus={handleFocus}
+      onChange={input.onChange}
+      onBlur={input.onBlur}
+      onFocus={input.onFocus}
       error={error}
       {...themeProps}
       popoverProps={{ withinPortal: false }}

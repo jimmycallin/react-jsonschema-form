@@ -1,8 +1,7 @@
-import type { ReactElement, ChangeEvent, FocusEvent } from 'react';
-import { useCallback } from 'react';
+import type { ReactElement } from 'react';
 import { Textarea } from '@mantine/core';
 import type { StrictRJSFSchema, RJSFSchema, FormContextType, WidgetProps } from '@rjsf/utils';
-import { labelValue, toInputValue, widgetDrawsLabel } from '@rjsf/utils';
+import { labelValue, useTextareaWidgetProps, widgetDrawsLabel } from '@rjsf/utils';
 
 import { cleanupOptions, getDescriptionProps, getWidgetError, useInputAriaProps } from '../utils.tsx';
 
@@ -15,68 +14,29 @@ export default function TextareaWidget<
   S extends StrictRJSFSchema = RJSFSchema,
   F extends FormContextType = FormContextType,
 >(props: WidgetProps<T, S, F>): ReactElement {
-  const {
-    id,
-    htmlName,
-    value,
-    placeholder,
-    required,
-    disabled,
-    readonly,
-    autofocus,
-    label,
-    options,
-    onChange,
-    onBlur,
-    onFocus,
-  } = props;
+  const { label, options } = props;
   const hideLabel = !widgetDrawsLabel<T, S, F>(props);
+  const textarea = useTextareaWidgetProps<T, S, F>(props);
 
   const themeProps = cleanupOptions(options, props);
-  const emptyValue = options?.emptyValue;
-
-  const handleChange = useCallback(
-    (e: ChangeEvent<HTMLTextAreaElement>) => {
-      onChange(e.target.value === '' ? emptyValue : e.target.value);
-    },
-    [onChange, emptyValue],
-  );
-
-  const handleBlur = useCallback(
-    ({ target }: FocusEvent<HTMLTextAreaElement>) => {
-      if (onBlur) {
-        onBlur(id, target?.value);
-      }
-    },
-    [onBlur, id],
-  );
-
-  const handleFocus = useCallback(
-    ({ target }: FocusEvent<HTMLTextAreaElement>) => {
-      if (onFocus) {
-        onFocus(id, target?.value);
-      }
-    },
-    [onFocus, id],
-  );
 
   const ariaDescribedByProps = useInputAriaProps('Textarea', props);
   const error = getWidgetError<T, S, F>(props);
 
   return (
     <Textarea
-      id={id}
-      name={htmlName || id}
-      value={toInputValue(value)}
-      placeholder={placeholder || undefined}
-      rows={options.rows}
-      required={required}
-      disabled={disabled || readonly}
-      autoFocus={autofocus}
+      id={textarea.id}
+      name={textarea.name}
+      value={textarea.value}
+      placeholder={textarea.placeholder || undefined}
+      rows={textarea.rows}
+      required={textarea.required}
+      disabled={textarea.disabled || textarea.readOnly}
+      autoFocus={textarea.autoFocus}
       label={labelValue(label || undefined, hideLabel, false)}
-      onChange={handleChange}
-      onBlur={handleBlur}
-      onFocus={handleFocus}
+      onChange={(event) => textarea.onChange(event.target.value)}
+      onBlur={textarea.onBlur}
+      onFocus={textarea.onFocus}
       error={error}
       {...themeProps}
       {...ariaDescribedByProps}
