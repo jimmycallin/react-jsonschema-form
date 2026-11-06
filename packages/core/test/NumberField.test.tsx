@@ -283,7 +283,8 @@ describe('NumberField', () => {
         const input = node.querySelector('input')!;
         await user.click(input);
 
-        expect(onFocus).toHaveBeenCalledWith(input.id, '2');
+        // The form data, a number, rather than the text the input shows
+        expect(onFocus).toHaveBeenCalledWith(input.id, 2);
       });
 
       it('should fill field with data', () => {

@@ -1,14 +1,6 @@
-import type { ChangeEvent, FocusEvent, InputHTMLAttributes, MouseEvent } from 'react';
-import { useCallback } from 'react';
+import type { InputHTMLAttributes } from 'react';
 import type { BaseInputTemplateProps, FormContextType, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
-import {
-  examplesId,
-  getControlAttributes,
-  getExampleSuggestions,
-  getBaseInputProps,
-  offersClearButton,
-  toInputValue,
-} from '@rjsf/utils';
+import { useBaseInputProps } from '@rjsf/utils';
 
 import SchemaExamples from '../SchemaExamples.tsx';
 
@@ -70,32 +62,9 @@ export default function BaseInputTemplate<
     console.log('No id for', props);
     throw new Error(`no id for props ${JSON.stringify(props)}`);
   }
-  const { title, ...baseInputProps } = getBaseInputProps<T, S, F>(props);
-  const inputProps = { ...rest, ...baseInputProps };
+  const input = useBaseInputProps<T, S, F>(props);
+  const inputProps = { ...rest, ...input.inputProps };
 
-  const inputValue = toInputValue(value);
-
-  const handleChange = useCallback(
-    ({ target: { value: newValue } }: ChangeEvent<HTMLInputElement>) =>
-      onChange(newValue === '' ? options.emptyValue : newValue),
-    [onChange, options],
-  );
-  const handleBlur = useCallback(({ target }: FocusEvent<HTMLInputElement>) => onBlur(id, target?.value), [onBlur, id]);
-  const handleFocus = useCallback(
-    ({ target }: FocusEvent<HTMLInputElement>) => onFocus(id, target?.value),
-    [onFocus, id],
-  );
-  const handleClear = useCallback(
-    (e: MouseEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      onChange(options.emptyValue);
-    },
-    [onChange, options.emptyValue],
-  );
-
-  const exampleSuggestions = getExampleSuggestions<S>(schema);
-  const hasExamples = exampleSuggestions.length > 0;
   let className = classMap.input;
   if (inputProps.type === 'file') {
     className = classMap.fileInput;
@@ -105,25 +74,23 @@ export default function BaseInputTemplate<
   return (
     <>
       <input
-        id={id}
-        name={htmlName || id}
+        id={input.id}
+        name={input.name}
         className={className}
-        readOnly={readonly}
-        disabled={disabled}
-        autoFocus={autofocus}
-        value={inputValue}
-        title={title}
+        readOnly={input.readOnly}
+        disabled={input.disabled}
+        autoFocus={input.autoFocus}
+        value={input.value}
+        title={input.title}
         {...inputProps}
-        list={hasExamples ? examplesId(id) : undefined}
-        onChange={onChangeOverride ?? handleChange}
-        onBlur={handleBlur}
-        onFocus={handleFocus}
-        {...getControlAttributes<T, S, F>({ id, presentation }, hasExamples ? [examplesId(id)] : [])}
+        list={input.listId}
+        onChange={onChangeOverride ?? ((event) => input.onChange(event.target.value))}
+        onBlur={input.onBlur}
+        onFocus={input.onFocus}
+        {...input.ariaProps}
       />
-      {options.allowClearTextInputs && !readonly && !disabled && offersClearButton(inputValue, inputProps.type) && (
-        <ClearButton registry={registry} onClick={handleClear} />
-      )}
-      <SchemaExamples id={id} schema={schema} suggestions={exampleSuggestions} />
+      {input.showClearButton && <ClearButton registry={registry} onClick={input.onClear} />}
+      <SchemaExamples id={id} schema={schema} suggestions={input.exampleSuggestions} />
     </>
   );
 }

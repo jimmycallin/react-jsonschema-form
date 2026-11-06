@@ -1,7 +1,5 @@
-import type { ChangeEvent, FocusEvent } from 'react';
-import { useCallback } from 'react';
 import type { FormContextType, RJSFSchema, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
-import { getControlAttributes, toInputValue } from '@rjsf/utils';
+import { useTextareaWidgetProps } from '@rjsf/utils';
 
 /** The `TextareaWidget` is a widget for rendering input fields as textarea.
  *
@@ -11,55 +9,24 @@ function TextareaWidget<
   T = unknown,
   S extends StrictRJSFSchema = RJSFSchema,
   F extends FormContextType = FormContextType,
->({
-  id,
-  options,
-  placeholder,
-  value,
-  required,
-  disabled,
-  readonly,
-  autofocus = false,
-  onChange,
-  onBlur,
-  onFocus,
-  htmlName,
-  registry,
-  presentation,
-}: WidgetProps<T, S, F>) {
-  const { classMap } = registry;
-  const handleChange = useCallback(
-    ({ target: { value: newValue } }: ChangeEvent<HTMLTextAreaElement>) =>
-      onChange(newValue === '' ? options.emptyValue : newValue),
-    [onChange, options.emptyValue],
-  );
-
-  const handleBlur = useCallback(
-    ({ target }: FocusEvent<HTMLTextAreaElement>) => onBlur(id, target?.value),
-    [onBlur, id],
-  );
-
-  const handleFocus = useCallback(
-    ({ target }: FocusEvent<HTMLTextAreaElement>) => onFocus(id, target?.value),
-    [id, onFocus],
-  );
-
+>(props: WidgetProps<T, S, F>) {
+  const textarea = useTextareaWidgetProps<T, S, F>(props);
   return (
     <textarea
-      id={id}
-      name={htmlName || id}
-      className={classMap.textarea}
-      value={toInputValue(value)}
-      placeholder={placeholder}
-      required={required}
-      disabled={disabled}
-      readOnly={readonly}
-      autoFocus={autofocus}
-      rows={options.rows}
-      onBlur={handleBlur}
-      onFocus={handleFocus}
-      onChange={handleChange}
-      {...getControlAttributes<T, S, F>({ id, presentation })}
+      id={textarea.id}
+      name={textarea.name}
+      className={props.registry.classMap.textarea}
+      value={textarea.value}
+      placeholder={textarea.placeholder}
+      required={textarea.required}
+      disabled={textarea.disabled}
+      readOnly={textarea.readOnly}
+      autoFocus={textarea.autoFocus}
+      rows={textarea.rows}
+      onBlur={textarea.onBlur}
+      onFocus={textarea.onFocus}
+      onChange={(event) => textarea.onChange(event.target.value)}
+      {...textarea.ariaProps}
     />
   );
 }

@@ -370,7 +370,8 @@ describe('omitExtraData and live omit onBlur', () => {
 
     await user.tab();
 
-    expect(onBlur).toHaveBeenLastCalledWith('root_foo', '');
+    // The form data, which the cleared input left empty
+    expect(onBlur).toHaveBeenLastCalledWith('root_foo', undefined);
     expect(onChange).toHaveBeenLastCalledWith(
       expect.objectContaining({
         formData: { bar: 'bar', foo: undefined },
