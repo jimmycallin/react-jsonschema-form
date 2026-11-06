@@ -1,6 +1,5 @@
-import type { ChangeEvent, FocusEvent } from 'react';
 import type { FormContextType, RJSFSchema, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
-import { getControlAttributes, hasWidgetErrors, toInputValue } from '@rjsf/utils';
+import { hasWidgetErrors, useTextareaWidgetProps } from '@rjsf/utils';
 
 import { Textarea } from '../components/ui/textarea.tsx';
 import { cn } from '../lib/utils.ts';
@@ -14,43 +13,25 @@ export default function TextareaWidget<
   S extends StrictRJSFSchema = RJSFSchema,
   F extends FormContextType = FormContextType,
 >(props: WidgetProps<T, S, F>) {
-  const {
-    id,
-    htmlName,
-    placeholder,
-    value,
-    required,
-    disabled,
-    autofocus,
-    readonly,
-    onBlur,
-    onFocus,
-    onChange,
-    options,
-    className,
-    presentation,
-  } = props;
-  const handleChange = ({ target: { value: newValue } }: ChangeEvent<HTMLTextAreaElement>) =>
-    onChange(newValue === '' ? options.emptyValue : newValue);
-  const handleBlur = ({ target }: FocusEvent<HTMLTextAreaElement>) => onBlur(id, target?.value);
-  const handleFocus = ({ target }: FocusEvent<HTMLTextAreaElement>) => onFocus(id, target?.value);
+  const { className } = props;
+  const textarea = useTextareaWidgetProps<T, S, F>(props);
 
   return (
     <div className='flex p-0.5'>
       <Textarea
-        id={id}
-        name={htmlName || id}
-        placeholder={placeholder}
-        disabled={disabled}
-        readOnly={readonly}
-        value={toInputValue(value)}
-        required={required}
-        autoFocus={autofocus}
-        rows={options.rows ?? 5}
-        onChange={handleChange}
-        onBlur={handleBlur}
-        onFocus={handleFocus}
-        {...getControlAttributes<T, S, F>({ id, presentation })}
+        id={textarea.id}
+        name={textarea.name}
+        placeholder={textarea.placeholder}
+        disabled={textarea.disabled}
+        readOnly={textarea.readOnly}
+        value={textarea.value}
+        required={textarea.required}
+        autoFocus={textarea.autoFocus}
+        rows={textarea.rows ?? 5}
+        onChange={(event) => textarea.onChange(event.target.value)}
+        onBlur={textarea.onBlur}
+        onFocus={textarea.onFocus}
+        {...textarea.ariaProps}
         className={cn({ 'border-destructive': hasWidgetErrors<T, S, F>(props) }, className)}
       />
     </div>

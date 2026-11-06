@@ -1,17 +1,7 @@
-import type { ChangeEvent, FocusEvent, InputHTMLAttributes, MouseEvent } from 'react';
-import { useCallback } from 'react';
+import type { InputHTMLAttributes } from 'react';
 import { SchemaExamples } from '@rjsf/core';
 import type { BaseInputTemplateProps, FormContextType, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
-import {
-  examplesId,
-  getControlAttributes,
-  getExampleSuggestions,
-  callerInputProps,
-  getBaseInputProps,
-  hasWidgetErrors,
-  offersClearButton,
-  toInputValue,
-} from '@rjsf/utils';
+import { callerInputProps, hasWidgetErrors, useBaseInputProps } from '@rjsf/utils';
 
 import { Input } from '../components/ui/input.tsx';
 import { cn } from '../lib/utils.ts';
@@ -41,76 +31,39 @@ export default function BaseInputTemplate<
   S extends StrictRJSFSchema = RJSFSchema,
   F extends FormContextType = FormContextType,
 >(props: ShadcnBaseInputTemplateProps<T, S, F>) {
-  const {
-    id,
-    htmlName,
-    placeholder,
-    required,
-    readonly,
-    disabled,
-    value,
-    onChange,
-    onChangeOverride,
-    onBlur,
-    onFocus,
-    autofocus,
-    options,
-    schema,
-    children,
-    extraProps,
-    className,
-    registry,
-    presentation,
-  } = props;
+  const { onChangeOverride, schema, children, extraProps, className, registry } = props;
   const { ClearButton } = registry.templates.ButtonTemplates;
   // The `pattern`, `inputMode`, `accept` and `multiple` in `extraProps` count as the widget's own, over its props
-  const { title, ...baseInputProps } = getBaseInputProps<T, S, F>({
+  const input = useBaseInputProps<T, S, F>({
     ...props,
     ...callerInputProps({ ...extraProps }),
     multiple: extraProps?.multiple ?? props.multiple,
   });
-  const inputProps = { ...extraProps, ...baseInputProps };
-  const handleChange = ({ target: { value: newValue } }: ChangeEvent<HTMLInputElement>) =>
-    onChange(newValue === '' ? options.emptyValue : newValue);
-  const handleBlur = ({ target }: FocusEvent<HTMLInputElement>) => onBlur(id, target?.value);
-  const handleFocus = ({ target }: FocusEvent<HTMLInputElement>) => onFocus(id, target?.value);
-  const handleClear = useCallback(
-    (e: MouseEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      onChange(options.emptyValue);
-    },
-    [onChange, options.emptyValue],
-  );
+  const inputProps = { ...extraProps, ...input.inputProps };
 
-  const inputValue = toInputValue(value);
-  const exampleSuggestions = getExampleSuggestions<S>(schema);
-  const hasExamples = exampleSuggestions.length > 0;
   return (
     <div className='p-0.5'>
       <Input
-        id={id}
-        name={htmlName || id}
-        placeholder={placeholder}
-        autoFocus={autofocus}
-        required={required}
-        disabled={disabled}
-        readOnly={readonly}
-        list={hasExamples ? examplesId(id) : undefined}
-        title={title}
+        id={input.id}
+        name={input.name}
+        placeholder={input.placeholder}
+        autoFocus={input.autoFocus}
+        required={input.required}
+        disabled={input.disabled}
+        readOnly={input.readOnly}
+        list={input.listId}
+        title={input.title}
         {...inputProps}
         className={cn({ 'border-destructive': hasWidgetErrors<T, S, F>(props) }, className, extraProps?.className)}
-        value={inputValue}
-        onChange={onChangeOverride ?? handleChange}
-        onBlur={handleBlur}
-        onFocus={handleFocus}
-        {...getControlAttributes<T, S, F>({ id, presentation }, hasExamples ? [examplesId(id)] : [])}
+        value={input.value}
+        onChange={onChangeOverride ?? ((event) => input.onChange(event.target.value))}
+        onBlur={input.onBlur}
+        onFocus={input.onFocus}
+        {...input.ariaProps}
       />
-      {options.allowClearTextInputs && !readonly && !disabled && offersClearButton(inputValue, inputProps.type) && (
-        <ClearButton onClick={handleClear} registry={registry} />
-      )}
+      {input.showClearButton && <ClearButton onClick={input.onClear} registry={registry} />}
       {children}
-      <SchemaExamples id={id} schema={schema} suggestions={exampleSuggestions} />
+      <SchemaExamples id={input.id} schema={schema} suggestions={input.exampleSuggestions} />
     </div>
   );
 }
