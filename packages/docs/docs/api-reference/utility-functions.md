@@ -3685,6 +3685,37 @@ disabled or read-only, so those buttons can be rendered disabled.
 
 - UseAltDateWidgetResult: The `UseAltDateWidgetResult` to be used within a `AltDateWidget` implementation
 
+### useCheckboxesWidgetProps&lt;T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = FormContextType>()
+
+Hook which holds what every `CheckboxesWidget` does whatever its UI library: it encodes each option's value as
+`ui:optionValueFormat` asks, marks the checked options and the `ui:enumDisabled` ones, picks the option `ui:autofocus`
+focuses, decodes a selection back into form data in enum order, and supplies the group's and its checkboxes' ids, name
+and `aria-*` attributes. The handlers report nothing while the field is disabled or read-only. To be used by theme
+specific `CheckboxesWidget` implementations, and by an app's own.
+
+#### Parameters
+
+- props: WidgetProps&lt;T, S, F> - The `WidgetProps` for the `CheckboxesWidget`
+- [labelOptions]: ChoiceWidgetLabelOptions - `{ drawsLabel: true }` for a widget that draws the field's label for its
+  group itself, rather than leaving it to its template
+
+#### Returns
+
+- UseCheckboxesWidgetPropsResult: Everything the group of checkboxes needs:
+  - `id`, `name`, `required`, `disabled` (`true` for a disabled or read-only field) and `inline`, from
+    `ui:options.inline`
+  - `groupProps`: the `role` and `aria-*` attributes of the element wrapping the options
+  - `optionProps`: the `aria-*` attributes of each option's control
+  - `drawsLabel` and `labelId`: whether the widget is to draw the field's label, which it is only where it asked to and
+    the field shows one, and the id to draw it under
+  - `value`: the encoded values of the checked options, in enum order. It only ever holds values the options carry
+  - `options`: every checkbox in enum order, as `{ id, value, label, disabled, checked, autoFocus, index, onFocus, onBlur }`, `value` being its encoded value
+    and `disabled` whether `ui:enumDisabled` disables it, apart from the group. `onFocus()` and `onBlur()` report the
+    option's own value and take no argument, so they can be handed to any control's focus and blur events. Its `onCheckedChange(checked)` checks or unchecks it
+    and reports the group's new selection
+  - `onChange(value)`: decodes the encoded values the group checked into form data, in enum order, for a library whose
+    group reports its whole selection. `null` or `undefined` is no selection
+
 ### useFileWidgetProps()
 
 Hook which encapsulates the logic needed to read and convert a `value` of `File` or `File[]` into the
@@ -3716,6 +3747,36 @@ theme specific `CheckboxesWidget` implementations.
 #### Returns
 
 - UseOptionFocusHandlersResult: The `focusHandlers` and `blurHandlers` arrays, holding the `onFocus` and `onBlur` handler of each option by its position
+
+### useRadioWidgetProps&lt;T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = FormContextType>()
+
+Hook which holds what every `RadioWidget` does whatever its UI library: it encodes each option's value as
+`ui:optionValueFormat` asks, marks the checked option and the `ui:enumDisabled` ones, picks the option `ui:autofocus`
+focuses, decodes a choice back into form data with `ui:emptyValue`, and supplies the group's and its radios' ids, name
+and `aria-*` attributes. The handlers report nothing while the field is disabled or read-only. To be used by theme
+specific `RadioWidget` implementations, and by an app's own.
+
+#### Parameters
+
+- props: WidgetProps&lt;T, S, F> - The `WidgetProps` for the `RadioWidget`
+- [labelOptions]: ChoiceWidgetLabelOptions - `{ drawsLabel: true }` for a widget that draws the field's label for its
+  group itself, rather than leaving it to its template
+
+#### Returns
+
+- UseRadioWidgetPropsResult: Everything the radio group needs:
+  - `id`, `name`, `required`, `disabled` (`true` for a disabled or read-only field) and `inline`, from
+    `ui:options.inline`
+  - `groupProps`: the `role` and `aria-*` attributes of the element wrapping the options
+  - `optionProps`: the `aria-*` attributes of each option's control
+  - `drawsLabel` and `labelId`: whether the widget is to draw the field's label, which it is only where it asked to and
+    the field shows one, and the id to draw it under
+  - `value`: the encoded value of the checked option, or `''`
+  - `options`: every radio in enum order, as `{ id, value, label, disabled, checked, autoFocus, index, onFocus, onBlur }`, `value` being its encoded value
+    and `disabled` whether `ui:enumDisabled` disables it, apart from the group. `onFocus()` and `onBlur()` report the
+    option's own value and take no argument, so they can be handed to any control's focus and blur events
+  - `onChange(value)`: decodes the encoded value of the checked option into form data. `null` or `undefined` is no
+    choice, which reports `ui:emptyValue`
 
 ### useSelectFocusHandlers&lt;T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = FormContextType>()
 

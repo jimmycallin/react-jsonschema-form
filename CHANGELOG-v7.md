@@ -79,6 +79,8 @@ https://github.com/rjsf-team/react-jsonschema-form/blob/main/packages/docs/docs/
 - Fix `RangeWidget` for an Ajv `$data` reference in `minimum`, `maximum` or `multipleOf`, which set the range's bound or step to the object and now leaves it at its default, and read a numeric-string bound such as `minimum: '5'` as its number ([#5688](https://github.com/rjsf-team/react-jsonschema-form/pull/5688))
 - **BREAKING CHANGE:** Change `WrapIfAdditionalTemplate` to read `ADDITIONAL_PROPERTY_FLAG` by its truth rather than its presence, so a schema with it set to `undefined` or `false` renders as a plain field, with no key input or remove button. See [the upgrade guide](https://rjsf-team.github.io/react-jsonschema-form/docs/migration-guides/v7.x%20upgrade%20guide#additional_property_flag-counts-only-when-set-to-a-truthy-value-breaking-change) ([#5689](https://github.com/rjsf-team/react-jsonschema-form/pull/5689))
 - Fix `SelectWidget` showing form data that no option holds, or a `ui:emptyValue`, as raw text instead of its placeholder ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
+- Change `CheckboxesWidget` to leave out form data that no option holds when a box is checked or unchecked, as the multiple `SelectWidget` does ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
+- Change `RadioWidget` to log an error when the schema's `default` is none of its options, as `SelectWidget` does ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
 
 ## @rjsf/bootstrap3
 
@@ -167,6 +169,8 @@ https://github.com/rjsf-team/react-jsonschema-form/blob/main/packages/docs/docs/
 - Fix `RangeWidget` for an Ajv `$data` reference in `minimum`, `maximum` or `multipleOf`, which set the range's bound or step to the object and now leaves it at its default, and read a numeric-string bound such as `minimum: '5'` as its number ([#5688](https://github.com/rjsf-team/react-jsonschema-form/pull/5688))
 - **BREAKING CHANGE:** Change `WrapIfAdditionalTemplate` to read `ADDITIONAL_PROPERTY_FLAG` by its truth rather than its presence, so a schema with it set to `undefined` or `false` renders as a plain field, with no key input or remove button. See [the upgrade guide](https://rjsf-team.github.io/react-jsonschema-form/docs/migration-guides/v7.x%20upgrade%20guide#additional_property_flag-counts-only-when-set-to-a-truthy-value-breaking-change) ([#5689](https://github.com/rjsf-team/react-jsonschema-form/pull/5689))
 - Fix `NativeSelectWidget` ignoring `ui:optionValueFormat` and drawing a single select for a multiple-choice field, which now selects several options ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
+- Change `CheckboxesWidget` to leave out form data that no option holds when a box is checked or unchecked, as the multiple `SelectWidget` does ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
+- Change `RadioWidget` to log an error when the schema's `default` is none of its options, as `SelectWidget` does ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
 
 ## @rjsf/core
 
@@ -517,6 +521,8 @@ https://github.com/rjsf-team/react-jsonschema-form/blob/main/packages/docs/docs/
 - **BREAKING CHANGE:** Change the values of the exported `GridProps` and of an object `LayoutGridSchemaType` from `any` to `unknown`. See [the upgrade guide](https://rjsf-team.github.io/react-jsonschema-form/docs/migration-guides/v7.x%20upgrade%20guide#any-members-of-the-public-types-are-specific-types-breaking-change) ([#5696](https://github.com/rjsf-team/react-jsonschema-form/pull/5696))
 - **BREAKING CHANGE:** Change a `LayoutGridField` with no `ui:layoutGrid` object, such as one missing or misspelled, a cell that names no field and whose `render` doesn't resolve, such as `{ name: '' }`, and a `ui:condition` with no `field` to render nothing and log a warning, where they rendered every field of the schema again, or a `none` condition's children. See [the upgrade guide](https://rjsf-team.github.io/react-jsonschema-form/docs/migration-guides/v7.x%20upgrade%20guide#a-layoutgridfield-with-no-layout-or-a-cell-or-condition-naming-no-field-renders-nothing-breaking-change) ([#5696](https://github.com/rjsf-team/react-jsonschema-form/pull/5696))
 - Change `SelectWidget` to report its form data on focus and blur, as every theme's does, rather than the option the browser shows ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
+- Change `CheckboxesWidget` to leave out form data that no option holds when a box is checked or unchecked, as the multiple `SelectWidget` does ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
+- Change `RadioWidget` to log an error when the schema's `default` is none of its options, as `SelectWidget` does ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
 
 ## @rjsf/daisyui
 
@@ -716,6 +722,8 @@ https://github.com/rjsf-team/react-jsonschema-form/blob/main/packages/docs/docs/
 - Fix `WrapIfAdditionalTemplate` leaving the key input and the remove button enabled for a property it is handed no rename or remove callback for, such as the root ([#5684](https://github.com/rjsf-team/react-jsonschema-form/pull/5684))
 - Fix `RangeWidget` for an Ajv `$data` reference in `minimum`, `maximum` or `multipleOf`, which set the range's bound or step to the object and now leaves it at its default, and read a numeric-string bound such as `minimum: '5'` as its number ([#5688](https://github.com/rjsf-team/react-jsonschema-form/pull/5688))
 - **BREAKING CHANGE:** Change `WrapIfAdditionalTemplate` to read `ADDITIONAL_PROPERTY_FLAG` by its truth rather than its presence, so a schema with it set to `undefined` or `false` renders as a plain field, with no key input or remove button. See [the upgrade guide](https://rjsf-team.github.io/react-jsonschema-form/docs/migration-guides/v7.x%20upgrade%20guide#additional_property_flag-counts-only-when-set-to-a-truthy-value-breaking-change) ([#5689](https://github.com/rjsf-team/react-jsonschema-form/pull/5689))
+- Change `CheckboxesWidget` to leave out form data that no option holds when a box is checked or unchecked, as the multiple `SelectWidget` does ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
+- Change `RadioWidget` to log an error when the schema's `default` is none of its options, as `SelectWidget` does ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
 
 ## @rjsf/mantine
 
@@ -812,6 +820,8 @@ https://github.com/rjsf-team/react-jsonschema-form/blob/main/packages/docs/docs/
 - Fix `RangeWidget` for an Ajv `$data` reference in `minimum`, `maximum` or `multipleOf`, which set the range's bound or step to the object and now leaves it at its default, and read a numeric-string bound such as `minimum: '5'` as its number ([#5688](https://github.com/rjsf-team/react-jsonschema-form/pull/5688))
 - **BREAKING CHANGE:** Change `WrapIfAdditionalTemplate` to read `ADDITIONAL_PROPERTY_FLAG` by its truth rather than its presence, so a schema with it set to `undefined` or `false` renders as a plain field, with no key input or remove button. See [the upgrade guide](https://rjsf-team.github.io/react-jsonschema-form/docs/migration-guides/v7.x%20upgrade%20guide#additional_property_flag-counts-only-when-set-to-a-truthy-value-breaking-change) ([#5689](https://github.com/rjsf-team/react-jsonschema-form/pull/5689))
 - Fix a `ui:options` value of the wrong shape reaching Mantine, which now leaves it out: a `thumbProps` that isn't an object and a `thumbLabel` that isn't a string, at the top level or in `thumbProps`, on `RangeWidget`, and, on every widget, an `inputContainer` that isn't a function and an `inputWrapperOrder` that isn't an array, at the top level or in `wrapperProps`, which threw ([#5696](https://github.com/rjsf-team/react-jsonschema-form/pull/5696))
+- Change `CheckboxesWidget` to leave out form data that no option holds when a box is checked or unchecked, as the multiple `SelectWidget` does ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
+- Change `RadioWidget` to log an error when the schema's `default` is none of its options, as `SelectWidget` does ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
 
 ## @rjsf/mui
 
@@ -880,6 +890,8 @@ https://github.com/rjsf-team/react-jsonschema-form/blob/main/packages/docs/docs/
 - Fix `FieldTemplate` dropping the `sx` and `className` of `rjsfSlotProps.fieldFormControl`: when the root option sets them too, the two `sx` are now merged, the root's winning a clash, and the two class names joined, where the root's replaced the slot's ([#5696](https://github.com/rjsf-team/react-jsonschema-form/pull/5696))
 - Fix `BaseInputTemplate` passing a `rjsfSlotProps` option to the `TextField`, whose DOM logged a React warning for it ([#5696](https://github.com/rjsf-team/react-jsonschema-form/pull/5696))
 - Fix `SelectWidget` shrinking its label over an empty select when the form data matches no option ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
+- Change `CheckboxesWidget` to leave out form data that no option holds when a box is checked or unchecked, as the multiple `SelectWidget` does ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
+- Change `RadioWidget` to log an error when the schema's `default` is none of its options, as `SelectWidget` does ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
 
 ## @rjsf/react-bootstrap
 
@@ -941,6 +953,8 @@ https://github.com/rjsf-team/react-jsonschema-form/blob/main/packages/docs/docs/
 - Fix `RangeWidget` for an Ajv `$data` reference in `minimum`, `maximum` or `multipleOf`, which set the range's bound or step to the object and now leaves it at its default, and read a numeric-string bound such as `minimum: '5'` as its number ([#5688](https://github.com/rjsf-team/react-jsonschema-form/pull/5688))
 - **BREAKING CHANGE:** Change `WrapIfAdditionalTemplate` to read `ADDITIONAL_PROPERTY_FLAG` by its truth rather than its presence, so a schema with it set to `undefined` or `false` renders as a plain field, with no key input or remove button. See [the upgrade guide](https://rjsf-team.github.io/react-jsonschema-form/docs/migration-guides/v7.x%20upgrade%20guide#additional_property_flag-counts-only-when-set-to-a-truthy-value-breaking-change) ([#5689](https://github.com/rjsf-team/react-jsonschema-form/pull/5689))
 - Change `SelectWidget` to report its form data on focus and blur, as every theme's does, rather than the option the browser shows ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
+- Change `CheckboxesWidget` to leave out form data that no option holds when a box is checked or unchecked, as the multiple `SelectWidget` does ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
+- Change `RadioWidget` to log an error when the schema's `default` is none of its options, as `SelectWidget` does ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
 
 ## @rjsf/shadcn
 
@@ -1041,6 +1055,8 @@ https://github.com/rjsf-team/react-jsonschema-form/blob/main/packages/docs/docs/
 - Fix `RangeWidget` for an Ajv `$data` reference in `minimum`, `maximum` or `multipleOf`, which set the range's bound or step to the object and now leaves it at its default, and read a numeric-string bound such as `minimum: '5'` as its number ([#5688](https://github.com/rjsf-team/react-jsonschema-form/pull/5688))
 - **BREAKING CHANGE:** Change `WrapIfAdditionalTemplate` to read `ADDITIONAL_PROPERTY_FLAG` by its truth rather than its presence, so a schema with it set to `undefined` or `false` renders as a plain field, with no key input or remove button. See [the upgrade guide](https://rjsf-team.github.io/react-jsonschema-form/docs/migration-guides/v7.x%20upgrade%20guide#additional_property_flag-counts-only-when-set-to-a-truthy-value-breaking-change) ([#5689](https://github.com/rjsf-team/react-jsonschema-form/pull/5689))
 - **BREAKING CHANGE:** Change the multiple `SelectWidget` to report its selection in the order the options are listed, as `@rjsf/core`'s does, rather than in the order they were picked. See [the upgrade guide](https://rjsf-team.github.io/react-jsonschema-form/docs/migration-guides/v7.x%20upgrade%20guide#rjsfshadcns-multiple-selectwidget-reports-its-selection-in-enum-order-breaking-change) ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
+- Change `CheckboxesWidget` to leave out form data that no option holds when a box is checked or unchecked, as the multiple `SelectWidget` does ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
+- Change `RadioWidget` to log an error when the schema's `default` is none of its options, as `SelectWidget` does ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
 
 ## @rjsf/snapshot-tests
 
@@ -1412,6 +1428,7 @@ https://github.com/rjsf-team/react-jsonschema-form/blob/main/packages/docs/docs/
 - **BREAKING CHANGE:** Change `mergeObjects()` and `mergeSchemas()` to take any objects and return `GenericObjectType`. See [the upgrade guide](https://rjsf-team.github.io/react-jsonschema-form/docs/migration-guides/v7.x%20upgrade%20guide#any-members-of-the-public-types-are-specific-types-breaking-change) ([#5696](https://github.com/rjsf-team/react-jsonschema-form/pull/5696))
 - **BREAKING CHANGE:** Remove `GenericSymbolObjectType`, which nothing uses. See [the upgrade guide](https://rjsf-team.github.io/react-jsonschema-form/docs/migration-guides/v7.x%20upgrade%20guide#any-members-of-the-public-types-are-specific-types-breaking-change) ([#5696](https://github.com/rjsf-team/react-jsonschema-form/pull/5696))
 - Add the `useSelectWidgetProps()` hook, which gives a select control its encoded value, its grouped options, its `aria-*` attributes and handlers that decode a change into form data, for a theme's or an app's own `SelectWidget` ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
+- Add the `useRadioWidgetProps()` and `useCheckboxesWidgetProps()` hooks, which give a radio group or a group of checkboxes its options' encoded values, checked state, ids and focus handlers, its `aria-*` attributes and a decoding `onChange`, for a theme's or an app's own widget ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
 
 ## @rjsf/validator-ajv8
 
