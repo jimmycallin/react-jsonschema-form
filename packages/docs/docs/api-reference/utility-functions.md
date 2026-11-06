@@ -3626,6 +3626,30 @@ disabled or read-only, so those buttons can be rendered disabled.
 
 - UseAltDateWidgetResult: The `UseAltDateWidgetResult` to be used within a `AltDateWidget` implementation
 
+### useCheckboxWidgetProps&lt;T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = FormContextType>()
+
+Hook which holds what every `CheckboxWidget` does whatever its UI library: it reads whether the checkbox is checked,
+marks it required only where the schema requires `true`, says whether the widget draws the field's label, and supplies
+the checkbox's id, name and `aria-*` attributes. The handlers report nothing while the field is disabled or read-only.
+To be used by theme specific `CheckboxWidget` implementations, and by an app's own.
+
+#### Parameters
+
+- props: WidgetProps&lt;T, S, F> - The `WidgetProps` for the `CheckboxWidget`
+
+#### Returns
+
+- UseCheckboxWidgetPropsResult: Everything the checkbox needs:
+  - `id`, `name`, `disabled` (`true` for a disabled or read-only field) and `autoFocus`
+  - `checked`: whether the form data is truthy
+  - `required`: `true` only where the field is required and its schema requires `true`, since an unchecked checkbox
+    fails a browser's `required` check whatever `false` the schema allows
+  - `drawsLabel`: whether the widget draws the field's label beside the checkbox
+  - `ariaProps`: the checkbox's `aria-*` attributes
+  - `onChange(checked)`: reports whether the box is checked as form data
+  - `onFocus()` and `onBlur()`: report the form data. They take no argument, so they can be handed to any control's
+    focus and blur events
+
 ### useCheckboxesWidgetProps&lt;T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = FormContextType>()
 
 Hook which holds what every `CheckboxesWidget` does whatever its UI library: it encodes each option's value as

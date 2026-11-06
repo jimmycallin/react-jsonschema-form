@@ -81,6 +81,7 @@ https://github.com/rjsf-team/react-jsonschema-form/blob/main/packages/docs/docs/
 - Fix `SelectWidget` showing form data that no option holds, or a `ui:emptyValue`, as raw text instead of its placeholder ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
 - Change `CheckboxesWidget` to leave out form data that no option holds when a box is checked or unchecked, as the multiple `SelectWidget` does ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
 - Change `RadioWidget` to log an error when the schema's `default` is none of its options, as `SelectWidget` does ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
+- Change `CheckboxWidget` to report its form data on focus and blur, as every other widget does, rather than whether the box is checked, so an unset checkbox reports `undefined` rather than `false` ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
 
 ## @rjsf/bootstrap3
 
@@ -172,6 +173,7 @@ https://github.com/rjsf-team/react-jsonschema-form/blob/main/packages/docs/docs/
 - Change `CheckboxesWidget` to leave out form data that no option holds when a box is checked or unchecked, as the multiple `SelectWidget` does ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
 - Change `RadioWidget` to log an error when the schema's `default` is none of its options, as `SelectWidget` does ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
 - Fix `RangeWidget` reporting no value on focus and blur, where it now reports the form data ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
+- Change `CheckboxWidget` to report its form data on focus and blur, as every other widget does, rather than whether the box is checked, so an unset checkbox reports `undefined` rather than `false` ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
 
 ## @rjsf/core
 
@@ -524,6 +526,7 @@ https://github.com/rjsf-team/react-jsonschema-form/blob/main/packages/docs/docs/
 - Change `SelectWidget` to report its form data on focus and blur, as every theme's does, rather than the option the browser shows ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
 - Change `CheckboxesWidget` to leave out form data that no option holds when a box is checked or unchecked, as the multiple `SelectWidget` does ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
 - Change `RadioWidget` to log an error when the schema's `default` is none of its options, as `SelectWidget` does ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
+- Change `CheckboxWidget` to report its form data on focus and blur, as every other widget does, rather than whether the box is checked, so an unset checkbox reports `undefined` rather than `false` ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
 
 ## @rjsf/daisyui
 
@@ -726,6 +729,7 @@ https://github.com/rjsf-team/react-jsonschema-form/blob/main/packages/docs/docs/
 - Change `CheckboxesWidget` to leave out form data that no option holds when a box is checked or unchecked, as the multiple `SelectWidget` does ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
 - Change `RadioWidget` to log an error when the schema's `default` is none of its options, as `SelectWidget` does ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
 - Fix `RangeWidget` reporting the thumb's value as a string on focus and blur, where it now reports the form data ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
+- Change `CheckboxWidget` to report its form data on focus and blur, as every other widget does, rather than whether the box is checked, so an unset checkbox reports `undefined` rather than `false` ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
 
 ## @rjsf/mantine
 
@@ -824,6 +828,7 @@ https://github.com/rjsf-team/react-jsonschema-form/blob/main/packages/docs/docs/
 - Fix a `ui:options` value of the wrong shape reaching Mantine, which now leaves it out: a `thumbProps` that isn't an object and a `thumbLabel` that isn't a string, at the top level or in `thumbProps`, on `RangeWidget`, and, on every widget, an `inputContainer` that isn't a function and an `inputWrapperOrder` that isn't an array, at the top level or in `wrapperProps`, which threw ([#5696](https://github.com/rjsf-team/react-jsonschema-form/pull/5696))
 - Change `CheckboxesWidget` to leave out form data that no option holds when a box is checked or unchecked, as the multiple `SelectWidget` does ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
 - Change `RadioWidget` to log an error when the schema's `default` is none of its options, as `SelectWidget` does ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
+- Change `CheckboxWidget` to report its form data on focus and blur, as every other widget does, rather than whether the box is checked, so an unset checkbox reports `undefined` rather than `false` ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
 
 ## @rjsf/mui
 
@@ -958,6 +963,7 @@ https://github.com/rjsf-team/react-jsonschema-form/blob/main/packages/docs/docs/
 - Change `SelectWidget` to report its form data on focus and blur, as every theme's does, rather than the option the browser shows ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
 - Change `CheckboxesWidget` to leave out form data that no option holds when a box is checked or unchecked, as the multiple `SelectWidget` does ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
 - Change `RadioWidget` to log an error when the schema's `default` is none of its options, as `SelectWidget` does ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
+- Change `CheckboxWidget` to report its form data on focus and blur, as every other widget does, rather than whether the box is checked, so an unset checkbox reports `undefined` rather than `false` ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
 
 ## @rjsf/shadcn
 
@@ -1431,6 +1437,7 @@ https://github.com/rjsf-team/react-jsonschema-form/blob/main/packages/docs/docs/
 - Add the `useSelectWidgetProps()` hook, which gives a select control its encoded value, its grouped options, its `aria-*` attributes and handlers that decode a change into form data, for a theme's or an app's own `SelectWidget` ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
 - Add the `useRadioWidgetProps()` and `useCheckboxesWidgetProps()` hooks, which give a radio group or a group of checkboxes its options' encoded values, checked state, ids and focus handlers, its `aria-*` attributes and a decoding `onChange`, for a theme's or an app's own widget ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
 - Add the `useRangeWidgetProps()` hook, which gives a slider its number, its `min`, `max` and `step`, its `aria-*` attributes and an `onChange` that writes the number back as the schema stores it, for a theme's or an app's own `RangeWidget` ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
+- Add the `useCheckboxWidgetProps()` hook, which gives a single checkbox its checked state, the `required` it takes only where the schema requires `true`, whether it draws the field's label, its `aria-*` attributes and its handlers, for a theme's or an app's own `CheckboxWidget` ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
 
 ## @rjsf/validator-ajv8
 
