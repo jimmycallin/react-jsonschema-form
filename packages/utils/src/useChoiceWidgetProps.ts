@@ -11,8 +11,6 @@ import type { SelectWidgetOption } from './useSelectWidgetProps.ts';
 import useSelectWidgetProps from './useSelectWidgetProps.ts';
 import widgetDrawsLabelText from './widgetDrawsLabelText.ts';
 
-function reportNothing() {}
-
 /** One option of a radio group or a group of checkboxes, ready to hand to its control */
 export interface ChoiceWidgetOption extends SelectWidgetOption {
   /** The id of the option's control */
@@ -71,12 +69,10 @@ export default function useChoiceWidgetProps<
   const select = useSelectWidgetProps<T, S, F>({ ...props, multiple });
   const { id, options, onFocus, onBlur, autofocus } = props;
   const { enumOptions, enumDisabled, inline = false } = options;
-  const { focusHandlers, blurHandlers } = useOptionFocusHandlers<T, S, F>({
-    id,
-    options,
-    onFocus: select.disabled ? reportNothing : onFocus,
-    onBlur: select.disabled ? reportNothing : onBlur,
-  });
+  const { focusHandlers, blurHandlers } = useOptionFocusHandlers<T, S, F>(
+    { id, options, onFocus, onBlur },
+    select.disabled,
+  );
   const held = [select.value].flat();
   // A radio group focuses its checked option, where Tab into the group lands
   const autofocusIndex = enumOptionsAutofocusIndex<S>(

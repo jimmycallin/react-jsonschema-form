@@ -20,7 +20,6 @@ import dateRangeOptions from './dateRangeOptions.ts';
 import deepEquals, { deepEqualsUndefinedAsMissing } from './deepEquals.ts';
 import describeUnresolvedComponent from './describeUnresolvedComponent.ts';
 import englishStringTranslator from './englishStringTranslator.ts';
-import enumOptionsAutofocusIndex from './enumOptionsAutofocusIndex.ts';
 import enumOptionsDeselectValue from './enumOptionsDeselectValue.ts';
 import enumOptionsDomValues from './enumOptionsDomValues.ts';
 import enumOptionSelectedValue from './enumOptionSelectedValue.ts';
@@ -45,7 +44,6 @@ import {
 } from './fieldPath.ts';
 import fieldShowsOwnErrors from './fieldShowsOwnErrors.ts';
 import findSchemaDefinition from './findSchemaDefinition.ts';
-import flattenGroupedOptions from './flattenGroupedOptions.ts';
 import getAdditionalKeyAttributes from './getAdditionalKeyAttributes.ts';
 import getArrayDescription from './getArrayDescription.ts';
 import getBaseInputProps from './getBaseInputProps.ts';
@@ -71,7 +69,6 @@ import getFreePropertyNames from './getFreePropertyNames.ts';
 import getGlobalUiOptions from './getGlobalUiOptions.ts';
 import getGroupAttributes from './getGroupAttributes.ts';
 import type { GroupRole } from './getGroupAttributes.ts';
-import getGroupLabelling from './getGroupLabelling.ts';
 import getInputProps from './getInputProps.ts';
 import getItemUiSchemaForItem from './getItemUiSchemaForItem.ts';
 import getLabelId from './getLabelId.ts';
@@ -224,14 +221,10 @@ import useCheckboxesWidgetProps from './useCheckboxesWidgetProps.ts';
 import type { ChoiceWidgetLabelOptions, ChoiceWidgetOption, ChoiceWidgetProps } from './useChoiceWidgetProps.ts';
 import type { FileInfoType, UseFileWidgetPropsResult } from './useFileWidgetProps.ts';
 import useFileWidgetProps from './useFileWidgetProps.ts';
-import type { UseOptionFocusHandlersResult } from './useOptionFocusHandlers.ts';
-import useOptionFocusHandlers from './useOptionFocusHandlers.ts';
 import type { UseRadioWidgetPropsResult } from './useRadioWidgetProps.ts';
 import useRadioWidgetProps from './useRadioWidgetProps.ts';
 import type { UseRangeWidgetPropsResult } from './useRangeWidgetProps.ts';
 import useRangeWidgetProps from './useRangeWidgetProps.ts';
-import type { UseSelectFocusHandlersResult } from './useSelectFocusHandlers.ts';
-import useSelectFocusHandlers from './useSelectFocusHandlers.ts';
 import type {
   SelectWidgetOption,
   SelectWidgetOptionGroup,
@@ -283,10 +276,8 @@ export type {
   UseAltDateWidgetResult,
   UseCheckboxesWidgetPropsResult,
   UseFileWidgetPropsResult,
-  UseOptionFocusHandlersResult,
   UseRadioWidgetPropsResult,
   UseRangeWidgetPropsResult,
-  UseSelectFocusHandlersResult,
   UseSelectWidgetPropsResult,
   UseTimeWidgetPropsResult,
   // oxlint-disable-next-line typescript/no-deprecated -- deprecated, and kept exported through v7
@@ -326,7 +317,6 @@ export {
   enumOptionSelectedValue,
   enumOptionValueDecoder,
   enumOptionValueLabel,
-  enumOptionsAutofocusIndex,
   enumOptionsDeselectValue,
   enumOptionsDomValues,
   enumOptionsIndexForValue,
@@ -344,7 +334,6 @@ export {
   fieldShowsOwnErrors,
   // oxlint-disable-next-line typescript/no-deprecated -- re-exported for callers written against 6.x
   findSchemaDefinition,
-  flattenGroupedOptions,
   getAdditionalKeyAttributes,
   getAdditionalPropertySchema,
   getArrayDescription,
@@ -371,7 +360,6 @@ export {
   getFreePropertyNames,
   getGlobalUiOptions,
   getGroupAttributes,
-  getGroupLabelling,
   getInputProps,
   getItemUiSchemaForItem,
   getLabelId,
@@ -517,10 +505,8 @@ export {
   useAltDateWidgetProps,
   useCheckboxesWidgetProps,
   useFileWidgetProps,
-  useOptionFocusHandlers,
   useRadioWidgetProps,
   useRangeWidgetProps,
-  useSelectFocusHandlers,
   useSelectWidgetProps,
   useTimeWidgetProps,
   utcToLocal,

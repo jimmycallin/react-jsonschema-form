@@ -2,7 +2,7 @@
 import { renderHook } from '@testing-library/react';
 
 import type { WidgetProps } from '../src/index.ts';
-import { useSelectFocusHandlers } from '../src/index.ts';
+import useSelectFocusHandlers from '../src/useSelectFocusHandlers.ts';
 
 function makeProps(overrides: Partial<WidgetProps> = {}): WidgetProps {
   return {
@@ -18,7 +18,7 @@ function makeProps(overrides: Partial<WidgetProps> = {}): WidgetProps {
 describe('useSelectFocusHandlers()', () => {
   it('should report the form data value as it is on focus and blur', () => {
     const props = makeProps({ value: { a: 1 } });
-    const { result } = renderHook(() => useSelectFocusHandlers(props));
+    const { result } = renderHook(() => useSelectFocusHandlers(props, false));
 
     result.current.handleFocus();
     result.current.handleBlur();
@@ -29,7 +29,7 @@ describe('useSelectFocusHandlers()', () => {
 
   it('should report the emptyValue option when nothing is selected', () => {
     const props = makeProps();
-    const { result } = renderHook(() => useSelectFocusHandlers(props));
+    const { result } = renderHook(() => useSelectFocusHandlers(props, false));
 
     result.current.handleFocus();
     result.current.handleBlur();
@@ -40,7 +40,7 @@ describe('useSelectFocusHandlers()', () => {
 
   it('should not throw when the widget is rendered without focus and blur handlers', () => {
     const props = makeProps({ onFocus: undefined, onBlur: undefined });
-    const { result } = renderHook(() => useSelectFocusHandlers(props));
+    const { result } = renderHook(() => useSelectFocusHandlers(props, false));
 
     expect(() => result.current.handleFocus()).not.toThrow();
     expect(() => result.current.handleBlur()).not.toThrow();
@@ -48,7 +48,7 @@ describe('useSelectFocusHandlers()', () => {
 
   it('should report a falsy selection rather than the emptyValue', () => {
     const props = makeProps({ value: null });
-    const { result } = renderHook(() => useSelectFocusHandlers(props));
+    const { result } = renderHook(() => useSelectFocusHandlers(props, false));
 
     result.current.handleFocus();
 

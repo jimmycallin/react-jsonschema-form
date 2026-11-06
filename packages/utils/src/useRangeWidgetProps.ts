@@ -16,8 +16,6 @@ import type {
 } from './types.ts';
 import useSelectFocusHandlers from './useSelectFocusHandlers.ts';
 
-function reportNothing() {}
-
 export interface UseRangeWidgetPropsResult {
   /** The control's id */
   id: string;
@@ -95,13 +93,10 @@ export default function useRangeWidgetProps<
     },
     [inactive, onChange, emptyValue, storesString],
   );
-  const { handleFocus, handleBlur } = useSelectFocusHandlers<T, S, F>({
-    id,
-    value,
-    options,
-    onFocus: inactive ? reportNothing : onFocus,
-    onBlur: inactive ? reportNothing : onBlur,
-  });
+  const { handleFocus, handleBlur } = useSelectFocusHandlers<T, S, F>(
+    { id, value, options, onFocus, onBlur },
+    inactive,
+  );
 
   return {
     id,

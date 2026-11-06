@@ -2,7 +2,7 @@
 import { renderHook } from '@testing-library/react';
 
 import type { WidgetProps } from '../src/index.ts';
-import { useOptionFocusHandlers } from '../src/index.ts';
+import useOptionFocusHandlers from '../src/useOptionFocusHandlers.ts';
 
 function makeProps(overrides: Partial<WidgetProps> = {}): WidgetProps {
   return {
@@ -22,7 +22,7 @@ function makeProps(overrides: Partial<WidgetProps> = {}): WidgetProps {
 describe('useOptionFocusHandlers()', () => {
   it('should report the value of the option at each handler position on focus and blur', () => {
     const props = makeProps();
-    const { result } = renderHook(() => useOptionFocusHandlers(props));
+    const { result } = renderHook(() => useOptionFocusHandlers(props, false));
 
     result.current.focusHandlers[1]();
     result.current.blurHandlers[0]();
@@ -33,14 +33,14 @@ describe('useOptionFocusHandlers()', () => {
 
   it('should return no handlers without options', () => {
     const props = makeProps({ options: {} });
-    const { result } = renderHook(() => useOptionFocusHandlers(props));
+    const { result } = renderHook(() => useOptionFocusHandlers(props, false));
 
     expect(result.current).toEqual({ focusHandlers: [], blurHandlers: [] });
   });
 
   it('should keep the same handlers across renders while its inputs are unchanged', () => {
     const props = makeProps();
-    const { result, rerender } = renderHook(() => useOptionFocusHandlers(props));
+    const { result, rerender } = renderHook(() => useOptionFocusHandlers(props, false));
     const first = result.current;
 
     rerender();
@@ -51,7 +51,7 @@ describe('useOptionFocusHandlers()', () => {
 
   it('should not throw when the widget is rendered without focus and blur handlers', () => {
     const props = makeProps({ onFocus: undefined, onBlur: undefined });
-    const { result } = renderHook(() => useOptionFocusHandlers(props));
+    const { result } = renderHook(() => useOptionFocusHandlers(props, false));
 
     expect(() => result.current.focusHandlers[0]()).not.toThrow();
     expect(() => result.current.blurHandlers[0]()).not.toThrow();

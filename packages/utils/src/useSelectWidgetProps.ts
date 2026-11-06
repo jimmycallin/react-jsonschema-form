@@ -22,8 +22,6 @@ import useSelectFocusHandlers from './useSelectFocusHandlers.ts';
 import widgetAriaProps from './widgetAriaProps.ts';
 import widgetDrawsLabel from './widgetDrawsLabel.ts';
 
-function reportNothing() {}
-
 /** One option of a select, ready to hand to a select control */
 export interface SelectWidgetOption {
   /** The option's encoded value, which no other option shares, for the control to select it by */
@@ -179,13 +177,10 @@ export default function useSelectWidgetProps<
     [inactive, multiple, inEnumOrder, onChange, enumOptions, optionValueFormat, emptyValue],
   );
 
-  const { handleFocus, handleBlur } = useSelectFocusHandlers<T, S, F>({
-    id,
-    value,
-    options,
-    onFocus: inactive ? reportNothing : onFocus,
-    onBlur: inactive ? reportNothing : onBlur,
-  });
+  const { handleFocus, handleBlur } = useSelectFocusHandlers<T, S, F>(
+    { id, value, options, onFocus, onBlur },
+    inactive,
+  );
 
   logUnsupportedDefaultForEnum<S>(id, schema, enumOptions, multiple);
 

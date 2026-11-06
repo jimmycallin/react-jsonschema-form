@@ -17,14 +17,21 @@ export interface UseSelectFocusHandlersResult {
  * its decoded empty selection. To be used by theme specific `SelectWidget` implementations.
  *
  * @param props - The `id`, `value`, `options`, `onFocus` and `onBlur` from the `WidgetProps` of the `SelectWidget`
+ * @param inactive - Whether the widget is disabled or read-only, which leaves its handlers reporting nothing
  * @returns - The `UseSelectFocusHandlersResult` to be used within a `SelectWidget` implementation
  */
 export default function useSelectFocusHandlers<
   T = unknown,
   S extends StrictRJSFSchema = RJSFSchema,
   F extends FormContextType = FormContextType,
->(props: Pick<WidgetProps<T, S, F>, 'id' | 'value' | 'options' | 'onFocus' | 'onBlur'>): UseSelectFocusHandlersResult {
-  const { id, value, options, onFocus, onBlur } = props;
+>(
+  props: Pick<WidgetProps<T, S, F>, 'id' | 'value' | 'options' | 'onFocus' | 'onBlur'>,
+  inactive: boolean,
+): UseSelectFocusHandlersResult {
+  const { id, value, options } = props;
+  // A disabled or read-only widget reports nothing
+  const onFocus = inactive ? undefined : props.onFocus;
+  const onBlur = inactive ? undefined : props.onBlur;
   const reportedValue = value === undefined ? options.emptyValue : value;
   // Guarded although `WidgetProps` requires both, since a custom field composing a theme's widget may leave them out
   const handleFocus = useCallback(() => onFocus?.(id, reportedValue), [onFocus, id, reportedValue]);

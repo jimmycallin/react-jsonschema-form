@@ -1,4 +1,4 @@
-import { enumOptionsAutofocusIndex } from '../src/index.ts';
+import enumOptionsAutofocusIndex from '../src/enumOptionsAutofocusIndex.ts';
 
 const options = [
   { label: 'Red', value: 'r' },
