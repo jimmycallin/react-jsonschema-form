@@ -427,7 +427,6 @@ exports[`array fields > checkboxes 1`] = `
               <li
                 aria-selected="false"
                 class="px-4 py-2 hover:bg-base-200 cursor-pointer "
-                data-value="0"
                 role="option"
                 tabindex="-1"
               >
@@ -449,7 +448,6 @@ exports[`array fields > checkboxes 1`] = `
               <li
                 aria-selected="false"
                 class="px-4 py-2 hover:bg-base-200 cursor-pointer "
-                data-value="1"
                 role="option"
                 tabindex="-1"
               >
@@ -471,7 +469,6 @@ exports[`array fields > checkboxes 1`] = `
               <li
                 aria-selected="false"
                 class="px-4 py-2 hover:bg-base-200 cursor-pointer "
-                data-value="2"
                 role="option"
                 tabindex="-1"
               >
@@ -1536,7 +1533,6 @@ exports[`nameGenerator > bracketNameGenerator > checkboxes with nameGenerator 1`
               <li
                 aria-selected="false"
                 class="px-4 py-2 hover:bg-base-200 cursor-pointer "
-                data-value="0"
                 role="option"
                 tabindex="-1"
               >
@@ -1558,7 +1554,6 @@ exports[`nameGenerator > bracketNameGenerator > checkboxes with nameGenerator 1`
               <li
                 aria-selected="false"
                 class="px-4 py-2 hover:bg-base-200 cursor-pointer "
-                data-value="1"
                 role="option"
                 tabindex="-1"
               >
@@ -1580,7 +1575,6 @@ exports[`nameGenerator > bracketNameGenerator > checkboxes with nameGenerator 1`
               <li
                 aria-selected="false"
                 class="px-4 py-2 hover:bg-base-200 cursor-pointer "
-                data-value="2"
                 role="option"
                 tabindex="-1"
               >
@@ -4004,7 +3998,6 @@ exports[`with title and description > checkboxes 1`] = `
               <li
                 aria-selected="false"
                 class="px-4 py-2 hover:bg-base-200 cursor-pointer "
-                data-value="0"
                 role="option"
                 tabindex="-1"
               >
@@ -4026,7 +4019,6 @@ exports[`with title and description > checkboxes 1`] = `
               <li
                 aria-selected="false"
                 class="px-4 py-2 hover:bg-base-200 cursor-pointer "
-                data-value="1"
                 role="option"
                 tabindex="-1"
               >
@@ -4048,7 +4040,6 @@ exports[`with title and description > checkboxes 1`] = `
               <li
                 aria-selected="false"
                 class="px-4 py-2 hover:bg-base-200 cursor-pointer "
-                data-value="2"
                 role="option"
                 tabindex="-1"
               >
@@ -4770,7 +4761,6 @@ exports[`with title and description from both > checkboxes 1`] = `
               <li
                 aria-selected="false"
                 class="px-4 py-2 hover:bg-base-200 cursor-pointer "
-                data-value="0"
                 role="option"
                 tabindex="-1"
               >
@@ -4792,7 +4782,6 @@ exports[`with title and description from both > checkboxes 1`] = `
               <li
                 aria-selected="false"
                 class="px-4 py-2 hover:bg-base-200 cursor-pointer "
-                data-value="1"
                 role="option"
                 tabindex="-1"
               >
@@ -4814,7 +4803,6 @@ exports[`with title and description from both > checkboxes 1`] = `
               <li
                 aria-selected="false"
                 class="px-4 py-2 hover:bg-base-200 cursor-pointer "
-                data-value="2"
                 role="option"
                 tabindex="-1"
               >
@@ -5536,7 +5524,6 @@ exports[`with title and description from uiSchema > checkboxes 1`] = `
               <li
                 aria-selected="false"
                 class="px-4 py-2 hover:bg-base-200 cursor-pointer "
-                data-value="0"
                 role="option"
                 tabindex="-1"
               >
@@ -5558,7 +5545,6 @@ exports[`with title and description from uiSchema > checkboxes 1`] = `
               <li
                 aria-selected="false"
                 class="px-4 py-2 hover:bg-base-200 cursor-pointer "
-                data-value="1"
                 role="option"
                 tabindex="-1"
               >
@@ -5580,7 +5566,6 @@ exports[`with title and description from uiSchema > checkboxes 1`] = `
               <li
                 aria-selected="false"
                 class="px-4 py-2 hover:bg-base-200 cursor-pointer "
-                data-value="2"
                 role="option"
                 tabindex="-1"
               >
@@ -6206,7 +6191,6 @@ exports[`with title and description with global label off > checkboxes 1`] = `
               <li
                 aria-selected="false"
                 class="px-4 py-2 hover:bg-base-200 cursor-pointer "
-                data-value="0"
                 role="option"
                 tabindex="-1"
               >
@@ -6228,7 +6212,6 @@ exports[`with title and description with global label off > checkboxes 1`] = `
               <li
                 aria-selected="false"
                 class="px-4 py-2 hover:bg-base-200 cursor-pointer "
-                data-value="1"
                 role="option"
                 tabindex="-1"
               >
@@ -6250,7 +6233,6 @@ exports[`with title and description with global label off > checkboxes 1`] = `
               <li
                 aria-selected="false"
                 class="px-4 py-2 hover:bg-base-200 cursor-pointer "
-                data-value="2"
                 role="option"
                 tabindex="-1"
               >

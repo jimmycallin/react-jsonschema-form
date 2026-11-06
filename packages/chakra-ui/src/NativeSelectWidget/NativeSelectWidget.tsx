@@ -1,118 +1,75 @@
-import type { ChangeEvent, FocusEvent } from 'react';
-import { useMemo } from 'react';
+import type { ChangeEvent } from 'react';
 import { NativeSelect } from '@chakra-ui/react';
-import type { FormContextType, IndexedEnumOptionType, RJSFSchema, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
+import type { FormContextType, RJSFSchema, SelectWidgetOption, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
 import {
-  enumOptionsIndexForValue,
-  enumOptionsValueForIndex,
-  groupEnumOptions,
   hasWidgetErrors,
-  isEnumOptionsGroup,
   labelValue,
-  logUnsupportedDefaultForEnum,
   SelectedOptionDescription,
-  widgetAriaProps,
+  useSelectWidgetProps,
   widgetDrawsLabelText,
 } from '@rjsf/utils';
 
 import { Field } from '../components/ui/field.tsx';
 import { getChakra } from '../utils.ts';
 
-/**
- * NativeSelectWidget is a React component that renders a native select input.
+function getValue(event: ChangeEvent<HTMLSelectElement>, multiple: boolean) {
+  const select = event.currentTarget;
+  return multiple ? Array.from(select.selectedOptions, (option) => option.value) : select.value;
+}
+
+function renderOption({ index, value, disabled, label }: SelectWidgetOption) {
+  return (
+    <option key={index} value={value} disabled={disabled}>
+      {label}
+    </option>
+  );
+}
+
+/** The `NativeSelectWidget` renders a native `<select>` styled by Chakra
  *
- * @param {T} T - The type of the value.
- * @param {S} S - The type of the schema.
- * @param {F} F - The type of the form context.
- * @param {WidgetProps<T, S, F>} props - The props for the component.
- *
- * @returns {JSX.Element} - The rendered component.
+ * @param props - The `WidgetProps` for this component
  */
 export default function NativeSelectWidget<
   T = unknown,
   S extends StrictRJSFSchema = RJSFSchema,
   F extends FormContextType = FormContextType,
 >(props: WidgetProps<T, S, F>) {
-  const {
-    id,
-    htmlName,
-    options,
-    label,
-    placeholder,
-    multiple,
-    required,
-    disabled,
-    readonly,
-    value,
-    autofocus,
-    onChange,
-    onBlur,
-    onFocus,
-    schema,
-  } = props;
+  const { options, label, readonly } = props;
+  const select = useSelectWidgetProps<T, S, F>(props);
+  const { multiple } = select;
   const drawsLabel = widgetDrawsLabelText<T, S, F>(props);
-  const { enumOptions, enumDisabled, emptyValue, optgroups } = options;
-
-  const handleChange = ({ target }: ChangeEvent<HTMLSelectElement>) =>
-    onChange(enumOptionsValueForIndex<S>(target?.value, enumOptions, emptyValue));
-
-  const handleBlur = ({ target }: FocusEvent<HTMLSelectElement>) =>
-    onBlur(id, enumOptionsValueForIndex<S>(target?.value, enumOptions, emptyValue));
-
-  const handleFocus = ({ target }: FocusEvent<HTMLSelectElement>) =>
-    onFocus(id, enumOptionsValueForIndex<S>(target?.value, enumOptions, emptyValue));
-
-  const showPlaceholderOption = !multiple && schema.default === undefined;
-  logUnsupportedDefaultForEnum<S>(id, schema, enumOptions, multiple);
-
-  const groupedOptions = useMemo(
-    () => groupEnumOptions<S>(enumOptions, optgroups, enumDisabled),
-    [enumDisabled, enumOptions, optgroups],
-  );
-
-  const selectedIndex = enumOptionsIndexForValue<S>(value, enumOptions, false);
-  const formValue = typeof selectedIndex !== 'undefined' ? selectedIndex.toString() : '';
-
-  const chakraProps = getChakra(options);
-
-  function renderOption(option: IndexedEnumOptionType<S>) {
-    return (
-      <option key={option.index} value={String(option.index)} disabled={option.disabled}>
-        {option.label}
-      </option>
-    );
-  }
 
   return (
     <Field
       mb={1}
-      disabled={disabled || readonly}
-      required={required}
+      disabled={select.disabled}
+      required={select.required}
       readOnly={readonly}
       invalid={hasWidgetErrors<T, S, F>(props)}
       label={labelValue(label, !drawsLabel)}
-      id={id}
-      {...chakraProps}
+      id={select.id}
+      {...getChakra(options)}
     >
-      <SelectedOptionDescription {...props} />
+      <SelectedOptionDescription {...select.descriptionProps} />
       <NativeSelect.Root>
         <NativeSelect.Field
-          id={id}
-          name={htmlName || id}
-          onBlur={handleBlur}
-          onChange={handleChange}
-          onFocus={handleFocus}
-          autoFocus={autofocus}
-          value={formValue}
-          {...widgetAriaProps(props)}
+          id={select.id}
+          name={select.name}
+          multiple={multiple}
+          onBlur={select.onBlur}
+          onChange={(event) => select.onChange(getValue(event, multiple))}
+          onFocus={select.onFocus}
+          autoFocus={select.autoFocus}
+          value={select.value}
+          {...select.ariaProps}
         >
-          {showPlaceholderOption ? (
+          {select.showPlaceholderOption ? (
             <option value='' disabled hidden>
-              {placeholder || ''}
+              {select.placeholder || ''}
             </option>
           ) : undefined}
-          {groupedOptions.map((item) =>
-            isEnumOptionsGroup<S>(item) ? (
+          {select.groupedOptions.map((item) =>
+            'options' in item ? (
               <optgroup key={`optgroup-${item.label}`} label={item.label}>
                 {item.options.map(renderOption)}
               </optgroup>
@@ -121,7 +78,7 @@ export default function NativeSelectWidget<
             ),
           )}
         </NativeSelect.Field>
-        <NativeSelect.Indicator />
+        {!multiple && <NativeSelect.Indicator />}
       </NativeSelect.Root>
     </Field>
   );

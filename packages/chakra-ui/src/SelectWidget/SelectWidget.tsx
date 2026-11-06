@@ -1,22 +1,12 @@
-import { useCallback, useMemo, useRef } from 'react';
-import type { SelectValueChangeDetails } from '@chakra-ui/react';
+import { useMemo, useRef } from 'react';
 import { createListCollection, Select as ChakraSelect } from '@chakra-ui/react';
-import type { FormContextType, IndexedEnumOptionType, RJSFSchema, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
+import type { FormContextType, RJSFSchema, SelectWidgetOption, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
 import {
-  enumOptionSelectedValue,
-  enumOptionValueDecoder,
-  enumOptionsDomValues,
-  flattenGroupedOptions,
   getLabelId,
-  getOptionValueFormat,
-  groupEnumOptions,
   hasWidgetErrors,
-  isEnumOptionsGroup,
   labelValue,
-  logUnsupportedDefaultForEnum,
   SelectedOptionDescription,
-  useSelectFocusHandlers,
-  widgetAriaProps,
+  useSelectWidgetProps,
   widgetDrawsLabelText,
 } from '@rjsf/utils';
 
@@ -24,97 +14,46 @@ import { Field } from '../components/ui/field.tsx';
 import { SelectRoot, SelectTrigger, SelectValueText } from '../components/ui/select.tsx';
 import { getChakra, labelledByOrNone } from '../utils.ts';
 
+function renderItem(item: SelectWidgetOption) {
+  return (
+    <ChakraSelect.Item item={item} key={item.index}>
+      {item.label}
+      <ChakraSelect.ItemIndicator />
+    </ChakraSelect.Item>
+  );
+}
+
 export default function SelectWidget<
   T = unknown,
   S extends StrictRJSFSchema = RJSFSchema,
   F extends FormContextType = FormContextType,
 >(props: WidgetProps<T, S, F>) {
-  const {
-    id,
-    htmlName,
-    options,
-    label,
-    placeholder,
-    multiple,
-    required,
-    disabled,
-    readonly,
-    value,
-    autofocus,
-    onChange,
-    schema,
-  } = props;
+  const { options, label, readonly } = props;
+  const select = useSelectWidgetProps<T, S, F>(props);
+  const { id, multiple, groupedOptions, ariaProps } = select;
   const drawsLabel = widgetDrawsLabelText<T, S, F>(props);
   const labelId = getLabelId<T, S, F>(props);
-  const ariaProps = widgetAriaProps(props);
   const labelledBy = labelledByOrNone(ariaProps['aria-labelledby'], drawsLabel);
-  const { enumOptions, enumDisabled, emptyValue, optgroups } = options;
-  const optionValueFormat = getOptionValueFormat(options);
-  const domValues = useMemo(
-    () => enumOptionsDomValues<S>(enumOptions, optionValueFormat),
-    [enumOptions, optionValueFormat],
+
+  // The collection lists the items in the order they are drawn, which keyboard navigation follows
+  const collection = useMemo(
+    () =>
+      createListCollection({ items: groupedOptions.flatMap((item) => ('options' in item ? item.options : [item])) }),
+    [groupedOptions],
   );
-
-  const handleMultiChange = ({ value: newValue }: SelectValueChangeDetails) =>
-    onChange(enumOptionValueDecoder<S>(newValue, enumOptions, optionValueFormat, emptyValue));
-
-  const handleSingleChange = ({ value: newValue }: SelectValueChangeDetails) => {
-    const selected = enumOptionValueDecoder<S>(newValue, enumOptions, optionValueFormat, emptyValue);
-    onChange(Array.isArray(selected) && selected.length === 1 ? selected[0] : selected);
-  };
-
-  // The focused element is the trigger button, which carries no option value
-  const { handleFocus, handleBlur } = useSelectFocusHandlers<T, S, F>(props);
-
-  logUnsupportedDefaultForEnum<S>(id, schema, enumOptions, multiple);
-
-  const toItem = useCallback(
-    (option: IndexedEnumOptionType<S>) => ({
-      label: option.label,
-      value: domValues[option.index],
-      disabled: option.disabled,
-    }),
-    [domValues],
-  );
-
-  const groupedOptions = useMemo(
-    () => groupEnumOptions<S>(enumOptions, optgroups, enumDisabled),
-    [enumDisabled, enumOptions, optgroups],
-  );
-
-  const isMultiple = typeof multiple !== 'undefined' && multiple && Boolean(enumOptions);
-
-  // Chakra's SelectRoot always expects a string array, so flatten the helper's
-  // single/multiple return shape and strip the empty-single case.
-  const formValue = [enumOptionSelectedValue(value, enumOptions, isMultiple, optionValueFormat, isMultiple ? [] : '')]
-    .flat()
-    .filter((v) => v !== '');
-
-  const selectOptions = useMemo(
-    () => createListCollection({ items: flattenGroupedOptions<S>(groupedOptions).map(toItem) }),
-    [groupedOptions, toItem],
-  );
+  // Chakra's SelectRoot always holds a string array, with no item selected as an empty one
+  const selected = [select.value].flat().filter(Boolean);
 
   const containerRef = useRef(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const chakraProps = getChakra(options);
 
-  function renderItem(option: IndexedEnumOptionType<S>) {
-    const item = toItem(option);
-    return (
-      <ChakraSelect.Item item={item} key={item.value}>
-        {item.label}
-        <ChakraSelect.ItemIndicator />
-      </ChakraSelect.Item>
-    );
-  }
-
   return (
     <Field
       ref={containerRef}
       mb={1}
-      disabled={disabled || readonly}
-      required={required}
+      disabled={select.disabled}
+      required={select.required}
       readOnly={readonly}
       invalid={hasWidgetErrors<T, S, F>(props)}
       label={labelValue(label, !drawsLabel)}
@@ -127,30 +66,30 @@ export default function SelectWidget<
       position='relative'
       {...chakraProps}
     >
-      <SelectedOptionDescription {...props} />
+      <SelectedOptionDescription {...select.descriptionProps} />
       <SelectRoot
-        collection={selectOptions}
+        collection={collection}
         id={id}
         // The trigger, which a user focuses, carries the field's id, so `focusOnFirstError` reaches it, and Ark points
         // it at the label's id. Ark's own ids replace the field's, so the label's is restated
         ids={{ trigger: id, label: labelId }}
         hiddenSelectLabelledBy={labelledBy}
-        name={htmlName || id}
-        multiple={isMultiple}
-        closeOnSelect={!isMultiple}
-        onBlur={handleBlur}
-        onValueChange={isMultiple ? handleMultiChange : handleSingleChange}
-        onFocus={handleFocus}
-        value={formValue}
+        name={select.name}
+        multiple={multiple}
+        closeOnSelect={!multiple}
+        onBlur={select.onBlur}
+        onValueChange={({ value }) => select.onChange(multiple ? value : value[0])}
+        onFocus={select.onFocus}
+        value={selected}
         positioning={{ placement: 'bottom' }}
       >
-        <SelectTrigger ref={triggerRef} autoFocus={autofocus} {...ariaProps} aria-labelledby={labelledBy}>
-          <SelectValueText placeholder={placeholder} />
+        <SelectTrigger ref={triggerRef} autoFocus={select.autoFocus} {...ariaProps} aria-labelledby={labelledBy}>
+          <SelectValueText placeholder={select.placeholder} />
         </SelectTrigger>
         <ChakraSelect.Positioner minWidth='100% !important' zIndex='2 !important' top='calc(100% + 5px) !important'>
           <ChakraSelect.Content aria-labelledby={labelledBy} aria-label={ariaProps['aria-label']}>
             {groupedOptions.map((option) =>
-              isEnumOptionsGroup<S>(option) ? (
+              'options' in option ? (
                 <ChakraSelect.ItemGroup key={`optgroup-${option.label}`}>
                   <ChakraSelect.ItemGroupLabel>{option.label}</ChakraSelect.ItemGroupLabel>
                   {option.options.map(renderItem)}

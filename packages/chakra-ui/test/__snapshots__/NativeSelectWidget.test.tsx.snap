@@ -128,62 +128,12 @@ exports[`NativeSelectWidget > select field multiple choice 1`] = `
   }
 }
 
-@layer recipes {
-  .emotion-5 {
-    position: absolute;
-    display: -webkit-inline-box;
-    display: -webkit-inline-flex;
-    display: -ms-inline-flexbox;
-    display: inline-flex;
-    -webkit-align-items: center;
-    -webkit-box-align: center;
-    -ms-flex-align: center;
-    align-items: center;
-    -webkit-box-pack: center;
-    -ms-flex-pack: center;
-    -webkit-justify-content: center;
-    justify-content: center;
-    pointer-events: none;
-    top: 50%;
-    -webkit-transform: translateY(-50%);
-    -moz-transform: translateY(-50%);
-    -ms-transform: translateY(-50%);
-    transform: translateY(-50%);
-    height: 100%;
-    color: var(--chakra-colors-fg-muted);
-    font-size: var(--chakra-font-sizes-lg);
-    line-height: 1.75rem;
-    inset-inline-end: var(--chakra-spacing-2);
-  }
-
-  .emotion-5:is(:disabled, [disabled], [data-disabled], [aria-disabled=true]) {
-    opacity: 0.5;
-  }
-
-  .emotion-5:is([data-invalid], [aria-invalid=true], [data-state=invalid]) {
-    color: var(--chakra-colors-fg-error);
-  }
-
-  .emotion-5 :where(svg) {
-    width: 1em;
-    height: 1em;
-  }
-}
-
-.emotion-6 {
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.emotion-7 {
+.emotion-5 {
   margin-top: var(--chakra-spacing-3);
 }
 
 @layer recipes {
-  .emotion-8 {
+  .emotion-6 {
     display: -webkit-inline-box;
     display: -webkit-inline-flex;
     display: -ms-inline-flexbox;
@@ -231,19 +181,19 @@ exports[`NativeSelectWidget > select field multiple choice 1`] = `
     color: var(--chakra-colors-color-palette-contrast);
   }
 
-  .emotion-8:is(:focus-visible, [data-focus-visible]) {
+  .emotion-6:is(:focus-visible, [data-focus-visible]) {
     outline-width: var(--focus-ring-width, 2px);
     outline-offset: var(--focus-ring-offset, 2px);
     outline-style: var(--focus-ring-style, solid);
     outline-color: var(--focus-ring-color);
   }
 
-  .emotion-8:is(:disabled, [disabled], [data-disabled], [aria-disabled=true]) {
+  .emotion-6:is(:disabled, [disabled], [data-disabled], [aria-disabled=true]) {
     opacity: 0.5;
     cursor: var(--chakra-cursor-disabled);
   }
 
-  .emotion-8 :where(svg) {
+  .emotion-6 :where(svg) {
     -webkit-flex-shrink: 0;
     -ms-flex-negative: 0;
     flex-shrink: 0;
@@ -251,14 +201,14 @@ exports[`NativeSelectWidget > select field multiple choice 1`] = `
     height: var(--chakra-sizes-5);
   }
 
-  .emotion-8:is([aria-expanded=true], [data-expanded], [data-state=expanded]) {
+  .emotion-6:is([aria-expanded=true], [data-expanded], [data-state=expanded]) {
     --mix-background: color-mix(in srgb, var(--chakra-colors-color-palette-solid) 90%, transparent);
     background: var(--mix-background, var(--chakra-colors-color-palette-solid));
     --bg-currentcolor: var(--mix-background, var(--chakra-colors-color-palette-solid));
   }
 
   @media (hover: hover) {
-    .emotion-8:is(:hover, [data-hover]):not(:disabled, [data-disabled]) {
+    .emotion-6:is(:hover, [data-hover]):not(:disabled, [data-disabled]) {
       --mix-background: color-mix(in srgb, var(--chakra-colors-color-palette-solid) 90%, transparent);
       background: var(--mix-background, var(--chakra-colors-color-palette-solid));
       --bg-currentcolor: var(--mix-background, var(--chakra-colors-color-palette-solid));
@@ -297,6 +247,7 @@ exports[`NativeSelectWidget > select field multiple choice 1`] = `
                 data-part="select"
                 data-scope="field"
                 id="root"
+                multiple=""
                 name="root"
               >
                 <option
@@ -320,28 +271,16 @@ exports[`NativeSelectWidget > select field multiple choice 1`] = `
                   qux
                 </option>
               </select>
-              <div
-                class="chakra-native-select__indicator emotion-5"
-              >
-                <svg
-                  class="emotion-6"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    d="m6 9 6 6 6-6"
-                  />
-                </svg>
-              </div>
             </div>
           </div>
         </div>
       </fieldset>
     </div>
     <div
-      class="emotion-7"
+      class="emotion-5"
     >
       <button
-        class="chakra-button emotion-8"
+        class="chakra-button emotion-6"
         type="submit"
       >
         Submit
@@ -482,62 +421,12 @@ exports[`NativeSelectWidget > select field multiple choice with labels 1`] = `
   }
 }
 
-@layer recipes {
-  .emotion-5 {
-    position: absolute;
-    display: -webkit-inline-box;
-    display: -webkit-inline-flex;
-    display: -ms-inline-flexbox;
-    display: inline-flex;
-    -webkit-align-items: center;
-    -webkit-box-align: center;
-    -ms-flex-align: center;
-    align-items: center;
-    -webkit-box-pack: center;
-    -ms-flex-pack: center;
-    -webkit-justify-content: center;
-    justify-content: center;
-    pointer-events: none;
-    top: 50%;
-    -webkit-transform: translateY(-50%);
-    -moz-transform: translateY(-50%);
-    -ms-transform: translateY(-50%);
-    transform: translateY(-50%);
-    height: 100%;
-    color: var(--chakra-colors-fg-muted);
-    font-size: var(--chakra-font-sizes-lg);
-    line-height: 1.75rem;
-    inset-inline-end: var(--chakra-spacing-2);
-  }
-
-  .emotion-5:is(:disabled, [disabled], [data-disabled], [aria-disabled=true]) {
-    opacity: 0.5;
-  }
-
-  .emotion-5:is([data-invalid], [aria-invalid=true], [data-state=invalid]) {
-    color: var(--chakra-colors-fg-error);
-  }
-
-  .emotion-5 :where(svg) {
-    width: 1em;
-    height: 1em;
-  }
-}
-
-.emotion-6 {
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.emotion-7 {
+.emotion-5 {
   margin-top: var(--chakra-spacing-3);
 }
 
 @layer recipes {
-  .emotion-8 {
+  .emotion-6 {
     display: -webkit-inline-box;
     display: -webkit-inline-flex;
     display: -ms-inline-flexbox;
@@ -585,19 +474,19 @@ exports[`NativeSelectWidget > select field multiple choice with labels 1`] = `
     color: var(--chakra-colors-color-palette-contrast);
   }
 
-  .emotion-8:is(:focus-visible, [data-focus-visible]) {
+  .emotion-6:is(:focus-visible, [data-focus-visible]) {
     outline-width: var(--focus-ring-width, 2px);
     outline-offset: var(--focus-ring-offset, 2px);
     outline-style: var(--focus-ring-style, solid);
     outline-color: var(--focus-ring-color);
   }
 
-  .emotion-8:is(:disabled, [disabled], [data-disabled], [aria-disabled=true]) {
+  .emotion-6:is(:disabled, [disabled], [data-disabled], [aria-disabled=true]) {
     opacity: 0.5;
     cursor: var(--chakra-cursor-disabled);
   }
 
-  .emotion-8 :where(svg) {
+  .emotion-6 :where(svg) {
     -webkit-flex-shrink: 0;
     -ms-flex-negative: 0;
     flex-shrink: 0;
@@ -605,14 +494,14 @@ exports[`NativeSelectWidget > select field multiple choice with labels 1`] = `
     height: var(--chakra-sizes-5);
   }
 
-  .emotion-8:is([aria-expanded=true], [data-expanded], [data-state=expanded]) {
+  .emotion-6:is([aria-expanded=true], [data-expanded], [data-state=expanded]) {
     --mix-background: color-mix(in srgb, var(--chakra-colors-color-palette-solid) 90%, transparent);
     background: var(--mix-background, var(--chakra-colors-color-palette-solid));
     --bg-currentcolor: var(--mix-background, var(--chakra-colors-color-palette-solid));
   }
 
   @media (hover: hover) {
-    .emotion-8:is(:hover, [data-hover]):not(:disabled, [data-disabled]) {
+    .emotion-6:is(:hover, [data-hover]):not(:disabled, [data-disabled]) {
       --mix-background: color-mix(in srgb, var(--chakra-colors-color-palette-solid) 90%, transparent);
       background: var(--mix-background, var(--chakra-colors-color-palette-solid));
       --bg-currentcolor: var(--mix-background, var(--chakra-colors-color-palette-solid));
@@ -651,6 +540,7 @@ exports[`NativeSelectWidget > select field multiple choice with labels 1`] = `
                 data-part="select"
                 data-scope="field"
                 id="root"
+                multiple=""
                 name="root"
               >
                 <option
@@ -669,28 +559,16 @@ exports[`NativeSelectWidget > select field multiple choice with labels 1`] = `
                   Green
                 </option>
               </select>
-              <div
-                class="chakra-native-select__indicator emotion-5"
-              >
-                <svg
-                  class="emotion-6"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    d="m6 9 6 6 6-6"
-                  />
-                </svg>
-              </div>
             </div>
           </div>
         </div>
       </fieldset>
     </div>
     <div
-      class="emotion-7"
+      class="emotion-5"
     >
       <button
-        class="chakra-button emotion-8"
+        class="chakra-button emotion-6"
         type="submit"
       >
         Submit
