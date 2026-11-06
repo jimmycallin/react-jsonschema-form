@@ -338,7 +338,7 @@ exports[`nameGenerator > bracketNameGenerator > object with additionalProperties
                   style="margin-top: 12px; max-height: 2.5rem;"
                 >
                   <button
-                    class="btn btn-danger btn-sm"
+                    class="rjsf-object-property-remove w-100 btn btn-danger btn-sm"
                     id="root_customField__remove"
                     title="Remove"
                     type="button"
@@ -611,7 +611,7 @@ exports[`nameGenerator > bracketNameGenerator > object with mixed types 1`] = `
                                   class="d-flex flex-row"
                                 >
                                   <button
-                                    class="btn btn-light btn-sm"
+                                    class="rjsf-array-item-move-up btn btn-light btn-sm"
                                     disabled=""
                                     id="root_tags_0__moveUp"
                                     title="Move up"
@@ -632,7 +632,7 @@ exports[`nameGenerator > bracketNameGenerator > object with mixed types 1`] = `
                                     </svg>
                                   </button>
                                   <button
-                                    class="btn btn-light btn-sm"
+                                    class="rjsf-array-item-move-down btn btn-light btn-sm"
                                     id="root_tags_0__moveDown"
                                     title="Move down"
                                     type="button"
@@ -652,7 +652,7 @@ exports[`nameGenerator > bracketNameGenerator > object with mixed types 1`] = `
                                     </svg>
                                   </button>
                                   <button
-                                    class="btn btn-danger btn-sm"
+                                    class="rjsf-array-item-remove btn btn-danger btn-sm"
                                     id="root_tags_0__remove"
                                     title="Remove"
                                     type="button"
@@ -716,7 +716,7 @@ exports[`nameGenerator > bracketNameGenerator > object with mixed types 1`] = `
                                   class="d-flex flex-row"
                                 >
                                   <button
-                                    class="btn btn-light btn-sm"
+                                    class="rjsf-array-item-move-up btn btn-light btn-sm"
                                     id="root_tags_1__moveUp"
                                     title="Move up"
                                     type="button"
@@ -736,7 +736,7 @@ exports[`nameGenerator > bracketNameGenerator > object with mixed types 1`] = `
                                     </svg>
                                   </button>
                                   <button
-                                    class="btn btn-light btn-sm"
+                                    class="rjsf-array-item-move-down btn btn-light btn-sm"
                                     disabled=""
                                     id="root_tags_1__moveDown"
                                     title="Move down"
@@ -757,7 +757,7 @@ exports[`nameGenerator > bracketNameGenerator > object with mixed types 1`] = `
                                     </svg>
                                   </button>
                                   <button
-                                    class="btn btn-danger btn-sm"
+                                    class="rjsf-array-item-remove btn btn-danger btn-sm"
                                     id="root_tags_1__remove"
                                     title="Remove"
                                     type="button"
@@ -1338,7 +1338,7 @@ exports[`nameGenerator > dotNotationNameGenerator > object with mixed types 1`] 
                                   class="d-flex flex-row"
                                 >
                                   <button
-                                    class="btn btn-light btn-sm"
+                                    class="rjsf-array-item-move-up btn btn-light btn-sm"
                                     disabled=""
                                     id="root_items_0__moveUp"
                                     title="Move up"
@@ -1359,7 +1359,7 @@ exports[`nameGenerator > dotNotationNameGenerator > object with mixed types 1`] 
                                     </svg>
                                   </button>
                                   <button
-                                    class="btn btn-light btn-sm"
+                                    class="rjsf-array-item-move-down btn btn-light btn-sm"
                                     id="root_items_0__moveDown"
                                     title="Move down"
                                     type="button"
@@ -1379,7 +1379,7 @@ exports[`nameGenerator > dotNotationNameGenerator > object with mixed types 1`] 
                                     </svg>
                                   </button>
                                   <button
-                                    class="btn btn-danger btn-sm"
+                                    class="rjsf-array-item-remove btn btn-danger btn-sm"
                                     id="root_items_0__remove"
                                     title="Remove"
                                     type="button"
@@ -1443,7 +1443,7 @@ exports[`nameGenerator > dotNotationNameGenerator > object with mixed types 1`] 
                                   class="d-flex flex-row"
                                 >
                                   <button
-                                    class="btn btn-light btn-sm"
+                                    class="rjsf-array-item-move-up btn btn-light btn-sm"
                                     id="root_items_1__moveUp"
                                     title="Move up"
                                     type="button"
@@ -1463,7 +1463,7 @@ exports[`nameGenerator > dotNotationNameGenerator > object with mixed types 1`] 
                                     </svg>
                                   </button>
                                   <button
-                                    class="btn btn-light btn-sm"
+                                    class="rjsf-array-item-move-down btn btn-light btn-sm"
                                     disabled=""
                                     id="root_items_1__moveDown"
                                     title="Move down"
@@ -1484,7 +1484,7 @@ exports[`nameGenerator > dotNotationNameGenerator > object with mixed types 1`] 
                                     </svg>
                                   </button>
                                   <button
-                                    class="btn btn-danger btn-sm"
+                                    class="rjsf-array-item-remove btn btn-danger btn-sm"
                                     id="root_items_1__remove"
                                     title="Remove"
                                     type="button"
@@ -1776,7 +1776,7 @@ exports[`object fields > additionalProperties 1`] = `
                   style="margin-top: 12px; max-height: 2.5rem;"
                 >
                   <button
-                    class="btn btn-danger btn-sm"
+                    class="rjsf-object-property-remove w-100 btn btn-danger btn-sm"
                     id="root_foo__remove"
                     title="Remove"
                     type="button"
@@ -1948,7 +1948,7 @@ exports[`object fields > additionalProperties with a description, propertyNames 
                   style="margin-top: -12px; max-height: 2.5rem;"
                 >
                   <button
-                    class="btn btn-danger btn-sm"
+                    class="rjsf-object-property-remove w-100 btn btn-danger btn-sm"
                     id="root_foo__remove"
                     title="Remove"
                     type="button"
@@ -2147,7 +2147,7 @@ exports[`object fields > additionalProperties, array type 1`] = `
                   style="margin-top: 12px; max-height: 2.5rem;"
                 >
                   <button
-                    class="btn btn-danger btn-sm"
+                    class="rjsf-object-property-remove w-100 btn btn-danger btn-sm"
                     id="root_foo__remove"
                     title="Remove"
                     type="button"
@@ -2305,7 +2305,7 @@ exports[`object fields > additionalProperties, description 1`] = `
                   style="margin-top: -12px; max-height: 2.5rem;"
                 >
                   <button
-                    class="btn btn-danger btn-sm"
+                    class="rjsf-object-property-remove w-100 btn btn-danger btn-sm"
                     id="root_foo__remove"
                     title="Remove"
                     type="button"
@@ -2450,7 +2450,7 @@ exports[`object fields > additionalProperties, label off 1`] = `
                   style="margin-top: 12px; max-height: 2.5rem;"
                 >
                   <button
-                    class="btn btn-danger btn-sm"
+                    class="rjsf-object-property-remove w-100 btn btn-danger btn-sm"
                     id="root_foo__remove"
                     title="Remove"
                     type="button"
@@ -2630,7 +2630,7 @@ exports[`object fields > additionalProperties, object type 1`] = `
                   style="margin-top: 12px; max-height: 2.5rem;"
                 >
                   <button
-                    class="btn btn-danger btn-sm"
+                    class="rjsf-object-property-remove w-100 btn btn-danger btn-sm"
                     id="root_foo__remove"
                     title="Remove"
                     type="button"
@@ -2789,7 +2789,7 @@ exports[`object fields > additionalProperties, propertyNames enum 1`] = `
                   style="margin-top: 12px; max-height: 2.5rem;"
                 >
                   <button
-                    class="btn btn-danger btn-sm"
+                    class="rjsf-object-property-remove w-100 btn btn-danger btn-sm"
                     id="root_foo__remove"
                     title="Remove"
                     type="button"
@@ -2948,7 +2948,7 @@ exports[`object fields > deprecated additionalProperties, propertyNames enum 1`]
                   style="margin-top: 12px; max-height: 2.5rem;"
                 >
                   <button
-                    class="btn btn-danger btn-sm"
+                    class="rjsf-object-property-remove w-100 btn btn-danger btn-sm"
                     id="root_foo__remove"
                     title="Remove"
                     type="button"
@@ -3191,7 +3191,7 @@ exports[`object fields > patternProperties, a key additionalProperties false for
                   style="margin-top: 12px; max-height: 2.5rem;"
                 >
                   <button
-                    class="btn btn-danger btn-sm"
+                    class="rjsf-object-property-remove w-100 btn btn-danger btn-sm"
                     id="root_abc__remove"
                     title="Remove"
                     type="button"
@@ -3292,7 +3292,7 @@ exports[`object fields > patternProperties, a key additionalProperties false for
                   style="margin-top: 12px; max-height: 2.5rem;"
                 >
                   <button
-                    class="btn btn-danger btn-sm"
+                    class="rjsf-object-property-remove w-100 btn btn-danger btn-sm"
                     id="root_a__remove"
                     title="Remove"
                     type="button"
@@ -3558,7 +3558,7 @@ exports[`object fields > show add button and fields if additionalProperties is t
                   style="margin-top: 12px; max-height: 2.5rem;"
                 >
                   <button
-                    class="btn btn-danger btn-sm"
+                    class="rjsf-object-property-remove w-100 btn btn-danger btn-sm"
                     id="root_additionalProperty__remove"
                     title="Remove"
                     type="button"
@@ -3726,7 +3726,7 @@ exports[`object fields > with title and description > additionalProperties 1`] =
                   style="margin-top: 12px; max-height: 2.5rem;"
                 >
                   <button
-                    class="btn btn-danger btn-sm"
+                    class="rjsf-object-property-remove w-100 btn btn-danger btn-sm"
                     id="root_foo__remove"
                     title="Remove"
                     type="button"
@@ -4041,7 +4041,7 @@ exports[`object fields > with title and description > show add button and fields
                   style="margin-top: 12px; max-height: 2.5rem;"
                 >
                   <button
-                    class="btn btn-danger btn-sm"
+                    class="rjsf-object-property-remove w-100 btn btn-danger btn-sm"
                     id="root_additionalProperty__remove"
                     title="Remove"
                     type="button"
@@ -4209,7 +4209,7 @@ exports[`object fields > with title and description from both > additionalProper
                   style="margin-top: 12px; max-height: 2.5rem;"
                 >
                   <button
-                    class="btn btn-danger btn-sm"
+                    class="rjsf-object-property-remove w-100 btn btn-danger btn-sm"
                     id="root_foo__remove"
                     title="Remove"
                     type="button"
@@ -4524,7 +4524,7 @@ exports[`object fields > with title and description from uiSchema > additionalPr
                   style="margin-top: 12px; max-height: 2.5rem;"
                 >
                   <button
-                    class="btn btn-danger btn-sm"
+                    class="rjsf-object-property-remove w-100 btn btn-danger btn-sm"
                     id="root_foo__remove"
                     title="Remove"
                     type="button"
@@ -4839,7 +4839,7 @@ exports[`object fields > with title and description from uiSchema > show add but
                   style="margin-top: 12px; max-height: 2.5rem;"
                 >
                   <button
-                    class="btn btn-danger btn-sm"
+                    class="rjsf-object-property-remove w-100 btn btn-danger btn-sm"
                     id="root_additionalProperty__remove"
                     title="Remove"
                     type="button"
@@ -4970,7 +4970,7 @@ exports[`object fields > with title and description with global label off > addi
                   style="margin-top: 0px; max-height: 2.5rem;"
                 >
                   <button
-                    class="btn btn-danger btn-sm"
+                    class="rjsf-object-property-remove w-100 btn btn-danger btn-sm"
                     id="root_foo__remove"
                     title="Remove"
                     type="button"
@@ -5181,7 +5181,7 @@ exports[`object fields > with title and description with global label off > show
                   style="margin-top: 0px; max-height: 2.5rem;"
                 >
                   <button
-                    class="btn btn-danger btn-sm"
+                    class="rjsf-object-property-remove w-100 btn btn-danger btn-sm"
                     id="root_additionalProperty__remove"
                     title="Remove"
                     type="button"
