@@ -79,13 +79,7 @@ export default function ObjectFieldTemplate<
       <div className={`grid grid-cols-1 gap-${description ? 3 : 4} ${isRoot ? '' : 'mb-4'}`}>
         {!showOptionalDataControlInTitle ? optionalDataControl : undefined}
         {properties.map((element) =>
-          element.hidden ? (
-            element.content
-          ) : (
-            <div key={element.content.key} className={id === 'root' && element.name === 'tasks' ? 'mt-2' : ''}>
-              {element.content}
-            </div>
-          ),
+          element.hidden ? element.content : <div key={element.content.key}>{element.content}</div>,
         )}
         {schemaUtils.canExpand(schema, uiSchema, formData) && (
           <div className='flex justify-end'>
