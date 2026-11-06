@@ -1,28 +1,17 @@
 import type {
   FormContextType,
-  GroupedEnumOptionsType,
-  IndexedEnumOptionType,
   RJSFSchema,
+  SelectWidgetOption,
+  SelectWidgetOptionGroup,
   StrictRJSFSchema,
   WidgetProps,
 } from '@rjsf/utils';
 import {
-  enumOptionSelectedValue,
-  enumOptionValueDecoder,
-  enumOptionsDomValues,
-  enumOptionsValueForIndex,
-  flattenGroupedOptions,
   getControlFallbackName,
-  getOptionValueFormat,
-  groupEnumOptions,
   hasWidgetErrors,
-  isEnumOptionsGroup,
-  logUnsupportedDefaultForEnum,
   SelectedOptionDescription,
   TranslatableString,
-  useSelectFocusHandlers,
-  widgetAriaProps,
-  widgetDrawsLabel,
+  useSelectWidgetProps,
 } from '@rjsf/utils';
 
 import { FancyMultiSelect } from '../components/ui/fancy-multi-select.tsx';
@@ -30,22 +19,31 @@ import type { FancySelectItem, FancySelectSection } from '../components/ui/fancy
 import { FancySelect } from '../components/ui/fancy-select.tsx';
 import { cn } from '../lib/utils.ts';
 
+/** The item `FancySelect` draws for an option, selected by its encoded value */
+function toItem({ value, label, index, disabled }: SelectWidgetOption): FancySelectItem<string> {
+  return { value, label, index, disabled };
+}
+
 /** Splits `groupedOptions` into the `FancySelectSection` list consumed by `FancySelect`/`FancyMultiSelect`: one
- * section per `ui:options.optgroups` group, plus a trailing unheaded section for any ungrouped options.
+ * section per `ui:options.optgroups` group, plus a trailing unheaded section for any ungrouped options, or no sections
+ * at all when nothing is grouped
  */
-function toSections<V, S extends StrictRJSFSchema = RJSFSchema>(
-  groupedOptions: GroupedEnumOptionsType<S>[],
-  toItem: (option: IndexedEnumOptionType<S>) => FancySelectItem<V>,
-): FancySelectSection<V>[] {
+function toSections<V>(
+  groupedOptions: (SelectWidgetOption | SelectWidgetOptionGroup)[],
+  itemFor: (option: SelectWidgetOption) => FancySelectItem<V>,
+): FancySelectSection<V>[] | undefined {
   const sections: FancySelectSection<V>[] = [];
   const ungrouped: FancySelectItem<V>[] = [];
   groupedOptions.forEach((item) => {
-    if (isEnumOptionsGroup<S>(item)) {
-      sections.push({ label: item.label, items: item.options.map(toItem) });
+    if ('options' in item) {
+      sections.push({ label: item.label, items: item.options.map(itemFor) });
     } else {
-      ungrouped.push(toItem(item));
+      ungrouped.push(itemFor(item));
     }
   });
+  if (sections.length === 0) {
+    return undefined;
+  }
   if (ungrouped.length > 0) {
     sections.push({ items: ungrouped });
   }
@@ -62,91 +60,60 @@ export default function SelectWidget<
   S extends StrictRJSFSchema = RJSFSchema,
   F extends FormContextType = FormContextType,
 >(props: WidgetProps<T, S, F>) {
-  const {
-    id,
-    options,
-    required,
-    disabled,
-    readonly,
-    value,
-    schema,
-    multiple,
-    autofocus,
-    onChange,
-    onBlur,
-    onFocus,
-    placeholder,
-    className,
-    registry,
-    uiSchema,
-    presentation,
-  } = props;
-  const hideLabel = !widgetDrawsLabel<T, S, F>(props);
-  const { enumOptions, enumDisabled, emptyValue: optEmptyValue, optgroups } = options;
-  const optionValueFormat = getOptionValueFormat(options);
-  const domValues = enumOptionsDomValues<S>(enumOptions, optionValueFormat);
-  logUnsupportedDefaultForEnum<S>(id, schema, enumOptions, multiple);
-
-  const { handleFocus: handleFancyFocus, handleBlur: handleFancyBlur } = useSelectFocusHandlers<T, S, F>({
-    id,
-    value,
-    options,
-    onFocus,
-    onBlur,
-  });
-
-  // A single select's items are valued by their DOM values, which are what `FancySelect` selects by, and a multiple
-  // select's by the option values `FancyMultiSelect` compares the selection with
-  const toItem = <V,>(option: IndexedEnumOptionType<S>, itemValue: V): FancySelectItem<V> => ({
-    value: itemValue,
-    label: option.label,
-    index: option.index,
-    disabled: option.disabled,
-  });
-  const toDomValueItem = (option: IndexedEnumOptionType<S>) => toItem(option, domValues[option.index] ?? '');
-  const toOptionValueItem = (option: IndexedEnumOptionType<S>) => toItem(option, option.value);
-
-  // `optgroups` is presentational, so `items` stays in enum order: the fancy selects derive their current selection by
-  // filtering `items`, so that order reaches the array written to formData. Grouping is applied to `sections`, which
-  // is what the popup actually renders.
-  const enumOrder = flattenGroupedOptions<S>(groupEnumOptions<S>(enumOptions, undefined, enumDisabled));
-  const groups = optgroups ? groupEnumOptions<S>(enumOptions, optgroups, enumDisabled) : undefined;
-
+  const { className, registry, options } = props;
+  const select = useSelectWidgetProps<T, S, F>(props);
   const {
     'aria-label': ariaLabel,
     'aria-labelledby': ariaLabelledby,
     'aria-describedby': ariaDescribedby,
-    'aria-invalid': ariaInvalid,
-  } = widgetAriaProps(props);
+  } = select.ariaProps;
+  const ariaInvalid = select.ariaProps['aria-invalid'];
+
+  // `optgroups` is presentational, so `items` stays in enum order: the fancy selects derive their current selection by
+  // filtering `items`, so that order reaches the array written to formData. Grouping is applied to `sections`, which
+  // is what the popup actually renders.
+  const items = select.options.map(toItem);
+  const sections = toSections(select.groupedOptions, toItem);
+  // `FancyMultiSelect` searches an option by its value as well as its label, so its items are valued by the options'
+  // own values, and so is the selection it compares with them
+  const toValueItem = (option: SelectWidgetOption) => ({
+    ...toItem(option),
+    value: options.enumOptions?.[option.index]?.value,
+  });
+  const valueItems = select.options.map(toValueItem);
+  const valueSections = toSections(select.groupedOptions, toValueItem);
+  const selectedValues = select.multiple
+    ? valueItems
+        .filter((_, position) => select.value.includes(select.options[position].value))
+        .map(({ value }) => value)
+    : [];
 
   const cnClassName = cn({ 'border-destructive': hasWidgetErrors<T, S, F>(props) }, className);
 
-  const placeholderText = placeholder || registry.translateString(TranslatableString.SelectPlaceholder);
+  const placeholderText = select.placeholder || registry.translateString(TranslatableString.SelectPlaceholder);
   // With no label naming it, a combobox, which takes no name from the item it displays, is named by the field's label,
   // or, for a field with no title, such as an array item, by its placeholder, else the select prompt
   const fallbackName = getControlFallbackName<T, S, F>(props);
 
   return (
     <div className='p-0.5'>
-      {!multiple ? (
+      {!select.multiple ? (
         <FancySelect
-          id={id}
-          items={enumOrder.map(toDomValueItem)}
-          sections={groups && toSections(groups, toDomValueItem)}
-          selected={enumOptionSelectedValue(value, enumOptions, false, optionValueFormat, '')}
-          onValueChange={(selectedValue) => {
-            onChange(enumOptionValueDecoder<S>(selectedValue, enumOptions, optionValueFormat, optEmptyValue));
-          }}
-          autoFocus={autofocus}
-          disabled={disabled || readonly}
-          required={required}
+          id={select.id}
+          items={items}
+          sections={sections}
+          selected={select.value}
+          onValueChange={select.onChange}
+          autoFocus={select.autoFocus}
+          disabled={select.disabled}
+          required={select.required}
           placeholder={placeholderText}
           ariaLabel={ariaLabel}
           ariaLabelledby={ariaLabelledby}
           ariaInvalid={ariaInvalid}
           className={cnClassName}
-          onFocus={handleFancyFocus}
-          onBlur={handleFancyBlur}
+          onFocus={select.onFocus}
+          onBlur={select.onBlur}
           ariaDescribedby={ariaDescribedby}
         />
       ) : (
@@ -155,35 +122,25 @@ export default function SelectWidget<
           // fallback name does where the field has no title
           label={ariaLabel || fallbackName}
           placeholder={placeholderText}
-          autoFocus={autofocus}
-          disabled={disabled || readonly}
-          required={required}
+          autoFocus={select.autoFocus}
+          disabled={select.disabled}
+          required={select.required}
           multiple
           className={cnClassName}
-          items={enumOrder.map(toOptionValueItem)}
-          sections={groups && toSections(groups, toOptionValueItem)}
-          selected={value === undefined ? [] : [value].flat()}
+          items={valueItems}
+          sections={valueSections}
+          selected={selectedValues}
           onValueChange={(indexes) => {
-            // `FancyMultiSelect` reports the selected options by index whatever the `optionValueFormat`, so they're
-            // resolved as indexes rather than decoded as DOM values
-            onChange(enumOptionsValueForIndex<S>(indexes.map(String), enumOptions, optEmptyValue));
+            // `FancyMultiSelect` reports the selected options by their index
+            select.onChange(select.options.filter(({ index }) => indexes.includes(index)).map(({ value }) => value));
           }}
-          onFocus={handleFancyFocus}
-          onBlur={handleFancyBlur}
+          onFocus={select.onFocus}
+          onBlur={select.onBlur}
           ariaDescribedby={ariaDescribedby}
           ariaInvalid={ariaInvalid}
         />
       )}
-      <SelectedOptionDescription
-        id={id}
-        multiple={multiple}
-        options={options}
-        registry={registry}
-        uiSchema={uiSchema}
-        value={value}
-        hideLabel={hideLabel}
-        presentation={presentation}
-      />
+      <SelectedOptionDescription {...select.descriptionProps} />
     </div>
   );
 }
