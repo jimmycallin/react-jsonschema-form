@@ -219,10 +219,15 @@ import uiBooleanOption from './uiBooleanOption.ts';
 import unwrapErrorHandler from './unwrapErrorHandler.ts';
 import type { DateElementProps, UseAltDateWidgetResult } from './useAltDateWidgetProps.tsx';
 import useAltDateWidgetProps, { DateElement } from './useAltDateWidgetProps.tsx';
+import type { CheckboxesWidgetOption, UseCheckboxesWidgetPropsResult } from './useCheckboxesWidgetProps.ts';
+import useCheckboxesWidgetProps from './useCheckboxesWidgetProps.ts';
+import type { ChoiceWidgetLabelOptions, ChoiceWidgetOption, ChoiceWidgetProps } from './useChoiceWidgetProps.ts';
 import type { FileInfoType, UseFileWidgetPropsResult } from './useFileWidgetProps.ts';
 import useFileWidgetProps from './useFileWidgetProps.ts';
 import type { UseOptionFocusHandlersResult } from './useOptionFocusHandlers.ts';
 import useOptionFocusHandlers from './useOptionFocusHandlers.ts';
+import type { UseRadioWidgetPropsResult } from './useRadioWidgetProps.ts';
+import useRadioWidgetProps from './useRadioWidgetProps.ts';
 import type { UseSelectFocusHandlersResult } from './useSelectFocusHandlers.ts';
 import useSelectFocusHandlers from './useSelectFocusHandlers.ts';
 import type {
@@ -252,6 +257,10 @@ export * from './schema/index.ts';
 
 export type {
   AdditionalPropertyKeySelectProps,
+  CheckboxesWidgetOption,
+  ChoiceWidgetLabelOptions,
+  ChoiceWidgetOption,
+  ChoiceWidgetProps,
   DateElementFormat,
   DateElementProp,
   DateElementProps,
@@ -270,8 +279,10 @@ export type {
   SelectWidgetOptionGroup,
   SelectWidgetValue,
   UseAltDateWidgetResult,
+  UseCheckboxesWidgetPropsResult,
   UseFileWidgetPropsResult,
   UseOptionFocusHandlersResult,
+  UseRadioWidgetPropsResult,
   UseSelectFocusHandlersResult,
   UseSelectWidgetPropsResult,
   UseTimeWidgetPropsResult,
@@ -501,8 +512,10 @@ export {
   unsetByPath,
   unwrapErrorHandler,
   useAltDateWidgetProps,
+  useCheckboxesWidgetProps,
   useFileWidgetProps,
   useOptionFocusHandlers,
+  useRadioWidgetProps,
   useSelectFocusHandlers,
   useSelectWidgetProps,
   useTimeWidgetProps,
