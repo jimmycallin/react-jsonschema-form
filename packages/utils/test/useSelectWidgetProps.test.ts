@@ -209,7 +209,7 @@ describe('useSelectWidgetProps()', () => {
     });
 
     it('do not throw when the widget has no onFocus or onBlur', () => {
-      const { onFocus, onBlur } = render({ ...makeProps(), onFocus: undefined, onBlur: undefined } as WidgetProps);
+      const { onFocus, onBlur } = render(makeProps({ onFocus: undefined, onBlur: undefined }));
       expect(() => {
         onFocus();
         onBlur();
