@@ -1,16 +1,6 @@
-import type { FocusEvent } from 'react';
-import { useCallback } from 'react';
 import { Radio, Flex } from '@mantine/core';
 import type { FormContextType, RJSFSchema, StrictRJSFSchema, WidgetProps } from '@rjsf/utils';
-import {
-  enumOptionSelectedValue,
-  enumOptionsAutofocusIndex,
-  enumOptionsIsDisabled,
-  enumOptionValueDecoder,
-  enumOptionsDomValues,
-  getOptionValueFormat,
-  optionId,
-} from '@rjsf/utils';
+import { useRadioWidgetProps } from '@rjsf/utils';
 
 import { cleanupOptions, getDescriptionProps, GroupOptions, groupExcludedKeys, useGroupAriaProps } from '../utils.tsx';
 
@@ -24,74 +14,36 @@ export default function RadioWidget<
   S extends StrictRJSFSchema = RJSFSchema,
   F extends FormContextType = FormContextType,
 >(props: WidgetProps<T, S, F>) {
-  const { id, htmlName, value, required, disabled, readonly, autofocus, options, onChange, onBlur, onFocus } = props;
-
-  const { enumOptions, enumDisabled, inline, emptyValue } = options;
-  const optionValueFormat = getOptionValueFormat(options);
-  const domValues = enumOptionsDomValues<S>(enumOptions, optionValueFormat);
-  const themeProps = cleanupOptions(options, props, groupExcludedKeys);
-  const fieldDisabled = disabled || readonly;
-
-  const handleChange = useCallback(
-    (nextValue: string) => {
-      if (!fieldDisabled && onChange) {
-        onChange(enumOptionValueDecoder<S>(nextValue, enumOptions, optionValueFormat, emptyValue));
-      }
-    },
-    [onChange, fieldDisabled, enumOptions, emptyValue, optionValueFormat],
-  );
-
-  const handleBlur = useCallback(
-    ({ target }: FocusEvent<HTMLInputElement>) => {
-      if (onBlur) {
-        onBlur(id, enumOptionValueDecoder<S>(target?.value, enumOptions, optionValueFormat, emptyValue));
-      }
-    },
-    [onBlur, id, enumOptions, emptyValue, optionValueFormat],
-  );
-
-  const handleFocus = useCallback(
-    ({ target }: FocusEvent<HTMLInputElement>) => {
-      if (onFocus) {
-        onFocus(id, enumOptionValueDecoder<S>(target?.value, enumOptions, optionValueFormat, emptyValue));
-      }
-    },
-    [onFocus, id, enumOptions, emptyValue, optionValueFormat],
-  );
-
-  // Compared against the options' own values, which are encoded in the `optionValueFormat` rather than always indexes
-  const selected: string | undefined = enumOptionSelectedValue(value, enumOptions, false, optionValueFormat);
-
+  const radio = useRadioWidgetProps<T, S, F>(props);
+  const themeProps = cleanupOptions(props.options, props, groupExcludedKeys);
   const { groupProps, optionProps } = useGroupAriaProps('RadioGroup', props);
 
-  const autofocusIndex = enumOptionsAutofocusIndex<S>(enumOptions, enumDisabled, autofocus, value);
   return (
     <Radio.Group
-      id={id}
-      name={htmlName || id}
-      value={selected}
-      onChange={handleChange}
-      required={required}
-      readOnly={fieldDisabled}
+      id={radio.id}
+      name={radio.name}
+      value={radio.value || undefined}
+      onChange={radio.onChange}
+      required={radio.required}
+      readOnly={radio.disabled}
       {...themeProps}
       {...groupProps}
       {...getDescriptionProps(props)}
     >
-      {Array.isArray(enumOptions) ? (
-        <Flex mt='xs' direction={inline ? 'row' : 'column'} gap='xs' wrap='wrap'>
+      {radio.options.length > 0 ? (
+        <Flex mt='xs' direction={radio.inline ? 'row' : 'column'} gap='xs' wrap='wrap'>
           <GroupOptions optionProps={optionProps}>
             {(describedOptionProps) =>
-              enumOptions.map((option, i) => (
+              radio.options.map((option) => (
                 <Radio
-                  // oxlint-disable-next-line react/no-array-index-key
-                  key={i}
-                  id={optionId(id, i)}
-                  value={domValues[i]}
+                  key={option.index}
+                  id={option.id}
+                  value={option.value}
                   label={option.label}
-                  disabled={fieldDisabled || enumOptionsIsDisabled(option.value, enumDisabled)}
-                  autoFocus={i === autofocusIndex}
-                  onBlur={handleBlur}
-                  onFocus={handleFocus}
+                  disabled={radio.disabled || option.disabled}
+                  autoFocus={option.autoFocus}
+                  onBlur={option.onBlur}
+                  onFocus={option.onFocus}
                   {...describedOptionProps}
                 />
               ))

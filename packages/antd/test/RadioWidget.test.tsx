@@ -71,4 +71,24 @@ describe('RadioWidget', () => {
 
     expect(onChange).not.toHaveBeenCalled();
   });
+
+  it("reports the focused radio's own value on focus and blur", async () => {
+    const onFocus = vi.fn();
+    const onBlur = vi.fn();
+    render(
+      <Form
+        schema={schema}
+        uiSchema={{ 'ui:widget': 'radio' }}
+        validator={validator}
+        onFocus={onFocus}
+        onBlur={onBlur}
+      />,
+    );
+
+    await user.click(screen.getByRole('radio', { name: 'bar' }));
+    await user.tab();
+
+    expect(onFocus).toHaveBeenCalledWith('root', 'bar');
+    expect(onBlur).toHaveBeenCalledWith('root', 'bar');
+  });
 });
