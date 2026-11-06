@@ -1,8 +1,11 @@
 import type { RJSFSchema, UiSchema } from '@rjsf/utils';
 import validator from '@rjsf/validator-ajv8';
 import { render, screen } from '@testing-library/react';
+import { userEvent } from '@testing-library/user-event';
 
 import Form from './WrappedForm.tsx';
+
+const user = userEvent.setup();
 
 describe('NativeSelectWidget', () => {
   test('select field with enum', async () => {
@@ -131,5 +134,27 @@ describe('NativeSelectWidget', () => {
     expect(container.querySelectorAll('optgroup')).toHaveLength(1);
     expect(consoleError).not.toHaveBeenCalledWith(expect.stringContaining('same key'), expect.anything());
     consoleError.mockRestore();
+  });
+
+  test('encodes its options as their own values under ui:optionValueFormat realValue', async () => {
+    const schema: RJSFSchema = { type: 'string', enum: ['red', 'green'] };
+    const uiSchema: UiSchema = { 'ui:widget': 'NativeSelectWidget', 'ui:options': { optionValueFormat: 'realValue' } };
+    const onChange = vi.fn();
+    render(<Form schema={schema} uiSchema={uiSchema} validator={validator} onChange={onChange} />);
+
+    expect(screen.getByRole('option', { name: 'green' })).toHaveValue('green');
+    await user.selectOptions(screen.getByRole('combobox'), 'green');
+    expect(onChange).toHaveBeenLastCalledWith(expect.objectContaining({ formData: 'green' }), 'root');
+  });
+
+  test('selects several options of a multiple select, reported in enum order', async () => {
+    const schema: RJSFSchema = { type: 'array', items: { type: 'string', enum: ['a', 'b', 'c'] }, uniqueItems: true };
+    const uiSchema: UiSchema = { 'ui:widget': 'NativeSelectWidget' };
+    const onChange = vi.fn();
+    render(<Form schema={schema} uiSchema={uiSchema} validator={validator} onChange={onChange} />);
+
+    const select = screen.getByRole('listbox');
+    await user.selectOptions(select, ['c', 'a']);
+    expect(onChange).toHaveBeenLastCalledWith(expect.objectContaining({ formData: ['a', 'c'] }), 'root');
   });
 });
