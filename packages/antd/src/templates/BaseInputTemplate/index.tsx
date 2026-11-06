@@ -1,16 +1,6 @@
-import type { ChangeEvent, FocusEvent, MouseEvent } from 'react';
-import { useCallback } from 'react';
 import { SchemaExamples } from '@rjsf/core';
 import type { BaseInputTemplateProps, FormContextType, RJSFSchema, StrictRJSFSchema } from '@rjsf/utils';
-import {
-  examplesId,
-  getBaseInputProps,
-  getControlAttributes,
-  getExampleSuggestions,
-  numericWidgetStoresString,
-  offersClearButton,
-  toInputValue,
-} from '@rjsf/utils';
+import { numericWidgetStoresString, toInputValue, useBaseInputProps } from '@rjsf/utils';
 import { Input, InputNumber } from 'antd';
 
 import useControlState from '../../controlState.ts';
@@ -30,54 +20,18 @@ export default function BaseInputTemplate<
   S extends StrictRJSFSchema = RJSFSchema,
   F extends FormContextType = FormContextType,
 >(props: BaseInputTemplateProps<T, S, F>) {
-  const {
-    autofocus,
-    disabled,
-    registry,
-    id,
-    htmlName,
-    onBlur,
-    onChange,
-    onChangeOverride,
-    onFocus,
-    options,
-    placeholder,
-    readonly,
-    required,
-    schema,
-    value,
-    presentation,
-  } = props;
+  const { disabled, registry, onChangeOverride, options, readonly, schema, value } = props;
   // `InputNumber` reports only the parsed value, never the `ChangeEvent` an `onChangeOverride` is declared to
   // receive, so a widget that supplies one gets the plain input every other theme renders for a numeric field.
   // `InputNumber` wraps its input and steps through its own `step`, which takes a number rather than `'any'`
   const plainInput = Boolean(onChangeOverride);
-  const inputProps = getBaseInputProps<T, S, F>(props, plainInput);
+  const input = useBaseInputProps<T, S, F>(props, plainInput);
   const control = useControlState<T, S, F>({ disabled, readonly, registry });
   const { ClearButton } = registry.templates.ButtonTemplates;
 
-  const handleNumberChange = (nextValue: unknown) => onChange(nextValue ?? options.emptyValue);
+  const { min, max, ...restInputProps } = input.inputProps;
 
-  const handleTextChange =
-    onChangeOverride ??
-    (({ target }: ChangeEvent<HTMLInputElement>) => onChange(target.value === '' ? options.emptyValue : target.value));
-
-  const handleBlur = ({ target }: FocusEvent<HTMLInputElement>) => onBlur(id, target?.value);
-
-  const handleFocus = ({ target }: FocusEvent<HTMLInputElement>) => onFocus(id, target?.value);
-
-  const handleClear = useCallback(
-    (e: MouseEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      onChange(options.emptyValue);
-    },
-    [onChange, options.emptyValue],
-  );
-
-  const { min, max, ...restInputProps } = inputProps;
-
-  const isNumeric = !plainInput && (inputProps.type === 'number' || inputProps.type === 'integer');
+  const isNumeric = !plainInput && (input.inputProps.type === 'number' || input.inputProps.type === 'integer');
 
   // A string is handed over as it is, as a string field that `ui:inputType: 'number'` renders here stores one, and
   // `InputNumber` keeps the digits a conversion to a number would round. Its `stringMode` writes such a field a string
@@ -85,62 +39,60 @@ export default function BaseInputTemplate<
   const numberValue = typeof value === 'number' || typeof value === 'string' ? value : undefined;
   const stringMode = numericWidgetStoresString<S>(schema, value);
 
-  const inputValue = toInputValue(value);
   // `InputNumber` shows whatever string or number it's given, where a native number input blanks all but a number
-  const showsValue = isNumeric ? Boolean(toInputValue(numberValue)) : offersClearButton(inputValue, inputProps.type);
-  const exampleSuggestions = getExampleSuggestions<S>(schema);
-  const hasExamples = exampleSuggestions.length > 0;
-  const controlAttributes = getControlAttributes<T, S, F>({ id, presentation }, hasExamples ? [examplesId(id)] : []);
-  const input = isNumeric ? (
+  const showClearButton = isNumeric
+    ? Boolean(options.allowClearTextInputs) && !readonly && !disabled && Boolean(toInputValue(numberValue))
+    : input.showClearButton;
+  const field = isNumeric ? (
     <InputNumber
-      autoFocus={autofocus}
+      autoFocus={input.autoFocus}
       disabled={control.disabled}
-      id={id}
-      name={htmlName || id}
-      onBlur={!readonly ? handleBlur : undefined}
-      onChange={!readonly ? handleNumberChange : undefined}
-      onFocus={!readonly ? handleFocus : undefined}
-      placeholder={placeholder}
-      readOnly={readonly}
-      required={required}
+      id={input.id}
+      name={input.name}
+      onBlur={input.onBlur}
+      onChange={input.onChange}
+      onFocus={input.onFocus}
+      placeholder={input.placeholder}
+      readOnly={input.readOnly}
+      required={input.required}
       style={INPUT_STYLE}
       changeOnWheel={false}
-      list={hasExamples ? examplesId(id) : undefined}
+      list={input.listId}
+      title={input.title}
       {...restInputProps}
       min={typeof min === 'number' ? min : undefined}
       max={typeof max === 'number' ? max : undefined}
       type={undefined}
       stringMode={stringMode}
       value={numberValue}
-      {...controlAttributes}
+      {...input.ariaProps}
     />
   ) : (
     <Input
-      autoFocus={autofocus}
+      autoFocus={input.autoFocus}
       disabled={control.disabled}
-      id={id}
-      name={htmlName || id}
-      onBlur={!readonly ? handleBlur : undefined}
-      onChange={!readonly ? handleTextChange : undefined}
-      onFocus={!readonly ? handleFocus : undefined}
-      placeholder={placeholder}
-      readOnly={readonly}
-      required={required}
+      id={input.id}
+      name={input.name}
+      onBlur={input.onBlur}
+      onChange={onChangeOverride ?? ((event) => input.onChange(event.target.value))}
+      onFocus={input.onFocus}
+      placeholder={input.placeholder}
+      readOnly={input.readOnly}
+      required={input.required}
       style={INPUT_STYLE}
-      list={hasExamples ? examplesId(id) : undefined}
-      {...inputProps}
-      value={value === undefined ? undefined : inputValue}
-      {...controlAttributes}
+      list={input.listId}
+      title={input.title}
+      {...input.inputProps}
+      value={value === undefined ? undefined : input.value}
+      {...input.ariaProps}
     />
   );
 
   return (
     <>
-      {input}
-      {options.allowClearTextInputs && !readonly && !disabled && showsValue && (
-        <ClearButton registry={registry} onClick={handleClear} />
-      )}
-      <SchemaExamples id={id} schema={schema} suggestions={exampleSuggestions} />
+      {field}
+      {showClearButton && <ClearButton registry={registry} onClick={input.onClear} />}
+      <SchemaExamples id={input.id} schema={schema} suggestions={input.exampleSuggestions} />
     </>
   );
 }

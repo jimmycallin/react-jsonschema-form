@@ -81,6 +81,10 @@ https://github.com/rjsf-team/react-jsonschema-form/blob/main/packages/docs/docs/
 - Fix `SelectWidget` showing form data that no option holds, or a `ui:emptyValue`, as raw text instead of its placeholder ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
 - Change `CheckboxesWidget` to leave out form data that no option holds when a box is checked or unchecked, as the multiple `SelectWidget` does ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
 - Change `RadioWidget` to log an error when the schema's `default` is none of its options, as `SelectWidget` does ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
+- **BREAKING CHANGE:** Change `BaseInputTemplate`, `TextareaWidget` and `PasswordWidget` to report the field's form data on focus and blur, a number for a number field and `ui:emptyValue` for an emptied one, rather than the text the input shows. See [the upgrade guide](https://rjsf-team.github.io/react-jsonschema-form/docs/migration-guides/v7.x%20upgrade%20guide#text-inputs-report-their-form-data-on-focus-and-blur-breaking-change) ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
+- Change `BaseInputTemplate`, `TextareaWidget` and `PasswordWidget` to report focus and blur on a read-only field that `readonlyAsDisabled: false` leaves enabled, as `@rjsf/core` does ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
+- Fix `PasswordWidget` storing `''` for an emptied password with no `ui:emptyValue`, where it now stores `undefined` as every other input does ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
+- Fix `PasswordWidget` ignoring `ui:autocomplete`, the schema's `examples` and `ui:allowClearTextInputs` ([#5691](https://github.com/rjsf-team/react-jsonschema-form/issues/5691))
 
 ## @rjsf/bootstrap3
 

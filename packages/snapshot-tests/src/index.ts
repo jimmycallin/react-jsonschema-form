@@ -15,6 +15,8 @@ export { formTests } from './formTests.tsx';
 
 export { hideErrorTests } from './hideErrorTests.tsx';
 
+export { inputFocusTests } from './inputFocusTests.tsx';
+
 export { objectTests } from './objectTests.tsx';
 
 export { optionErrorStateTests } from './optionErrorStateTests.tsx';

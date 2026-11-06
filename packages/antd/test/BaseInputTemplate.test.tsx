@@ -68,6 +68,27 @@ describe('BaseInputTemplate', () => {
     expect(onChangeOverride.mock.calls[0][0].target.value).toBe('42');
     expect(onChange).not.toHaveBeenCalled();
   });
+  test('reports focus and blur on a read-only input that readonlyAsDisabled: false leaves enabled', async () => {
+    // A read-only input still takes focus, so it reports it as core's does, where it reported nothing
+    const onFocus = vi.fn();
+    const onBlur = vi.fn();
+    render(
+      <Form
+        schema={{ type: 'string' }}
+        validator={validator}
+        initialFormData='a'
+        readonly
+        formContext={{ readonlyAsDisabled: false }}
+        onFocus={onFocus}
+        onBlur={onBlur}
+      />,
+    );
+    await user.click(screen.getByRole('textbox'));
+    await user.tab();
+
+    expect(onFocus).toHaveBeenCalledWith('root', 'a');
+    expect(onBlur).toHaveBeenCalledWith('root', 'a');
+  });
 });
 
 callerInputPropsTests(Form);
