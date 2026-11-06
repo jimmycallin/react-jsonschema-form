@@ -41,8 +41,8 @@ export interface UseBaseInputPropsResult {
   autoFocus: boolean;
   /** The text shown while the input is empty */
   placeholder: string | undefined;
-  /** The form data as the string an input shows, `''` where it holds none */
-  value: string;
+  /** The form data as the string or number an input shows, `''` where it holds none */
+  value: string | number;
   /** The input's `type`, `step`, `min`, `max`, `accept`, `autoComplete` and the other attributes the schema and
    * `ui:options` give it, with `multiple` for a file input
    */
