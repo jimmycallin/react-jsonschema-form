@@ -1,4 +1,3 @@
-import type { ChangeEvent } from 'react';
 import type { InputLabelProps as MuiInputLabelProps } from '@mui/material/InputLabel';
 import ListSubheader from '@mui/material/ListSubheader';
 import MenuItem from '@mui/material/MenuItem';
@@ -8,26 +7,12 @@ import TextField from '@mui/material/TextField';
 import type {
   FormContextType,
   GenericObjectType,
-  IndexedEnumOptionType,
   RJSFSchema,
+  SelectWidgetOption,
   StrictRJSFSchema,
   WidgetProps,
 } from '@rjsf/utils';
-import {
-  enumOptionSelectedValue,
-  enumOptionValueDecoder,
-  enumOptionsDomValues,
-  getOptionValueFormat,
-  groupEnumOptions,
-  hasWidgetErrors,
-  isEnumOptionsGroup,
-  labelValue,
-  logUnsupportedDefaultForEnum,
-  SelectedOptionDescription,
-  useSelectFocusHandlers,
-  widgetAriaProps,
-  widgetDrawsLabel,
-} from '@rjsf/utils';
+import { hasWidgetErrors, labelValue, SelectedOptionDescription, useSelectWidgetProps } from '@rjsf/utils';
 
 import { describeByHelperText, getMuiProps, helperTextSlot, inputLabelId, withSlotProps } from '../util.ts';
 
@@ -44,6 +29,14 @@ export interface SelectWidgetMuiProps extends GenericObjectType {
     /** Props applied to the helper text, as an object or as MUI's `(ownerState) => props`. */
     formHelperText?: NonNullable<TextFieldProps['slotProps']>['formHelperText'];
   };
+}
+
+function renderOption({ index, value, disabled, label }: SelectWidgetOption) {
+  return (
+    <MenuItem key={index} value={value} disabled={disabled}>
+      {label}
+    </MenuItem>
+  );
 }
 
 /** The `SelectWidget` is a widget for rendering dropdowns.
@@ -64,29 +57,29 @@ export default function SelectWidget<
   },
 ) {
   const {
-    schema,
+    schema: _schema,
     id,
-    name, // remove this from textFieldProps
-    htmlName,
+    name: _name,
+    htmlName: _htmlName,
     options,
     label,
     // oxlint-disable-next-line typescript/no-deprecated -- kept out of the props this spreads onto the element
     hideLabel: _hideLabel,
-    required,
-    disabled,
+    required: _required,
+    disabled: _disabled,
     placeholder,
-    readonly,
-    value,
+    readonly: _readonly,
+    value: _value,
     multiple,
-    autofocus,
-    onChange,
-    onBlur,
-    onFocus,
-    errorSchema,
+    autofocus: _autofocus,
+    onChange: _onChange,
+    onBlur: _onBlur,
+    onFocus: _onFocus,
+    errorSchema: _errorSchema,
     // oxlint-disable-next-line typescript/no-deprecated -- kept out of the props this spreads onto the element
     rawErrors: _rawErrors,
-    registry,
-    uiSchema,
+    registry: _registry,
+    uiSchema: _uiSchema,
     hideError: _hideError,
     // Given to the combobox below, so kept off the field's root, where `textFieldProps` are spread
     'aria-label': _ariaLabel,
@@ -94,24 +87,7 @@ export default function SelectWidget<
     presentation: _presentation,
     ...textFieldProps
   } = props;
-  const hideLabel = !widgetDrawsLabel<T, S, F>(props);
-  const { enumOptions, enumDisabled, emptyValue: optEmptyVal, optgroups } = options;
-  const optionValueFormat = getOptionValueFormat(options);
-  const domValues = enumOptionsDomValues<S>(enumOptions, optionValueFormat);
-
-  const isMultiple = multiple ?? false;
-
-  const emptyValue = isMultiple ? [] : '';
-  const selectedValue = enumOptionSelectedValue(value, enumOptions, isMultiple, optionValueFormat, emptyValue);
-  // A multiple select shows a lone value as a one-item selection, so its label shrinks for whatever it shows
-  const isEmpty = Array.isArray(selectedValue)
-    ? selectedValue.length < 1
-    : typeof value === 'undefined' || value === emptyValue;
-
-  const handleChange = ({ target: { value: newValue } }: ChangeEvent<{ value: string }>) =>
-    onChange(enumOptionValueDecoder<S>(newValue, enumOptions, optionValueFormat, optEmptyVal));
-  // MUI's select focuses a `div` with no value of its own
-  const { handleFocus, handleBlur } = useSelectFocusHandlers<T, S, F>(props);
+  const select = useSelectWidgetProps<T, S, F>(props);
   const { rjsfSlotProps: muiSlotProps, ...otherMuiProps } = getMuiProps<T, S, F, SelectWidgetMuiProps>(options);
 
   const { InputLabelProps, SelectProps, autocomplete, ...textFieldRemainingProps } = textFieldProps;
@@ -119,44 +95,35 @@ export default function SelectWidget<
   // `htmlInput` given through `rjsfSlotProps` is the form author's own choice for that element, so it is applied last
   const textFieldOverrides = { ...otherMuiProps, ...textFieldRemainingProps } as TextFieldProps;
   const textFieldId = textFieldOverrides.id ?? id;
-  const ariaProps = describeByHelperText(widgetAriaProps(props), textFieldId, textFieldOverrides.helperText);
-  const ownLabel = labelValue(label || undefined, hideLabel, undefined);
+  const ariaProps = describeByHelperText(select.ariaProps, textFieldId, textFieldOverrides.helperText);
+  const ownLabel = labelValue(label || undefined, select.descriptionProps.hideLabel, undefined);
   const textFieldLabel = 'label' in textFieldOverrides ? textFieldOverrides.label : ownLabel;
   const labelId = muiSlotProps?.inputLabel?.id ?? inputLabelId(textFieldId);
-  const showPlaceholderOption = !isMultiple && schema.default === undefined;
-  logUnsupportedDefaultForEnum<S>(id, schema, enumOptions, isMultiple);
-
-  function renderOption(option: IndexedEnumOptionType<S>) {
-    return (
-      <MenuItem key={option.index} value={domValues[option.index]} disabled={option.disabled}>
-        {option.label}
-      </MenuItem>
-    );
-  }
 
   return (
     <>
       <TextField
-        id={id}
-        name={htmlName || id}
+        id={select.id}
+        name={select.name}
         label={ownLabel}
-        value={selectedValue}
-        required={required}
-        disabled={disabled || readonly}
-        autoFocus={autofocus}
+        value={select.value}
+        required={select.required}
+        disabled={select.disabled}
+        autoFocus={select.autoFocus}
         autoComplete={autocomplete}
         placeholder={placeholder}
         error={hasWidgetErrors<T, S, F>(props)}
-        onChange={handleChange}
-        onBlur={handleBlur}
-        onFocus={handleFocus}
+        onChange={(event) => select.onChange(event.target.value)}
+        onBlur={select.onBlur}
+        onFocus={select.onFocus}
         {...textFieldOverrides}
         select // Apply this and the following props after the potential overrides defined in textFieldProps
         slotProps={{
           ...muiSlotProps,
           inputLabel: {
             ...muiSlotProps?.inputLabel,
-            shrink: !isEmpty,
+            // A multiple select shows a lone value as a one-item selection, so its label shrinks for whatever it shows
+            shrink: select.value.length > 0,
             id: labelId,
           },
           select: {
@@ -172,9 +139,9 @@ export default function SelectWidget<
           formHelperText: helperTextSlot(textFieldId, muiSlotProps?.formHelperText),
         }}
       >
-        {showPlaceholderOption && <MenuItem value=''>{placeholder}</MenuItem>}
-        {groupEnumOptions<S>(enumOptions, optgroups, enumDisabled).flatMap((item) =>
-          isEnumOptionsGroup<S>(item)
+        {select.showPlaceholderOption && <MenuItem value=''>{placeholder}</MenuItem>}
+        {select.groupedOptions.flatMap((item) =>
+          'options' in item
             ? [
                 // MUI's `SelectInput` clones every direct child with `role='option'` and has no group primitive, so a
                 // heading can't be exposed as a `role='group'` label the way a native `<optgroup>` is. `aria-disabled`
@@ -188,7 +155,7 @@ export default function SelectWidget<
             : [renderOption(item)],
         )}
       </TextField>
-      <SelectedOptionDescription {...props} />
+      <SelectedOptionDescription {...select.descriptionProps} />
     </>
   );
 }
