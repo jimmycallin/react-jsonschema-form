@@ -3778,6 +3778,30 @@ specific `RadioWidget` implementations, and by an app's own.
   - `onChange(value)`: decodes the encoded value of the checked option into form data. `null` or `undefined` is no
     choice, which reports `ui:emptyValue`
 
+### useRangeWidgetProps&lt;T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = FormContextType>()
+
+Hook which holds what every `RangeWidget` does whatever its UI library: it reads the form data as a number, takes the
+slider's `min`, `max` and `step` from the schema's `minimum`, `maximum` and `multipleOf`, writes a moved value back as
+the number or string the schema stores, and supplies the control's id, name and `aria-*` attributes. The handlers
+report nothing while the field is disabled or read-only. To be used by theme specific `RangeWidget` implementations,
+and by an app's own.
+
+#### Parameters
+
+- props: WidgetProps&lt;T, S, F> - The `WidgetProps` for the `RangeWidget`
+
+#### Returns
+
+- UseRangeWidgetPropsResult: Everything the slider needs:
+  - `id`, `name`, `required`, `disabled` (`true` for a disabled or read-only field) and `autoFocus`
+  - `value`: the form data as a number, or `undefined` where it holds none
+  - `spec`: the `min`, `max` and `step` the schema sets, holding only those it sets, to spread onto the slider
+  - `ariaProps`: the control's `aria-*` attributes
+  - `onChange(value)`: writes the number as form data, a string where the schema stores the number as one, and
+    `ui:emptyValue` for `undefined`
+  - `onFocus()` and `onBlur()`: report the form data. They take no argument, so they can be handed to any control's
+    focus and blur events
+
 ### useSelectFocusHandlers&lt;T = unknown, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = FormContextType>()
 
 Hook which builds the focus and blur handlers of a select widget whose focused element carries no option value of its

@@ -390,6 +390,7 @@ function MyRadioWidget(props: WidgetProps) {
 
 An option's `disabled` is `ui:enumDisabled`'s alone, so it is combined with the group's.
 A checkbox's `onCheckedChange(checked)` checks or unchecks it, for a component that reports each box on its own, and the hook's `onChange` takes the whole selection, for one that reports the group's.
+A slider is built the same way on [`useRangeWidgetProps()`](../api-reference/utility-functions.md#userangewidgetpropst--unknown-s-extends-strictrjsfschema--rjsfschema-f-extends-formcontexttype--formcontexttype), whose `value` is the form data as a number and whose `onChange` takes the number the slider moved to.
 
 ## Custom field components
 
