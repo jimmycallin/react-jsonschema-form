@@ -216,6 +216,8 @@ import uiBooleanOption from './uiBooleanOption.ts';
 import unwrapErrorHandler from './unwrapErrorHandler.ts';
 import type { DateElementProps, UseAltDateWidgetResult } from './useAltDateWidgetProps.tsx';
 import useAltDateWidgetProps, { DateElement } from './useAltDateWidgetProps.tsx';
+import type { ClearEvent, UseBaseInputPropsResult } from './useBaseInputProps.ts';
+import useBaseInputProps from './useBaseInputProps.ts';
 import type { CheckboxesWidgetOption, UseCheckboxesWidgetPropsResult } from './useCheckboxesWidgetProps.ts';
 import useCheckboxesWidgetProps from './useCheckboxesWidgetProps.ts';
 import type { ChoiceWidgetLabelOptions, ChoiceWidgetOption, ChoiceWidgetProps } from './useChoiceWidgetProps.ts';
@@ -232,6 +234,8 @@ import type {
   UseSelectWidgetPropsResult,
 } from './useSelectWidgetProps.ts';
 import useSelectWidgetProps from './useSelectWidgetProps.ts';
+import type { UseTextareaWidgetPropsResult } from './useTextareaWidgetProps.ts';
+import useTextareaWidgetProps from './useTextareaWidgetProps.ts';
 import type { UseTimeWidgetPropsResult } from './useTimeWidgetProps.ts';
 import useTimeWidgetProps from './useTimeWidgetProps.ts';
 import utcToLocal from './utcToLocal.ts';
@@ -253,6 +257,7 @@ export * from './schema/index.ts';
 export type {
   AdditionalPropertyKeySelectProps,
   CheckboxesWidgetOption,
+  ClearEvent,
   ChoiceWidgetLabelOptions,
   ChoiceWidgetOption,
   ChoiceWidgetProps,
@@ -274,11 +279,13 @@ export type {
   SelectWidgetOptionGroup,
   SelectWidgetValue,
   UseAltDateWidgetResult,
+  UseBaseInputPropsResult,
   UseCheckboxesWidgetPropsResult,
   UseFileWidgetPropsResult,
   UseRadioWidgetPropsResult,
   UseRangeWidgetPropsResult,
   UseSelectWidgetPropsResult,
+  UseTextareaWidgetPropsResult,
   UseTimeWidgetPropsResult,
   // oxlint-disable-next-line typescript/no-deprecated -- deprecated, and kept exported through v7
   VisibleErrorsProps,
@@ -503,11 +510,13 @@ export {
   unsetByPath,
   unwrapErrorHandler,
   useAltDateWidgetProps,
+  useBaseInputProps,
   useCheckboxesWidgetProps,
   useFileWidgetProps,
   useRadioWidgetProps,
   useRangeWidgetProps,
   useSelectWidgetProps,
+  useTextareaWidgetProps,
   useTimeWidgetProps,
   utcToLocal,
   validationDataMerge,
