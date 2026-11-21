@@ -1,10 +1,11 @@
 import { PROPERTIES_KEY, REF_KEY } from './constants.ts';
-import deepEquals from './deepEquals.ts';
-import getFieldSchemaPath from './getFieldSchemaPath.ts';
 import getKeywordParentSchema, { keywordParentSchemaAt } from './getKeywordParentSchema.ts';
-import getUiOptions from './getUiOptions.ts';
-import isObject from './isObject.ts';
-import { getByPath } from './pathUtils.ts';
+import getValidatorErrorUiTitle, {
+  getErrorFieldSchemaPath,
+  isEngineParent,
+  uiSchemaAtDataPath,
+} from './getValidatorErrorUiTitle.ts';
+import { getByPath, propertyToPath } from './pathUtils.ts';
 import { stringKeyword } from './schema/graph/parseSchemaGraph.ts';
 import { resolveOwnRef } from './schema/retrieveSchema.ts';
 import type { FormContextType, RJSFSchema, StrictRJSFSchema, UiSchema } from './types.ts';
@@ -21,7 +22,7 @@ export interface ValidatorErrorTitleSource<
   names: string[];
   /** The quote the engine puts around a property name */
   quote: "'" | '"';
-  /** The error's property path, dot-separated as RJSF writes it, `''` for the root */
+  /** The error's property path, as `pathToProperty()` writes it, `''` for the root */
   property: string;
   /** The URI fragment of the JSON Pointer to the schema keyword that failed, such as `#/properties/a/required` */
   schemaPath: string;
@@ -38,12 +39,11 @@ export interface ValidatorErrorTitleSource<
 }
 
 /** Used by the validator packages to name the properties an error's message names by their `ui:title` or `title`.
- * A name's title is its `ui:title` at the error's `property`, then at the `schemaPath`, then at it with the branches the
- * keyword sits in removed (see `getFieldSchemaPath()`), then the `title` the uiSchema holds at the `property`, then the
- * `title` of its schema in the `parentSchema`, then in the schema of the field holding the branch the keyword sits in,
- * then in the root `schema`. A schema that is a `$ref` is read resolved, its own `title` kept over its target's. Each
- * name with a title is replaced, in one pass so a title that matches another name isn't replaced again, by its title in
- * single quotes. The title is written as it is, `$` patterns included.
+ * A name's title is its `ui:title` (see `getValidatorErrorUiTitle()`), then the `title` the uiSchema holds at the
+ * `property`, then the `title` of its schema in the `parentSchema`, then in the schema of the field holding the branch
+ * the keyword sits in, then in the root `schema`. A schema that is a `$ref` is read resolved, its own `title` kept over
+ * its target's. Each name with a title is replaced, in one pass so a title that matches another name isn't replaced
+ * again, by its title in single quotes. The title is written as it is, `$` patterns included.
  *
  * @param source - The error's message and what its names' titles are looked up in
  * @returns - The `message` with each name that has a title replaced by it, and the title of each such name
@@ -64,28 +64,8 @@ export default function applyValidatorErrorTitles<
   parentSchema,
   schema,
 }: ValidatorErrorTitleSource<T, S, F>): { message: string; titles: Map<string, string> } {
-  const propParts = property.replace(/^\./, '').split('.').filter(Boolean);
-  // `#/properties/A/properties/B/required` points into the uiSchema at `['A', 'B']`
-  const uiSchemaPathParts = (path: string) =>
-    path
-      .replace(/\/properties\//g, '/')
-      .split('/')
-      .slice(1, -1)
-      .map(decodeSchemaPathKey);
-  const schemaPathParts = uiSchemaPathParts(schemaPath);
-  // Ajv starts the path of a keyword in a `$ref` target it compiles on its own at that target, so a path the root
-  // doesn't lead along to the engine's own schema names no field of the root. One `skipsRefs` reads as `null` does lead
-  // along it, to a branch of a field it names either way
-  const pathParent = schema && getKeywordParentSchema<S>(schema, schemaPath, decodeSchemaPathKey, skipsRefs);
-  // The path's schema is read resolved where it holds a `$ref`, which Ajv's `parentSchema`, as written, doesn't
-  const pathKeys = schemaPath.split('/').slice(1, -1).map(decodeSchemaPathKey);
-  const leadsToParent =
-    isObject(pathParent) &&
-    (parentSchema === undefined ||
-      deepEquals(pathParent, parentSchema) ||
-      deepEquals(pathKeys.length > 0 ? getByPath(schema, pathKeys) : schema, parentSchema));
-  const fieldSchemaPath = !schema || pathParent === null || leadsToParent ? getFieldSchemaPath(schemaPath) : schemaPath;
-  const fieldSchemaPathParts = uiSchemaPathParts(fieldSchemaPath);
+  const propParts = propertyToPath(property);
+  const fieldSchemaPath = getErrorFieldSchemaPath<S>(schemaPath, decodeSchemaPathKey, schema, skipsRefs, parentSchema);
   const fieldSchema =
     schema && fieldSchemaPath !== schemaPath
       ? getKeywordParentSchema<S>(schema, fieldSchemaPath, decodeSchemaPathKey, skipsRefs)
@@ -114,15 +94,23 @@ export default function applyValidatorErrorTitles<
               skipsRefs,
             )
           : undefined) ?? getByPath(holder, [PROPERTIES_KEY, name]));
-  const parentSchemaPath = leadsToParent ? schemaPath : undefined;
+  const parentSchemaPath =
+    schema &&
+    isEngineParent(
+      getKeywordParentSchema<S>(schema, schemaPath, decodeSchemaPathKey, skipsRefs),
+      schema,
+      schemaPath,
+      decodeSchemaPathKey,
+      parentSchema,
+    )
+      ? schemaPath
+      : undefined;
   const titles = new Map<string, string>();
   for (const name of names) {
     // A sub-field named `title` sits at the same path as a raw `title`
-    const rawUiTitle = getByPath(uiSchema, [...propParts, name, 'title']);
+    const rawUiTitle = getByPath(uiSchemaAtDataPath<T, S, F>(uiSchema, [...propParts, name], schema), 'title');
     const title =
-      (getUiOptions<T, S, F>(getByPath(uiSchema, [...propParts, name])).title ??
-        getUiOptions<T, S, F>(getByPath(uiSchema, [...schemaPathParts, name])).title ??
-        getUiOptions<T, S, F>(getByPath(uiSchema, [...fieldSchemaPathParts, name])).title ??
+      (getValidatorErrorUiTitle<T, S, F>({ property, name, schemaPath, decodeSchemaPathKey, uiSchema, schema }) ??
         (typeof rawUiTitle === 'string' ? rawUiTitle : undefined)) ||
       titleOf(propertyOf(parentSchemaPath, parentSchema, name)) ||
       titleOf(propertyOf(fieldSchemaPath, fieldSchema, name)) ||
