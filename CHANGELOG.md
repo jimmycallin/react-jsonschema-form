@@ -26,16 +26,24 @@ https://github.com/rjsf-team/react-jsonschema-form/blob/main/packages/docs/docs/
 - Fix `retrieveSchema()` dropping an `additionalProperties` of `true` or `{}`, the object's own, an `allOf` entry's or an option's, when it merges the object's `allOf`, including the options it merges with those of an `allOf` entry, unless another entry's `unevaluatedProperties` other than `true` or `{}` closes the object to the keys it takes, the keywords beside a `$ref` reading as the object's own rather than as an entry ([#5926](https://github.com/rjsf-team/react-jsonschema-form/pull/5926), [#5886](https://github.com/rjsf-team/react-jsonschema-form/issues/5886))
 - Fix `getFilledDefault()` reading a property's default off its parent's fill, which a `patternProperties` subschema its name matches holding an `if`, or for an extra key no pattern matches an `additionalProperties` or `unevaluatedProperties` one, can change, rather than filling the property by itself ([#5924](https://github.com/rjsf-team/react-jsonschema-form/pull/5924))
 - Add `getKeywordParentSchema()`, which finds the schema holding the keyword a validation error reports ([#5933](https://github.com/rjsf-team/react-jsonschema-form/pull/5933), [#5919](https://github.com/rjsf-team/react-jsonschema-form/issues/5919))
+- Add `getFieldSchemaPath()`, which removes the `allOf`/`anyOf`/`oneOf`, `then`/`else` and `dependentSchemas`/`dependencies` branches from a failed keyword's schema path, so the validator packages can name a property by the field the keyword applies to ([#5932](https://github.com/rjsf-team/react-jsonschema-form/issues/5932))
+- Fix `applyValidatorErrorTitles()` not naming a missing property by its schema `title` when its schema is a `$ref`, or when a branch requires it inside an array item or under a `$ref`, nor by its `ui:title` when such a branch requires it inside an array item ([#5932](https://github.com/rjsf-team/react-jsonschema-form/issues/5932))
+
+## @rjsf/validator-ajv8
+
+- Fix the error for a missing property not naming it by its schema `title` when its schema is a `$ref`, or when an `allOf`, `if`/`then` or `dependencies` branch requires it inside an array item or under a `$ref`, nor by its `ui:title` when such a branch requires it inside an array item ([#5932](https://github.com/rjsf-team/react-jsonschema-form/issues/5932))
 
 ## @rjsf/validator-ata
 
 - Fix errors under a `$ref` not naming their property by its schema `title` ([#5933](https://github.com/rjsf-team/react-jsonschema-form/pull/5933), [#5919](https://github.com/rjsf-team/react-jsonschema-form/issues/5919))
 - Fix the error for a `false` property taking the schema of a sibling property named `title` as its title ([#5933](https://github.com/rjsf-team/react-jsonschema-form/pull/5933), [#5919](https://github.com/rjsf-team/react-jsonschema-form/issues/5919))
+- Fix the error for a missing property not naming it by its schema `title` when its schema is a `$ref`, or when an `allOf` or `if`/`then` branch requires it inside an array item or under a `$ref`, nor by its `ui:title` when such a branch requires it inside an array item ([#5932](https://github.com/rjsf-team/react-jsonschema-form/issues/5932))
 
 ## @rjsf/validator-cfworker
 
 - Fix errors inside an array item, or under a `$ref`, `allOf`, `if`/`then` or `additionalProperties`, not naming their property by its schema `title` ([#5933](https://github.com/rjsf-team/react-jsonschema-form/pull/5933), [#5919](https://github.com/rjsf-team/react-jsonschema-form/issues/5919))
 - Fix errors naming a property that a branch, `patternProperties` entry or `additionalProperties` schema redeclares with its own `title` by the `title` along `properties` rather than the redeclared one ([#5933](https://github.com/rjsf-team/react-jsonschema-form/pull/5933), [#5919](https://github.com/rjsf-team/react-jsonschema-form/issues/5919))
+- Fix the error for a missing property not naming it by its schema `title` when its schema is a `$ref`, or when an `allOf`, `if`/`then` or `dependencies` branch requires it inside an array item or under a `$ref`, nor by its `ui:title` when such a branch requires it inside an array item ([#5932](https://github.com/rjsf-team/react-jsonschema-form/issues/5932))
 
 # 7.0.0-beta.1 (2026-11-20)
 
